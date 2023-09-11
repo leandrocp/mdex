@@ -1,11 +1,12 @@
 # MDEx
 
-**TODO: Add description**
+A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter.
+
+Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `mdex` to your list of dependencies in `mix.exs`:
+Add `:mdex` dependecy:
 
 ```elixir
 def deps do
@@ -14,8 +15,3 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/mdex>.
-
