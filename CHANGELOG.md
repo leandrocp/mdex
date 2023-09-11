@@ -1,6 +1,14 @@
 
 # Changelog
 
+## 0.1.2 (2023-09-11)
+
+### Enhancements
+  * Guard markdown arg
+
+### Fixes
+  * specs
+
 ## 0.1.1 (2023-09-11)
 
 ### Enhancements
