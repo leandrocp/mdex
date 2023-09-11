@@ -1,6 +1,11 @@
 
 # Changelog
 
+## 0.1.3 (2023-09-11)
+
+### Enhancements
+  * NIF version 2.15
+
 ## 0.1.2 (2023-09-11)
 
 ### Enhancements
