@@ -1,5 +1,8 @@
 name: Precomp NIFs
 
+env:
+  NIF_DIRECTORY: "native/comrak_nif"
+
 on:
   push:
     branches:
@@ -25,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        nif: ["2.16", "2.15"]
+        nif: ["2.17", "2.16", "2.15"]
         job:
           - { target: arm-unknown-linux-gnueabihf , os: ubuntu-22.04 , use-cross: true }
           - { target: aarch64-unknown-linux-gnu   , os: ubuntu-22.04 , use-cross: true }
@@ -37,21 +40,40 @@ jobs:
           - { target: x86_64-unknown-linux-musl   , os: ubuntu-22.04 , use-cross: true }
           - { target: x86_64-pc-windows-gnu       , os: windows-2019  }
           - { target: x86_64-pc-windows-msvc      , os: windows-2019  }
-
+    env:
+      RUSTLER_NIF_VERSION: ${{ matrix.nif }}
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
+
+    - name: Install prerequisites
+      run: |
+        case ${{ matrix.job.target }} in
+          arm-unknown-linux-*) sudo apt-get -y update ; sudo apt-get -y install gcc-arm-linux-gnueabihf ;;
+          aarch64-unknown-linux-gnu) sudo apt-get -y update ; sudo apt-get -y install gcc-aarch64-linux-gnu ;;
+        esac
 
     - name: Extract project version
       shell: bash
       run: |
         # Get the project version from mix.exs
         echo "PROJECT_VERSION=$(sed -n 's/^  @version "\(.*\)"/\1/p' mix.exs | head -n1)" >> $GITHUB_ENV
+
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: stable
         target: ${{ matrix.job.target }}
+
+    - name: Show version information (Rust, cargo, GCC)
+      run: |
+        gcc --version || true
+        rustup -V
+        rustup toolchain list
+        rustup default
+        cargo -V
+        rustc -V
+        rustc --print=cfg
 
     - name: Build the project
       id: build-crate
