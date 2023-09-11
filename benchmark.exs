@@ -1,4 +1,4 @@
-Mix.install([:req, :benchee, :earmark, :md, :mdex])
+Mix.install([:req, :benchee, :earmark, :md, :cmark, :mdex])
 
 defmodule Benchmark do
   @markdown Req.get!("https://raw.githubusercontent.com/BeaconCMS/live_monaco_editor/main/README.md").body
@@ -7,6 +7,7 @@ defmodule Benchmark do
     Benchee.run(%{
       "earmark" => fn -> Earmark.as_html(@markdown) end,
       "md" => fn -> Md.generate(@markdown) end,
+      "cmark" => fn -> Cmark.to_html(@markdown) end,
       "mdex" => fn -> MDEx.to_html(@markdown) end
     })
   end

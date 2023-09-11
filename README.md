@@ -25,12 +25,14 @@ A [simple script](benchmark.exs) is available to compare existing libs:
 
 ```
 Name              ips        average  deviation         median         99th %
-mdex         16694.30      0.0599 ms     ±5.98%      0.0596 ms      0.0713 ms
-md             858.68        1.16 ms     ±3.74%        1.15 ms        1.30 ms
-earmark        478.00        2.09 ms     ±1.90%        2.09 ms        2.20 ms
+cmark         24.01 K      0.0417 ms    ±14.11%      0.0405 ms      0.0631 ms
+mdex          16.37 K      0.0611 ms     ±9.65%      0.0601 ms      0.0870 ms
+md             0.85 K        1.18 ms     ±4.72%        1.16 ms        1.36 ms
+earmark        0.47 K        2.14 ms     ±2.82%        2.13 ms        2.42 ms
 
 Comparison:
-mdex         16694.30
-md             858.68 - 19.44x slower +1.10 ms
-earmark        478.00 - 34.93x slower +2.03 ms
+cmark         24.01 K
+mdex          16.37 K - 1.47x slower +0.0194 ms
+md             0.85 K - 28.36x slower +1.14 ms
+earmark        0.47 K - 51.47x slower +2.10 ms
 ```
