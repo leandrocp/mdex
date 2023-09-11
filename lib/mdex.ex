@@ -30,6 +30,10 @@ defmodule MDEx do
 
   Accepts all available [Comrak Options](https://docs.rs/comrak/latest/comrak/struct.ComrakOptions.html) as keyword lists.
 
+  * `:extension` - https://docs.rs/comrak/latest/comrak/struct.ComrakExtensionOptions.html
+  * `:parse` - https://docs.rs/comrak/latest/comrak/struct.ComrakParseOptions.html
+  * `:render` - https://docs.rs/comrak/latest/comrak/struct.ComrakRenderOptions.html
+
   ## Examples
 
       iex> MDEx.to_html("# MDEx")
@@ -47,15 +51,14 @@ defmodule MDEx do
   """
   def to_html(markdown, opts) do
     extension = Keyword.get(opts, :extension, %{})
-    extension = struct(MDEx.ExtensionOptions, extension)
-
     parse = Keyword.get(opts, :parse, %{})
-    parse = struct(MDEx.ParseOptions, parse)
-
     render = Keyword.get(opts, :render, %{})
-    render = struct(MDEx.RenderOptions, render)
 
-    options = %MDEx.Options{extension: extension, parse: parse, render: render}
+    options = %MDEx.Options{
+      extension: struct(MDEx.ExtensionOptions, extension),
+      parse: struct(MDEx.ParseOptions, parse),
+      render: struct(MDEx.RenderOptions, render)
+    }
 
     Native.to_html_with_options(markdown, options)
   end

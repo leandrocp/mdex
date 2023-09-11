@@ -16,7 +16,8 @@ defmodule MDEx.MixProject do
       aliases: aliases(),
       name: "MDEx",
       homepage_url: "https://github.com/leandrocp/mdex",
-      description: "Markdown"
+      description:
+        "A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter."
     ]
   end
 
@@ -58,8 +59,8 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:rustler_precompiled, "~> 0.6"},
       {:rustler, ">= 0.0.0", optional: true},
+      {:rustler_precompiled, "~> 0.6"},
       {:ex_doc, "~> 0.29", only: :dev}
     ]
   end
