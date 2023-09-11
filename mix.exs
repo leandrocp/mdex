@@ -41,7 +41,8 @@ defmodule MDEx.MixProject do
         "native",
         "README.md",
         "LICENSE.md",
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "checksum-*.exs"
       ]
     ]
   end
