@@ -1,6 +1,11 @@
 
 # Changelog
 
+## 0.1.4 (2023-09-11)
+
+### Fixes
+  * Compile on Ubuntu 20 to fix libc version mismatch
+
 ## 0.1.3 (2023-09-11)
 
 ### Enhancements
