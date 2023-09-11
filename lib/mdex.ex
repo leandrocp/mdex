@@ -19,6 +19,7 @@ defmodule MDEx do
       "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"
 
   """
+  @spec to_html(String.t()) :: String.t()
   def to_html(markdown) do
     Native.to_html(markdown)
   end
@@ -49,17 +50,18 @@ defmodule MDEx do
       "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"
 
   """
+  @spec to_html(String.t()) :: String.t()
   def to_html(markdown, opts) do
     extension = Keyword.get(opts, :extension, %{})
     parse = Keyword.get(opts, :parse, %{})
     render = Keyword.get(opts, :render, %{})
 
-    options = %MDEx.Options{
+    opts = %MDEx.Options{
       extension: struct(MDEx.ExtensionOptions, extension),
       parse: struct(MDEx.ParseOptions, parse),
       render: struct(MDEx.RenderOptions, render)
     }
 
-    Native.to_html_with_options(markdown, options)
+    Native.to_html_with_options(markdown, opts)
   end
 end
