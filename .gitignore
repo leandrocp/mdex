@@ -24,6 +24,7 @@ mdex-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+/priv/
 
 # The directory that rust will compile to for testing.
 /native/comrak_nif/target/

@@ -16,7 +16,8 @@ defmodule MDEx.MixProject do
       aliases: aliases(),
       name: "MDEx",
       homepage_url: "https://github.com/leandrocp/mdex",
-      description: "Markdown"
+      description:
+        "A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter."
     ]
   end
 
@@ -34,14 +35,18 @@ defmodule MDEx.MixProject do
         Changelog: "https://hexdocs.pm/mdex/changelog.html",
         GitHub: @source_url
       },
-      files: [
-        "mix.exs",
-        "lib",
-        "priv",
-        "native",
-        "README.md",
-        "LICENSE.md",
-        "CHANGELOG.md"
+      files: ~w[
+        lib
+        native/comrak_nif/src
+        native/comrak_nif/Cargo.*
+        native/comrak_nif/Cross.toml
+        native/comrak_nif/.cargo
+        native/comrak_nif/rust-toolchain.toml
+        checksum-Elixir.MDEx.Native.exs
+        mix.exs
+        README.md
+        LICENSE.md
+        CHANGELOG.md
       ]
     ]
   end
@@ -57,15 +62,17 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:rustler_precompiled, "~> 0.6"},
       {:rustler, ">= 0.0.0", optional: true},
+      {:rustler_precompiled, "~> 0.6"},
       {:ex_doc, "~> 0.29", only: :dev}
     ]
   end
 
   defp aliases do
     [
-      test: [fn _ -> System.put_env("MDEX_BUILD", "true") end, "test"]
+      generate_checksum: "rustler_precompiled.download MDEx.Native --all --print",
+      "rust.lint": ["cmd cargo clippy --manifest-path=native/comrak_nif/Cargo.toml -- -Dwarnings"],
+      "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"]
     ]
   end
 end
