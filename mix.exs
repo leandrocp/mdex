@@ -71,6 +71,7 @@ defmodule MDEx.MixProject do
   defp aliases do
     [
       generate_checksum: "rustler_precompiled.download MDEx.Native --all --print",
+      test: [fn _ -> System.put_env("MDEX_BUILD", "true") end, "test"],
       "rust.lint": ["cmd cargo clippy --manifest-path=native/comrak_nif/Cargo.toml -- -Dwarnings"],
       "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"]
     ]
