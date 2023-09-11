@@ -17,8 +17,9 @@ on:
       - "*"
   pull_request:
     paths:
-      # In PRs we only run if this file changes.
+      # In PRs we only run if these files changes.
       - ".github/workflows/release.yml"
+      - "native/**"
   workflow_dispatch:
 
 jobs:
