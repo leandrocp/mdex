@@ -14,3 +14,8 @@ comrak = "0.18"
 rustler = "0.29"
 serde = "1.0"
 serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
+
+[features]
+default = ["nif_version_2_15"]
+# Feature necessary for Rustler Precompiled.
+nif_version_2_15 = ["rustler/nif_version_2_15"]
