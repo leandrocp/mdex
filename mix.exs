@@ -41,7 +41,6 @@ defmodule MDEx.MixProject do
         native/comrak_nif/Cargo.*
         native/comrak_nif/Cross.toml
         native/comrak_nif/.cargo
-        native/comrak_nif/rust-toolchain.toml
         checksum-Elixir.MDEx.Native.exs
         mix.exs
         README.md
