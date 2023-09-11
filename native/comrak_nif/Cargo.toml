@@ -1,0 +1,17 @@
+[package]
+name = "comrak_nif"
+version = "0.1.0"
+authors = []
+edition = "2018"
+
+[lib]
+name = "comrak_nif"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+comrak = "0.18"
+
+rustler = "0.29"
+serde = "1.0"
+serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
