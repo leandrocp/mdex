@@ -20,7 +20,7 @@ defmodule MDEx do
 
   """
   @spec to_html(String.t()) :: String.t()
-  def to_html(markdown) do
+  def to_html(markdown) when is_binary(markdown) do
     Native.to_html(markdown)
   end
 
@@ -50,8 +50,8 @@ defmodule MDEx do
       "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"
 
   """
-  @spec to_html(String.t()) :: String.t()
-  def to_html(markdown, opts) do
+  @spec to_html(String.t(), keyword()) :: String.t()
+  def to_html(markdown, opts) when is_binary(markdown) do
     extension = Keyword.get(opts, :extension, %{})
     parse = Keyword.get(opts, :parse, %{})
     render = Keyword.get(opts, :render, %{})
