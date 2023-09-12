@@ -47,7 +47,7 @@ Some benefits you'll find:
 #=> </ul>
 ```
 
-Or play with the [playgroud](playground.livemd) livebook.
+Or play with the [playground](playground.livemd) livebook.
 
 ## Benchmark
 

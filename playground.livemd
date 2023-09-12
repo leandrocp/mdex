@@ -20,15 +20,3 @@ end
 
 IO.puts(Playground.run())
 ```
-
-```elixir
-MDEx.to_html(~S|
-# MDEx
-
-Some benefits you'll find:
-- Fast
-- CommonMark spec
-- Binary is precompiled, no need to compile anything
-- Easier to work with since it's Rust
-|) |> IO.puts()
-```
