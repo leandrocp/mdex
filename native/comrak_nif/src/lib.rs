@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rustler;
 
+use ammonia::clean;
 use comrak::markdown_to_html;
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
@@ -56,6 +57,7 @@ pub struct Options {
     pub extension: ExtensionOptions,
     pub parse: ParseOptions,
     pub render: RenderOptions,
+    pub sanitize: bool,
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -95,8 +97,14 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
         },
     };
 
-    let html = markdown_to_html(md, &comrak_options);
-    to_term(env, html).map_err(|err| err.into())
+    let unsafe_html = markdown_to_html(md, &comrak_options);
+
+    if options.sanitize {
+        let safe_html = clean(&unsafe_html);
+        to_term(env, safe_html).map_err(|err| err.into())
+    } else {
+        to_term(env, unsafe_html).map_err(|err| err.into())
+    }
 }
 
 fn list_style(list_style: ListStyleType) -> comrak::ListStyleType {

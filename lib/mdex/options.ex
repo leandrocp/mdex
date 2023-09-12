@@ -35,5 +35,6 @@ defmodule MDEx.Options do
   @moduledoc false
   defstruct extension: %MDEx.ExtensionOptions{},
             parse: %MDEx.ParseOptions{},
-            render: %MDEx.RenderOptions{}
+            render: %MDEx.RenderOptions{},
+            sanitize: false
 end

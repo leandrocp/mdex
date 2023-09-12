@@ -34,6 +34,7 @@ defmodule MDEx do
   * `:extension` - https://docs.rs/comrak/latest/comrak/struct.ComrakExtensionOptions.html
   * `:parse` - https://docs.rs/comrak/latest/comrak/struct.ComrakParseOptions.html
   * `:render` - https://docs.rs/comrak/latest/comrak/struct.ComrakRenderOptions.html
+  * `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
 
   ## Examples
 
@@ -49,17 +50,22 @@ defmodule MDEx do
       iex> MDEx.to_html("<marquee>visit https://https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
       "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"
 
+      iex> MDEx.to_html("# Title with <script>console.log('dangerous script')</script>", render: [unsafe_: true], sanitize: true)
+      "<h1>Title with </h1>\\n"
+
   """
   @spec to_html(String.t(), keyword()) :: String.t()
   def to_html(markdown, opts) when is_binary(markdown) do
     extension = Keyword.get(opts, :extension, %{})
     parse = Keyword.get(opts, :parse, %{})
     render = Keyword.get(opts, :render, %{})
+    sanitize = Keyword.get(opts, :sanitize, false)
 
     opts = %MDEx.Options{
       extension: struct(MDEx.ExtensionOptions, extension),
       parse: struct(MDEx.ParseOptions, parse),
-      render: struct(MDEx.RenderOptions, render)
+      render: struct(MDEx.RenderOptions, render),
+      sanitize: sanitize
     }
 
     Native.to_html_with_options(markdown, opts)
