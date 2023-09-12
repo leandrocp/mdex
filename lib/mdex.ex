@@ -34,7 +34,13 @@ defmodule MDEx do
   * `:extension` - https://docs.rs/comrak/latest/comrak/struct.ComrakExtensionOptions.html
   * `:parse` - https://docs.rs/comrak/latest/comrak/struct.ComrakParseOptions.html
   * `:render` - https://docs.rs/comrak/latest/comrak/struct.ComrakRenderOptions.html
+  * `:features` - see the available options below.
+
+  ### Features Options
+
   * `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
+  * `:syntax_highlighting` (default `"InspiredGithub`) - syntax highlight code fences using [syntect](https://crates.io/crates/syntect).
+  See a list of available themes at [struct.ThemeSet](https://docs.rs/syntect/latest/syntect/highlighting/struct.ThemeSet.html#method.load_defaults)
 
   ## Examples
 
@@ -50,7 +56,7 @@ defmodule MDEx do
       iex> MDEx.to_html("<marquee>visit https://https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
       "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"
 
-      iex> MDEx.to_html("# Title with <script>console.log('dangerous script')</script>", render: [unsafe_: true], sanitize: true)
+      iex> MDEx.to_html("# Title with <script>console.log('dangerous script')</script>", render: [unsafe_: true], features: [sanitize: true])
       "<h1>Title with </h1>\\n"
 
   """
@@ -59,13 +65,13 @@ defmodule MDEx do
     extension = Keyword.get(opts, :extension, %{})
     parse = Keyword.get(opts, :parse, %{})
     render = Keyword.get(opts, :render, %{})
-    sanitize = Keyword.get(opts, :sanitize, false)
+    features = Keyword.get(opts, :features, %{})
 
     opts = %MDEx.Options{
       extension: struct(MDEx.ExtensionOptions, extension),
       parse: struct(MDEx.ParseOptions, parse),
       render: struct(MDEx.RenderOptions, render),
-      sanitize: sanitize
+      features: struct(MDEx.FeaturesOptions, features)
     }
 
     Native.to_html_with_options(markdown, opts)

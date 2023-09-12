@@ -2,7 +2,8 @@
 extern crate rustler;
 
 use ammonia::clean;
-use comrak::markdown_to_html;
+use comrak::plugins::syntect::SyntectAdapter;
+use comrak::{markdown_to_html, markdown_to_html_with_plugins};
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
 
@@ -52,17 +53,27 @@ pub struct RenderOptions {
 }
 
 #[derive(Debug, NifStruct)]
+#[module = "MDEx.FeaturesOptions"]
+pub struct FeaturesOptions {
+    pub sanitize: bool,
+    pub syntax_highlighting: Option<String>,
+}
+
+#[derive(Debug, NifStruct)]
 #[module = "MDEx.Options"]
 pub struct Options {
     pub extension: ExtensionOptions,
     pub parse: ParseOptions,
     pub render: RenderOptions,
-    pub sanitize: bool,
+    pub features: FeaturesOptions,
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {
-    markdown_to_html(md, &comrak::ComrakOptions::default())
+    let syntec_adapter = SyntectAdapter::new("InspiredGitHub");
+    let mut plugins = comrak::ComrakPlugins::default();
+    plugins.render.codefence_syntax_highlighter = Some(&syntec_adapter);
+    markdown_to_html_with_plugins(md, &comrak::ComrakOptions::default(), &plugins)
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -97,14 +108,28 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
         },
     };
 
-    let unsafe_html = markdown_to_html(md, &comrak_options);
-
-    if options.sanitize {
-        let safe_html = clean(&unsafe_html);
-        to_term(env, safe_html).map_err(|err| err.into())
-    } else {
-        to_term(env, unsafe_html).map_err(|err| err.into())
+    match options.features.syntax_highlighting {
+        Some(theme) => {
+            let mut plugins = comrak::ComrakPlugins::default();
+            let syntec_adapter = SyntectAdapter::new(theme.as_str());
+            plugins.render.codefence_syntax_highlighter = Some(&syntec_adapter);
+            let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);
+            render(env, unsafe_html, options.features.sanitize)
+        }
+        None => {
+            let unsafe_html = markdown_to_html(md, &comrak_options);
+            render(env, unsafe_html, options.features.sanitize)
+        }
     }
+}
+
+fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
+    let html = match sanitize {
+        true => clean(&unsafe_html),
+        false => unsafe_html,
+    };
+
+    to_term(env, html).map_err(|err| err.into())
 }
 
 fn list_style(list_style: ListStyleType) -> comrak::ListStyleType {

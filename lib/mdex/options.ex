@@ -31,10 +31,16 @@ defmodule MDEx.RenderOptions do
             sourcepos: false
 end
 
+defmodule MDEx.FeaturesOptions do
+  @moduledoc false
+  defstruct sanitize: false,
+            syntax_highlighting: "InspiredGitHub"
+end
+
 defmodule MDEx.Options do
   @moduledoc false
   defstruct extension: %MDEx.ExtensionOptions{},
             parse: %MDEx.ParseOptions{},
             render: %MDEx.RenderOptions{},
-            sanitize: false
+            features: %MDEx.FeaturesOptions{}
 end
