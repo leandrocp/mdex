@@ -1,6 +1,11 @@
 
 # Changelog
 
+## 0.1.5-dev
+
+### Enhancements
+  * Sanitize output with https://crates.io/crates/ammonia
+
 ## 0.1.4 (2023-09-11)
 
 ### Fixes
