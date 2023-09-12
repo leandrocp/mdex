@@ -43,8 +43,8 @@ If any of the available libraries are working for you, keep using it, if not the
 
 * `earmark` [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
 * `md` is fast and extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" so it also fails to parse many documents.
-* `markdown` is not precompiled and has not received updated in a while.
-* `cmark` is fast and complies to the CommonMark spec but it requires compiling the C library and it's harder to extend (unless you're confortable with C).
+* `markdown` is not precompiled and has not received updates in a while.
+* `cmark` is a fast CommonMark parser but it requires compiling the C library and it's harder to extend (unless you're confortable with C).
 
 So given those trade-offs, mdex brings some benefits over the alternatives:
 - Fast
