@@ -10,10 +10,11 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-comrak = "0.18"
 rustler = "0.29"
 serde = "1.0"
 serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
+comrak = "0.18"
+ammonia = "3.3"
 
 [features]
 default = ["nif_version_2_15"]
