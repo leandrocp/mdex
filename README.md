@@ -36,3 +36,17 @@ mdex          16.37 K - 1.47x slower +0.0194 ms
 md             0.85 K - 28.36x slower +1.14 ms
 earmark        0.47 K - 51.47x slower +2.10 ms
 ```
+
+## Motivation
+
+If any of the available libraries are working for you, keep using it, if not then keep reading.
+
+* `earmark` [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
+* `md` is fast and extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" so it also fails to parse many documents.
+* `cmark` is fast and complies to the CommonMark spec but it requires compiling the C library and it's harder to extend (unless you're confortable with C)
+
+So given those trade-offs, mdex brings some benefits over the alternatives:
+- Fast
+- CommonMark spec
+- Binary is precompiled, no need to compile anything
+- Easier to work with since it's Rust
