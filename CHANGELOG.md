@@ -1,10 +1,10 @@
-
 # Changelog
 
-## 0.1.5-dev
+## 0.1.5
 
 ### Enhancements
   * Sanitize output with https://crates.io/crates/ammonia
+  * Syntax Highlight with https://crates.io/crates/syntect
 
 ## 0.1.4 (2023-09-11)
 
