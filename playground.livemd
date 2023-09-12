@@ -1,0 +1,34 @@
+# MDEx Playground
+
+```elixir
+Mix.install([:req, :mdex])
+```
+
+## Section
+
+```elixir
+defmodule Playground do
+  @markdown Req.get!("https://raw.githubusercontent.com/elixir-lang/elixir/main/README.md").body
+
+  def run do
+    MDEx.to_html(@markdown,
+      render: [unsafe_: true],
+      features: [sanitize: true, syntax_highlighting: "base16-mocha.dark"]
+    )
+  end
+end
+
+IO.puts(Playground.run())
+```
+
+```elixir
+MDEx.to_html(~S|
+# MDEx
+
+Some benefits you'll find:
+- Fast
+- CommonMark spec
+- Binary is precompiled, no need to compile anything
+- Easier to work with since it's Rust
+|) |> IO.puts()
+```
