@@ -34,13 +34,13 @@ defmodule MDEx do
   * `:extension` - https://docs.rs/comrak/latest/comrak/struct.ComrakExtensionOptions.html
   * `:parse` - https://docs.rs/comrak/latest/comrak/struct.ComrakParseOptions.html
   * `:render` - https://docs.rs/comrak/latest/comrak/struct.ComrakRenderOptions.html
-  * `:features` - see the available options below.
+  * `:features` - see the available options below
 
   ### Features Options
 
   * `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
-  * `:syntax_highlighting` (default `"InspiredGithub`) - syntax highlight code fences using [syntect](https://crates.io/crates/syntect).
-  See a list of available themes at [struct.ThemeSet](https://docs.rs/syntect/latest/syntect/highlighting/struct.ThemeSet.html#method.load_defaults)
+  * `:syntax_highlight_theme` (default `"Dracula"`) - syntax highlight code fences using [syntect](https://crates.io/crates/syntect).
+  See a list of available themes at [syntect-assets#supported-themes](https://github.com/ttys3/syntect-assets#supported-themes)
 
   ## Examples
 
