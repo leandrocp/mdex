@@ -14,6 +14,8 @@ rustler = "0.29"
 serde = "1.0"
 serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
 comrak = "0.18"
+syntect = "5.1"
+syntect-assets = "0.23"
 ammonia = "3.3"
 
 [features]

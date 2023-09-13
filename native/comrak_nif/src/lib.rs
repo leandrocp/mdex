@@ -1,11 +1,17 @@
 #[macro_use]
 extern crate rustler;
 
+use std::collections::BTreeMap;
+
 use ammonia::clean;
-use comrak::plugins::syntect::SyntectAdapter;
-use comrak::{markdown_to_html, markdown_to_html_with_plugins};
+use comrak::{
+    markdown_to_html, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter,
+    plugins::syntect::SyntectAdapterBuilder, ComrakOptions, ComrakPlugins,
+};
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
+use syntect::highlighting::ThemeSet;
+use syntect_assets::assets::HighlightingAssets;
 
 rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
 
@@ -56,7 +62,7 @@ pub struct RenderOptions {
 #[module = "MDEx.FeaturesOptions"]
 pub struct FeaturesOptions {
     pub sanitize: bool,
-    pub syntax_highlighting: Option<String>,
+    pub syntax_highlight_theme: Option<String>,
 }
 
 #[derive(Debug, NifStruct)]
@@ -71,14 +77,14 @@ pub struct Options {
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {
     let syntec_adapter = SyntectAdapter::new("InspiredGitHub");
-    let mut plugins = comrak::ComrakPlugins::default();
+    let mut plugins = ComrakPlugins::default();
     plugins.render.codefence_syntax_highlighter = Some(&syntec_adapter);
-    markdown_to_html_with_plugins(md, &comrak::ComrakOptions::default(), &plugins)
+    markdown_to_html_with_plugins(md, &ComrakOptions::default(), &plugins)
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResult<Term<'a>> {
-    let comrak_options = comrak::ComrakOptions {
+    let comrak_options = ComrakOptions {
         extension: comrak::ComrakExtensionOptions {
             strikethrough: options.extension.strikethrough,
             tagfilter: options.extension.tagfilter,
@@ -108,11 +114,11 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
         },
     };
 
-    match options.features.syntax_highlighting {
+    match options.features.syntax_highlight_theme {
         Some(theme) => {
-            let mut plugins = comrak::ComrakPlugins::default();
-            let syntec_adapter = SyntectAdapter::new(theme.as_str());
-            plugins.render.codefence_syntax_highlighter = Some(&syntec_adapter);
+            let mut plugins = ComrakPlugins::default();
+            let adapter = build_syntect_adapter(theme);
+            plugins.render.codefence_syntax_highlighter = Some(&adapter);
             let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);
             render(env, unsafe_html, options.features.sanitize)
         }
@@ -121,6 +127,28 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
             render(env, unsafe_html, options.features.sanitize)
         }
     }
+}
+
+fn build_syntect_adapter(theme: String) -> SyntectAdapter {
+    let assets = HighlightingAssets::from_binary();
+    let syntax_set = assets.get_syntax_set().unwrap();
+
+    let mut theme_set = ThemeSet::new();
+    let mut themes = BTreeMap::new();
+
+    for theme_name in assets.themes() {
+        let theme = assets.get_theme(theme_name);
+        themes.insert(String::from(theme_name), theme.clone());
+    }
+    theme_set.themes = themes.clone();
+
+    let builder = SyntectAdapterBuilder::new();
+
+    builder
+        .syntax_set(syntax_set.clone())
+        .theme_set(theme_set)
+        .theme(theme.as_str())
+        .build()
 }
 
 fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {

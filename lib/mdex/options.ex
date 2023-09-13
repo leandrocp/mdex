@@ -34,7 +34,7 @@ end
 defmodule MDEx.FeaturesOptions do
   @moduledoc false
   defstruct sanitize: false,
-            syntax_highlighting: "InspiredGitHub"
+            syntax_highlight_theme: "Dracula"
 end
 
 defmodule MDEx.Options do

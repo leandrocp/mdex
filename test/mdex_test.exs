@@ -19,9 +19,9 @@ defmodule MDExTest do
                {:mdex, "~> 0.1"}
                ```
                """,
-               features: [syntax_highlighting: "base16-mocha.dark"]
+               features: [syntax_highlight_theme: "Dracula"]
              ) ==
-               "<pre style=\"background-color:#3b3228;\"><code class=\"language-elixir\"><span style=\"color:#d0c8c6;\">{:mdex, &quot;~&gt; 0.1&quot;}\n</span></code></pre>\n"
+               "<pre style=\"background-color:#282a36;\"><code class=\"language-elixir\"><span style=\"color:#f8f8f2;\">{</span><span style=\"color:#bd93f9;\">:mdex</span><span style=\"color:#f8f8f2;\">, </span><span style=\"color:#f1fa8c;\">&quot;~&gt; 0.1&quot;</span><span style=\"color:#f8f8f2;\">}\n</span></code></pre>\n"
     end
 
     test "can be disabled" do
@@ -31,7 +31,7 @@ defmodule MDExTest do
                {:mdex, "~> 0.1"}
                ```
                """,
-               features: [syntax_highlighting: nil]
+               features: [syntax_highlight_theme: nil]
              ) ==
                "<pre><code class=\"language-elixir\">{:mdex, &quot;~&gt; 0.1&quot;}\n</code></pre>\n"
     end
