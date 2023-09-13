@@ -39,7 +39,7 @@ defmodule MDEx do
   ### Features Options
 
   * `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
-  * `:syntax_highlight_theme` (default `Dracula`) - syntax highlight code fences using [syntect](https://crates.io/crates/syntect).
+  * `:syntax_highlight_theme` (default `"Dracula"`) - syntax highlight code fences using [syntect](https://crates.io/crates/syntect).
   See a list of available themes at [syntect-assets#supported-themes](https://github.com/ttys3/syntect-assets#supported-themes)
 
   ## Examples
