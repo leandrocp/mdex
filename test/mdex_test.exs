@@ -19,9 +19,32 @@ defmodule MDExTest do
                {:mdex, "~> 0.1"}
                ```
                """,
-               features: [syntax_highlight_theme: "Dracula"]
+               features: [syntax_highlight_theme: "Nord"]
              ) ==
-               "<pre style=\"background-color:#282a36;\"><code class=\"language-elixir\"><span style=\"color:#f8f8f2;\">{</span><span style=\"color:#bd93f9;\">:mdex</span><span style=\"color:#f8f8f2;\">, </span><span style=\"color:#f1fa8c;\">&quot;~&gt; 0.1&quot;</span><span style=\"color:#f8f8f2;\">}\n</span></code></pre>\n"
+               "<pre style=\"background-color:#2e3440;\"><code class=\"language-elixir\"><span style=\"color:#d8dee9;\">{:mdex</span><span style=\"color:#eceff4;\">, </span><span style=\"color:#a3be8c;\">&quot;~&gt; 0.1&quot;</span><span style=\"color:#d8dee9;\">}\n</span></code></pre>\n"
+    end
+
+    test "respect space and new lines" do
+      template = ~S"""
+      ```elixir
+      {images_binary, images_type, _} = train_images
+
+      images =
+        images_binary
+        |> Nx.from_binary(images_type)
+      ```
+      """
+
+      expected = ~S"""
+      <pre style="background-color:#282a36;"><code class="language-elixir"><span style="color:#f8f8f2;">{images_binary, images_type, _} </span><span style="color:#ff79c6;">=</span><span style="color:#f8f8f2;"> train_images
+      </span><span style="color:#f8f8f2;">
+      </span><span style="color:#f8f8f2;">images </span><span style="color:#ff79c6;">=
+      </span><span style="color:#f8f8f2;">  images_binary
+      </span><span style="color:#f8f8f2;">  </span><span style="color:#ff79c6;">|&gt; </span><span style="text-decoration:underline;color:#8be9fd;">Nx</span><span style="color:#f8f8f2;">.from_binary(images_type)
+      </span></code></pre>
+      """
+
+      assert MDEx.to_html(template, features: [syntax_highlight_theme: "Dracula"]) == expected
     end
 
     test "can be disabled" do
