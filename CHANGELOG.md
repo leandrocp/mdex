@@ -1,9 +1,11 @@
 # Changelog
 
+## 0.1.7-dev
+
 ## 0.1.6
 
-### Fixes
-  * Replace https://crates.io/crates/syntect-assets with https://crates.io/crates/two-face
+### Enhancements
+  * Load extra themes and syntaxes with https://crates.io/crates/two-face
 
 ## 0.1.5
 
