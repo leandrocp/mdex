@@ -27,15 +27,14 @@ Mix.install([{:mdex, "~> 0.1"}])
 MDEx.to_html("# Hello")
 #=> "<h1>Hello</h1>\n"
 
-MDEx.to_html(~S|
+MDEx.to_html(~S"""
 # MDEx
 
 Some benefits you'll find:
 - Fast
 - CommonMark spec
 - Binary is precompiled, no need to compile anything
-- Easier to work with since it's Rust
-|) |> IO.puts()
+""") |> IO.puts()
 #=>
 #=> <h1>MDEx</h1>
 #=> <p>Some benefits you'll find:</p>
@@ -45,9 +44,8 @@ Some benefits you'll find:
 #=> <li>Binary is precompiled, no need to compile anything</li>
 #=> <li>Easier to work with since it's Rust</li>
 #=> </ul>
-```
 
-Or play with the [playground](playground.livemd) livebook.
+Or play with the [playground livebook](playground.livemd), or the [playground script](playground.exs)
 
 ## Benchmark
 
