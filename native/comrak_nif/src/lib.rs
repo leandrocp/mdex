@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate rustler;
 
-use std::collections::BTreeMap;
-
 use ammonia::clean;
 use comrak::{
     markdown_to_html, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter,
@@ -11,7 +9,6 @@ use comrak::{
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
 use syntect::highlighting::ThemeSet;
-use syntect_assets::assets::HighlightingAssets;
 
 rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
 
@@ -130,23 +127,13 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
 }
 
 fn build_syntect_adapter(theme: String) -> SyntectAdapter {
-    let assets = HighlightingAssets::from_binary();
-    let syntax_set = assets.get_syntax_set().unwrap();
+    let syntax_set = two_face::syntax::extra_newlines();
+    let theme_set = two_face::theme::extra();
+    let syntect_theme_set = ThemeSet::from(&theme_set);
 
-    let mut theme_set = ThemeSet::new();
-    let mut themes = BTreeMap::new();
-
-    for theme_name in assets.themes() {
-        let theme = assets.get_theme(theme_name);
-        themes.insert(String::from(theme_name), theme.clone());
-    }
-    theme_set.themes = themes.clone();
-
-    let builder = SyntectAdapterBuilder::new();
-
-    builder
-        .syntax_set(syntax_set.clone())
-        .theme_set(theme_set)
+    SyntectAdapterBuilder::new()
+        .syntax_set(syntax_set)
+        .theme_set(syntect_theme_set)
         .theme(theme.as_str())
         .build()
 }

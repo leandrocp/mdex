@@ -31,3 +31,5 @@ mdex-*.tar
 
 # The checksum files for precompiled NIFs
 checksum-*.exs
+
+/.elixir_ls/
