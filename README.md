@@ -44,6 +44,7 @@ Some benefits you'll find:
 #=> <li>Binary is precompiled, no need to compile anything</li>
 #=> <li>Easier to work with since it's Rust</li>
 #=> </ul>
+```
 
 Or play with the [playground livebook](playground.livemd), or the [playground script](playground.exs)
 
