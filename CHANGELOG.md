@@ -2,6 +2,9 @@
 
 ## 0.1.7-dev
 
+### Enhancements
+  * Syntax highlight code using tree-sitter and helix editor themes. Use https://github.com/leandrocp/autumn/tree/main/native/inkjet_nif under the hood.
+
 ## 0.1.6
 
 ### Enhancements
