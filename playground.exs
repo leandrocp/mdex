@@ -21,7 +21,7 @@ defmodule Playground do
     EEx.eval_string(layout, assigns: [inner_content: inner_content])
   end
 
-  @options [features: [syntax_highlight_theme: "Dracula"]]
+  @options [features: [syntax_highlight_theme: "dracula"]]
 
   @inner_content ~S"""
   # Elixir

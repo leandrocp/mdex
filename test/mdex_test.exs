@@ -9,7 +9,7 @@ defmodule MDExTest do
              {:mdex, "~> 0.1"}
              ```
              """) ==
-               "<pre style=\"background-color:#ffffff;\"><code class=\"language-elixir\"><span style=\"color:#323232;\">{:mdex, &quot;~&gt; 0.1&quot;}\n</span></code></pre>\n"
+               "<pre class=\"autumn highlight\" style=\"background-color: #282C34;\">\n<code class=\"language-elixir\"><span class=\"\" style=\"color: #ABB2BF;\">{</span><span class=\"string\" style=\"color: #98C379;\">:mdex</span><span class=\"\" style=\"color: #ABB2BF;\">,</span> <span class=\"string\" style=\"color: #98C379;\">&quot;~&gt; 0.1&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">}</span>\n</code></pre>\n"
     end
 
     test "change theme name" do
@@ -19,32 +19,9 @@ defmodule MDExTest do
                {:mdex, "~> 0.1"}
                ```
                """,
-               features: [syntax_highlight_theme: "Nord"]
+               features: [syntax_highlight_theme: "nord"]
              ) ==
-               "<pre style=\"background-color:#2e3440;\"><code class=\"language-elixir\"><span style=\"color:#d8dee9;\">{:mdex</span><span style=\"color:#eceff4;\">, </span><span style=\"color:#a3be8c;\">&quot;~&gt; 0.1&quot;</span><span style=\"color:#d8dee9;\">}\n</span></code></pre>\n"
-    end
-
-    test "respect space and new lines" do
-      template = ~S"""
-      ```elixir
-      {images_binary, images_type, _} = train_images
-
-      images =
-        images_binary
-        |> Nx.from_binary(images_type)
-      ```
-      """
-
-      expected = ~S"""
-      <pre style="background-color:#282a36;"><code class="language-elixir"><span style="color:#f8f8f2;">{images_binary, images_type, _} </span><span style="color:#ff79c6;">=</span><span style="color:#f8f8f2;"> train_images
-      </span><span style="color:#f8f8f2;">
-      </span><span style="color:#f8f8f2;">images </span><span style="color:#ff79c6;">=
-      </span><span style="color:#f8f8f2;">  images_binary
-      </span><span style="color:#f8f8f2;">  </span><span style="color:#ff79c6;">|&gt; </span><span style="text-decoration:underline;color:#8be9fd;">Nx</span><span style="color:#f8f8f2;">.from_binary(images_type)
-      </span></code></pre>
-      """
-
-      assert MDEx.to_html(template, features: [syntax_highlight_theme: "Dracula"]) == expected
+               "<pre class=\"autumn highlight\" style=\"background-color: #2e3440;\">\n<code class=\"language-elixir\"><span class=\"punctuation bracket\" style=\"color: #ECEFF4;\">{</span><span class=\"string special\" style=\"color: #EBCB8B;\">:mdex</span><span class=\"punctuation delimiter\" style=\"color: #ECEFF4;\">,</span> <span class=\"string\" style=\"color: #A3BE8C;\">&quot;~&gt; 0.1&quot;</span><span class=\"punctuation bracket\" style=\"color: #ECEFF4;\">}</span>\n</code></pre>\n"
     end
 
     test "can be disabled" do

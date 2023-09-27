@@ -46,7 +46,10 @@ Some benefits you'll find:
 #=> </ul>
 ```
 
-Or play with the [playground livebook](playground.livemd), or the [playground script](playground.exs)
+## Demo and Samples
+
+A [livebook](playground.livemd) and a [script](playground.exs) are available to demo and experiment,
+or you can check out samples at [/priv/samples](https://github.com/leandrocp/mdex/tree/main/priv/samples).
 
 ## Benchmark
 
