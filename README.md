@@ -23,10 +23,14 @@ end
 
 ```elixir
 Mix.install([{:mdex, "~> 0.1"}])
+```
 
+```elixir
 MDEx.to_html("# Hello")
 #=> "<h1>Hello</h1>\n"
+```
 
+```elixir
 MDEx.to_html(~S"""
 # MDEx
 
@@ -44,6 +48,26 @@ Some benefits you'll find:
 #=> <li>Binary is precompiled, no need to compile anything</li>
 #=> <li>Easier to work with since it's Rust</li>
 #=> </ul>
+```
+
+```elixir
+MDEx.to_html(~S"""
+# And more...
+
+* Code syntax highlight is also available:
+
+\`\`\`elixir
+String.upcase("elixir")
+\`\`\`
+""") |> IO.puts()
+#=> <h1>And more...</h1>
+#=> <ul>
+#=> <li>Code syntax highlight is also available:</li>
+#=> </ul>
+#=> <pre class="autumn highlight" style="background-color: #282C34;">
+#=> <code class="language-elixir">
+#=> <span class="namespace" style="color: #61AFEF;">String</span><span class="operator" style="color: #C678DD;">.</span><span class="function" style="color: #61AFEF;">upcase</span><span class="" style="color: #ABB2BF;">(</span><span class="string" style="color: #98C379;">&quot;elixir&quot;</span><span class="" style="color: #ABB2BF;">)</span>
+#=> </code></pre>
 ```
 
 ## Demo and Samples
