@@ -14,9 +14,55 @@ rustler = "0.29"
 serde = "1.0"
 serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
 comrak = "0.18"
-syntect = "5.1"
-two-face = "0.3"
 ammonia = "3.3"
+phf = { version = "0.11", features = ["macros"] }
+tree-sitter = "0.20"
+tree-sitter-highlight = "0.20"
+v_htmlescape = "0.15"
+inkjet = { version = "0.8.1" , default-features = false, features = [
+  "html",
+  "language-bash",
+  "language-c",
+  "language-clojure",
+  "language-c-sharp",
+  "language-commonlisp",
+  "language-cpp",
+  "language-css",
+  "language-diff",
+  "language-dockerfile",
+  "language-elisp",
+  "language-elixir",
+  "language-erlang",
+  "language-gleam",
+  "language-go",
+  "language-haskell",
+  "language-hcl",
+  "language-heex",
+  "language-html",
+  "language-java",
+  "language-javascript",
+  "language-json",
+  "language-kotlin",
+  "language-latex",
+  "language-llvm",
+  "language-lua",
+  "language-make",
+  "language-php",
+  "language-proto",
+  "language-python",
+  "language-r",
+  "language-regex",
+  "language-ruby",
+  "language-rust",
+  "language-scala",
+  "language-scss",
+  "language-sql",
+  "language-swift",
+  "language-toml",
+  "language-typescript",
+  "language-yaml",
+  "language-zig",
+] }
 
 [features]
 default = ["nif_version_2_15"]

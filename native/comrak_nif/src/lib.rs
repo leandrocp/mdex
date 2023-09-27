@@ -1,14 +1,14 @@
 #[macro_use]
 extern crate rustler;
 
+pub mod inkjet_adapter;
+pub mod themes;
+
 use ammonia::clean;
-use comrak::{
-    markdown_to_html, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter,
-    plugins::syntect::SyntectAdapterBuilder, ComrakOptions, ComrakPlugins,
-};
+use comrak::{markdown_to_html, markdown_to_html_with_plugins, ComrakOptions, ComrakPlugins};
+use inkjet_adapter::InkjetAdapter;
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
-use syntect::highlighting::ThemeSet;
 
 rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
 
@@ -73,9 +73,9 @@ pub struct Options {
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {
-    let syntec_adapter = SyntectAdapter::new("InspiredGitHub");
+    let inkjet_adapter = InkjetAdapter::new("onedark");
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&syntec_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
     markdown_to_html_with_plugins(md, &ComrakOptions::default(), &plugins)
 }
 
@@ -113,9 +113,9 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
 
     match options.features.syntax_highlight_theme {
         Some(theme) => {
+            let inkjet_adapter = InkjetAdapter::new(&theme);
             let mut plugins = ComrakPlugins::default();
-            let adapter = build_syntect_adapter(theme);
-            plugins.render.codefence_syntax_highlighter = Some(&adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
             let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);
             render(env, unsafe_html, options.features.sanitize)
         }
@@ -124,18 +124,6 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResu
             render(env, unsafe_html, options.features.sanitize)
         }
     }
-}
-
-fn build_syntect_adapter(theme: String) -> SyntectAdapter {
-    let syntax_set = two_face::syntax::extra_newlines();
-    let theme_set = two_face::theme::extra();
-    let syntect_theme_set = ThemeSet::from(&theme_set);
-
-    SyntectAdapterBuilder::new()
-        .syntax_set(syntax_set)
-        .theme_set(syntect_theme_set)
-        .theme(theme.as_str())
-        .build()
 }
 
 fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
