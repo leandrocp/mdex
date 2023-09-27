@@ -34,7 +34,7 @@ end
 defmodule MDEx.FeaturesOptions do
   @moduledoc false
   defstruct sanitize: false,
-            syntax_highlight_theme: "Dracula"
+            syntax_highlight_theme: "onedark"
 end
 
 defmodule MDEx.Options do
