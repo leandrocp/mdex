@@ -1,16 +1,21 @@
 # Changelog
 
-## 0.1.7
+## 0.1.8-dev
+
+### Enhancements
+  * Fallback to plain text on invalid language
+
+## 0.1.7 (2023-09-27)
 
 ### Enhancements
   * Syntax highlight code using tree-sitter and helix editor themes. Use https://github.com/leandrocp/autumn/tree/main/native/inkjet_nif under the hood.
 
-## 0.1.6
+## 0.1.6 (2023-09-14)
 
 ### Enhancements
   * Load extra themes and syntaxes with https://crates.io/crates/two-face
 
-## 0.1.5
+## 0.1.5 (2023-09-12)
 
 ### Enhancements
   * Sanitize output with https://crates.io/crates/ammonia
