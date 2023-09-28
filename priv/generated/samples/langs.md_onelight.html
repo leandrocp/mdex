@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MDEx Sample - langs.md</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    body {
+      background-color: #ffffff;
+    }
+    pre {
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Language Syntax Highlight Demo</h1>
+<h2>Elixir</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-elixir"><span class="keyword" style="color: #B500A9;">defmodule</span> <span class="namespace" style="color: #0061FF;">HelloModule</span> <span class="keyword" style="color: #B500A9;">do</span>
+  <span class="comment" style="font-style: italic; color: #5C6370;"># A &quot;Hello world&quot; function</span>
+  <span class="keyword" style="color: #B500A9;">def</span> <span class="function" style="color: #0061FF;">some_fun</span> <span class="keyword" style="color: #B500A9;">do</span>
+    <span class="namespace" style="color: #0061FF;">IO</span><span class="operator" style="color: #D50000;">.</span><span class="function" style="color: #0061FF;">puts</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="string" style="color: #24A443;">&quot;Hello world!&quot;</span><span class="punctuation bracket" style="color: #795548;">)</span>
+  <span class="keyword" style="color: #B500A9;">end</span>
+
+  <span class="comment" style="font-style: italic; color: #5C6370;"># This one works only with lists</span>
+  <span class="keyword" style="color: #B500A9;">def</span> <span class="function" style="color: #0061FF;">some_fun</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="" style="color: #282C34;">list</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="keyword" style="color: #B500A9;">when</span> <span class="function" style="color: #0061FF;">is_list</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="" style="color: #282C34;">list</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="keyword" style="color: #B500A9;">do</span>
+    <span class="namespace" style="color: #0061FF;">IO</span><span class="operator" style="color: #D50000;">.</span><span class="function" style="color: #0061FF;">inspect</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="" style="color: #282C34;">list</span><span class="punctuation bracket" style="color: #795548;">)</span>
+  <span class="keyword" style="color: #B500A9;">end</span>
+
+  <span class="comment" style="font-style: italic; color: #5C6370;"># A private function</span>
+  <span class="keyword" style="color: #B500A9;">defp</span> <span class="function" style="color: #0061FF;">priv</span> <span class="keyword" style="color: #B500A9;">do</span>
+    <span class="string special symbol" style="color: #C2185B;">:secret_info</span>
+  <span class="keyword" style="color: #B500A9;">end</span>
+<span class="keyword" style="color: #B500A9;">end</span>
+</code></pre>
+<h2>Ruby</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-ruby"><span class="keyword" style="color: #B500A9;">module</span> <span class="constructor" style="color: #0061FF;">Notes</span>
+  <span class="function builtin" style="color: #0086C1;">attr</span>  <span class="string special symbol" style="color: #C2185B;">:concertA</span>
+  <span class="keyword function" style="color: #B500A9;">def</span> <span class="function method" style="color: #0091EA;">tuning</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="variable parameter" style="color: #D50000;">amt</span><span class="punctuation bracket" style="color: #795548;">)</span>
+    <span class="variable other member" style="color: #C2185B;">@concertA</span> <span class="operator" style="color: #D50000;">=</span> <span class="constant numeric integer" style="color: #795548;">440.0</span> <span class="operator" style="color: #D50000;">+</span> <span class="variable parameter" style="color: #D50000;">amt</span>
+  <span class="keyword" style="color: #B500A9;">end</span>
+<span class="keyword" style="color: #B500A9;">end</span>
+
+<span class="keyword" style="color: #B500A9;">class</span> <span class="constructor" style="color: #0061FF;">Trumpet</span>
+  <span class="function builtin" style="color: #0086C1;">include</span> <span class="constructor" style="color: #0061FF;">Notes</span>
+  <span class="keyword function" style="color: #B500A9;">def</span> <span class="function method" style="color: #0091EA;">initialize</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="variable parameter" style="color: #D50000;">tune</span><span class="punctuation bracket" style="color: #795548;">)</span>
+    <span class="function method" style="color: #0091EA;">tuning</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="variable parameter" style="color: #D50000;">tune</span><span class="punctuation bracket" style="color: #795548;">)</span>
+    <span class="function method" style="color: #0091EA;">puts</span> <span class="string" style="color: #24A443;">&quot;Instance method returns <span class="punctuation special" style="color: #795548;">#{</span><span class="function method" style="color: #0091EA;">concertA</span><span class="punctuation special" style="color: #795548;">}</span>&quot;</span>
+    <span class="function method" style="color: #0091EA;">puts</span> <span class="string" style="color: #24A443;">&quot;Instance variable is <span class="punctuation special" style="color: #795548;">#{</span><span class="variable other member" style="color: #C2185B;">@concertA</span><span class="punctuation special" style="color: #795548;">}</span>&quot;</span>
+  <span class="keyword" style="color: #B500A9;">end</span>
+<span class="keyword" style="color: #B500A9;">end</span>
+
+<span class="comment" style="font-style: italic; color: #5C6370;"># The piano is a little flat, so we&#x27;ll match it</span>
+<span class="constructor" style="color: #0061FF;">Trumpet</span><span class="punctuation delimiter" style="color: #B500A9;">.</span><span class="function method" style="color: #0091EA;">new</span><span class="punctuation bracket" style="color: #795548;">(</span>-<span class="constant numeric integer" style="color: #795548;">5.3</span><span class="punctuation bracket" style="color: #795548;">)</span>
+</code></pre>
+<h2>Rust</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-rust"><span class="keyword storage type" style="color: #B500A9;">struct</span> <span class="type" style="color: #D35400;">User</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+    <span class="variable other member" style="color: #C2185B;">active</span>: <span class="type builtin" style="color: #FF6F00;">bool</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+    <span class="variable other member" style="color: #C2185B;">username</span>: <span class="type" style="color: #D35400;">String</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+    <span class="variable other member" style="color: #C2185B;">email</span>: <span class="type" style="color: #D35400;">String</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+    <span class="variable other member" style="color: #C2185B;">sign_in_count</span>: <span class="type builtin" style="color: #FF6F00;">u64</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+<span class="punctuation bracket" style="color: #795548;">}</span>
+
+<span class="keyword function" style="color: #B500A9;">fn</span> <span class="function" style="color: #0061FF;">main</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+    <span class="keyword storage" style="color: #B500A9;">let</span> <span class="" style="color: #282C34;">user1</span> <span class="operator" style="color: #D50000;">=</span> <span class="type" style="color: #D35400;">User</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+        <span class="variable other member" style="color: #C2185B;">active</span>: <span class="constant builtin boolean" style="color: #B500A9;">true</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+        <span class="variable other member" style="color: #C2185B;">username</span>: <span class="type" style="color: #D35400;">String</span><span class="punctuation delimiter" style="color: #B500A9;">::</span><span class="function" style="color: #0061FF;">from</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="string" style="color: #24A443;">&quot;someusername123&quot;</span><span class="punctuation bracket" style="color: #795548;">)</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+        <span class="variable other member" style="color: #C2185B;">email</span>: <span class="type" style="color: #D35400;">String</span><span class="punctuation delimiter" style="color: #B500A9;">::</span><span class="function" style="color: #0061FF;">from</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="string" style="color: #24A443;">&quot;someone@example.com&quot;</span><span class="punctuation bracket" style="color: #795548;">)</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+        <span class="variable other member" style="color: #C2185B;">sign_in_count</span>: <span class="constant numeric integer" style="color: #795548;">1</span><span class="punctuation delimiter" style="color: #B500A9;">,</span>
+    <span class="punctuation bracket" style="color: #795548;">}</span><span class="punctuation delimiter" style="color: #B500A9;">;</span>
+<span class="punctuation bracket" style="color: #795548;">}</span>
+</code></pre>
+<h2>Swift</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-swift"><span class="keyword control import" style="color: #D50000;">import</span> <span class="" style="color: #282C34;">SwiftUI</span>
+
+<span class="" style="color: #282C34;">@<span class="type" style="color: #D35400;">main</span></span>
+<span class="keyword" style="color: #B500A9;">struct</span> <span class="type" style="color: #D35400;">DatePlannerApp</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="type" style="color: #D35400;">App</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+    <span class="" style="color: #282C34;">@<span class="type" style="color: #D35400;">StateObject</span></span> <span class="keyword" style="color: #B500A9;">private</span> <span class="keyword" style="color: #B500A9;">var</span> <span class="" style="color: #282C34;"><span class="variable other member" style="color: #C2185B;">eventData</span></span> <span class="operator" style="color: #D50000;">=</span> <span class="function" style="color: #0061FF;">EventData</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation bracket" style="color: #795548;">)</span>
+
+    <span class="keyword" style="color: #B500A9;">var</span> <span class="" style="color: #282C34;"><span class="variable other member" style="color: #C2185B;">body</span></span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="keyword" style="color: #B500A9;">some</span> <span class="type" style="color: #D35400;">Scene</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+        <span class="function" style="color: #0061FF;">WindowGroup</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+            <span class="function" style="color: #0061FF;">NavigationView</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+                <span class="function" style="color: #0061FF;">EventList</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation bracket" style="color: #795548;">)</span>
+                <span class="function" style="color: #0061FF;">Text</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="string" style="color: #24A443;">&quot;</span><span class="string" style="color: #24A443;">Select an Event</span><span class="string" style="color: #24A443;">&quot;</span><span class="punctuation bracket" style="color: #795548;">)</span>
+                    <span class="punctuation delimiter" style="color: #B500A9;">.</span><span class="function" style="color: #0061FF;">foregroundStyle</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation delimiter" style="color: #B500A9;">.</span><span class="" style="color: #282C34;">secondary</span><span class="punctuation bracket" style="color: #795548;">)</span>
+            <span class="punctuation bracket" style="color: #795548;">}</span>
+            <span class="punctuation delimiter" style="color: #B500A9;">.</span><span class="function" style="color: #0061FF;">environmentObject</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="" style="color: #282C34;">eventData</span><span class="punctuation bracket" style="color: #795548;">)</span>
+        <span class="punctuation bracket" style="color: #795548;">}</span>
+    <span class="punctuation bracket" style="color: #795548;">}</span>
+<span class="punctuation bracket" style="color: #795548;">}</span>
+</code></pre>
+<h2>Python</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-python"><span class="keyword control" style="color: #B500A9;">from</span> <span class="namespace" style="color: #0061FF;">abc</span> <span class="keyword control import" style="color: #D50000;">import</span> <span class="namespace" style="color: #0061FF;">ABC</span>
+
+<span class="keyword" style="color: #B500A9;">class</span> <span class="type" style="color: #D35400;">MyABC</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="type" style="color: #D35400;">ABC</span><span class="punctuation bracket" style="color: #795548;">)</span><span class="punctuation delimiter" style="color: #B500A9;">:</span>
+    <span class="keyword control" style="color: #B500A9;">pass</span>
+
+<span class="type" style="color: #D35400;">MyABC</span><span class="punctuation delimiter" style="color: #B500A9;">.</span><span class="function method" style="color: #0091EA;">register</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="type builtin" style="color: #FF6F00;">tuple</span><span class="punctuation bracket" style="color: #795548;">)</span>
+
+<span class="keyword control" style="color: #B500A9;">assert</span> <span class="function builtin" style="color: #0086C1;">issubclass</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="type builtin" style="color: #FF6F00;">tuple</span><span class="punctuation delimiter" style="color: #B500A9;">,</span> <span class="type" style="color: #D35400;">MyABC</span><span class="punctuation bracket" style="color: #795548;">)</span>
+<span class="keyword control" style="color: #B500A9;">assert</span> <span class="function builtin" style="color: #0086C1;">isinstance</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation bracket" style="color: #795548;">(</span><span class="punctuation bracket" style="color: #795548;">)</span><span class="punctuation delimiter" style="color: #B500A9;">,</span> <span class="type" style="color: #D35400;">MyABC</span><span class="punctuation bracket" style="color: #795548;">)</span>
+</code></pre>
+<h2>CSS</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-css"><span class="comment" style="font-style: italic; color: #5C6370;">&#x2f;* At the top level of your code *&#x2f;</span>
+<span class="keyword" style="color: #B500A9;">@media</span> screen <span class="keyword operator" style="color: #D50000;">and</span> <span class="punctuation bracket" style="color: #795548;">(</span><span class="variable other member" style="color: #C2185B;">min-width</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="constant numeric integer" style="color: #795548;">900px</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+  <span class="tag" style="color: #0086C1;">article</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+    <span class="variable other member" style="color: #C2185B;">padding</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="constant numeric integer" style="color: #795548;">1rem</span> <span class="constant numeric integer" style="color: #795548;">3rem</span><span class="punctuation delimiter" style="color: #B500A9;">;</span>
+  <span class="punctuation bracket" style="color: #795548;">}</span>
+<span class="punctuation bracket" style="color: #795548;">}</span>
+
+<span class="comment" style="font-style: italic; color: #5C6370;">&#x2f;* Nested within another conditional at-rule *&#x2f;</span>
+<span class="keyword" style="color: #B500A9;">@supports</span> <span class="punctuation bracket" style="color: #795548;">(</span><span class="variable other member" style="color: #C2185B;">display</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="constant" style="font-weight: bold; color: #0086C1;">flex</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+  <span class="keyword" style="color: #B500A9;">@media</span> screen <span class="keyword operator" style="color: #D50000;">and</span> <span class="punctuation bracket" style="color: #795548;">(</span><span class="variable other member" style="color: #C2185B;">min-width</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="constant numeric integer" style="color: #795548;">900px</span><span class="punctuation bracket" style="color: #795548;">)</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+    <span class="tag" style="color: #0086C1;">article</span> <span class="punctuation bracket" style="color: #795548;">{</span>
+      <span class="variable other member" style="color: #C2185B;">display</span><span class="punctuation delimiter" style="color: #B500A9;">:</span> <span class="constant" style="font-weight: bold; color: #0086C1;">flex</span><span class="punctuation delimiter" style="color: #B500A9;">;</span>
+    <span class="punctuation bracket" style="color: #795548;">}</span>
+  <span class="punctuation bracket" style="color: #795548;">}</span>
+<span class="punctuation bracket" style="color: #795548;">}</span>
+</code></pre>
+<h2>JavaScript (WIP)</h2>
+<pre class="autumn highlight" style="background-color: #FAFAFA; color: #282C34;">
+<code class="language-js">const bigDay = new Date(2019, 6, 19);
+console.log(bigDay.toLocaleDateString());
+if (bigDay.getTime() &lt; Date.now()) {
+  console.log(&quot;Once upon a time...&quot;);
+}
+</code></pre>
+
+</body>
+</html>
