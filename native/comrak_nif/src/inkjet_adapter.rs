@@ -1,7 +1,6 @@
 use crate::themes;
 use crate::themes::Theme;
 use comrak::adapters::SyntaxHighlighterAdapter;
-use comrak::html;
 use inkjet::Language;
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -21,23 +20,13 @@ impl<'a> InkjetAdapter<'a> {
 
         Self { theme }
     }
-}
 
-impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
     fn write_highlighted(
         &self,
         output: &mut dyn Write,
-        lang: Option<&str>,
+        lang: Language,
         code: &str,
     ) -> io::Result<()> {
-        let lang = lang.unwrap_or("");
-
-        let lang = match Language::from_token(lang) {
-            Some(language) => language,
-            // TODO: default language? plain text?
-            None => panic!("lang not found"),
-        };
-
         let mut highlighter = Highlighter::new();
         let config = lang.config();
 
@@ -66,16 +55,66 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         Ok(())
     }
 
+    fn write_plain_highlighted(
+        &self,
+        output: &mut dyn Write,
+        lang: Language,
+        code: &str,
+    ) -> io::Result<()> {
+        let mut highlighter = Highlighter::new();
+        let config = lang.config();
+
+        let highlights = highlighter
+            .highlight(config, code.as_bytes(), None, |_| None)
+            .unwrap();
+
+        for event in highlights {
+            match event.unwrap() {
+                HighlightEvent::Source { start, end } => {
+                    let span = code
+                        .get(start..end)
+                        .expect("Source bounds should be in bounds!");
+                    let span = v_htmlescape::escape(span).to_string();
+                    write!(output, "{}", span)?
+                }
+                HighlightEvent::HighlightStart(_idx) => write!(output, "<span>")?,
+                HighlightEvent::HighlightEnd => write!(output, "</span>")?,
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
+    fn write_highlighted(
+        &self,
+        output: &mut dyn Write,
+        lang: Option<&str>,
+        code: &str,
+    ) -> io::Result<()> {
+        let lang = lang.unwrap_or("plain");
+
+        match Language::from_token(lang) {
+            Some(lang_config) => self.write_highlighted(output, lang_config, code)?,
+            None => self.write_plain_highlighted(output, Language::Diff, code)?,
+        };
+
+        Ok(())
+    }
+
     fn write_pre_tag(
         &self,
         output: &mut dyn Write,
         _attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        let (_class, style) = self.theme.get_scope("background");
+        let (_class, background_style) = self.theme.get_scope("background");
+        let (_class, text_style) = self.theme.get_scope("text");
+
         writeln!(
             output,
-            "<pre class=\"autumn highlight\" style=\"{}\">",
-            style
+            "<pre class=\"autumn highlight\" style=\"{} {}\">",
+            background_style, text_style
         )
     }
 
@@ -84,6 +123,10 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         output: &mut dyn Write,
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        html::write_opening_tag(output, "code", attributes)
+        if attributes.contains_key("class") {
+            writeln!(output, "<code class=\"{}\">", attributes["class"])
+        } else {
+            writeln!(output, "<code>")
+        }
     }
 }
