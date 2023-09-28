@@ -46,6 +46,8 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     for {filename, url} <- @files do
       generate(filename, url)
     end
+
+    langs()
   end
 
   defp generate(filename, url) do
@@ -58,10 +60,49 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
         assigns: %{filename: filename, inner_content: md}
       )
 
-    dest_path =
-      Path.join([:code.priv_dir(:mdex), "generated", "samples", "#{filename}.html"])
-
+    dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "#{filename}.html"])
     File.write!(dest_path, html)
+  end
+
+  defp langs do
+    path = "langs.md"
+
+    for theme <- [
+          "onedark",
+          "dracula",
+          "catppuccin_macchiato",
+          "github_light",
+          "github_dark",
+          "autumn",
+          "base16_default_dark",
+          "emacs",
+          "nord",
+          "nord_light",
+          "onelight",
+          "solarized_dark",
+          "solarized_light",
+          "sonokai",
+          "spacebones_light"
+        ] do
+      Mix.shell().info("#{path} - #{theme}")
+
+      md =
+        [:code.priv_dir(:mdex), "generated", "samples", path]
+        |> Path.join()
+        |> File.read!()
+
+      md = MDEx.to_html(md, features: [syntax_highlight_theme: theme])
+
+      html =
+        EEx.eval_string(@layout,
+          assigns: %{filename: path, inner_content: md}
+        )
+
+      dest_path =
+        Path.join([:code.priv_dir(:mdex), "generated", "samples", "#{path}_#{theme}.html"])
+
+      File.write!(dest_path, html)
+    end
   end
 
   defp download_source(url) do

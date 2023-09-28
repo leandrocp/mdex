@@ -124,9 +124,9 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
         if attributes.contains_key("class") {
-            writeln!(output, "<code class=\"{}\">", attributes["class"])
+            write!(output, "<code class=\"{}\">", attributes["class"])
         } else {
-            writeln!(output, "<code>")
+            write!(output, "<code>")
         }
     }
 }

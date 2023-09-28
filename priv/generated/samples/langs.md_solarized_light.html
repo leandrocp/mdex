@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MDEx Sample - langs.md</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    body {
+      background-color: #ffffff;
+    }
+    pre {
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Language Syntax Highlight Demo</h1>
+<h2>Elixir</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-elixir"><span class="keyword" style="color: #859900;">defmodule</span> <span class="namespace" style="color: #6c71c4;">HelloModule</span> <span class="keyword" style="color: #859900;">do</span>
+  <span class="comment" style="color: #93a1a1;"># A &quot;Hello world&quot; function</span>
+  <span class="keyword" style="color: #859900;">def</span> <span class="function" style="color: #268bd2;">some_fun</span> <span class="keyword" style="color: #859900;">do</span>
+    <span class="namespace" style="color: #6c71c4;">IO</span><span class="operator" style="color: #859900;">.</span><span class="function" style="color: #268bd2;">puts</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;Hello world!&quot;</span><span class="" style="color: #586e75;">)</span>
+  <span class="keyword" style="color: #859900;">end</span>
+
+  <span class="comment" style="color: #93a1a1;"># This one works only with lists</span>
+  <span class="keyword" style="color: #859900;">def</span> <span class="function" style="color: #268bd2;">some_fun</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">list</span><span class="" style="color: #586e75;">)</span> <span class="keyword" style="color: #859900;">when</span> <span class="function" style="color: #268bd2;">is_list</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">list</span><span class="" style="color: #586e75;">)</span> <span class="keyword" style="color: #859900;">do</span>
+    <span class="namespace" style="color: #6c71c4;">IO</span><span class="operator" style="color: #859900;">.</span><span class="function" style="color: #268bd2;">inspect</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">list</span><span class="" style="color: #586e75;">)</span>
+  <span class="keyword" style="color: #859900;">end</span>
+
+  <span class="comment" style="color: #93a1a1;"># A private function</span>
+  <span class="keyword" style="color: #859900;">defp</span> <span class="function" style="color: #268bd2;">priv</span> <span class="keyword" style="color: #859900;">do</span>
+    <span class="string" style="color: #2aa198;">:secret_info</span>
+  <span class="keyword" style="color: #859900;">end</span>
+<span class="keyword" style="color: #859900;">end</span>
+</code></pre>
+<h2>Ruby</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-ruby"><span class="keyword" style="color: #859900;">module</span> <span class="constructor" style="color: #268bd2;">Notes</span>
+  <span class="function builtin" style="font-weight: bold; color: #268bd2;">attr</span>  <span class="string" style="color: #2aa198;">:concertA</span>
+  <span class="keyword" style="color: #859900;">def</span> <span class="function" style="color: #268bd2;">tuning</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">amt</span><span class="" style="color: #586e75;">)</span>
+    <span class="" style="color: #586e75;">@concertA</span> <span class="operator" style="color: #859900;">=</span> <span class="constant" style="color: #2aa198;">440.0</span> <span class="operator" style="color: #859900;">+</span> <span class="" style="color: #586e75;">amt</span>
+  <span class="keyword" style="color: #859900;">end</span>
+<span class="keyword" style="color: #859900;">end</span>
+
+<span class="keyword" style="color: #859900;">class</span> <span class="constructor" style="color: #268bd2;">Trumpet</span>
+  <span class="function builtin" style="font-weight: bold; color: #268bd2;">include</span> <span class="constructor" style="color: #268bd2;">Notes</span>
+  <span class="keyword" style="color: #859900;">def</span> <span class="function" style="color: #268bd2;">initialize</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">tune</span><span class="" style="color: #586e75;">)</span>
+    <span class="function" style="color: #268bd2;">tuning</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">tune</span><span class="" style="color: #586e75;">)</span>
+    <span class="function" style="color: #268bd2;">puts</span> <span class="string" style="color: #2aa198;">&quot;Instance method returns <span class="" style="color: #586e75;">#{</span><span class="function" style="color: #268bd2;">concertA</span><span class="" style="color: #586e75;">}</span>&quot;</span>
+    <span class="function" style="color: #268bd2;">puts</span> <span class="string" style="color: #2aa198;">&quot;Instance variable is <span class="" style="color: #586e75;">#{</span><span class="" style="color: #586e75;">@concertA</span><span class="" style="color: #586e75;">}</span>&quot;</span>
+  <span class="keyword" style="color: #859900;">end</span>
+<span class="keyword" style="color: #859900;">end</span>
+
+<span class="comment" style="color: #93a1a1;"># The piano is a little flat, so we&#x27;ll match it</span>
+<span class="constructor" style="color: #268bd2;">Trumpet</span><span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">new</span><span class="" style="color: #586e75;">(</span>-<span class="constant" style="color: #2aa198;">5.3</span><span class="" style="color: #586e75;">)</span>
+</code></pre>
+<h2>Rust</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-rust"><span class="keyword" style="color: #859900;">struct</span> <span class="type" style="color: #b58900;">User</span> <span class="" style="color: #586e75;">{</span>
+    <span class="" style="color: #586e75;">active</span>: <span class="type builtin" style="font-weight: bold; color: #b58900;">bool</span><span class="" style="color: #586e75;">,</span>
+    <span class="" style="color: #586e75;">username</span>: <span class="type" style="color: #b58900;">String</span><span class="" style="color: #586e75;">,</span>
+    <span class="" style="color: #586e75;">email</span>: <span class="type" style="color: #b58900;">String</span><span class="" style="color: #586e75;">,</span>
+    <span class="" style="color: #586e75;">sign_in_count</span>: <span class="type builtin" style="font-weight: bold; color: #b58900;">u64</span><span class="" style="color: #586e75;">,</span>
+<span class="" style="color: #586e75;">}</span>
+
+<span class="keyword" style="color: #859900;">fn</span> <span class="function" style="color: #268bd2;">main</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span> <span class="" style="color: #586e75;">{</span>
+    <span class="keyword" style="color: #859900;">let</span> <span class="" style="color: #586e75;">user1</span> <span class="operator" style="color: #859900;">=</span> <span class="type" style="color: #b58900;">User</span> <span class="" style="color: #586e75;">{</span>
+        <span class="" style="color: #586e75;">active</span>: <span class="constant builtin" style="font-weight: bold; color: #2aa198;">true</span><span class="" style="color: #586e75;">,</span>
+        <span class="" style="color: #586e75;">username</span>: <span class="type" style="color: #b58900;">String</span><span class="" style="color: #586e75;">::</span><span class="function" style="color: #268bd2;">from</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;someusername123&quot;</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span>
+        <span class="" style="color: #586e75;">email</span>: <span class="type" style="color: #b58900;">String</span><span class="" style="color: #586e75;">::</span><span class="function" style="color: #268bd2;">from</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;someone@example.com&quot;</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span>
+        <span class="" style="color: #586e75;">sign_in_count</span>: <span class="constant" style="color: #2aa198;">1</span><span class="" style="color: #586e75;">,</span>
+    <span class="" style="color: #586e75;">}</span><span class="" style="color: #586e75;">;</span>
+<span class="" style="color: #586e75;">}</span>
+</code></pre>
+<h2>Swift</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-swift"><span class="keyword" style="color: #859900;">import</span> <span class="" style="color: #586e75;">SwiftUI</span>
+
+<span class="" style="color: #586e75;">@<span class="type" style="color: #b58900;">main</span></span>
+<span class="keyword" style="color: #859900;">struct</span> <span class="type" style="color: #b58900;">DatePlannerApp</span><span class="" style="color: #586e75;">:</span> <span class="type" style="color: #b58900;">App</span> <span class="" style="color: #586e75;">{</span>
+    <span class="" style="color: #586e75;">@<span class="type" style="color: #b58900;">StateObject</span></span> <span class="keyword" style="color: #859900;">private</span> <span class="keyword" style="color: #859900;">var</span> <span class="" style="color: #586e75;"><span class="" style="color: #586e75;">eventData</span></span> <span class="operator" style="color: #859900;">=</span> <span class="function" style="color: #268bd2;">EventData</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span>
+
+    <span class="keyword" style="color: #859900;">var</span> <span class="" style="color: #586e75;"><span class="" style="color: #586e75;">body</span></span><span class="" style="color: #586e75;">:</span> <span class="keyword" style="color: #859900;">some</span> <span class="type" style="color: #b58900;">Scene</span> <span class="" style="color: #586e75;">{</span>
+        <span class="function" style="color: #268bd2;">WindowGroup</span> <span class="" style="color: #586e75;">{</span>
+            <span class="function" style="color: #268bd2;">NavigationView</span> <span class="" style="color: #586e75;">{</span>
+                <span class="function" style="color: #268bd2;">EventList</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span>
+                <span class="function" style="color: #268bd2;">Text</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;</span><span class="string" style="color: #2aa198;">Select an Event</span><span class="string" style="color: #2aa198;">&quot;</span><span class="" style="color: #586e75;">)</span>
+                    <span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">foregroundStyle</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">.</span><span class="" style="color: #586e75;">secondary</span><span class="" style="color: #586e75;">)</span>
+            <span class="" style="color: #586e75;">}</span>
+            <span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">environmentObject</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">eventData</span><span class="" style="color: #586e75;">)</span>
+        <span class="" style="color: #586e75;">}</span>
+    <span class="" style="color: #586e75;">}</span>
+<span class="" style="color: #586e75;">}</span>
+</code></pre>
+<h2>Python</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-python"><span class="keyword" style="color: #859900;">from</span> <span class="namespace" style="color: #6c71c4;">abc</span> <span class="keyword" style="color: #859900;">import</span> <span class="namespace" style="color: #6c71c4;">ABC</span>
+
+<span class="keyword" style="color: #859900;">class</span> <span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">(</span><span class="type" style="color: #b58900;">ABC</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">:</span>
+    <span class="keyword" style="color: #859900;">pass</span>
+
+<span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">register</span><span class="" style="color: #586e75;">(</span><span class="type builtin" style="font-weight: bold; color: #b58900;">tuple</span><span class="" style="color: #586e75;">)</span>
+
+<span class="keyword" style="color: #859900;">assert</span> <span class="function builtin" style="font-weight: bold; color: #268bd2;">issubclass</span><span class="" style="color: #586e75;">(</span><span class="type builtin" style="font-weight: bold; color: #b58900;">tuple</span><span class="" style="color: #586e75;">,</span> <span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">)</span>
+<span class="keyword" style="color: #859900;">assert</span> <span class="function builtin" style="font-weight: bold; color: #268bd2;">isinstance</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span> <span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">)</span>
+</code></pre>
+<h2>CSS</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-css"><span class="comment" style="color: #93a1a1;">&#x2f;* At the top level of your code *&#x2f;</span>
+<span class="keyword" style="color: #859900;">@media</span> screen <span class="keyword" style="color: #859900;">and</span> <span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">min-width</span><span class="" style="color: #586e75;">:</span> <span class="constant" style="color: #2aa198;">900px</span><span class="" style="color: #586e75;">)</span> <span class="" style="color: #586e75;">{</span>
+  <span class="tag" style="color: #d33682;">article</span> <span class="" style="color: #586e75;">{</span>
+    <span class="" style="color: #586e75;">padding</span><span class="" style="color: #586e75;">:</span> <span class="constant" style="color: #2aa198;">1rem</span> <span class="constant" style="color: #2aa198;">3rem</span><span class="" style="color: #586e75;">;</span>
+  <span class="" style="color: #586e75;">}</span>
+<span class="" style="color: #586e75;">}</span>
+
+<span class="comment" style="color: #93a1a1;">&#x2f;* Nested within another conditional at-rule *&#x2f;</span>
+<span class="keyword" style="color: #859900;">@supports</span> <span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">display</span><span class="" style="color: #586e75;">:</span> <span class="constant" style="color: #2aa198;">flex</span><span class="" style="color: #586e75;">)</span> <span class="" style="color: #586e75;">{</span>
+  <span class="keyword" style="color: #859900;">@media</span> screen <span class="keyword" style="color: #859900;">and</span> <span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">min-width</span><span class="" style="color: #586e75;">:</span> <span class="constant" style="color: #2aa198;">900px</span><span class="" style="color: #586e75;">)</span> <span class="" style="color: #586e75;">{</span>
+    <span class="tag" style="color: #d33682;">article</span> <span class="" style="color: #586e75;">{</span>
+      <span class="" style="color: #586e75;">display</span><span class="" style="color: #586e75;">:</span> <span class="constant" style="color: #2aa198;">flex</span><span class="" style="color: #586e75;">;</span>
+    <span class="" style="color: #586e75;">}</span>
+  <span class="" style="color: #586e75;">}</span>
+<span class="" style="color: #586e75;">}</span>
+</code></pre>
+<h2>JavaScript (WIP)</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-js">const bigDay = new Date(2019, 6, 19);
+console.log(bigDay.toLocaleDateString());
+if (bigDay.getTime() &lt; Date.now()) {
+  console.log(&quot;Once upon a time...&quot;);
+}
+</code></pre>
+
+</body>
+</html>
