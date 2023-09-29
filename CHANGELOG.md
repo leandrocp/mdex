@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.9-dev
+## 0.1.9
 
 ### Enhancements
   * Add logo
