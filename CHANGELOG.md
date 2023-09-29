@@ -1,9 +1,13 @@
 # Changelog
 
-## 0.1.8-dev
+## 0.1.9-dev
+
+## 0.1.8 (2023-09-29)
 
 ### Enhancements
   * Fallback to plain text on invalid language
+  * Syntax highlight injections
+  * Add samples
 
 ## 0.1.7 (2023-09-27)
 
