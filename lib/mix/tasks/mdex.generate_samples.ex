@@ -29,7 +29,9 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     </style>
   </head>
   <body>
-    <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+    <%= if @index do %>
+      <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+    <% end %>
     <%= @inner_content %>
   </body>
   </html>
@@ -75,9 +77,9 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     links =
       (src_path <> "/*.html")
       |> Path.wildcard()
+      |> Enum.map(&Path.basename/1)
       |> Enum.reject(&(&1 == "index.html"))
-      |> Enum.map(fn file ->
-        sample = Path.basename(file)
+      |> Enum.map(fn sample ->
         ["<p><a href=", ?", sample, ?", ">", sample, "</a></p>", "\n"]
       end)
 
@@ -89,7 +91,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
 
     html =
       EEx.eval_string(@layout,
-        assigns: %{inner_content: inner_content}
+        assigns: %{inner_content: inner_content, index: true}
       )
 
     dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "index.html"])

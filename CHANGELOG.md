@@ -4,6 +4,7 @@
 
 ### Enhancements
   * Add logo
+  * Add icon
 
 ## 0.1.8 (2023-09-29)
 
