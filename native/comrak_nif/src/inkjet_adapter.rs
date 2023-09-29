@@ -31,7 +31,15 @@ impl<'a> InkjetAdapter<'a> {
         let config = lang.config();
 
         let highlights = highlighter
-            .highlight(config, code.as_bytes(), None, |_| None)
+            .highlight(
+                config,
+                code.as_bytes(),
+                None,
+                |token| match Language::from_token(token) {
+                    Some(lang) => Some(lang.config()),
+                    None => None,
+                },
+            )
             .unwrap();
 
         for event in highlights {
