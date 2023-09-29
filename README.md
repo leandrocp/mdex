@@ -2,6 +2,8 @@
 
 A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir.
 
+See some samples at https://mdex-c31.pages.dev
+
 Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
 
 [![Documentation](http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat)](https://hexdocs.pm/mdex)
@@ -73,7 +75,7 @@ String.upcase("elixir")
 ## Demo and Samples
 
 A [livebook](playground.livemd) and a [script](playground.exs) are available to demo and experiment,
-or you can check out samples at [/priv/generated/samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples).
+or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
 
 ## Benchmark
 
