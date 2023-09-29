@@ -145,7 +145,22 @@
 </code></pre>
 <h2>SQL</h2>
 <pre class="autumn highlight" style="background-color: #2e3440; color: #D8DEE9;">
-<code class="language-sql"><span class="keyword" style="color: #81A1C1;">SELECT</span> a<span class="punctuation delimiter" style="color: #ECEFF4;">,</span> <span class="function" style="color: #88C0D0;">max</span><span class="punctuation bracket" style="color: #ECEFF4;">(</span>b<span class="punctuation bracket" style="color: #ECEFF4;">)</span> <span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">table1</span> <span class="keyword" style="color: #81A1C1;">GROUP</span> <span class="keyword operator" style="color: #81A1C1;">BY</span> a <span class="keyword" style="color: #81A1C1;">ORDER</span> <span class="keyword operator" style="color: #81A1C1;">BY</span> <span class="string" style="color: #A3BE8C;">1</span><span class="punctuation delimiter" style="color: #ECEFF4;">;</span>
+<code class="language-sql"><span class="keyword" style="color: #81A1C1;">WITH</span> regional_sales <span class="keyword" style="color: #81A1C1;">AS</span> <span class="punctuation bracket" style="color: #ECEFF4;">(</span>
+    <span class="keyword" style="color: #81A1C1;">SELECT</span> region<span class="punctuation delimiter" style="color: #ECEFF4;">,</span> <span class="function" style="color: #88C0D0;">SUM</span><span class="punctuation bracket" style="color: #ECEFF4;">(</span>amount<span class="punctuation bracket" style="color: #ECEFF4;">)</span> <span class="keyword" style="color: #81A1C1;">AS</span> <span class="variable" style="color: #D8DEE9;">total_sales</span>
+    <span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">orders</span>
+    <span class="keyword" style="color: #81A1C1;">GROUP</span> <span class="keyword operator" style="color: #81A1C1;">BY</span> region
+<span class="punctuation bracket" style="color: #ECEFF4;">)</span><span class="punctuation delimiter" style="color: #ECEFF4;">,</span> top_regions <span class="keyword" style="color: #81A1C1;">AS</span> <span class="punctuation bracket" style="color: #ECEFF4;">(</span>
+    <span class="keyword" style="color: #81A1C1;">SELECT</span> region
+    <span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">regional_sales</span>
+    <span class="keyword" style="color: #81A1C1;">WHERE</span> total_sales <span class="operator" style="color: #81A1C1;">&gt;</span> <span class="punctuation bracket" style="color: #ECEFF4;">(</span><span class="keyword" style="color: #81A1C1;">SELECT</span> <span class="function" style="color: #88C0D0;">SUM</span><span class="punctuation bracket" style="color: #ECEFF4;">(</span>total_sales<span class="punctuation bracket" style="color: #ECEFF4;">)</span><span class="operator" style="color: #81A1C1;">&#x2f;</span><span class="string" style="color: #A3BE8C;">10</span> <span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">regional_sales</span><span class="punctuation bracket" style="color: #ECEFF4;">)</span>
+<span class="punctuation bracket" style="color: #ECEFF4;">)</span>
+<span class="keyword" style="color: #81A1C1;">SELECT</span> region<span class="punctuation delimiter" style="color: #ECEFF4;">,</span>
+       product<span class="punctuation delimiter" style="color: #ECEFF4;">,</span>
+       <span class="function" style="color: #88C0D0;">SUM</span><span class="punctuation bracket" style="color: #ECEFF4;">(</span>quantity<span class="punctuation bracket" style="color: #ECEFF4;">)</span> <span class="keyword" style="color: #81A1C1;">AS</span> <span class="variable" style="color: #D8DEE9;">product_units</span><span class="punctuation delimiter" style="color: #ECEFF4;">,</span>
+       <span class="function" style="color: #88C0D0;">SUM</span><span class="punctuation bracket" style="color: #ECEFF4;">(</span>amount<span class="punctuation bracket" style="color: #ECEFF4;">)</span> <span class="keyword" style="color: #81A1C1;">AS</span> <span class="variable" style="color: #D8DEE9;">product_sales</span>
+<span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">orders</span>
+<span class="keyword" style="color: #81A1C1;">WHERE</span> region <span class="keyword operator" style="color: #81A1C1;">IN</span> <span class="punctuation bracket" style="color: #ECEFF4;">(</span><span class="keyword" style="color: #81A1C1;">SELECT</span> region <span class="keyword" style="color: #81A1C1;">FROM</span> <span class="type" style="color: #D8DEE9;">top_regions</span><span class="punctuation bracket" style="color: #ECEFF4;">)</span>
+<span class="keyword" style="color: #81A1C1;">GROUP</span> <span class="keyword operator" style="color: #81A1C1;">BY</span> region<span class="punctuation delimiter" style="color: #ECEFF4;">,</span> product<span class="punctuation delimiter" style="color: #ECEFF4;">;</span>
 </code></pre>
 <h2>HEEx</h2>
 <pre class="autumn highlight" style="background-color: #2e3440; color: #D8DEE9;">
@@ -183,7 +198,7 @@ if (bigDay.getTime() &lt; Date.now()) {
   console.log(&quot;Once upon a time...&quot;);
 }
 </code></pre>
-<h2>TypeScript</h2>
+<h2>TypeScript (WIP)</h2>
 <pre class="autumn highlight" style="background-color: #2e3440; color: #D8DEE9;">
 <code class="language-typescript"><span class="keyword storage type" style="color: #8FBCBB;">type</span> <span class="type" style="color: #D8DEE9;">DescribableFunction</span> = {
   description<span class="punctuation delimiter" style="color: #ECEFF4;">:</span> <span class="type builtin" style="color: #8FBCBB;">string</span>;
@@ -199,19 +214,16 @@ function myFunc(<span class="variable parameter" style="color: #88C0D0;">someArg
 myFunc.description = &quot;default description&quot;;
  
 doSomething(myFunc);
-```
-
-## JSON
-
-```json
-{
-  &quot;full_name&quot;<span class="punctuation delimiter" style="color: #ECEFF4;">:</span> &quot;John Doe&quot;,
-  &quot;age&quot;<span class="punctuation delimiter" style="color: #ECEFF4;">:</span> 30,
-  &quot;address&quot;<span class="punctuation delimiter" style="color: #ECEFF4;">:</span> {
-    &quot;country&quot;<span class="punctuation delimiter" style="color: #ECEFF4;">:</span> &quot;US&quot;
-  }
-}
-```
+</code></pre>
+<h2>JSON</h2>
+<pre class="autumn highlight" style="background-color: #2e3440; color: #D8DEE9;">
+<code class="language-json"><span class="punctuation bracket" style="color: #ECEFF4;">{</span>
+  <span class="keyword" style="color: #81A1C1;">&quot;full_name&quot;</span>: <span class="string" style="color: #A3BE8C;">&quot;John Doe&quot;</span><span class="punctuation delimiter" style="color: #ECEFF4;">,</span>
+  <span class="keyword" style="color: #81A1C1;">&quot;age&quot;</span>: <span class="constant numeric" style="color: #B48EAD;">30</span><span class="punctuation delimiter" style="color: #ECEFF4;">,</span>
+  <span class="keyword" style="color: #81A1C1;">&quot;address&quot;</span>: <span class="punctuation bracket" style="color: #ECEFF4;">{</span>
+    <span class="keyword" style="color: #81A1C1;">&quot;country&quot;</span>: <span class="string" style="color: #A3BE8C;">&quot;US&quot;</span>
+  <span class="punctuation bracket" style="color: #ECEFF4;">}</span>
+<span class="punctuation bracket" style="color: #ECEFF4;">}</span>
 </code></pre>
 
 </body>

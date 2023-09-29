@@ -145,7 +145,22 @@
 </code></pre>
 <h2>SQL</h2>
 <pre class="autumn highlight" style="background-color: #232323; color: #F3F2CC;">
-<code class="language-sql"><span class="keyword" style="color: #F05E48;">SELECT</span> a<span class="" style="color: #F3F2CC;">,</span> <span class="function" style="color: #FAD566;">max</span><span class="" style="color: #F3F2CC;">(</span>b<span class="" style="color: #F3F2CC;">)</span> <span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">table1</span> <span class="keyword" style="color: #F05E48;">GROUP</span> <span class="keyword" style="color: #F05E48;">BY</span> a <span class="keyword" style="color: #F05E48;">ORDER</span> <span class="keyword" style="color: #F05E48;">BY</span> <span class="string" style="color: #99be70;">1</span><span class="" style="color: #F3F2CC;">;</span>
+<code class="language-sql"><span class="keyword" style="color: #F05E48;">WITH</span> regional_sales <span class="keyword" style="color: #F05E48;">AS</span> <span class="" style="color: #F3F2CC;">(</span>
+    <span class="keyword" style="color: #F05E48;">SELECT</span> region<span class="" style="color: #F3F2CC;">,</span> <span class="function" style="color: #FAD566;">SUM</span><span class="" style="color: #F3F2CC;">(</span>amount<span class="" style="color: #F3F2CC;">)</span> <span class="keyword" style="color: #F05E48;">AS</span> <span class="variable" style="color: #F3F2CC;">total_sales</span>
+    <span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">orders</span>
+    <span class="keyword" style="color: #F05E48;">GROUP</span> <span class="keyword" style="color: #F05E48;">BY</span> region
+<span class="" style="color: #F3F2CC;">)</span><span class="" style="color: #F3F2CC;">,</span> top_regions <span class="keyword" style="color: #F05E48;">AS</span> <span class="" style="color: #F3F2CC;">(</span>
+    <span class="keyword" style="color: #F05E48;">SELECT</span> region
+    <span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">regional_sales</span>
+    <span class="keyword" style="color: #F05E48;">WHERE</span> total_sales <span class="operator" style="color: #F3F2CC;">&gt;</span> <span class="" style="color: #F3F2CC;">(</span><span class="keyword" style="color: #F05E48;">SELECT</span> <span class="function" style="color: #FAD566;">SUM</span><span class="" style="color: #F3F2CC;">(</span>total_sales<span class="" style="color: #F3F2CC;">)</span><span class="operator" style="color: #F3F2CC;">&#x2f;</span><span class="string" style="color: #99be70;">10</span> <span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">regional_sales</span><span class="" style="color: #F3F2CC;">)</span>
+<span class="" style="color: #F3F2CC;">)</span>
+<span class="keyword" style="color: #F05E48;">SELECT</span> region<span class="" style="color: #F3F2CC;">,</span>
+       product<span class="" style="color: #F3F2CC;">,</span>
+       <span class="function" style="color: #FAD566;">SUM</span><span class="" style="color: #F3F2CC;">(</span>quantity<span class="" style="color: #F3F2CC;">)</span> <span class="keyword" style="color: #F05E48;">AS</span> <span class="variable" style="color: #F3F2CC;">product_units</span><span class="" style="color: #F3F2CC;">,</span>
+       <span class="function" style="color: #FAD566;">SUM</span><span class="" style="color: #F3F2CC;">(</span>amount<span class="" style="color: #F3F2CC;">)</span> <span class="keyword" style="color: #F05E48;">AS</span> <span class="variable" style="color: #F3F2CC;">product_sales</span>
+<span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">orders</span>
+<span class="keyword" style="color: #F05E48;">WHERE</span> region <span class="keyword" style="color: #F05E48;">IN</span> <span class="" style="color: #F3F2CC;">(</span><span class="keyword" style="color: #F05E48;">SELECT</span> region <span class="keyword" style="color: #F05E48;">FROM</span> <span class="type" style="font-style: italic; color: #F3F2CC;">top_regions</span><span class="" style="color: #F3F2CC;">)</span>
+<span class="keyword" style="color: #F05E48;">GROUP</span> <span class="keyword" style="color: #F05E48;">BY</span> region<span class="" style="color: #F3F2CC;">,</span> product<span class="" style="color: #F3F2CC;">;</span>
 </code></pre>
 <h2>HEEx</h2>
 <pre class="autumn highlight" style="background-color: #232323; color: #F3F2CC;">
@@ -183,7 +198,7 @@ if (bigDay.getTime() &lt; Date.now()) {
   console.log(&quot;Once upon a time...&quot;);
 }
 </code></pre>
-<h2>TypeScript</h2>
+<h2>TypeScript (WIP)</h2>
 <pre class="autumn highlight" style="background-color: #232323; color: #F3F2CC;">
 <code class="language-typescript"><span class="keyword" style="color: #F05E48;">type</span> <span class="type" style="font-style: italic; color: #F3F2CC;">DescribableFunction</span> = {
   description<span class="" style="color: #F3F2CC;">:</span> <span class="type" style="font-style: italic; color: #F3F2CC;">string</span>;
@@ -199,19 +214,16 @@ function myFunc(<span class="variable" style="color: #F3F2CC;">someArg</span><sp
 myFunc.description = &quot;default description&quot;;
  
 doSomething(myFunc);
-```
-
-## JSON
-
-```json
-{
-  &quot;full_name&quot;<span class="" style="color: #F3F2CC;">:</span> &quot;John Doe&quot;,
-  &quot;age&quot;<span class="" style="color: #F3F2CC;">:</span> 30,
-  &quot;address&quot;<span class="" style="color: #F3F2CC;">:</span> {
-    &quot;country&quot;<span class="" style="color: #F3F2CC;">:</span> &quot;US&quot;
-  }
-}
-```
+</code></pre>
+<h2>JSON</h2>
+<pre class="autumn highlight" style="background-color: #232323; color: #F3F2CC;">
+<code class="language-json"><span class="" style="color: #F3F2CC;">{</span>
+  <span class="keyword" style="color: #F05E48;">&quot;full_name&quot;</span>: <span class="string" style="color: #99be70;">&quot;John Doe&quot;</span><span class="" style="color: #F3F2CC;">,</span>
+  <span class="keyword" style="color: #F05E48;">&quot;age&quot;</span>: <span class="constant numeric" style="color: #86c1b9;">30</span><span class="" style="color: #F3F2CC;">,</span>
+  <span class="keyword" style="color: #F05E48;">&quot;address&quot;</span>: <span class="" style="color: #F3F2CC;">{</span>
+    <span class="keyword" style="color: #F05E48;">&quot;country&quot;</span>: <span class="string" style="color: #99be70;">&quot;US&quot;</span>
+  <span class="" style="color: #F3F2CC;">}</span>
+<span class="" style="color: #F3F2CC;">}</span>
 </code></pre>
 
 </body>
