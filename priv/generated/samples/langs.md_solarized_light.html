@@ -24,6 +24,22 @@
 </head>
 <body>
   <h1>Language Syntax Highlight Demo</h1>
+<h2>Erlang</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-erlang"><span class="operator" style="color: #859900;">-</span><span class="keyword" style="color: #859900;">module</span><span class="" style="color: #586e75;">(</span>tut14<span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">.</span>
+
+<span class="operator" style="color: #859900;">-</span><span class="keyword" style="color: #859900;">export</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">[</span><span class="function" style="color: #268bd2;">start</span><span class="operator" style="color: #859900;">&#x2f;</span>0<span class="" style="color: #586e75;">,</span> <span class="function" style="color: #268bd2;">say_something</span><span class="operator" style="color: #859900;">&#x2f;</span>2<span class="" style="color: #586e75;">]</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">.</span>
+
+<span class="function" style="color: #268bd2;">say_something</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">What</span><span class="" style="color: #586e75;">,</span> 0<span class="" style="color: #586e75;">)</span> <span class="operator" style="color: #859900;">-&gt;</span>
+    <span class="string" style="color: #2aa198;">done</span><span class="" style="color: #586e75;">;</span>
+<span class="function" style="color: #268bd2;">say_something</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">What</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">Times</span><span class="" style="color: #586e75;">)</span> <span class="operator" style="color: #859900;">-&gt;</span>
+    io<span class="operator" style="color: #859900;">:</span><span class="function" style="color: #268bd2;">format</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;~p~n&quot;</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">[</span><span class="" style="color: #586e75;">What</span><span class="" style="color: #586e75;">]</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span>
+    <span class="function" style="color: #268bd2;">say_something</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">What</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">Times</span> <span class="operator" style="color: #859900;">-</span> 1<span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">.</span>
+
+<span class="function" style="color: #268bd2;">start</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span> <span class="operator" style="color: #859900;">-&gt;</span>
+    <span class="function" style="color: #268bd2;">spawn</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">tut14</span><span class="" style="color: #586e75;">,</span> <span class="string" style="color: #2aa198;">say_something</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">[</span><span class="string" style="color: #2aa198;">hello</span><span class="" style="color: #586e75;">,</span> 3<span class="" style="color: #586e75;">]</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span>
+    <span class="function" style="color: #268bd2;">spawn</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">tut14</span><span class="" style="color: #586e75;">,</span> <span class="string" style="color: #2aa198;">say_something</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">[</span><span class="string" style="color: #2aa198;">goodbye</span><span class="" style="color: #586e75;">,</span> 3<span class="" style="color: #586e75;">]</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">.</span>
+</code></pre>
 <h2>Elixir</h2>
 <pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
 <code class="language-elixir"><span class="keyword" style="color: #859900;">defmodule</span> <span class="namespace" style="color: #6c71c4;">HelloModule</span> <span class="keyword" style="color: #859900;">do</span>
@@ -82,6 +98,19 @@
     <span class="" style="color: #586e75;">}</span><span class="" style="color: #586e75;">;</span>
 <span class="" style="color: #586e75;">}</span>
 </code></pre>
+<h2>Go</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-go"><span class="keyword" style="color: #859900;">package</span> <span class="namespace" style="color: #6c71c4;">greetings</span>
+
+<span class="keyword" style="color: #859900;">import</span> <span class="string" style="color: #2aa198;">&quot;fmt&quot;</span>
+
+<span class="comment" style="color: #93a1a1;">&#x2f;&#x2f; Hello returns a greeting for the named person.</span>
+<span class="keyword" style="color: #859900;">func</span> <span class="function" style="color: #268bd2;">Hello</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">name</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">string</span><span class="" style="color: #586e75;">)</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">string</span> <span class="" style="color: #586e75;">{</span>
+    <span class="comment" style="color: #93a1a1;">&#x2f;&#x2f; Return a greeting that embeds the name in a message.</span>
+    <span class="" style="color: #586e75;">message</span> <span class="operator" style="color: #859900;">:=</span> <span class="" style="color: #586e75;">fmt</span><span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">Sprintf</span><span class="" style="color: #586e75;">(</span><span class="string" style="color: #2aa198;">&quot;Hi, %v. Welcome!&quot;</span><span class="" style="color: #586e75;">,</span> <span class="" style="color: #586e75;">name</span><span class="" style="color: #586e75;">)</span>
+    <span class="keyword" style="color: #859900;">return</span> <span class="" style="color: #586e75;">message</span>
+<span class="" style="color: #586e75;">}</span>
+</code></pre>
 <h2>Swift</h2>
 <pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
 <code class="language-swift"><span class="keyword" style="color: #859900;">import</span> <span class="" style="color: #586e75;">SwiftUI</span>
@@ -114,6 +143,20 @@
 <span class="keyword" style="color: #859900;">assert</span> <span class="function builtin" style="font-weight: bold; color: #268bd2;">issubclass</span><span class="" style="color: #586e75;">(</span><span class="type builtin" style="font-weight: bold; color: #b58900;">tuple</span><span class="" style="color: #586e75;">,</span> <span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">)</span>
 <span class="keyword" style="color: #859900;">assert</span> <span class="function builtin" style="font-weight: bold; color: #268bd2;">isinstance</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">(</span><span class="" style="color: #586e75;">)</span><span class="" style="color: #586e75;">,</span> <span class="type" style="color: #b58900;">MyABC</span><span class="" style="color: #586e75;">)</span>
 </code></pre>
+<h2>SQL</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-sql"><span class="keyword" style="color: #859900;">SELECT</span> a<span class="" style="color: #586e75;">,</span> <span class="function" style="color: #268bd2;">max</span><span class="" style="color: #586e75;">(</span>b<span class="" style="color: #586e75;">)</span> <span class="keyword" style="color: #859900;">FROM</span> <span class="type" style="color: #b58900;">table1</span> <span class="keyword" style="color: #859900;">GROUP</span> <span class="keyword" style="color: #859900;">BY</span> a <span class="keyword" style="color: #859900;">ORDER</span> <span class="keyword" style="color: #859900;">BY</span> <span class="string" style="color: #2aa198;">1</span><span class="" style="color: #586e75;">;</span>
+</code></pre>
+<h2>HEEx</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-heex"><span class="" style="color: #586e75;">&lt;</span><span class="namespace" style="color: #6c71c4;">Phoenix.Component</span><span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">live_title</span> <span class="attribute" style="color: #6c71c4;">prefix</span><span class="operator" style="color: #859900;">=</span><span class="string" style="color: #2aa198;">&quot;<span class="string" style="color: #2aa198;">MyApp – </span>&quot;</span><span class="" style="color: #586e75;">&gt;</span>
+  <span class="keyword" style="color: #859900;">&lt;%=</span> assigns[:page_title] || &quot;Welcome&quot;<span class="keyword" style="color: #859900;"> %&gt;</span>
+<span class="" style="color: #586e75;">&lt;&#x2f;</span><span class="namespace" style="color: #6c71c4;">Phoenix.Component</span><span class="" style="color: #586e75;">.</span><span class="function" style="color: #268bd2;">live_title</span><span class="" style="color: #586e75;">&gt;</span>
+
+<span class="" style="color: #586e75;">&lt;</span><span class="tag" style="color: #d33682;">div</span> <span class="attribute" style="color: #6c71c4;">id</span><span class="operator" style="color: #859900;">=</span><span class="keyword" style="color: #859900;">{</span>&quot;user_#<span class="keyword" style="color: #859900;">{</span>@user.id<span class="keyword" style="color: #859900;">}</span>&quot;<span class="keyword" style="color: #859900;">}</span><span class="" style="color: #586e75;">&gt;</span>
+  <span class="keyword" style="color: #859900;">&lt;%=</span> @user.name<span class="keyword" style="color: #859900;"> %&gt;</span>
+<span class="" style="color: #586e75;">&lt;&#x2f;</span><span class="tag" style="color: #d33682;">div</span><span class="" style="color: #586e75;">&gt;</span>
+</code></pre>
 <h2>CSS</h2>
 <pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
 <code class="language-css"><span class="comment" style="color: #93a1a1;">&#x2f;* At the top level of your code *&#x2f;</span>
@@ -139,6 +182,36 @@ console.log(bigDay.toLocaleDateString());
 if (bigDay.getTime() &lt; Date.now()) {
   console.log(&quot;Once upon a time...&quot;);
 }
+</code></pre>
+<h2>TypeScript</h2>
+<pre class="autumn highlight" style="background-color: #fdf6e3; color: #586e75;">
+<code class="language-typescript"><span class="keyword" style="color: #859900;">type</span> <span class="type" style="color: #b58900;">DescribableFunction</span> = {
+  description<span class="" style="color: #586e75;">:</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">string</span>;
+  (<span class="" style="color: #586e75;">someArg</span><span class="" style="color: #586e75;">:</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">number</span>)<span class="" style="color: #586e75;">:</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">boolean</span>;
+};
+function doSomething(<span class="" style="color: #586e75;">fn</span><span class="" style="color: #586e75;">:</span> <span class="type" style="color: #b58900;">DescribableFunction</span>) {
+  console.log(fn.description + &quot; returned &quot; + fn(6));
+}
+ 
+function myFunc(<span class="" style="color: #586e75;">someArg</span><span class="" style="color: #586e75;">:</span> <span class="type builtin" style="font-weight: bold; color: #b58900;">number</span>) {
+  return someArg &gt; 3;
+}
+myFunc.description = &quot;default description&quot;;
+ 
+doSomething(myFunc);
+```
+
+## JSON
+
+```json
+{
+  &quot;full_name&quot;<span class="" style="color: #586e75;">:</span> &quot;John Doe&quot;,
+  &quot;age&quot;<span class="" style="color: #586e75;">:</span> 30,
+  &quot;address&quot;<span class="" style="color: #586e75;">:</span> {
+    &quot;country&quot;<span class="" style="color: #586e75;">:</span> &quot;US&quot;
+  }
+}
+```
 </code></pre>
 
 </body>

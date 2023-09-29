@@ -73,7 +73,7 @@ String.upcase("elixir")
 ## Demo and Samples
 
 A [livebook](playground.livemd) and a [script](playground.exs) are available to demo and experiment,
-or you can check out samples at [/priv/samples](https://github.com/leandrocp/mdex/tree/main/priv/samples).
+or you can check out samples at [/priv/generated/samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples).
 
 ## Benchmark
 

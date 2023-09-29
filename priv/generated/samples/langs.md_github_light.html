@@ -24,6 +24,22 @@
 </head>
 <body>
   <h1>Language Syntax Highlight Demo</h1>
+<h2>Erlang</h2>
+<pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
+<code class="language-erlang"><span class="operator" style="color: #0a3069;">-</span><span class="keyword" style="color: #cf222e;">module</span><span class="punctuation" style="color: #24292f;">(</span>tut14<span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">.</span>
+
+<span class="operator" style="color: #0a3069;">-</span><span class="keyword" style="color: #cf222e;">export</span><span class="punctuation" style="color: #24292f;">(</span><span class="punctuation" style="color: #24292f;">[</span><span class="function" style="color: #8250df;">start</span><span class="operator" style="color: #0a3069;">&#x2f;</span>0<span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="function" style="color: #8250df;">say_something</span><span class="operator" style="color: #0a3069;">&#x2f;</span>2<span class="punctuation" style="color: #24292f;">]</span><span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">.</span>
+
+<span class="function" style="color: #8250df;">say_something</span><span class="punctuation" style="color: #24292f;">(</span><span class="variable" style="color: #24292f;">What</span><span class="punctuation delimiter" style="color: #24292f;">,</span> 0<span class="punctuation" style="color: #24292f;">)</span> <span class="operator" style="color: #0a3069;">-&gt;</span>
+    <span class="string" style="color: #0a3069;">done</span><span class="punctuation delimiter" style="color: #24292f;">;</span>
+<span class="function" style="color: #8250df;">say_something</span><span class="punctuation" style="color: #24292f;">(</span><span class="variable" style="color: #24292f;">What</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="variable" style="color: #24292f;">Times</span><span class="punctuation" style="color: #24292f;">)</span> <span class="operator" style="color: #0a3069;">-&gt;</span>
+    io<span class="operator" style="color: #0a3069;">:</span><span class="function" style="color: #8250df;">format</span><span class="punctuation" style="color: #24292f;">(</span><span class="string" style="color: #0a3069;">&quot;~p~n&quot;</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="punctuation" style="color: #24292f;">[</span><span class="variable" style="color: #24292f;">What</span><span class="punctuation" style="color: #24292f;">]</span><span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">,</span>
+    <span class="function" style="color: #8250df;">say_something</span><span class="punctuation" style="color: #24292f;">(</span><span class="variable" style="color: #24292f;">What</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="variable" style="color: #24292f;">Times</span> <span class="operator" style="color: #0a3069;">-</span> 1<span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">.</span>
+
+<span class="function" style="color: #8250df;">start</span><span class="punctuation" style="color: #24292f;">(</span><span class="punctuation" style="color: #24292f;">)</span> <span class="operator" style="color: #0a3069;">-&gt;</span>
+    <span class="function" style="color: #8250df;">spawn</span><span class="punctuation" style="color: #24292f;">(</span><span class="string" style="color: #0a3069;">tut14</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="string" style="color: #0a3069;">say_something</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="punctuation" style="color: #24292f;">[</span><span class="string" style="color: #0a3069;">hello</span><span class="punctuation delimiter" style="color: #24292f;">,</span> 3<span class="punctuation" style="color: #24292f;">]</span><span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">,</span>
+    <span class="function" style="color: #8250df;">spawn</span><span class="punctuation" style="color: #24292f;">(</span><span class="string" style="color: #0a3069;">tut14</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="string" style="color: #0a3069;">say_something</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="punctuation" style="color: #24292f;">[</span><span class="string" style="color: #0a3069;">goodbye</span><span class="punctuation delimiter" style="color: #24292f;">,</span> 3<span class="punctuation" style="color: #24292f;">]</span><span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">.</span>
+</code></pre>
 <h2>Elixir</h2>
 <pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
 <code class="language-elixir"><span class="keyword" style="color: #cf222e;">defmodule</span> <span class="namespace" style="color: #953800;">HelloModule</span> <span class="keyword" style="color: #cf222e;">do</span>
@@ -82,6 +98,19 @@
     <span class="punctuation" style="color: #24292f;">}</span><span class="punctuation delimiter" style="color: #24292f;">;</span>
 <span class="punctuation" style="color: #24292f;">}</span>
 </code></pre>
+<h2>Go</h2>
+<pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
+<code class="language-go"><span class="keyword" style="color: #cf222e;">package</span> <span class="namespace" style="color: #953800;">greetings</span>
+
+<span class="keyword" style="color: #cf222e;">import</span> <span class="string" style="color: #0a3069;">&quot;fmt&quot;</span>
+
+<span class="comment" style="color: #57606a;">&#x2f;&#x2f; Hello returns a greeting for the named person.</span>
+<span class="keyword" style="color: #cf222e;">func</span> <span class="function" style="color: #8250df;">Hello</span><span class="punctuation" style="color: #24292f;">(</span><span class="variable parameter" style="color: #953800;">name</span> <span class="type builtin" style="color: #0550ae;">string</span><span class="punctuation" style="color: #24292f;">)</span> <span class="type builtin" style="color: #0550ae;">string</span> <span class="punctuation" style="color: #24292f;">{</span>
+    <span class="comment" style="color: #57606a;">&#x2f;&#x2f; Return a greeting that embeds the name in a message.</span>
+    <span class="variable" style="color: #24292f;">message</span> <span class="operator" style="color: #0a3069;">:=</span> <span class="variable" style="color: #24292f;">fmt</span><span class="punctuation delimiter" style="color: #24292f;">.</span><span class="function" style="color: #8250df;">Sprintf</span><span class="punctuation" style="color: #24292f;">(</span><span class="string" style="color: #0a3069;">&quot;Hi, %v. Welcome!&quot;</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="variable parameter" style="color: #953800;">name</span><span class="punctuation" style="color: #24292f;">)</span>
+    <span class="keyword" style="color: #cf222e;">return</span> <span class="variable" style="color: #24292f;">message</span>
+<span class="punctuation" style="color: #24292f;">}</span>
+</code></pre>
 <h2>Swift</h2>
 <pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
 <code class="language-swift"><span class="keyword" style="color: #cf222e;">import</span> <span class="variable" style="color: #24292f;">SwiftUI</span>
@@ -114,6 +143,20 @@
 <span class="keyword" style="color: #cf222e;">assert</span> <span class="function" style="color: #8250df;">issubclass</span><span class="punctuation" style="color: #24292f;">(</span><span class="type builtin" style="color: #0550ae;">tuple</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="type" style="color: #953800;">MyABC</span><span class="punctuation" style="color: #24292f;">)</span>
 <span class="keyword" style="color: #cf222e;">assert</span> <span class="function" style="color: #8250df;">isinstance</span><span class="punctuation" style="color: #24292f;">(</span><span class="punctuation" style="color: #24292f;">(</span><span class="punctuation" style="color: #24292f;">)</span><span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="type" style="color: #953800;">MyABC</span><span class="punctuation" style="color: #24292f;">)</span>
 </code></pre>
+<h2>SQL</h2>
+<pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
+<code class="language-sql"><span class="keyword" style="color: #cf222e;">SELECT</span> a<span class="punctuation delimiter" style="color: #24292f;">,</span> <span class="function" style="color: #8250df;">max</span><span class="punctuation" style="color: #24292f;">(</span>b<span class="punctuation" style="color: #24292f;">)</span> <span class="keyword" style="color: #cf222e;">FROM</span> <span class="type" style="color: #953800;">table1</span> <span class="keyword" style="color: #cf222e;">GROUP</span> <span class="keyword" style="color: #cf222e;">BY</span> a <span class="keyword" style="color: #cf222e;">ORDER</span> <span class="keyword" style="color: #cf222e;">BY</span> <span class="string" style="color: #0a3069;">1</span><span class="punctuation delimiter" style="color: #24292f;">;</span>
+</code></pre>
+<h2>HEEx</h2>
+<pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
+<code class="language-heex"><span class="punctuation" style="color: #24292f;">&lt;</span><span class="namespace" style="color: #953800;">Phoenix.Component</span><span class="punctuation delimiter" style="color: #24292f;">.</span><span class="function" style="color: #8250df;">live_title</span> <span class="attribute" style="color: #24292f;">prefix</span><span class="operator" style="color: #0a3069;">=</span><span class="string" style="color: #0a3069;">&quot;<span class="string" style="color: #0a3069;">MyApp – </span>&quot;</span><span class="punctuation" style="color: #24292f;">&gt;</span>
+  <span class="keyword" style="color: #cf222e;">&lt;%=</span> assigns[:page_title] || &quot;Welcome&quot;<span class="keyword" style="color: #cf222e;"> %&gt;</span>
+<span class="punctuation" style="color: #24292f;">&lt;&#x2f;</span><span class="namespace" style="color: #953800;">Phoenix.Component</span><span class="punctuation delimiter" style="color: #24292f;">.</span><span class="function" style="color: #8250df;">live_title</span><span class="punctuation" style="color: #24292f;">&gt;</span>
+
+<span class="punctuation" style="color: #24292f;">&lt;</span><span class="tag" style="color: #116329;">div</span> <span class="attribute" style="color: #24292f;">id</span><span class="operator" style="color: #0a3069;">=</span><span class="keyword" style="color: #cf222e;">{</span>&quot;user_#<span class="keyword" style="color: #cf222e;">{</span>@user.id<span class="keyword" style="color: #cf222e;">}</span>&quot;<span class="keyword" style="color: #cf222e;">}</span><span class="punctuation" style="color: #24292f;">&gt;</span>
+  <span class="keyword" style="color: #cf222e;">&lt;%=</span> @user.name<span class="keyword" style="color: #cf222e;"> %&gt;</span>
+<span class="punctuation" style="color: #24292f;">&lt;&#x2f;</span><span class="tag" style="color: #116329;">div</span><span class="punctuation" style="color: #24292f;">&gt;</span>
+</code></pre>
 <h2>CSS</h2>
 <pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
 <code class="language-css"><span class="comment" style="color: #57606a;">&#x2f;* At the top level of your code *&#x2f;</span>
@@ -139,6 +182,36 @@ console.log(bigDay.toLocaleDateString());
 if (bigDay.getTime() &lt; Date.now()) {
   console.log(&quot;Once upon a time...&quot;);
 }
+</code></pre>
+<h2>TypeScript</h2>
+<pre class="autumn highlight" style="background-color: #ffffff; color: #57606a;">
+<code class="language-typescript"><span class="keyword" style="color: #cf222e;">type</span> <span class="type" style="color: #953800;">DescribableFunction</span> = {
+  description<span class="punctuation delimiter" style="color: #24292f;">:</span> <span class="type builtin" style="color: #0550ae;">string</span>;
+  (<span class="variable parameter" style="color: #953800;">someArg</span><span class="punctuation delimiter" style="color: #24292f;">:</span> <span class="type builtin" style="color: #0550ae;">number</span>)<span class="punctuation delimiter" style="color: #24292f;">:</span> <span class="type builtin" style="color: #0550ae;">boolean</span>;
+};
+function doSomething(<span class="variable parameter" style="color: #953800;">fn</span><span class="punctuation delimiter" style="color: #24292f;">:</span> <span class="type" style="color: #953800;">DescribableFunction</span>) {
+  console.log(fn.description + &quot; returned &quot; + fn(6));
+}
+ 
+function myFunc(<span class="variable parameter" style="color: #953800;">someArg</span><span class="punctuation delimiter" style="color: #24292f;">:</span> <span class="type builtin" style="color: #0550ae;">number</span>) {
+  return someArg &gt; 3;
+}
+myFunc.description = &quot;default description&quot;;
+ 
+doSomething(myFunc);
+```
+
+## JSON
+
+```json
+{
+  &quot;full_name&quot;<span class="punctuation delimiter" style="color: #24292f;">:</span> &quot;John Doe&quot;,
+  &quot;age&quot;<span class="punctuation delimiter" style="color: #24292f;">:</span> 30,
+  &quot;address&quot;<span class="punctuation delimiter" style="color: #24292f;">:</span> {
+    &quot;country&quot;<span class="punctuation delimiter" style="color: #24292f;">:</span> &quot;US&quot;
+  }
+}
+```
 </code></pre>
 
 </body>

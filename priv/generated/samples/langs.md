@@ -1,5 +1,23 @@
 # Language Syntax Highlight Demo
 
+## Erlang
+
+```erlang
+-module(tut14).
+
+-export([start/0, say_something/2]).
+
+say_something(What, 0) ->
+    done;
+say_something(What, Times) ->
+    io:format("~p~n", [What]),
+    say_something(What, Times - 1).
+
+start() ->
+    spawn(tut14, say_something, [hello, 3]),
+    spawn(tut14, say_something, [goodbye, 3]).
+```
+
 ## Elixir
 
 ```elixir
@@ -64,6 +82,21 @@ fn main() {
 }
 ```
 
+## Go
+
+```go
+package greetings
+
+import "fmt"
+
+// Hello returns a greeting for the named person.
+func Hello(name string) string {
+    // Return a greeting that embeds the name in a message.
+    message := fmt.Sprintf("Hi, %v. Welcome!", name)
+    return message
+}
+```
+
 ## Swift
 
 ```swift
@@ -100,6 +133,24 @@ assert issubclass(tuple, MyABC)
 assert isinstance((), MyABC)
 ```
 
+## SQL
+
+```sql
+SELECT a, max(b) FROM table1 GROUP BY a ORDER BY 1;
+```
+
+## HEEx
+
+```heex
+<Phoenix.Component.live_title prefix="MyApp – ">
+  <%= assigns[:page_title] || "Welcome" %>
+</Phoenix.Component.live_title>
+
+<div id={"user_#{@user.id}"}>
+  <%= @user.name %>
+</div>
+```
+
 ## CSS
 
 ```css
@@ -127,5 +178,36 @@ const bigDay = new Date(2019, 6, 19);
 console.log(bigDay.toLocaleDateString());
 if (bigDay.getTime() < Date.now()) {
   console.log("Once upon a time...");
+}
+```
+
+## TypeScript (WIP)
+
+````typescript
+type DescribableFunction = {
+  description: string;
+  (someArg: number): boolean;
+};
+function doSomething(fn: DescribableFunction) {
+  console.log(fn.description + " returned " + fn(6));
+}
+ 
+function myFunc(someArg: number) {
+  return someArg > 3;
+}
+myFunc.description = "default description";
+ 
+doSomething(myFunc);
+```
+
+## JSON
+
+```json
+{
+  "full_name": "John Doe",
+  "age": 30,
+  "address": {
+    "country": "US"
+  }
 }
 ```
