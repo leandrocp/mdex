@@ -1,9 +1,10 @@
 defmodule MDEx do
-  @moduledoc """
-  A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter.
+  @external_resource "README.md"
 
-  Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
-  """
+  @moduledoc "README.md"
+             |> File.read!()
+             |> String.split("<!-- MDOC -->")
+             |> Enum.fetch!(1)
 
   alias MDEx.Native
 
@@ -39,7 +40,8 @@ defmodule MDEx do
   ### Features Options
 
   * `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
-  * `:syntax_highlight_theme` (default `"onedark"`) - syntax highlight code fences using [autumn](https://github.com/leandrocp/autumn/tree/main/native/inkjet_nif).
+  * `:syntax_highlight_theme` (default `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
+  you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: "adwaita_dark"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme.
 
   ## Examples
 

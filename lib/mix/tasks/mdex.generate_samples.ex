@@ -29,6 +29,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     </style>
   </head>
   <body>
+    <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
     <%= @inner_content %>
   </body>
   </html>

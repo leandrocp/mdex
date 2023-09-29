@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.1.8"
+  @version "0.1.9-dev"
 
   def project do
     [
@@ -53,9 +53,12 @@ defmodule MDEx.MixProject do
   defp docs do
     [
       main: "MDEx",
+      assets: "assets",
+      logo: "assets/images/mdex_icon.png",
       source_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["CHANGELOG.md"]
+      extras: ["CHANGELOG.md"],
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
   end
 

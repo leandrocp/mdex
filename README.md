@@ -1,13 +1,17 @@
 # MDEx
 
-A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir.
+[![Documentation](http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat)](https://hexdocs.pm/mdex)
+[![Package](https://img.shields.io/hexpm/v/mdex.svg)](https://hex.pm/packages/mdex)
+
+<!-- MDOC -->
+
+<img src="assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+
+**A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir**.
 
 See some samples at https://mdex-c31.pages.dev
 
 Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
-
-[![Documentation](http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat)](https://hexdocs.pm/mdex)
-[![Package](https://img.shields.io/hexpm/v/mdex.svg)](https://hex.pm/packages/mdex)
 
 ## Installation
 
@@ -74,7 +78,7 @@ String.upcase("elixir")
 
 ## Demo and Samples
 
-A [livebook](playground.livemd) and a [script](playground.exs) are available to demo and experiment,
+A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to demo and experiment,
 or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
 
 ## Benchmark
@@ -109,3 +113,9 @@ So given those trade-offs, mdex brings some benefits over the alternatives:
 - CommonMark spec
 - Binary is precompiled, no need to compile anything
 - Easier to work with since it's Rust
+
+
+## Acknowledgements
+
+* [Logo](https://www.flaticon.com/free-icons/rpg) created by by Freepik - Flaticon
+* [Logo font](https://github.com/quoteunquoteapps/CourierPrime) designed by [Alan Greene](https://github.com/a-dg)

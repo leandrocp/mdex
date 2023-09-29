@@ -2,6 +2,9 @@
 
 ## 0.1.9-dev
 
+### Enhancements
+  * Add logo
+
 ## 0.1.8 (2023-09-29)
 
 ### Enhancements
