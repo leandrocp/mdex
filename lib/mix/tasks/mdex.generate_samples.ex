@@ -62,6 +62,37 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
 
     dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "#{filename}.html"])
     File.write!(dest_path, html)
+
+    generate_index()
+  end
+
+  defp generate_index do
+    Mix.shell().info("index.html")
+
+    src_path = Path.join([:code.priv_dir(:mdex), "generated", "samples"])
+
+    links =
+      (src_path <> "/*.html")
+      |> Path.wildcard()
+      |> Enum.reject(&(&1 == "index.html"))
+      |> Enum.map(fn file ->
+        sample = Path.basename(file)
+        ["<p><a href=", ?", sample, ?", ">", sample, "</a></p>", "\n"]
+      end)
+
+    inner_content = [
+      "<h1>MDEx Samples</h1>",
+      "\n",
+      links
+    ]
+
+    html =
+      EEx.eval_string(@layout,
+        assigns: %{inner_content: inner_content}
+      )
+
+    dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "index.html"])
+    File.write!(dest_path, html)
   end
 
   defp langs do
