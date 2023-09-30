@@ -68,11 +68,11 @@ defmodule MDEx do
     render = Keyword.get(opts, :render, %{})
     features = Keyword.get(opts, :features, %{})
 
-    opts = %MDEx.Options{
-      extension: struct(MDEx.ExtensionOptions, extension),
-      parse: struct(MDEx.ParseOptions, parse),
-      render: struct(MDEx.RenderOptions, render),
-      features: struct(MDEx.FeaturesOptions, features)
+    opts = %MDEx.Types.Options{
+      extension: struct(MDEx.Types.ExtensionOptions, extension),
+      parse: struct(MDEx.Types.ParseOptions, parse),
+      render: struct(MDEx.Types.RenderOptions, render),
+      features: struct(MDEx.Types.FeaturesOptions, features)
     }
 
     Native.to_html_with_options(markdown, opts)

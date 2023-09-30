@@ -1,75 +1,18 @@
 #[macro_use]
 extern crate rustler;
 
-pub mod inkjet_adapter;
-pub mod themes;
+mod inkjet_adapter;
+mod themes;
+mod types;
 
 use ammonia::clean;
 use comrak::{markdown_to_html, markdown_to_html_with_plugins, ComrakOptions, ComrakPlugins};
 use inkjet_adapter::InkjetAdapter;
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
+use types::options::*;
 
 rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
-
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.ExtensionOptions"]
-pub struct ExtensionOptions {
-    pub strikethrough: bool,
-    pub tagfilter: bool,
-    pub table: bool,
-    pub autolink: bool,
-    pub tasklist: bool,
-    pub superscript: bool,
-    pub header_ids: Option<String>,
-    pub footnotes: bool,
-    pub description_lists: bool,
-    pub front_matter_delimiter: Option<String>,
-}
-
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.ParseOptions"]
-pub struct ParseOptions {
-    pub smart: bool,
-    pub default_info_string: Option<String>,
-    pub relaxed_tasklist_matching: bool,
-}
-
-#[derive(Debug, NifUnitEnum)]
-pub enum ListStyleType {
-    Dash,
-    Plus,
-    Star,
-}
-
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.RenderOptions"]
-pub struct RenderOptions {
-    pub hardbreaks: bool,
-    pub github_pre_lang: bool,
-    pub full_info_string: bool,
-    pub width: usize,
-    pub unsafe_: bool,
-    pub escape: bool,
-    pub list_style: ListStyleType,
-    pub sourcepos: bool,
-}
-
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.FeaturesOptions"]
-pub struct FeaturesOptions {
-    pub sanitize: bool,
-    pub syntax_highlight_theme: Option<String>,
-}
-
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.Options"]
-pub struct Options {
-    pub extension: ExtensionOptions,
-    pub parse: ParseOptions,
-    pub render: RenderOptions,
-    pub features: FeaturesOptions,
-}
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {

@@ -1,4 +1,4 @@
-defmodule MDEx.ExtensionOptions do
+defmodule MDEx.Types.ExtensionOptions do
   @moduledoc false
   defstruct strikethrough: false,
             tagfilter: false,
@@ -12,14 +12,14 @@ defmodule MDEx.ExtensionOptions do
             front_matter_delimiter: nil
 end
 
-defmodule MDEx.ParseOptions do
+defmodule MDEx.Types.ParseOptions do
   @moduledoc false
   defstruct smart: false,
             default_info_string: nil,
             relaxed_tasklist_matching: false
 end
 
-defmodule MDEx.RenderOptions do
+defmodule MDEx.Types.RenderOptions do
   @moduledoc false
   defstruct hardbreaks: false,
             github_pre_lang: false,
@@ -31,16 +31,16 @@ defmodule MDEx.RenderOptions do
             sourcepos: false
 end
 
-defmodule MDEx.FeaturesOptions do
+defmodule MDEx.Types.FeaturesOptions do
   @moduledoc false
   defstruct sanitize: false,
             syntax_highlight_theme: "onedark"
 end
 
-defmodule MDEx.Options do
+defmodule MDEx.Types.Options do
   @moduledoc false
-  defstruct extension: %MDEx.ExtensionOptions{},
-            parse: %MDEx.ParseOptions{},
-            render: %MDEx.RenderOptions{},
-            features: %MDEx.FeaturesOptions{}
+  defstruct extension: %MDEx.Types.ExtensionOptions{},
+            parse: %MDEx.Types.ParseOptions{},
+            render: %MDEx.Types.RenderOptions{},
+            features: %MDEx.Types.FeaturesOptions{}
 end
