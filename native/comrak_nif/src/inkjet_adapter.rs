@@ -132,7 +132,11 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
         if attributes.contains_key("class") {
-            write!(output, "<code class=\"{}\" translate=\"no\">", attributes["class"])
+            write!(
+                output,
+                "<code class=\"{}\" translate=\"no\">",
+                attributes["class"]
+            )
         } else {
             write!(output, "<code translate=\"no\">")
         }

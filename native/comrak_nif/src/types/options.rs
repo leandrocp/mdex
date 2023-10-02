@@ -1,6 +1,4 @@
-use comrak::{
-    ComrakExtensionOptions, ComrakParseOptions, ComrakRenderOptions, ListStyleType,
-};
+use comrak::{ComrakExtensionOptions, ComrakParseOptions, ComrakRenderOptions, ListStyleType};
 
 #[derive(Debug, NifStruct)]
 #[module = "MDEx.Types.ExtensionOptions"]
