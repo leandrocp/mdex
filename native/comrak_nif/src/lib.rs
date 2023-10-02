@@ -6,7 +6,10 @@ mod themes;
 mod types;
 
 use ammonia::clean;
-use comrak::{markdown_to_html, markdown_to_html_with_plugins, ComrakOptions, ComrakPlugins};
+use comrak::{
+    markdown_to_html, markdown_to_html_with_plugins, ComrakExtensionOptions, ComrakOptions,
+    ComrakParseOptions, ComrakPlugins, ComrakRenderOptions,
+};
 use inkjet_adapter::InkjetAdapter;
 use rustler::{Env, NifResult, Term};
 use serde_rustler::to_term;
@@ -23,35 +26,11 @@ fn to_html(md: &str) -> String {
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: Options) -> NifResult<Term<'a>> {
+fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
     let comrak_options = ComrakOptions {
-        extension: comrak::ComrakExtensionOptions {
-            strikethrough: options.extension.strikethrough,
-            tagfilter: options.extension.tagfilter,
-            table: options.extension.table,
-            autolink: options.extension.autolink,
-            tasklist: options.extension.tasklist,
-            superscript: options.extension.superscript,
-            header_ids: options.extension.header_ids,
-            footnotes: options.extension.footnotes,
-            description_lists: options.extension.description_lists,
-            front_matter_delimiter: options.extension.front_matter_delimiter,
-        },
-        parse: comrak::ComrakParseOptions {
-            smart: options.parse.smart,
-            default_info_string: options.parse.default_info_string,
-            relaxed_tasklist_matching: options.parse.relaxed_tasklist_matching,
-        },
-        render: comrak::ComrakRenderOptions {
-            hardbreaks: options.render.hardbreaks,
-            github_pre_lang: options.render.github_pre_lang,
-            full_info_string: options.render.full_info_string,
-            width: options.render.width,
-            unsafe_: options.render.unsafe_,
-            escape: options.render.escape,
-            list_style: list_style(options.render.list_style),
-            sourcepos: options.render.sourcepos,
-        },
+        extension: ComrakExtensionOptions::from(options.extension),
+        parse: ComrakParseOptions::from(options.parse),
+        render: ComrakRenderOptions::from(options.render),
     };
 
     match options.features.syntax_highlight_theme {
@@ -76,12 +55,4 @@ fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
     };
 
     to_term(env, html).map_err(|err| err.into())
-}
-
-fn list_style(list_style: ListStyleType) -> comrak::ListStyleType {
-    match list_style {
-        ListStyleType::Dash => comrak::ListStyleType::Dash,
-        ListStyleType::Plus => comrak::ListStyleType::Plus,
-        ListStyleType::Star => comrak::ListStyleType::Star,
-    }
 }
