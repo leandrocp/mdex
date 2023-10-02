@@ -30,7 +30,8 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
   </head>
   <body>
     <%= if @index do %>
-      <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+      <p><a href="https://github.com/leandrocp/mdex"><img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo"></img></a></p>
+      <p><a href="https://github.com/leandrocp/mdex">https://github.com/leandrocp/mdex</a></p>
     <% end %>
     <%= @inner_content %>
   </body>
