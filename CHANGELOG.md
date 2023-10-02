@@ -2,6 +2,9 @@
 
 ## 0.1.10-dev
 
+### Enhancements
+  * Add translate="no" attr in <code> tag
+
 ## 0.1.9
 
 ### Enhancements
