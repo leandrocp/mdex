@@ -4,7 +4,7 @@
 // Generated automatically by mix task `Mix.Tasks.Autumn.GenerateThemes`.
 // Execute `mix autumn.generate_themes` at the root to update this file.
 //
-// Generated at 2023-09-28 15:40:58.231512Z
+// Generated at 2023-10-04 14:50:28.402176Z
 
 #![allow(dead_code)]
 #![allow(unused_variables)]

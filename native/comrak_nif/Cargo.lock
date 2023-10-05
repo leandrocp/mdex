@@ -103,6 +103,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "autumn"
+version = "0.1.0"
+dependencies = [
+ "inkjet",
+ "phf 0.11.2",
+ "tree-sitter",
+ "tree-sitter-highlight",
+ "v_htmlescape",
+]
+
+[[package]]
 name = "base64"
 version = "0.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -224,6 +235,7 @@ name = "comrak_nif"
 version = "0.1.0"
 dependencies = [
  "ammonia",
+ "autumn",
  "comrak",
  "inkjet",
  "phf 0.11.2",
