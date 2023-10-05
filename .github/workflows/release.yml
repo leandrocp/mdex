@@ -1,8 +1,5 @@
 name: Precomp NIFs
 
-env:
-  NIF_DIRECTORY: "native/comrak_nif"
-
 on:
   push:
     branches:
@@ -71,7 +68,7 @@ jobs:
 
     - name: Build the project
       id: build-crate
-      uses: philss/rustler-precompiled-action@v1.0.1
+      uses: philss/rustler-precompiled-action@v1.1.0
       with:
         project-name: comrak_nif
         project-version: ${{ env.PROJECT_VERSION }}

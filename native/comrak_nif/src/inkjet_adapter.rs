@@ -44,9 +44,11 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
                     None => None,
                 },
             )
+            // TODO: fallback to plain text
             .expect("expected to generate the syntax highlight events");
 
         for event in highlights {
+            // TODO: fallback to plain text
             let event = event.expect("expected a highlight event");
             let inner_highlights = autumn::inner_highlights(source, event, self.theme);
             write!(output, "{}", inner_highlights)?
