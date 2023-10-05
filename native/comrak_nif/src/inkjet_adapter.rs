@@ -1,10 +1,10 @@
-use crate::themes;
-use crate::themes::Theme;
+use autumn::themes;
+use autumn::themes::Theme;
 use comrak::adapters::SyntaxHighlighterAdapter;
 use inkjet::Language;
 use std::collections::HashMap;
 use std::io::{self, Write};
-use tree_sitter_highlight::{HighlightEvent, Highlighter};
+use tree_sitter_highlight::Highlighter;
 
 #[derive(Debug)]
 pub struct InkjetAdapter<'a> {
@@ -20,78 +20,6 @@ impl<'a> InkjetAdapter<'a> {
 
         Self { theme }
     }
-
-    fn write_highlighted(
-        &self,
-        output: &mut dyn Write,
-        lang: Language,
-        code: &str,
-    ) -> io::Result<()> {
-        let mut highlighter = Highlighter::new();
-        let config = lang.config();
-
-        let highlights = highlighter
-            .highlight(
-                config,
-                code.as_bytes(),
-                None,
-                |token| match Language::from_token(token) {
-                    Some(lang) => Some(lang.config()),
-                    None => None,
-                },
-            )
-            .unwrap();
-
-        for event in highlights {
-            match event.unwrap() {
-                HighlightEvent::Source { start, end } => {
-                    let span = code
-                        .get(start..end)
-                        .expect("Source bounds should be in bounds!");
-                    let span = v_htmlescape::escape(span).to_string();
-                    write!(output, "{}", span)?
-                }
-                HighlightEvent::HighlightStart(idx) => {
-                    let scope = inkjet::constants::HIGHLIGHT_NAMES[idx.0];
-                    let (class, style) = self.theme.get_scope(scope);
-                    write!(output, "<span class=\"{}\" style=\"{}\">", class, style)?
-                }
-                HighlightEvent::HighlightEnd => write!(output, "</span>")?,
-            }
-        }
-
-        Ok(())
-    }
-
-    fn write_plain_highlighted(
-        &self,
-        output: &mut dyn Write,
-        lang: Language,
-        code: &str,
-    ) -> io::Result<()> {
-        let mut highlighter = Highlighter::new();
-        let config = lang.config();
-
-        let highlights = highlighter
-            .highlight(config, code.as_bytes(), None, |_| None)
-            .unwrap();
-
-        for event in highlights {
-            match event.unwrap() {
-                HighlightEvent::Source { start, end } => {
-                    let span = code
-                        .get(start..end)
-                        .expect("Source bounds should be in bounds!");
-                    let span = v_htmlescape::escape(span).to_string();
-                    write!(output, "{}", span)?
-                }
-                HighlightEvent::HighlightStart(_idx) => write!(output, "<span>")?,
-                HighlightEvent::HighlightEnd => write!(output, "</span>")?,
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
@@ -99,14 +27,32 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         &self,
         output: &mut dyn Write,
         lang: Option<&str>,
-        code: &str,
+        source: &str,
     ) -> io::Result<()> {
-        let lang = lang.unwrap_or("plain");
+        let mut highlighter = Highlighter::new();
+        let lang = lang.unwrap_or("diff");
+        let lang = Language::from_token(lang).unwrap_or(Language::Diff);
+        let config = lang.config();
 
-        match Language::from_token(lang) {
-            Some(lang_config) => self.write_highlighted(output, lang_config, code)?,
-            None => self.write_plain_highlighted(output, Language::Diff, code)?,
-        };
+        let highlights = highlighter
+            .highlight(
+                config,
+                source.as_bytes(),
+                None,
+                |token| match Language::from_token(token) {
+                    Some(lang) => Some(lang.config()),
+                    None => None,
+                },
+            )
+            // TODO: fallback to plain text
+            .expect("expected to generate the syntax highlight events");
+
+        for event in highlights {
+            // TODO: fallback to plain text
+            let event = event.expect("expected a highlight event");
+            let inner_highlights = autumn::inner_highlights(source, event, self.theme);
+            write!(output, "{}", inner_highlights)?
+        }
 
         Ok(())
     }
@@ -116,14 +62,8 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         output: &mut dyn Write,
         _attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        let (_class, background_style) = self.theme.get_scope("background");
-        let (_class, text_style) = self.theme.get_scope("text");
-
-        writeln!(
-            output,
-            "<pre class=\"autumn highlight\" style=\"{} {}\">",
-            background_style, text_style
-        )
+        let pre_tag = autumn::open_pre_tag(self.theme, None);
+        writeln!(output, "{}", pre_tag)
     }
 
     fn write_code_tag(
@@ -132,13 +72,14 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
         if attributes.contains_key("class") {
-            write!(
-                output,
-                "<code class=\"{}\" translate=\"no\">",
-                attributes["class"]
-            )
+            // lang does not matter since class will be replaced
+            let code_tag =
+                autumn::open_code_tag(Language::Diff, Some(attributes["class"].as_str()));
+            writeln!(output, "{}", code_tag)
         } else {
-            write!(output, "<code translate=\"no\">")
+            // assume there's no language and fallbacks to plain text
+            let code_tag = autumn::open_code_tag(Language::Diff, Some("language-plain-text"));
+            writeln!(output, "{}", code_tag)
         }
     }
 }

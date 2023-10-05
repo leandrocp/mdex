@@ -78,7 +78,8 @@ defmodule MDEx.MixProject do
       test: [fn _ -> System.put_env("MDEX_BUILD", "true") end, "test"],
       format: ["format", "rust.fmt"],
       "rust.lint": ["cmd cargo clippy --manifest-path=native/comrak_nif/Cargo.toml -- -Dwarnings"],
-      "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"]
+      "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"],
+      vendor: ["cmd cp -rv ../autumn/native/autumn native/comrak_nif/vendor"]
     ]
   end
 end

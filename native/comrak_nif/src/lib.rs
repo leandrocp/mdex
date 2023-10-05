@@ -2,7 +2,6 @@
 extern crate rustler;
 
 mod inkjet_adapter;
-mod themes;
 mod types;
 
 use ammonia::clean;
