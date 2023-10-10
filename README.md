@@ -24,6 +24,14 @@
   </a>
 </p>
 
+## Features
+
+- [Fast](https://github.com/leandrocp/mdex#benchmark)
+- Compatible with [CommonMark spec](https://spec.commonmark.org) and [GitHub Flavored Markdown Spec](https://github.github.com/gfm/)
+- Binary is precompiled, no need to compile anything
+
+Check out some samples at https://mdex-c31.pages.dev
+
 ## Installation
 
 Add `:mdex` dependecy:
@@ -115,15 +123,9 @@ earmark        0.47 K - 51.47x slower +2.10 ms
 If any of the available libraries are working for you, keep using it, if not then keep reading.
 
 * `earmark` [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
-* `md` is fast and extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" so it also fails to parse many documents.
+* `md` is fast enough and extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" so it also fails to parse many documents.
 * `markdown` is not precompiled and has not received updates in a while.
-* `cmark` is a fast CommonMark parser but it requires compiling the C library and it's harder to extend (unless you're confortable with C).
-
-So given those trade-offs, mdex brings some benefits over the alternatives:
-- Fast
-- CommonMark spec
-- Binary is precompiled, no need to compile anything
-- Easier to work with since it's Rust
+* `cmark` is a fast CommonMark parser but it requires compiling the C library.
 
 ## Looking for help with your Elixir project?
 
