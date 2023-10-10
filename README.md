@@ -1,17 +1,28 @@
 # MDEx
 
-[![Documentation](http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat)](https://hexdocs.pm/mdex)
-[![Package](https://img.shields.io/hexpm/v/mdex.svg)](https://hex.pm/packages/mdex)
-
 <!-- MDOC -->
 
-<img src="assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+<p align="center">
+  <img src="assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+</p>
 
-**A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir**.
+<p align="center">
+  A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir.
+</p>
 
-See some samples at https://mdex-c31.pages.dev
+<p align="center">
+  <a href="https://hex.pm/packages/mdex">
+    <img alt="Hex Version" src="https://img.shields.io/hexpm/v/mdex">
+  </a>
 
-Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
+  <a href="https://hexdocs.pm/mdex">
+    <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
+  </a>
+
+  <a href="https://opensource.org/licenses/MIT">
+    <img alt="MIT" src="https://img.shields.io/hexpm/l/mdex">
+  </a>
+</p>
 
 ## Installation
 
@@ -125,5 +136,6 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 ## Acknowledgements
 
+* Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
 * [Logo](https://www.flaticon.com/free-icons/rpg) created by by Freepik - Flaticon
 * [Logo font](https://github.com/quoteunquoteapps/CourierPrime) designed by [Alan Greene](https://github.com/a-dg)
