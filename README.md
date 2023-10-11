@@ -3,7 +3,7 @@
 <!-- MDOC -->
 
 <p align="center">
-  <img src="assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
 </p>
 
 <p align="center">
@@ -129,7 +129,7 @@ If any of the available libraries are working for you, keep using it, if not the
 
 ## Looking for help with your Elixir project?
 
-<img src="assets/images/dockyard_logo.png" width="256" alt="DockYard logo">
+<img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/dockyard_logo.png" width="256" alt="DockYard logo">
 
 At DockYard we are [ready to help you build your next Elixir project](https://dockyard.com/phoenix-consulting).
 We have a unique expertise in Elixir and Phoenix development that is unmatched and we love to [write about Elixir](https://dockyard.com/blog/categories/elixir).
