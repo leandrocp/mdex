@@ -19,8 +19,7 @@ phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
 v_htmlescape = "0.15"
-# inkjet = { version = "0.10" , default-features = false, features = [
-inkjet = { git = "https://github.com/leandrocp/inkjet.git", branch = "lp/update-langs" , default-features = false, features = [
+inkjet = { version = "0.10.1" , default-features = false, features = [
   "html",
   "language-bash",
   "language-c",

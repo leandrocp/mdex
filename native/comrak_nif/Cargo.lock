@@ -416,8 +416,9 @@ dependencies = [
 
 [[package]]
 name = "inkjet"
-version = "0.10.0"
-source = "git+https://github.com/leandrocp/inkjet.git?branch=lp/update-langs#716676ada287bf21233295bba39130142fbeaf62"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "755833cd551f1caf9a1ff51133c1c2a3449337f5ca77d71c07f9ca47012630ef"
 dependencies = [
  "anyhow",
  "cc",
@@ -1135,9 +1136,9 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51cc078118ed25af325985ff674c00c8416b0f962be67da4946854ebfc99f334"
+checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
 dependencies = [
  "serde",
 ]
