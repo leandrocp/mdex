@@ -14,7 +14,7 @@ phf = { version = "0.11", features = ["macros"] }
 v_htmlescape = "0.15"
 tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
-inkjet = { version = "0.9" , default-features = false, features = [
+inkjet = { version = "0.10.1" , default-features = false, features = [
   "html",
   "language-bash",
   "language-c",
