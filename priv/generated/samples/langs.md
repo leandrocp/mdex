@@ -186,7 +186,7 @@ GROUP BY region, product;
 }
 ```
 
-## JavaScript (WIP)
+## JavaScript
 
 ```js
 const bigDay = new Date(2019, 6, 19);
@@ -196,7 +196,7 @@ if (bigDay.getTime() < Date.now()) {
 }
 ```
 
-## TypeScript (WIP)
+## TypeScript
 
 ```typescript
 type DescribableFunction = {
@@ -206,12 +206,12 @@ type DescribableFunction = {
 function doSomething(fn: DescribableFunction) {
   console.log(fn.description + " returned " + fn(6));
 }
- 
+
 function myFunc(someArg: number) {
   return someArg > 3;
 }
 myFunc.description = "default description";
- 
+
 doSomething(myFunc);
 ```
 
