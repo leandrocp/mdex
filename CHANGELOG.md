@@ -1,9 +1,13 @@
 # Changelog
 
-## 0.1.10-dev
+## 0.1.10
 
 ### Enhancements
   * Add translate="no" attr in <code> tag
+
+### Fixes
+  * Fix Javascript syntax highlight
+  * Fix Typescript syntax highlight
 
 ## 0.1.9
 

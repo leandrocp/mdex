@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.1.10-dev"
+  @version "0.1.10"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -40,9 +40,10 @@ defmodule MDEx.MixProject do
       files: ~w[
         lib
         native/comrak_nif/src
+        native/comrak_nif/vendor
+        native/comrak_nif/.cargo
         native/comrak_nif/Cargo.*
         native/comrak_nif/Cross.toml
-        native/comrak_nif/.cargo
         checksum-Elixir.MDEx.Native.exs
         mix.exs
         README.md
