@@ -30,7 +30,7 @@ pub fn highlight_source_code(
 
     output.push_str(
         format!(
-            "{}\n{}\n",
+            "{}{}",
             open_pre_tag(theme, pre_class),
             open_code_tag(lang, code_class)
         )
@@ -44,7 +44,7 @@ pub fn highlight_source_code(
         output.push_str(highlight.as_str())
     }
 
-    output.push_str(format!("\n{}{}\n", close_code_tag(), close_pre_tag()).as_str());
+    output.push_str(format!("{}{}", close_code_tag(), close_pre_tag()).as_str());
 
     output
 }
@@ -56,14 +56,14 @@ pub fn open_tags(
     code_class: Option<&str>,
 ) -> String {
     format!(
-        "{}\n{}",
+        "{}{}",
         open_pre_tag(theme, pre_class),
         open_code_tag(lang, code_class)
     )
 }
 
 pub fn close_tags() -> String {
-    String::from("\n</code></pre>")
+    String::from("</code></pre>")
 }
 
 pub fn open_pre_tag(theme: &Theme, class: Option<&str>) -> String {
@@ -127,7 +127,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "<pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">\n<code class=\"language-rust\" translate=\"no\">\n<span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span>\n</code></pre>\n"
+            "<pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"language-rust\" translate=\"no\"><span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span></code></pre>"
         );
     }
 
@@ -144,7 +144,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "<pre class=\"pre_class\" style=\"background-color: #282C34; color: #ABB2BF;\">\n<code class=\"language-rust\" translate=\"no\">\n<span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span>\n</code></pre>\n"
+            "<pre class=\"pre_class\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"language-rust\" translate=\"no\"><span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span></code></pre>"
         );
     }
 
@@ -161,7 +161,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "<pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">\n<code class=\"code_class\" translate=\"no\">\n<span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span>\n</code></pre>\n"
+            "<pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"code_class\" translate=\"no\"><span class=\"keyword control import\" style=\"color: #E06C75;\">mod</span> <span class=\"namespace\" style=\"color: #61AFEF;\">themes</span><span class=\"\" style=\"color: #ABB2BF;\">;</span></code></pre>"
         );
     }
 }

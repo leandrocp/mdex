@@ -63,7 +63,7 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         _attributes: HashMap<String, String>,
     ) -> io::Result<()> {
         let pre_tag = autumn::open_pre_tag(self.theme, None);
-        writeln!(output, "{}", pre_tag)
+        write!(output, "{}", pre_tag)
     }
 
     fn write_code_tag(
@@ -75,11 +75,11 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
             // lang does not matter since class will be replaced
             let code_tag =
                 autumn::open_code_tag(Language::Diff, Some(attributes["class"].as_str()));
-            writeln!(output, "{}", code_tag)
+            write!(output, "{}", code_tag)
         } else {
             // assume there's no language and fallbacks to plain text
             let code_tag = autumn::open_code_tag(Language::Diff, Some("language-plain-text"));
-            writeln!(output, "{}", code_tag)
+            write!(output, "{}", code_tag)
         }
     }
 }
