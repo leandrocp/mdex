@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.1.11-dev
+## 0.1.11
+
+### Fixes
+  * Syntax highlighting - remove newlines to avoid formatting incorrectly
 
 ## 0.1.10 (2023-10-24)
 
