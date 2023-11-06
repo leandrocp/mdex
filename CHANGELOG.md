@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.12-dev
+## 0.1.12 (2023-11-06)
 
 ### Fixes
   * Comrak docs links
