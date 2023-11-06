@@ -2,6 +2,13 @@
 
 ## 0.1.12-dev
 
+### Fixes
+  * Comrak docs links
+
+### Enhancements
+  * Add languages: jsx, tsx, vim
+  * Bump injket v0.10.2
+
 ## 0.1.11 (2023-10-25)
 
 ### Fixes

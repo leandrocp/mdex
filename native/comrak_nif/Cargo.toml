@@ -19,7 +19,7 @@ phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
 v_htmlescape = "0.15"
-inkjet = { version = "0.10.1" , default-features = false, features = [
+inkjet = { version = "0.10.2" , default-features = false, features = [
   "html",
   "language-bash",
   "language-c",
@@ -42,6 +42,7 @@ inkjet = { version = "0.10.1" , default-features = false, features = [
   "language-java",
   "language-javascript",
   "language-json",
+  "language-jsx",
   "language-kotlin",
   "language-latex",
   "language-llvm",
@@ -59,7 +60,9 @@ inkjet = { version = "0.10.1" , default-features = false, features = [
   "language-sql",
   "language-swift",
   "language-toml",
+  "language-tsx",
   "language-typescript",
+  "language-vim",
   "language-yaml",
   "language-zig",
 ] }
