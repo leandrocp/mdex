@@ -4,7 +4,7 @@
 // Generated automatically by mix task `Mix.Tasks.Autumn.GenerateThemes`.
 // Execute `mix autumn.generate_themes` at the root to update this file.
 //
-// Generated at 2023-10-04 14:50:28.402176Z
+// Generated at 2023-11-12 05:31:51.898767Z
 
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -13,7 +13,7 @@ use phf::phf_map;
 
 #[derive(Debug)]
 pub struct Theme {
-    pub scopes: phf::Map<&'static str, (&'static str, &'static str)>,
+    pub scopes: phf::Map<&'static str, (&'static str, &'static str)>
 }
 
 impl Theme {
@@ -706,6 +706,41 @@ static THEMES: phf::Map<&'static str, Theme> = phf_map! {
           "comment.line" => ("comment line", "color: #6272A4;"),
           "markup.bold" => ("markup bold", "font-weight: bold; color: #ffb86c;"),
           "label" => ("label", "color: #8be9fd;"),
+          "markup.strikethrough" => ("markup strikethrough", ""),
+        },
+    },
+    "base16_tomorrow_night" => Theme {
+        scopes: phf_map! {
+          "debug" => ("debug", "color: #969896;"),
+          "constant.numeric" => ("constant numeric", "color: #de935f;"),
+          "function" => ("function", "color: #81a2be;"),
+          "variable.other.member" => ("variable other member", "color: #b5bd68;"),
+          "markup.list" => ("markup list", "color: #cc6666;"),
+          "markup.quote" => ("markup quote", "color: #8abeb7;"),
+          "keyword" => ("keyword", "color: #b294bb;"),
+          "diff.delta" => ("diff delta", "color: #de935f;"),
+          "string" => ("string", "color: #b5bd68;"),
+          "markup.link.url" => ("markup link url", "text-decoration: underline; color: #de935f;"),
+          "constant.character.escape" => ("constant character escape", "color: #8abeb7;"),
+          "operator" => ("operator", "color: #c5c8c6;"),
+          "diff.plus" => ("diff plus", "color: #b5bd68;"),
+          "special" => ("special", "color: #81a2be;"),
+          "markup.italic" => ("markup italic", "font-style: italic; color: #b294bb;"),
+          "background" => ("", "background-color: #1d1f21;"),
+          "markup.link.text" => ("markup link text", "color: #cc6666;"),
+          "comment" => ("comment", "font-style: italic; color: #969896;"),
+          "markup.raw" => ("markup raw", "color: #b5bd68;"),
+          "attributes" => ("attributes", "color: #de935f;"),
+          "diff.minus" => ("diff minus", "color: #cc6666;"),
+          "constructor" => ("constructor", "color: #81a2be;"),
+          "variable" => ("variable", "color: #cc6666;"),
+          "text" => ("", "color: #c5c8c6;"),
+          "constant" => ("constant", "color: #de935f;"),
+          "type" => ("type", "color: #f0c674;"),
+          "markup.heading" => ("markup heading", "color: #81a2be;"),
+          "namespace" => ("namespace", "color: #b294bb;"),
+          "markup.bold" => ("markup bold", "font-weight: bold; color: #f0c674;"),
+          "label" => ("label", "color: #b294bb;"),
           "markup.strikethrough" => ("markup strikethrough", ""),
         },
     },
@@ -4530,6 +4565,41 @@ static THEMES: phf::Map<&'static str, Theme> = phf_map! {
           "markup.strikethrough" => ("markup strikethrough", ""),
         },
     },
+    "base16_tomorrow" => Theme {
+        scopes: phf_map! {
+          "debug" => ("debug", "color: #8e908c;"),
+          "constant.numeric" => ("constant numeric", "color: #f5871f;"),
+          "function" => ("function", "color: #4271ae;"),
+          "variable.other.member" => ("variable other member", "color: #718c00;"),
+          "markup.list" => ("markup list", "color: #c82829;"),
+          "markup.quote" => ("markup quote", "color: #3e999f;"),
+          "keyword" => ("keyword", "color: #8959a8;"),
+          "diff.delta" => ("diff delta", "color: #f5871f;"),
+          "string" => ("string", "color: #718c00;"),
+          "markup.link.url" => ("markup link url", "text-decoration: underline; color: #f5871f;"),
+          "constant.character.escape" => ("constant character escape", "color: #3e999f;"),
+          "operator" => ("operator", "color: #4d4d4c;"),
+          "diff.plus" => ("diff plus", "color: #718c00;"),
+          "special" => ("special", "color: #4271ae;"),
+          "markup.italic" => ("markup italic", "font-style: italic; color: #8959a8;"),
+          "background" => ("", "background-color: #ffffff;"),
+          "markup.link.text" => ("markup link text", "color: #c82829;"),
+          "comment" => ("comment", "font-style: italic; color: #8e908c;"),
+          "markup.raw" => ("markup raw", "color: #718c00;"),
+          "attributes" => ("attributes", "color: #f5871f;"),
+          "diff.minus" => ("diff minus", "color: #c82829;"),
+          "constructor" => ("constructor", "color: #4271ae;"),
+          "variable" => ("variable", "color: #c82829;"),
+          "text" => ("", "color: #4d4d4c;"),
+          "constant" => ("constant", "color: #f5871f;"),
+          "type" => ("type", "color: #eab700;"),
+          "markup.heading" => ("markup heading", "color: #4271ae;"),
+          "namespace" => ("namespace", "color: #8959a8;"),
+          "markup.bold" => ("markup bold", "font-weight: bold; color: #eab700;"),
+          "label" => ("label", "color: #8959a8;"),
+          "markup.strikethrough" => ("markup strikethrough", ""),
+        },
+    },
     "serika_light" => Theme {
         scopes: phf_map! {
           "function" => ("function", "color: #3f4b34;"),
@@ -4866,7 +4936,7 @@ pub fn theme(name: &str) -> Option<&Theme> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    
     #[test]
     fn load_github_dark_high_contrast() {
         let _theme = theme("github_dark_high_contrast");
@@ -4922,6 +4992,10 @@ mod tests {
     #[test]
     fn load_dracula() {
         let _theme = theme("dracula");
+    }
+    #[test]
+    fn load_base16_tomorrow_night() {
+        let _theme = theme("base16_tomorrow_night");
     }
     #[test]
     fn load_zed_onedark() {
@@ -5262,6 +5336,10 @@ mod tests {
     #[test]
     fn load_gruvbox_dark_hard() {
         let _theme = theme("gruvbox_dark_hard");
+    }
+    #[test]
+    fn load_base16_tomorrow() {
+        let _theme = theme("base16_tomorrow");
     }
     #[test]
     fn load_serika_light() {
