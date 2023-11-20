@@ -19,7 +19,7 @@
 ## 0.1.10 (2023-10-24)
 
 ### Enhancements
-  * Add translate="no" attr in <code> tag
+  * Add translate="no" attr in `<code>` tag
 
 ### Fixes
   * Fix Javascript syntax highlight
