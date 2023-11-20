@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.1.13-dev
+## 0.1.13 (2023-11-20)
+
+### Enhancements
+  * Update autumn themes to add base16-tomorrow and base16-tomorrow-night - @paradox460
 
 ## 0.1.12 (2023-11-06)
 
