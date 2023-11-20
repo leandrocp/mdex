@@ -13,7 +13,7 @@ use phf::phf_map;
 
 #[derive(Debug)]
 pub struct Theme {
-    pub scopes: phf::Map<&'static str, (&'static str, &'static str)>
+    pub scopes: phf::Map<&'static str, (&'static str, &'static str)>,
 }
 
 impl Theme {
@@ -4936,7 +4936,7 @@ pub fn theme(name: &str) -> Option<&Theme> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn load_github_dark_high_contrast() {
         let _theme = theme("github_dark_high_contrast");
