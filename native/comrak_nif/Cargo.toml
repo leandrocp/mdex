@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 rustler = "0.29"
 serde = "1.0"
 serde_rustler = { git = "https://github.com/avencera/serde_rustler.git", branch = "rustler-0-29" }
-comrak = "0.18"
+comrak = "0.20"
 ammonia = "3.3"
 phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"

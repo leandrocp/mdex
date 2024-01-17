@@ -16,7 +16,8 @@ defmodule MDEx.Types.ParseOptions do
   @moduledoc false
   defstruct smart: false,
             default_info_string: nil,
-            relaxed_tasklist_matching: false
+            relaxed_tasklist_matching: false,
+            relaxed_autolinks: true
 end
 
 defmodule MDEx.Types.RenderOptions do
