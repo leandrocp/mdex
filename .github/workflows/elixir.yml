@@ -23,7 +23,7 @@ jobs:
           - elixir: "1.12.0"
             otp: "23"
 
-          - elixir: "1.15.1"
+          - elixir: "1.16"
             otp: "26"
 
     runs-on: ubuntu-20.04
@@ -54,7 +54,7 @@ jobs:
           restore-keys: |
             mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
 
-      - run: mix do deps.get, deps.compile
+      - run: mix deps.get
         if: steps.cache-deps.outputs.cache-hit != 'true'
 
       - run: mix test
@@ -69,7 +69,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - elixir: "1.15.1"
+          - elixir: "1.16"
             otp: "26"
 
     runs-on: ubuntu-20.04
@@ -100,7 +100,7 @@ jobs:
           restore-keys: |
             mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
 
-      - run: mix do deps.get, deps.compile
+      - run: mix deps.get
         if: steps.cache-deps.outputs.cache-hit != 'true'
 
       - run: mix compile --warnings-as-errors
