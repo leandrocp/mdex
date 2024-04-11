@@ -30,8 +30,8 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         source: &str,
     ) -> io::Result<()> {
         let mut highlighter = Highlighter::new();
-        let lang = lang.unwrap_or("diff");
-        let lang = Language::from_token(lang).unwrap_or(Language::Diff);
+        let lang = lang.unwrap_or("plaintext");
+        let lang = Language::from_token(lang).unwrap_or(Language::Plaintext);
         let config = lang.config();
 
         let highlights = highlighter
@@ -44,13 +44,11 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
                     None => None,
                 },
             )
-            // TODO: fallback to plain text
             .expect("expected to generate the syntax highlight events");
 
         for event in highlights {
-            // TODO: fallback to plain text
             let event = event.expect("expected a highlight event");
-            let inner_highlights = autumn::inner_highlights(source, event, self.theme);
+            let inner_highlights = autumn::inner_highlights(source, event, self.theme, true);
             write!(output, "{}", inner_highlights)?
         }
 
@@ -62,7 +60,7 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         output: &mut dyn Write,
         _attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        let pre_tag = autumn::open_pre_tag(self.theme, None);
+        let pre_tag = autumn::open_pre_tag(self.theme, None, true);
         write!(output, "{}", pre_tag)
     }
 
@@ -71,15 +69,12 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         output: &mut dyn Write,
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        if attributes.contains_key("class") {
-            // lang does not matter since class will be replaced
-            let code_tag =
-                autumn::open_code_tag(Language::Diff, Some(attributes["class"].as_str()));
-            write!(output, "{}", code_tag)
-        } else {
-            // assume there's no language and fallbacks to plain text
-            let code_tag = autumn::open_code_tag(Language::Diff, Some("language-plain-text"));
-            write!(output, "{}", code_tag)
-        }
+        let plaintext = "language-plaintext".to_string();
+        let language = attributes.get("class").unwrap_or(&plaintext);
+        let split: Vec<&str> = language.split('-').collect();
+        let language = split.get(1).unwrap_or(&"plaintext");
+        let language = Language::from_token(language).unwrap_or(Language::Plaintext);
+        let code_tag = autumn::open_code_tag(language);
+        write!(output, "{}", code_tag)
     }
 }

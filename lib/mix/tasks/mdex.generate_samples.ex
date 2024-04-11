@@ -20,11 +20,13 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
         line-height: 1.5;
       }
       body {
-        background-color: #ffffff;
+        padding: 50px;
       }
       pre {
         font-size: 15px;
         margin: 20px;
+        padding: 50px;
+        border-radius: 10px;
       }
     </style>
   </head>
