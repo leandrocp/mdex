@@ -34,9 +34,9 @@ defmodule MDEx.MixProject do
       maintainers: ["Leandro Pereira"],
       licenses: ["MIT"],
       links: %{
-        "Changelog" => "https://hexdocs.pm/mdex/changelog.html",
-        "GitHub" => @source_url,
-        "comrak" => "https://crates.io/crates/comrak"
+        Changelog: "https://hexdocs.pm/mdex/changelog.html",
+        GitHub: @source_url,
+        comrak: "https://crates.io/crates/comrak"
       },
       files: ~w[
         lib/mdex.ex
