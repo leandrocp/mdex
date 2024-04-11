@@ -39,7 +39,8 @@ defmodule MDEx.MixProject do
         "comrak" => "https://crates.io/crates/comrak"
       },
       files: ~w[
-        lib
+        lib/mdex.ex
+        lib/mdex
         native/comrak_nif/src
         native/comrak_nif/vendor
         native/comrak_nif/.cargo
