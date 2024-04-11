@@ -2,6 +2,10 @@
 
 ## 0.1.14-dev
 
+### Enhancements
+  * Update autumn to 0.2.2 (#33)
+  * Update comrak to 0.20.0 (#27) - @supernintendo
+
 ## 0.1.13 (2023-11-20)
 
 ### Enhancements
