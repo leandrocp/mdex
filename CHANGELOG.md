@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.15 (2024-04-11)
+## 0.1.14 (2024-04-11)
 
 ### Enhancements
   * Update autumn to 0.2.2 (#33)
