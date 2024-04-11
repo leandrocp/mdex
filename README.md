@@ -80,19 +80,19 @@ Some benefits you'll find:
 MDEx.to_html(~S"""
 # And more...
 
-* Code syntax highlight is also available:
+* Built-in code syntax highlight
 
-\`\`\`elixir
+\```elixir
 String.upcase("elixir")
-\`\`\`
+\```
 """) |> IO.puts()
 #=> <h1>And more...</h1>
 #=> <ul>
-#=> <li>Code syntax highlight is also available:</li>
+#=> <li>Built-in code syntax highlight</li>
 #=> </ul>
-#=> <pre class="autumn highlight" style="background-color: #282C34;">
-#=> <code class="language-elixir">
-#=> <span class="namespace" style="color: #61AFEF;">String</span><span class="operator" style="color: #C678DD;">.</span><span class="function" style="color: #61AFEF;">upcase</span><span class="" style="color: #ABB2BF;">(</span><span class="string" style="color: #98C379;">&quot;elixir&quot;</span><span class="" style="color: #ABB2BF;">)</span>
+#=> <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;">
+#=> <code class="language-elixir" translate="no">
+#=> <span class="ahl-namespace" style="color: #61AFEF;">String</span><span class="ahl-operator" style="color: #C678DD;">.</span><span class="ahl-function" style="color: #61AFEF;">upcase</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">(</span><span class="ahl-string" style="color: #98C379;">&quot;elixir&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">)</span>
 #=> </code></pre>
 ```
 
