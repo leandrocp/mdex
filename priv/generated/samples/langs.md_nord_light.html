@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>MDEx Sample - langs.md</title>
+  
+  <title>MDEx Sample - nord_light</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
@@ -214,6 +216,30 @@ doSomething(myFunc);
     <span class="ahl-keyword" style="color: #434C5E;">&quot;country&quot;</span>: <span class="ahl-string" style="color: #A3BE8C;">&quot;US&quot;</span>
   <span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">}</span>
 <span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">}</span>
+</code></pre>
+<h2>Lua</h2>
+<pre class="autumn-hl" style="background-color: #ECEFF4; color: #2E3440;"><code class="language-lua" translate="no"><span class="ahl-comment" style="color: #8FBCBB;">-- show all global variables</span><span class="ahl-keyword" style="color: #434C5E;">
+
+local</span> <span class="ahl-variable" style="color: #2E3440;">seen</span><span class="ahl-operator" style="color: #2E3440;">=</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">{</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">}</span><span class="ahl-keyword ahl-function" style="color: #434C5E;">
+
+function</span> <span class="ahl-variable" style="color: #2E3440;">dump</span>(<span class="ahl-variable" style="color: #2E3440;">t</span>,<span class="ahl-variable" style="color: #2E3440;">i</span>)
+	<span class="ahl-variable" style="color: #2E3440;">seen</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">[</span><span class="ahl-variable" style="color: #2E3440;">t</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">]</span><span class="ahl-operator" style="color: #2E3440;">=</span>true
+	<span class="ahl-keyword" style="color: #434C5E;">local</span> <span class="ahl-variable" style="color: #2E3440;">s</span><span class="ahl-operator" style="color: #2E3440;">=</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">{</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">}</span>
+	<span class="ahl-keyword" style="color: #434C5E;">local</span> <span class="ahl-variable" style="color: #2E3440;">n</span><span class="ahl-operator" style="color: #2E3440;">=</span>0
+	<span class="ahl-keyword" style="color: #434C5E;">for</span> <span class="ahl-variable" style="color: #2E3440;">k</span> <span class="ahl-keyword" style="color: #434C5E;">in</span> <span class="ahl-variable" style="color: #2E3440;">pairs</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">t</span><span class="ahl-function" style="color: #4C566A;">)</span> <span class="ahl-keyword" style="color: #434C5E;">do</span>
+		<span class="ahl-variable" style="color: #2E3440;">n</span><span class="ahl-operator" style="color: #2E3440;">=</span><span class="ahl-variable" style="color: #2E3440;">n</span><span class="ahl-operator" style="color: #2E3440;">+</span>1 <span class="ahl-variable" style="color: #2E3440;">s</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">[</span><span class="ahl-variable" style="color: #2E3440;">n</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">]</span><span class="ahl-operator" style="color: #2E3440;">=</span><span class="ahl-variable" style="color: #2E3440;">k</span>
+	<span class="ahl-keyword" style="color: #434C5E;">end</span>
+	<span class="ahl-variable" style="color: #2E3440;">table</span><span class="ahl-punctuation ahl-delimiter" style="color: #2E3440;">.</span><span class="ahl-variable" style="color: #2E3440;">sort</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">s</span><span class="ahl-function" style="color: #4C566A;">)</span>
+	<span class="ahl-keyword" style="color: #434C5E;">for</span> <span class="ahl-variable" style="color: #2E3440;">k</span>,<span class="ahl-variable" style="color: #2E3440;">v</span> <span class="ahl-keyword" style="color: #434C5E;">in</span> <span class="ahl-variable" style="color: #2E3440;">ipairs</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">s</span><span class="ahl-function" style="color: #4C566A;">)</span> <span class="ahl-keyword" style="color: #434C5E;">do</span>
+		<span class="ahl-variable" style="color: #2E3440;">print</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">i</span><span class="ahl-punctuation ahl-delimiter" style="color: #2E3440;">,</span><span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-function" style="color: #4C566A;">)</span>
+		<span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-operator" style="color: #2E3440;">=</span><span class="ahl-variable" style="color: #2E3440;">t</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">[</span><span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">]</span>
+		<span class="ahl-keyword" style="color: #434C5E;">if</span> <span class="ahl-variable" style="color: #2E3440;">type</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-function" style="color: #4C566A;">)</span><span class="ahl-operator" style="color: #2E3440;">==</span><span class="ahl-string" style="color: #A3BE8C;">&quot;table&quot;</span> <span class="ahl-keyword ahl-operator" style="color: #434C5E;">and</span> <span class="ahl-keyword ahl-operator" style="color: #434C5E;">not</span> <span class="ahl-variable" style="color: #2E3440;">seen</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">[</span><span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-punctuation ahl-bracket" style="color: #2E3440;">]</span> <span class="ahl-keyword" style="color: #434C5E;">then</span>
+			<span class="ahl-variable" style="color: #2E3440;">dump</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">v</span><span class="ahl-punctuation ahl-delimiter" style="color: #2E3440;">,</span><span class="ahl-variable" style="color: #2E3440;">i</span><span class="ahl-operator" style="color: #2E3440;">..</span><span class="ahl-string" style="color: #A3BE8C;">&quot;\t&quot;</span><span class="ahl-function" style="color: #4C566A;">)</span>
+		<span class="ahl-keyword" style="color: #434C5E;">end</span>
+	<span class="ahl-keyword" style="color: #434C5E;">end</span>
+<span class="ahl-keyword ahl-function" style="color: #434C5E;">end</span><span class="ahl-variable" style="color: #2E3440;">
+
+dump</span><span class="ahl-function" style="color: #4C566A;">(</span><span class="ahl-variable" style="color: #2E3440;">_G</span><span class="ahl-punctuation ahl-delimiter" style="color: #2E3440;">,</span><span class="ahl-string" style="color: #A3BE8C;">&quot;&quot;</span><span class="ahl-function" style="color: #4C566A;">)</span>
 </code></pre>
 
 </body>

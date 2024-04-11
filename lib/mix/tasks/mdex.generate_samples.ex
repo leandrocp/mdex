@@ -10,7 +10,11 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <%= if @index do %>
+    <title>MDEx Samples</title>
+    <% else %>
     <title>MDEx Sample - <%= @filename %></title>
+    <% end %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
@@ -63,7 +67,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
 
     html =
       EEx.eval_string(@layout,
-        assigns: %{filename: filename, inner_content: md}
+        assigns: %{filename: filename, inner_content: md, index: false}
       )
 
     dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "#{filename}.html"])
@@ -94,7 +98,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
 
     html =
       EEx.eval_string(@layout,
-        assigns: %{inner_content: inner_content, index: true}
+        assigns: %{inner_content: inner_content, filename: "", index: true}
       )
 
     dest_path = Path.join([:code.priv_dir(:mdex), "generated", "samples", "index.html"])
@@ -105,13 +109,16 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
     path = "langs.md"
 
     for theme <- [
-          "onedark",
-          "dracula",
           "catppuccin_macchiato",
+          "catppuccin_latte",
+          "onedark",
+          "zed_onedark",
+          "zed_onelight",
+          "dracula",
           "github_light",
           "github_dark",
-          "autumn",
           "base16_default_dark",
+          "base16_tomorrow",
           "emacs",
           "nord",
           "nord_light",
@@ -119,7 +126,8 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
           "solarized_dark",
           "solarized_light",
           "sonokai",
-          "spacebones_light"
+          "tokyonight",
+          "tokyonight_day"
         ] do
       Mix.shell().info("#{path} - #{theme}")
 
@@ -132,7 +140,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
 
       html =
         EEx.eval_string(@layout,
-          assigns: %{filename: path, inner_content: md}
+          assigns: %{filename: theme, inner_content: md, index: false}
         )
 
       dest_path =
