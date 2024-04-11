@@ -489,9 +489,9 @@ dependencies = [
 
 [[package]]
 name = "inkjet"
-version = "0.10.2"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b4d60ab5fcbcbe85167d4781b58b1b8f386b81cb987e77f26acaa81d8bbc7fc"
+checksum = "b44a14d77fc5879e5137be9beee1401ca24038be727ca1b4b68bc81705f98b40"
 dependencies = [
  "anyhow",
  "cc",
