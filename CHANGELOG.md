@@ -2,6 +2,10 @@
 
 ## 0.1.14 (2024-04-11)
 
+### Backwards incompatible changes
+  * [Syntax Highlight] Renamed parent `<pre>` class from `autumn-highlight` to `autumn-hl`
+  * [Syntax Highlight] Added prefix `ahl-` to each scope class
+
 ### Enhancements
   * Update autumn to 0.2.2 (#33)
   * Update comrak to 0.20.0 (#27) - @supernintendo
