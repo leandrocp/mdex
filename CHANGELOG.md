@@ -8,6 +8,7 @@
   * Added legacy targets
 
 ### Backwards incompatible changes
+  * Minimum required Elixir version is now 1.14
   * Removed target `arm-unknown-linux-gnueabihf`
   * Removed target `riscv64gc-unknown-linux-gnu`
 
