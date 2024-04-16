@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.15-dev
+## 0.1.15 (2024-04-16)
 
 ### Enhancements
   * Update rustler to `~> 0.32`
