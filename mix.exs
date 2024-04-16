@@ -10,7 +10,7 @@ defmodule MDEx.MixProject do
     [
       app: :mdex,
       version: @version,
-      elixir: "~> 1.12",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       package: package(),
       docs: docs(),
