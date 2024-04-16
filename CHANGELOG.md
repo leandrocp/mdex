@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.15-dev
+
+### Enhancements
+  * Update rustler to `~> 0.32`
+  * Update rustler_precompiled `~> 0.7`
+  * Added legacy targets
+
+### Backwards incompatible changes
+  * Minimum required Elixir version is now 1.14
+  * Removed target `arm-unknown-linux-gnueabihf`
+  * Removed target `riscv64gc-unknown-linux-gnu`
+
 ## 0.1.14 (2024-04-11)
 
 ### Backwards incompatible changes
