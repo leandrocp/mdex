@@ -11,7 +11,6 @@ use comrak::{
 };
 use inkjet_adapter::InkjetAdapter;
 use rustler::{Env, NifResult, Term};
-use serde_rustler::to_term;
 use types::options::*;
 
 rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
@@ -95,5 +94,5 @@ fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
         false => unsafe_html,
     };
 
-    to_term(env, html).map_err(|err| err.into())
+    rustler::serde::to_term(env, html).map_err(|err| err.into())
 }

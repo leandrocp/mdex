@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.1.15"
+  @version "0.1.16-dev"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -69,7 +69,7 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.32.0", optional: not (@dev? or @force_build?)},
+      {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
       {:ex_doc, "~> 0.29", only: :dev}
     ]
