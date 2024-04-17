@@ -95,5 +95,4 @@ fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
     };
 
     rustler::serde::to_term(env, html).map_err(|err| err.into())
-
 }
