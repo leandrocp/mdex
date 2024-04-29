@@ -16,7 +16,7 @@ tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
 # inkjet = { git = "https://github.com/fork/inkjet.git", branch = "master", version = "0.10.4" , default-features = false, features = [
 # inkjet = { path = "/path/to/inkjet" , version = "0.10.4" , default-features = false, features = [
-inkjet = { version = "0.10.4" , default-features = false, features = [
+inkjet = { version = "0.10.5" , default-features = false, features = [
   "html",
   "language-bash",
   "language-c",
@@ -48,6 +48,7 @@ inkjet = { version = "0.10.4" , default-features = false, features = [
   "language-llvm",
   "language-lua",
   "language-make",
+  "language-objc",
   "language-ocaml",
   "language-ocaml-interface",
   "language-pascal",
