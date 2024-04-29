@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.16 (2024-04-29)
+
+### Enhancements
+  * Added language `objc` to syntax highlighter.
+
 ## 0.1.15 (2024-04-16)
 
 ### Enhancements
