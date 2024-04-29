@@ -100,6 +100,14 @@ String.upcase("elixir")
 
 A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library,or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
 
+## Used By
+
+- [BeaconCMS](https://github.com/BeaconCMS/beacon)
+- [Tableau](https://github.com/elixir-tools/tableau)
+
+_Using it and want your project listed here? Please send a PR!_
+
+
 ## Benchmark
 
 A [simple script](benchmark.exs) is available to compare existing libs:
