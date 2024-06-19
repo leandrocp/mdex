@@ -54,10 +54,20 @@ fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOptions {
     extension_options.autolink = options.extension.autolink;
     extension_options.tasklist = options.extension.tasklist;
     extension_options.superscript = options.extension.superscript;
-    extension_options.header_ids = options.extension.header_ids.clone();
+    extension_options
+        .header_ids
+        .clone_from(&options.extension.header_ids);
     extension_options.footnotes = options.extension.footnotes;
     extension_options.description_lists = options.extension.description_lists;
-    extension_options.front_matter_delimiter = options.extension.front_matter_delimiter.clone();
+    extension_options
+        .front_matter_delimiter
+        .clone_from(&options.extension.front_matter_delimiter);
+    extension_options.multiline_block_quotes = options.extension.multiline_block_quotes;
+    extension_options.math_dollars = options.extension.math_dollars;
+    extension_options.math_code = options.extension.math_code;
+    extension_options.shortcodes = options.extension.shortcodes;
+    extension_options.wikilinks_title_after_pipe = options.extension.wikilinks_title_after_pipe;
+    extension_options.wikilinks_title_before_pipe = options.extension.wikilinks_title_before_pipe;
 
     extension_options
 }
@@ -66,7 +76,9 @@ fn parse_options_from_ex_options(options: &ExOptions) -> ParseOptions {
     let mut parse_options = ParseOptions::default();
 
     parse_options.smart = options.parse.smart;
-    parse_options.default_info_string = options.parse.default_info_string.clone();
+    parse_options
+        .default_info_string
+        .clone_from(&options.parse.default_info_string);
     parse_options.relaxed_tasklist_matching = options.parse.relaxed_tasklist_matching;
     parse_options.relaxed_autolinks = options.parse.relaxed_autolinks;
 
@@ -84,6 +96,7 @@ fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
     render_options.escape = options.render.escape;
     render_options.list_style = ListStyleType::from(options.render.list_style.clone());
     render_options.sourcepos = options.render.sourcepos;
+    render_options.escaped_char_spans = options.render.escaped_char_spans;
 
     render_options
 }

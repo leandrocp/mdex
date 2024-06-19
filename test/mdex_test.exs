@@ -81,4 +81,8 @@ defmodule MDExTest do
       )
     end
   end
+
+  test "render emoji shortcodes" do
+    assert_output(":rocket:", "<p>🚀</p>\n", extension: [shortcodes: true])
+  end
 end

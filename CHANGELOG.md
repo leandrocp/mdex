@@ -6,6 +6,8 @@
   * Relax minimum required Elixir version to 1.13
   * Bump comrak to 0.24.1
   * Bump ammonia to 4.0
+  * Add new `extension` options: multiline_block_quotes, math_dollars, math_code, shortcodes, wikilinks_title_after_pipe, wikilinks_title_before_pipe
+  * Add new `render` option: escaped_char_spans
 
 ## 0.1.16 (2024-04-29)
 

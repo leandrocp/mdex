@@ -213,6 +213,7 @@ checksum = "5a972c8ec1be8065f7b597b5f7f5b3be535db780280644aebdcd1966decf58dc"
 dependencies = [
  "clap",
  "derive_builder",
+ "emojis",
  "entities",
  "memchr",
  "once_cell",
@@ -339,6 +340,15 @@ name = "deunicode"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a1abaf4d861455be59f64fd2b55606cb151fce304ede7165f410243ce96bde6"
+
+[[package]]
+name = "emojis"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f619a926616ae7149a0d82610b051134a0d6c4ae2962d990c06c847a445c5d9"
+dependencies = [
+ "phf",
+]
 
 [[package]]
 name = "entities"
