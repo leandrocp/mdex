@@ -170,12 +170,14 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 
 ## Motivation
 
-* `earmark` [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
+* `earmark` is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
 * `md` is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
 * `markdown` is not precompiled and has not received updates in a while.
-* `cmark` is a fast CommonMark parser but it requires compiling the C library and is hard to extend.
+* `cmark` is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archieved on Apr 2024
 
-But if any of the available libraries is working for you, you can keep using it :)
+_Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
+
+To finish, a friendly reminder that all libs have their own strengths and trade-offs.
 
 ## Looking for help with your Elixir project?
 
