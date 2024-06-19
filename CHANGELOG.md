@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.17-dev
+
+### Enhancements
+  * Relax minimum required Elixir version to 1.13
+
 ## 0.1.16 (2024-04-29)
 
 ### Enhancements
