@@ -156,22 +156,22 @@ A [simple script](benchmark.exs) is available to compare existing libs:
 
 ```
 Name              ips        average  deviation         median         99th %
-cmark         24.01 K      0.0417 ms    ±14.11%      0.0405 ms      0.0631 ms
-mdex          16.37 K      0.0611 ms     ±9.65%      0.0601 ms      0.0870 ms
-md             0.85 K        1.18 ms     ±4.72%        1.16 ms        1.36 ms
-earmark        0.47 K        2.14 ms     ±2.82%        2.13 ms        2.42 ms
+cmark         22.82 K      0.0438 ms    ±16.24%      0.0429 ms      0.0598 ms
+mdex           3.57 K        0.28 ms     ±9.79%        0.28 ms        0.33 ms
+md             0.34 K        2.95 ms    ±10.56%        2.90 ms        3.62 ms
+earmark        0.25 K        4.04 ms     ±4.50%        4.00 ms        4.44 ms
 
 Comparison:
-cmark         24.01 K
-mdex          16.37 K - 1.47x slower +0.0194 ms
-md             0.85 K - 28.36x slower +1.14 ms
-earmark        0.47 K - 51.47x slower +2.10 ms
+cmark         22.82 K
+mdex           3.57 K - 6.39x slower +0.24 ms
+md             0.34 K - 67.25x slower +2.90 ms
+earmark        0.25 K - 92.19x slower +4.00 ms
 ```
 
 ## Motivation
 
 * `earmark` [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
-* `md` is fast enough and extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" so it also fails to parse many documents.
+* `md` is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
 * `markdown` is not precompiled and has not received updates in a while.
 * `cmark` is a fast CommonMark parser but it requires compiling the C library and is hard to extend.
 

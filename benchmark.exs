@@ -1,7 +1,7 @@
 Mix.install([:req, :benchee, :earmark, :md, :cmark, :mdex])
 
 defmodule Benchmark do
-  @markdown Req.get!("https://raw.githubusercontent.com/BeaconCMS/live_monaco_editor/main/README.md").body
+  @markdown Req.get!("https://raw.githubusercontent.com/leandrocp/mdex/main/README.md").body
 
   def run do
     Benchee.run(%{
