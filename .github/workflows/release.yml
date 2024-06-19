@@ -17,26 +17,29 @@ on:
       - "*"
   pull_request:
     paths:
-      # In PRs we only run if these files changes.
+      # In PRs we only run if this file changes.
       - ".github/workflows/release.yml"
-      - "native/**"
   workflow_dispatch:
 
 jobs:
   build_release:
     name: NIF ${{ matrix.nif }} - ${{ matrix.job.target }} (${{ matrix.job.os }} | ${{ matrix.job.variant || 'default' }})
     runs-on: ${{ matrix.job.os }}
+
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+
     strategy:
       fail-fast: false
       matrix:
         nif: ["2.15"]
         job:
-          - { target: aarch64-apple-darwin, os: macos-11 }
+          - { target: aarch64-apple-darwin, os: macos-12 }
           - { target: aarch64-unknown-linux-gnu, os: ubuntu-20.04, use-cross: true }
           - { target: aarch64-unknown-linux-musl, os: ubuntu-20.04, use-cross: true }
-          - { target: x86_64-apple-darwin, os: macos-11 }
+          - { target: x86_64-apple-darwin, os: macos-12 }
           - { target: x86_64-pc-windows-gnu, os: windows-2022, rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
           - { target: x86_64-pc-windows-gnu, os: windows-2022, variant: "legacy_cpu" }
           - { target: x86_64-pc-windows-msvc, os: windows-2019, rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
@@ -88,6 +91,11 @@ jobs:
           project-dir: "native/comrak_nif"
           cargo-args: ${{ matrix.job.cargo-args }}
           variant: ${{ matrix.job.variant }}
+
+      - name: Artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ steps.build-crate.outputs.file-path }}
 
       - name: Artifact upload
         uses: actions/upload-artifact@v4
