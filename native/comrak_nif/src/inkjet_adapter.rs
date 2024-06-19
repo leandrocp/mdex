@@ -12,6 +12,17 @@ pub struct InkjetAdapter<'a> {
     inline_style: bool,
 }
 
+impl<'a> Default for InkjetAdapter<'a> {
+    fn default() -> Self {
+        let default_theme = themes::theme("onedark").unwrap();
+
+        InkjetAdapter {
+            theme: &default_theme,
+            inline_style: true,
+        }
+    }
+}
+
 impl<'a> InkjetAdapter<'a> {
     pub fn new(theme: &'a str, inline_style: bool) -> Self {
         let theme = match themes::theme(theme) {

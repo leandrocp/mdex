@@ -17,7 +17,7 @@ rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {
-    let inkjet_adapter = InkjetAdapter::new("onedark", true);
+    let inkjet_adapter = InkjetAdapter::default();
     let mut plugins = ComrakPlugins::default();
     plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
     markdown_to_html_with_plugins(md, &Options::default(), &plugins)
