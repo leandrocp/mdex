@@ -58,7 +58,6 @@ defmodule MDEx.MixProject do
   defp docs do
     [
       main: "MDEx",
-      assets: "assets/images",
       logo: "assets/images/mdex_icon.png",
       source_ref: "v#{@version}",
       source_url: @source_url,
