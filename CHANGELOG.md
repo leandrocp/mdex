@@ -10,6 +10,9 @@
   * Add new `render` option: escaped_char_spans
   * Add new option `features.syntax_highlight_inline_style` to control whether to embed inline styles or not. Default is `true`.
 
+### Changed
+  * Build binaries on MacOS 12
+
 ## 0.1.16 (2024-04-29)
 
 ### Enhancements
