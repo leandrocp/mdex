@@ -71,7 +71,7 @@ defmodule MDEx.MixProject do
     [
       {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
-      {:ex_doc, "~> 0.29", only: :dev}
+      {:ex_doc, "~> 0.34", only: :dev}
     ]
   end
 
