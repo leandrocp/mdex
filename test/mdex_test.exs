@@ -80,6 +80,21 @@ defmodule MDExTest do
         """
       )
     end
+
+    test "without inline styles" do
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre class="autumn-hl"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket">{</span><span class="ahl-string ahl-special ahl-symbol">:mdex</span><span class="ahl-punctuation ahl-delimiter">,</span> <span class="ahl-string">&quot;~&gt; 0.1&quot;</span><span class="ahl-punctuation ahl-bracket">}</span>
+        </code></pre>
+        """,
+        features: [syntax_highlight_inline_style: false]
+      )
+    end
   end
 
   test "render emoji shortcodes" do

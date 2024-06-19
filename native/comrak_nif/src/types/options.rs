@@ -66,6 +66,7 @@ pub struct ExRenderOptions {
 pub struct ExFeaturesOptions {
     pub sanitize: bool,
     pub syntax_highlight_theme: Option<String>,
+    pub syntax_highlight_inline_style: Option<bool>,
 }
 
 #[derive(Debug, NifStruct)]

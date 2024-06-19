@@ -42,7 +42,8 @@ end
 defmodule MDEx.Types.FeaturesOptions do
   @moduledoc false
   defstruct sanitize: false,
-            syntax_highlight_theme: "onedark"
+            syntax_highlight_theme: "onedark",
+            syntax_highlight_inline_style: true
 end
 
 defmodule MDEx.Types.Options do
