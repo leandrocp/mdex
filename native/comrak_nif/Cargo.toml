@@ -10,14 +10,14 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = { version = "0.32", features = [
+rustler = { version = "0.33", features = [
     "derive",
     "nif_version_2_15",
     "serde",
 ] }
 serde = "1.0"
-comrak = "0.22"
-ammonia = "3.3"
+comrak = "0.24"
+ammonia = "4.0"
 phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"

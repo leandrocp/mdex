@@ -4,6 +4,8 @@
 
 ### Enhancements
   * Relax minimum required Elixir version to 1.13
+  * Bump comrak to 0.24.1
+  * Bump ammonia to 4.0
 
 ## 0.1.16 (2024-04-29)
 
