@@ -56,49 +56,90 @@ MDEx.to_html("# Hello")
 #=> "<h1>Hello</h1>\n"
 ```
 
-```elixir
-MDEx.to_html(~S"""
-# MDEx
+And you can change how the markdown is parsed and formatted by passing options to `MDEx.to_html/2` to enable more features:
 
-Some benefits you'll find:
-- Fast
-- CommonMark spec
-- Binary is precompiled, no need to compile anything
-""") |> IO.puts()
-#=>
-#=> <h1>MDEx</h1>
-#=> <p>Some benefits you'll find:</p>
+### GitHub Flavored Markdown with emojis
+
+```elixir
+MDEx.to_html(
+  ~S"""
+  # GitHub Flavored Markdown :rocket:
+
+  - [x] Task A
+  - [x] Task B
+  - [ ] Task C
+
+  | Feature | Status |
+  | ------- | ------ |
+  | Fast | :white_check_mark: |
+  | GFM  | :white_check_mark: |
+
+  Check out the spec at https://github.github.com/gfm/
+  """,
+  extension: [
+    strikethrough: true,
+    tagfilter: true,
+    table: true,
+    autolink: true,
+    tasklist: true,
+    footnotes: true,
+    shortcodes: true,
+  ],
+  parse: [
+    smart: true,
+    relaxed_tasklist_matching: true,
+    relaxed_autolinks: true
+  ],
+  render: [
+     github_pre_lang: true,
+     escape: true
+  ]
+) |> IO.puts()
+#=> <p>GitHub Flavored Markdown 🚀</p>
 #=> <ul>
-#=> <li>Fast</li>
-#=> <li>CommonMark spec</li>
-#=> <li>Binary is precompiled, no need to compile anything</li>
-#=> <li>Easier to work with since it's Rust</li>
+#=>   <li><input type="checkbox" checked="" disabled="" /> Task A</li>
+#=>   <li><input type="checkbox" checked="" disabled="" /> Task B</li>
+#=>   <li><input type="checkbox" disabled="" /> Task C</li>
 #=> </ul>
+#=> <table>
+#=>   <thead>
+#=>     <tr>
+#=>       <th>Feature</th>
+#=>       <th>Status</th>
+#=>     </tr>
+#=>   </thead>
+#=>   <tbody>
+#=>     <tr>
+#=>       <td>Fast</td>
+#=>       <td>✅</td>
+#=>     </tr>
+#=>     <tr>
+#=>       <td>GFM</td>
+#=>       <td>✅</td>
+#=>     </tr>
+#=>   </tbody>
+#=> </table>
+#=> <p>Check out the spec at <a href="https://github.github.com/gfm/">https://github.github.com/gfm/</a></p>
 ```
 
+### Code Syntax Highlighting
+
 ```elixir
 MDEx.to_html(~S"""
-# And more...
-
-* Built-in code syntax highlight
-
 \```elixir
 String.upcase("elixir")
 \```
 """) |> IO.puts()
-#=> <h1>And more...</h1>
-#=> <ul>
-#=> <li>Built-in code syntax highlight</li>
-#=> </ul>
 #=> <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;">
-#=> <code class="language-elixir" translate="no">
-#=> <span class="ahl-namespace" style="color: #61AFEF;">String</span><span class="ahl-operator" style="color: #C678DD;">.</span><span class="ahl-function" style="color: #61AFEF;">upcase</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">(</span><span class="ahl-string" style="color: #98C379;">&quot;elixir&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">)</span>
-#=> </code></pre>
+#=>   <code class="language-elixir" translate="no">
+#=>     <span class="ahl-namespace" style="color: #61AFEF;">String</span><span class="ahl-operator" style="color: #C678DD;">.</span><span class="ahl-function" style="color: #61AFEF;">upcase</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">(</span><span class="ahl-string" style="color: #98C379;">&quot;elixir&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">)</span>
+#=>   </code>
+#=> </pre>
 ```
 
 ## Demo and Samples
 
-A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library,or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
+A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library, or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
 
 ## Used By
 
@@ -106,7 +147,6 @@ A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and 
 - [Tableau](https://github.com/elixir-tools/tableau)
 
 _Using it and want your project listed here? Please send a PR!_
-
 
 ## Benchmark
 
