@@ -124,18 +124,20 @@ MDEx.to_html(
 
 ### Code Syntax Highlighting
 
-```elixir
+````elixir
 MDEx.to_html(~S"""
-\```elixir
+```elixir
 String.upcase("elixir")
-\```
-""") |> IO.puts()
-#=> <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;">
-#=>   <code class="language-elixir" translate="no">
-#=>     <span class="ahl-namespace" style="color: #61AFEF;">String</span><span class="ahl-operator" style="color: #C678DD;">.</span><span class="ahl-function" style="color: #61AFEF;">upcase</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">(</span><span class="ahl-string" style="color: #98C379;">&quot;elixir&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">)</span>
+```
+""",
+features: [syntax_highlight_theme: "catppuccin_latte"]
+) |> IO.puts()
+#=> <pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">
+#=>   <code class=\"language-elixir\" translate=\"no\">
+#=>     <span class=\"namespace\" style=\"color: #61AFEF;\">String</span><span class=\"operator\" style=\"color: #C678DD;\">.</span><span class=\"function\" style=\"color: #61AFEF;\">upcase</span><span class=\"\" style=\"color: #ABB2BF;\">(</span><span class=\"string\" style=\"color: #98C379;\">&quot;elixir&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">)</span>
 #=>   </code>
 #=> </pre>
-```
+````
 
 ## Demo and Samples
 

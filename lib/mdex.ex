@@ -30,7 +30,7 @@ defmodule MDEx do
 
   ## Options
 
-  Accepts all available [Comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html) as keyword lists.
+  Accepts all available [Comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html) as keyword lists and an extra `:features` option:
 
   * `:extension` - https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html
   * `:parse` - https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html
