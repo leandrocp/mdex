@@ -13,6 +13,12 @@ pub struct ExExtensionOptions {
     pub footnotes: bool,
     pub description_lists: bool,
     pub front_matter_delimiter: Option<String>,
+    pub multiline_block_quotes: bool,
+    pub math_dollars: bool,
+    pub math_code: bool,
+    pub shortcodes: bool,
+    pub wikilinks_title_after_pipe: bool,
+    pub wikilinks_title_before_pipe: bool,
 }
 
 #[derive(Debug, NifStruct)]
@@ -52,6 +58,7 @@ pub struct ExRenderOptions {
     pub escape: bool,
     pub list_style: ExListStyleType,
     pub sourcepos: bool,
+    pub escaped_char_spans: bool,
 }
 
 #[derive(Debug, NifStruct)]
