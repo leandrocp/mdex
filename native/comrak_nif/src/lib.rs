@@ -17,7 +17,7 @@ rustler::init!("Elixir.MDEx.Native", [to_html, to_html_with_options]);
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn to_html(md: &str) -> String {
-    let inkjet_adapter = InkjetAdapter::new("onedark");
+    let inkjet_adapter = InkjetAdapter::default();
     let mut plugins = ComrakPlugins::default();
     plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
     markdown_to_html_with_plugins(md, &Options::default(), &plugins)
@@ -32,7 +32,13 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifRe
     };
     match options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(&theme);
+            let inkjet_adapter = InkjetAdapter::new(
+                &theme,
+                options
+                    .features
+                    .syntax_highlight_inline_style
+                    .unwrap_or(true),
+            );
             let mut plugins = ComrakPlugins::default();
             plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
             let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);

@@ -9,16 +9,31 @@ use tree_sitter_highlight::Highlighter;
 #[derive(Debug)]
 pub struct InkjetAdapter<'a> {
     theme: &'a Theme,
+    inline_style: bool,
+}
+
+impl<'a> Default for InkjetAdapter<'a> {
+    fn default() -> Self {
+        let default_theme = themes::theme("onedark").unwrap();
+
+        InkjetAdapter {
+            theme: default_theme,
+            inline_style: true,
+        }
+    }
 }
 
 impl<'a> InkjetAdapter<'a> {
-    pub fn new(theme: &'a str) -> Self {
+    pub fn new(theme: &'a str, inline_style: bool) -> Self {
         let theme = match themes::theme(theme) {
             Some(theme) => theme,
             None => themes::theme("onedark").unwrap(),
         };
 
-        Self { theme }
+        Self {
+            theme,
+            inline_style,
+        }
     }
 }
 
@@ -48,7 +63,8 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
 
         for event in highlights {
             let event = event.expect("expected a highlight event");
-            let inner_highlights = autumn::inner_highlights(source, event, self.theme, true);
+            let inner_highlights =
+                autumn::inner_highlights(source, event, self.theme, self.inline_style);
             write!(output, "{}", inner_highlights)?
         }
 
@@ -60,7 +76,7 @@ impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
         output: &mut dyn Write,
         _attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        let pre_tag = autumn::open_pre_tag(self.theme, None, true);
+        let pre_tag = autumn::open_pre_tag(self.theme, None, self.inline_style);
         write!(output, "{}", pre_tag)
     }
 
