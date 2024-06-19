@@ -17,7 +17,7 @@ impl<'a> Default for InkjetAdapter<'a> {
         let default_theme = themes::theme("onedark").unwrap();
 
         InkjetAdapter {
-            theme: &default_theme,
+            theme: default_theme,
             inline_style: true,
         }
     }
