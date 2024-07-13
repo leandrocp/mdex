@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.18
+## 0.1.18 (2024-07-13)
 
 ### Enhancements
   * Bump comrak from [0.24.1 to 0.26.0](https://github.com/kivikakk/comrak/blob/9f4d391abe2857031f993c4cdddf1ebba7cdbc7d/changelog.txt#L1-L60)
