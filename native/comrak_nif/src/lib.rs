@@ -33,7 +33,7 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifRe
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
             let inkjet_adapter = InkjetAdapter::new(
-                &theme,
+                theme,
                 options
                     .features
                     .syntax_highlight_inline_style
