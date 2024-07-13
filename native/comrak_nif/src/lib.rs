@@ -30,10 +30,10 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifRe
         parse: parse_options_from_ex_options(&options),
         render: render_options_from_ex_options(&options),
     };
-    match options.features.syntax_highlight_theme {
+    match &options.features.syntax_highlight_theme {
         Some(theme) => {
             let inkjet_adapter = InkjetAdapter::new(
-                &theme,
+                theme,
                 options
                     .features
                     .syntax_highlight_inline_style
@@ -74,6 +74,9 @@ fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOptions {
     extension_options.shortcodes = options.extension.shortcodes;
     extension_options.wikilinks_title_after_pipe = options.extension.wikilinks_title_after_pipe;
     extension_options.wikilinks_title_before_pipe = options.extension.wikilinks_title_before_pipe;
+    extension_options.underline = options.extension.underline;
+    extension_options.spoiler = options.extension.spoiler;
+    extension_options.greentext = options.extension.greentext;
 
     extension_options
 }
@@ -102,7 +105,12 @@ fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
     render_options.escape = options.render.escape;
     render_options.list_style = ListStyleType::from(options.render.list_style.clone());
     render_options.sourcepos = options.render.sourcepos;
+    render_options.experimental_inline_sourcepos = options.render.experimental_inline_sourcepos;
     render_options.escaped_char_spans = options.render.escaped_char_spans;
+    render_options.ignore_setext = options.render.ignore_setext;
+    render_options.ignore_empty_links = options.render.ignore_empty_links;
+    render_options.gfm_quirks = options.render.gfm_quirks;
+    render_options.prefer_fenced = options.render.prefer_fenced;
 
     render_options
 }
