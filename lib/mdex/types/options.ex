@@ -15,7 +15,10 @@ defmodule MDEx.Types.ExtensionOptions do
             math_code: false,
             shortcodes: false,
             wikilinks_title_after_pipe: false,
-            wikilinks_title_before_pipe: false
+            wikilinks_title_before_pipe: false,
+            underline: false,
+            spoiler: false,
+            greentext: false
 end
 
 defmodule MDEx.Types.ParseOptions do
@@ -36,7 +39,12 @@ defmodule MDEx.Types.RenderOptions do
             escape: false,
             list_style: :dash,
             sourcepos: false,
-            escaped_char_spans: false
+            experimental_inline_sourcepos: false,
+            escaped_char_spans: false,
+            ignore_setext: false,
+            ignore_empty_links: false,
+            gfm_quirks: false,
+            prefer_fenced: false
 end
 
 defmodule MDEx.Types.FeaturesOptions do

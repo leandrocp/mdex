@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.18
+
+### Enhancements
+  * Bump comrak from [0.24.1 to 0.26.0](https://github.com/kivikakk/comrak/blob/9f4d391abe2857031f993c4cdddf1ebba7cdbc7d/changelog.txt#L1-L60)
+  * Add new `extension` options: underline, spoiler, greentext
+  * Add new `render` options: experimental_inline_sourcepos, escaped_char_spans, ignore_setext, ignore_empty_links, gfm_quirks, prefer_fenced
+
 ## 0.1.17 (2024-06-19)
 
 ### Enhancements

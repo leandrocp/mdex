@@ -19,6 +19,9 @@ pub struct ExExtensionOptions {
     pub shortcodes: bool,
     pub wikilinks_title_after_pipe: bool,
     pub wikilinks_title_before_pipe: bool,
+    pub underline: bool,
+    pub spoiler: bool,
+    pub greentext: bool,
 }
 
 #[derive(Debug, NifStruct)]
@@ -58,7 +61,12 @@ pub struct ExRenderOptions {
     pub escape: bool,
     pub list_style: ExListStyleType,
     pub sourcepos: bool,
+    pub experimental_inline_sourcepos: bool,
     pub escaped_char_spans: bool,
+    pub ignore_setext: bool,
+    pub ignore_empty_links: bool,
+    pub gfm_quirks: bool,
+    pub prefer_fenced: bool,
 }
 
 #[derive(Debug, NifStruct)]
