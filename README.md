@@ -35,7 +35,7 @@ Check out some samples at https://mdex-c31.pages.dev
 
 ## Installation
 
-Add `:mdex` dependecy:
+Add `:mdex` dependency:
 
 ```elixir
 def deps do
