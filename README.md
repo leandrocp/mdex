@@ -58,7 +58,7 @@ MDEx.to_html("# Hello")
 
 And you can change how the markdown is parsed and formatted by passing options to `MDEx.to_html/2` to enable more features:
 
-### GitHub Flavored Markdown with emojis
+### GitHub Flavored Markdown with [emojis](https://www.webfx.com/tools/emoji-cheat-sheet/)
 
 ```elixir
 MDEx.to_html(
