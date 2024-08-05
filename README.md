@@ -29,7 +29,7 @@
 - Fast. Check out the [benchmark](https://github.com/leandrocp/mdex#benchmark)
 - Compatible with the [CommonMark spec](https://spec.commonmark.org) and the [GitHub Flavored Markdown Spec](https://github.github.com/gfm/)
 - Binary is precompiled, no need to compile anything
-- Code syntax highlithging, performed by [Autumn](https://github.com/leandrocp/autumn)
+- Code syntax highlighting, performed by [Autumn](https://github.com/leandrocp/autumn)
 
 Check out some samples at https://mdex-c31.pages.dev
 
