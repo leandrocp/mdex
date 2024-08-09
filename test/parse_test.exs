@@ -2,14 +2,172 @@ defmodule MDEx.ParseTest do
   use ExUnit.Case
   doctest MDEx
 
-  @md_opts extension: [front_matter_delimiter: "---", table: true, tasklist: true, autolink: true, shortcodes: true]
+  @extension [
+    strikethrough: true,
+    tagfilter: true,
+    table: true,
+    autolink: true,
+    tasklist: true,
+    superscript: true,
+    footnotes: true,
+    description_lists: true,
+    front_matter_delimiter: "---",
+    multiline_block_quotes: true,
+    math_dollars: true,
+    math_code: true,
+    shortcodes: true,
+    underline: true,
+    spoiler: true,
+    greentext: true
+  ]
 
-  def assert_parse_document(document, expected) do
-    assert MDEx.parse_document(document, @md_opts) == expected
+  def assert_parse_document(document, expected, extension \\ []) do
+    opts = [
+      extension: Keyword.merge(@extension, extension)
+    ]
+
+    assert MDEx.parse_document(document, opts) == expected
   end
 
   test "text" do
     assert_parse_document("mdex", [{"document", [], [{"paragraph", [], ["mdex"]}]}])
+  end
+
+  test "front matter" do
+    assert_parse_document(
+      """
+      ---
+      title: MDEx
+      ---
+      """,
+      [{"document", [], [{"front_matter", [{"content", "---\ntitle: MDEx\n---\n"}], []}]}]
+    )
+  end
+
+  test "block quote" do
+    assert_parse_document(
+      """
+      > MDEx
+      """,
+      [{"document", [], [{"block_quote", [], [{"paragraph", [], ["MDEx"]}]}]}]
+    )
+  end
+
+  describe "list" do
+    test "bullet" do
+      assert_parse_document(
+        """
+        - MDEx
+        - Elixir
+        """,
+        [
+          {"document", [],
+           [
+             {"list",
+              [
+                {"list_type", "bullet"},
+                {"marker_offset", 0},
+                {"padding", 2},
+                {"start", 1},
+                {"delimiter", "period"},
+                {"bullet_char", "-"},
+                {"tight", true}
+              ],
+              [
+                {"item",
+                 [
+                   {"list_type", "bullet"},
+                   {"marker_offset", 0},
+                   {"padding", 2},
+                   {"start", 1},
+                   {"delimiter", "period"},
+                   {"bullet_char", "-"},
+                   {"tight", false}
+                 ], [{"paragraph", [], ["MDEx"]}]},
+                {"item",
+                 [
+                   {"list_type", "bullet"},
+                   {"marker_offset", 0},
+                   {"padding", 2},
+                   {"start", 1},
+                   {"delimiter", "period"},
+                   {"bullet_char", "-"},
+                   {"tight", false}
+                 ], [{"paragraph", [], ["Elixir"]}]}
+              ]}
+           ]}
+        ]
+      )
+    end
+
+    test "ordered" do
+      assert_parse_document(
+        """
+        1) MDEx
+        2) Elixir
+        """,
+        [
+          {"document", [],
+           [
+             {"list",
+              [
+                {"list_type", "ordered"},
+                {"marker_offset", 0},
+                {"padding", 3},
+                {"start", 1},
+                {"delimiter", "paren"},
+                {"bullet_char", ""},
+                {"tight", true}
+              ],
+              [
+                {"item",
+                 [
+                   {"list_type", "ordered"},
+                   {"marker_offset", 0},
+                   {"padding", 3},
+                   {"start", 1},
+                   {"delimiter", "paren"},
+                   {"bullet_char", ""},
+                   {"tight", false}
+                 ], [{"paragraph", [], ["MDEx"]}]},
+                {"item",
+                 [
+                   {"list_type", "ordered"},
+                   {"marker_offset", 0},
+                   {"padding", 3},
+                   {"start", 2},
+                   {"delimiter", "paren"},
+                   {"bullet_char", ""},
+                   {"tight", false}
+                 ], [{"paragraph", [], ["Elixir"]}]}
+              ]}
+           ]}
+        ]
+      )
+    end
+  end
+
+  test "description list" do
+    assert_parse_document(
+      """
+      MDEx
+
+      : Built with Elixir and Rust
+      """,
+      [
+        {"document", [],
+         [
+           {"description_list", [],
+            [
+              {"description_item", [{"marker_offset", 0}, {"padding", 2}],
+               [
+                 {"description_term", [], [{"paragraph", [], ["MDEx"]}]},
+                 {"description_details", [], [{"paragraph", [], ["Built with Elixir and Rust"]}]}
+               ]}
+            ]}
+         ]}
+      ]
+    )
   end
 
   test "code block" do
@@ -31,6 +189,39 @@ defmodule MDEx.ParseTest do
               {"info", "elixir"},
               {"literal", "String.trim(\" MDEx \")\n"}
             ], []}
+         ]}
+      ]
+    )
+  end
+
+  test "html block" do
+    assert_parse_document(
+      """
+      # HTML
+      <h1>MDEx</h1>
+      """,
+      [
+        {"document", [],
+         [
+           {"heading", [{"level", 1}, {"setext", false}], ["HTML"]},
+           {"html_block", [{"block_type", 6}, {"literal", "<h1>MDEx</h1>\n"}], []}
+         ]}
+      ]
+    )
+  end
+
+  test "footnote" do
+    assert_parse_document(
+      """
+      footnote[^1]
+
+      [^1]: ref
+      """,
+      [
+        {"document", [],
+         [
+           {"paragraph", [], ["footnote", {"footnote_reference", [{"name", "1"}, {"ref_num", 1}, {"ix", 1}], []}]},
+           {"footnote_definition", [{"name", "1"}, {"total_references", 1}], [{"paragraph", [], ["ref"]}]}
          ]}
       ]
     )
@@ -71,6 +262,148 @@ defmodule MDEx.ParseTest do
             ]}
          ]}
       ]
+    )
+  end
+
+  test "task item" do
+    assert_parse_document(
+      """
+      * [x] Done
+      * [ ] Not done
+      """,
+      [
+        {"document", [],
+         [
+           {"list",
+            [
+              {"list_type", "bullet"},
+              {"marker_offset", 0},
+              {"padding", 2},
+              {"start", 1},
+              {"delimiter", "period"},
+              {"bullet_char", "*"},
+              {"tight", true}
+            ],
+            [
+              {"task_item", [{"symbol", "x"}], [{"paragraph", [], ["Done"]}]},
+              {"task_item", [{"symbol", " "}], [{"paragraph", [], ["Not done"]}]}
+            ]}
+         ]}
+      ]
+    )
+  end
+
+  test "link" do
+    assert_parse_document(
+      """
+      [foo]: /url "title"
+
+      [foo]
+      """,
+      [{"document", [], [{"paragraph", [], [{"link", [{"url", "/url"}, {"title", "title"}], ["foo"]}]}]}]
+    )
+  end
+
+  test "image" do
+    assert_parse_document(
+      """
+      ![foo](/url "title")
+      """,
+      [{"document", [], [{"paragraph", [], [{"image", [{"url", "/url"}, {"title", "title"}], ["foo"]}]}]}]
+    )
+  end
+
+  test "code" do
+    assert_parse_document(
+      """
+      `String.trim(" MDEx ")`
+      """,
+      [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "String.trim(\" MDEx \")"}], []}]}]}]
+    )
+  end
+
+  test "shortcode" do
+    assert_parse_document(
+      """
+      :smile:
+      """,
+      [{"document", [], [{"paragraph", [], [{"short_code", [{"name", "smile"}, {"emoji", "😄"}], []}]}]}]
+    )
+  end
+
+  test "math" do
+    assert_parse_document(
+      """
+      $1 + 2$ and $$x = y$$
+
+      $`1 + 2`$
+      """,
+      [
+        {"document", [],
+         [
+           {"paragraph", [],
+            [
+              {"math", [{"dollar_math", true}, {"display_math", false}, {"literal", "1 + 2"}], []},
+              " and ",
+              {"math", [{"dollar_math", true}, {"display_math", true}, {"literal", "x = y"}], []}
+            ]},
+           {"paragraph", [], [{"math", [{"dollar_math", false}, {"display_math", false}, {"literal", "1 + 2"}], []}]}
+         ]}
+      ]
+    )
+  end
+
+  test "multiline block quote" do
+    assert_parse_document(
+      """
+      > line 1
+      > line 2
+      """,
+      [
+        {"document", [], [{"block_quote", [], [{"paragraph", [], ["line 1", {"soft_break", [], []}, "line 2"]}]}]}
+      ]
+    )
+  end
+
+  describe "wiki links" do
+    test "title before pipe" do
+      assert_parse_document(
+        """
+        [[link label|url]]
+        """,
+        :FIXME,
+        wikilinks_title_before_pipe: true
+      )
+    end
+
+    test "title after pipe" do
+      assert_parse_document(
+        """
+        [[url|link label]]
+        """,
+        :FIXME,
+        wikilinks_title_after_pipe: true
+      )
+    end
+  end
+
+  test "spoiler" do
+    assert_parse_document(
+      """
+      Darth Vader is ||Luke's father||
+      """,
+      :FIXME
+    )
+  end
+
+  test "greentext" do
+    assert_parse_document(
+      """
+      > one
+      > > two
+      > three
+      """,
+      :FIXME
     )
   end
 end

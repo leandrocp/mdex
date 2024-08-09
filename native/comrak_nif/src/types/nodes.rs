@@ -208,7 +208,8 @@ impl ExNode {
         }
     }
 
-    // [name, attrs, children]
+    // decode
+    // [node, attrs, children] to ExNode
     fn decode_node<'a>(node: Vec<Term<'a>>) -> Self {
         // println!("node: {:?}", node);
 
@@ -478,6 +479,8 @@ impl ExNode {
         ))))
     }
 
+    // decode
+    // ExNode (Elixir) to AstNode (Rust comrak)
     fn to_ast_node<'a>(&'a self, arena: &'a Arena<AstNode<'a>>, exnode: ExNode) -> &'a AstNode<'a> {
         let build = |node_value: NodeValue, children: Vec<ExNode>| {
             let parent = self.ast(arena, node_value);
@@ -789,12 +792,14 @@ impl<'a> Decoder<'a> for ExNode {
     }
 }
 
+// encode
+// AstNode (Rust comrak) to ExNode (Elixir)
 impl<'a> From<&'a AstNode<'a>> for ExNode {
     fn from(ast_node: &'a AstNode<'a>) -> Self {
         let children = ast_node.children().map(Self::from).collect::<Vec<_>>();
         let node_value = &ast_node.data.borrow().value;
 
-        // println!("node_value: {:?}", node_value);
+        println!("encode astnode to exnode: {:?}", node_value);
 
         match node_value {
             NodeValue::Document => Self {
@@ -1034,7 +1039,7 @@ impl<'a> From<&'a AstNode<'a>> for ExNode {
                 children,
             },
 
-            _ => todo!("TODO")
+            _ => todo!("TODO"),
         }
     }
 }
@@ -1058,10 +1063,11 @@ impl<'a> From<Term<'a>> for ExNode {
     }
 }
 
-// encoding
+// encode
+// ExNode to [node, attrs, children]
 impl Encoder for ExNode {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
-        // println!("encode: {:?}", self);
+        println!("encode exnode to list: {:?}", self);
 
         match self {
             // document
@@ -1734,6 +1740,12 @@ impl ToString for ExListDelimType {
 }
 
 fn char_to_string(c: u8) -> Result<String, &'static str> {
+    println!("char_to_string: {:?}", c);
+
+    if c == 0 {
+        return Ok("".to_string());
+    }
+
     match String::from_utf8(vec![c]) {
         Ok(s) => Ok(s),
         Err(_) => Err("failed to convert to string"),
