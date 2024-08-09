@@ -29,7 +29,7 @@
 - Fast. Check out the [benchmark](https://github.com/leandrocp/mdex#benchmark)
 - Compatible with the [CommonMark spec](https://spec.commonmark.org) and the [GitHub Flavored Markdown Spec](https://github.github.com/gfm/)
 - Binary is precompiled, no need to compile anything
-- Code syntax highlithging, performed by [Autumn](https://github.com/leandrocp/autumn)
+- Code syntax highlighting, performed by [Autumn](https://github.com/leandrocp/autumn)
 
 Check out some samples at https://mdex-c31.pages.dev
 
@@ -58,7 +58,7 @@ MDEx.to_html("# Hello")
 
 And you can change how the markdown is parsed and formatted by passing options to `MDEx.to_html/2` to enable more features:
 
-### GitHub Flavored Markdown with emojis
+### GitHub Flavored Markdown with [emojis](https://www.webfx.com/tools/emoji-cheat-sheet/)
 
 ```elixir
 MDEx.to_html(
