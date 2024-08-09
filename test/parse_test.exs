@@ -369,9 +369,9 @@ defmodule MDEx.ParseTest do
     test "title before pipe" do
       assert_parse_document(
         """
-        [[link label|url]]
+        [[repo|https://github.com/leandrocp/mdex]]
         """,
-        :FIXME,
+        [{"document", [], [{"paragraph", [], [{"wiki_link", [{"url", "https://github.com/leandrocp/mdex"}], ["repo"]}]}]}],
         wikilinks_title_before_pipe: true
       )
     end
@@ -379,9 +379,9 @@ defmodule MDEx.ParseTest do
     test "title after pipe" do
       assert_parse_document(
         """
-        [[url|link label]]
+        [[https://github.com/leandrocp/mdex|repo]]
         """,
-        :FIXME,
+        [{"document", [], [{"paragraph", [], [{"wiki_link", [{"url", "https://github.com/leandrocp/mdex"}], ["repo"]}]}]}],
         wikilinks_title_after_pipe: true
       )
     end
@@ -392,7 +392,7 @@ defmodule MDEx.ParseTest do
       """
       Darth Vader is ||Luke's father||
       """,
-      :FIXME
+      [{"document", [], [{"paragraph", [], ["Darth Vader is ", {"spoilered_text", [], ["Luke's father"]}]}]}]
     )
   end
 
@@ -403,7 +403,10 @@ defmodule MDEx.ParseTest do
       > > two
       > three
       """,
-      :FIXME
+      [
+        {"document", [],
+         [{"block_quote", [], [{"paragraph", [], ["one"]}, {"block_quote", [], [{"paragraph", [], ["two"]}]}, {"paragraph", [], ["three"]}]}]}
+      ]
     )
   end
 end

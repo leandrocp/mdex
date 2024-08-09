@@ -4,7 +4,7 @@ use comrak::{
         Ast, AstNode, LineColumn, ListDelimType, ListType, NodeCode, NodeCodeBlock,
         NodeDescriptionItem, NodeFootnoteDefinition, NodeFootnoteReference, NodeHeading,
         NodeHtmlBlock, NodeLink, NodeList, NodeMath, NodeMultilineBlockQuote, NodeShortCode,
-        NodeTable, NodeValue, TableAlignment,
+        NodeTable, NodeValue, NodeWikiLink, TableAlignment,
     },
     Arena, Options,
 };
@@ -59,6 +59,10 @@ pub enum ExNodeData {
     Math(ExNodeMath),
     MultilineBlockQuote(ExNodeMultilineBlockQuote),
     Escaped,
+    WikiLink(ExNodeWikiLink),
+    Underline,
+    SpoileredText,
+    EscapedTag(String),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -170,6 +174,11 @@ pub struct ExNodeMath {
 pub struct ExNodeMultilineBlockQuote {
     pub fence_length: usize,
     pub fence_offset: usize,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExNodeWikiLink {
+    pub url: String,
 }
 
 pub type ExNodeAttrs = Vec<ExNodeAttr>;
@@ -780,6 +789,31 @@ impl ExNode {
                 data: ExNodeData::Escaped,
                 children,
             } => build(NodeValue::Escaped, children),
+
+            ExNode {
+                data: ExNodeData::WikiLink(ref wiki_link),
+                children,
+            } => build(
+                NodeValue::WikiLink(NodeWikiLink {
+                    url: wiki_link.url.to_owned(),
+                }),
+                children,
+            ),
+
+            ExNode {
+                data: ExNodeData::Underline,
+                children,
+            } => build(NodeValue::Underline, children),
+
+            ExNode {
+                data: ExNodeData::SpoileredText,
+                children,
+            } => build(NodeValue::SpoileredText, children),
+
+            ExNode {
+                data: ExNodeData::EscapedTag(ref escaped_tag),
+                children,
+            } => build(NodeValue::EscapedTag(escaped_tag.to_owned()), children),
         }
     }
 }
@@ -1039,7 +1073,27 @@ impl<'a> From<&'a AstNode<'a>> for ExNode {
                 children,
             },
 
-            _ => todo!("TODO"),
+            NodeValue::WikiLink(ref wiki_link) => Self {
+                data: ExNodeData::WikiLink(ExNodeWikiLink {
+                    url: wiki_link.url.to_string(),
+                }),
+                children,
+            },
+
+            NodeValue::Underline => Self {
+                data: ExNodeData::Underline,
+                children,
+            },
+
+            NodeValue::SpoileredText => Self {
+                data: ExNodeData::SpoileredText,
+                children,
+            },
+
+            NodeValue::EscapedTag(ref tag) => Self {
+                data: ExNodeData::EscapedTag(tag.to_string()),
+                children,
+            },
         }
     }
 }
@@ -1676,6 +1730,58 @@ impl Encoder for ExNode {
             } => {
                 let doc: (String, ExNodeAttrs, ExNodeChildren) =
                     ("escaped".to_string(), vec![], children.to_vec());
+                doc.encode(env)
+            }
+
+            // wiki link
+            ExNode {
+                data: ExNodeData::WikiLink(wiki_link),
+                children,
+            } => {
+                let doc: (String, ExNodeAttrs, ExNodeChildren) = (
+                    "wiki_link".to_string(),
+                    vec![ExNodeAttr(
+                        "url".to_string(),
+                        ExNodeAttrValue::Text(wiki_link.url.clone()),
+                    )],
+                    children.to_vec(),
+                );
+                doc.encode(env)
+            }
+
+            // underline
+            ExNode {
+                data: ExNodeData::Underline,
+                children,
+            } => {
+                let doc: (String, ExNodeAttrs, ExNodeChildren) =
+                    ("underline".to_string(), vec![], children.to_vec());
+                doc.encode(env)
+            }
+
+            // spoiler
+            ExNode {
+                data: ExNodeData::SpoileredText,
+                children,
+            } => {
+                let doc: (String, ExNodeAttrs, ExNodeChildren) =
+                    ("spoilered_text".to_string(), vec![], children.to_vec());
+                doc.encode(env)
+            }
+
+            // escaped tag
+            ExNode {
+                data: ExNodeData::EscapedTag(tag),
+                children,
+            } => {
+                let doc: (String, ExNodeAttrs, ExNodeChildren) = (
+                    "escaped_tag".to_string(),
+                    vec![ExNodeAttr(
+                        "content".to_string(),
+                        ExNodeAttrValue::Text(tag.to_string()),
+                    )],
+                    children.to_vec(),
+                );
                 doc.encode(env)
             }
         }
