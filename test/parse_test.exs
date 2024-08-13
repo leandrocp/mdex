@@ -57,8 +57,10 @@ defmodule MDEx.ParseTest do
     test "unordered" do
       assert_parse_document(
         """
-        - MDEx
-        - Elixir
+        - foo
+          - bar
+            - baz
+              - boo
         """,
         [
           {"document", [],
@@ -83,17 +85,82 @@ defmodule MDEx.ParseTest do
                    {"delimiter", "period"},
                    {"bullet_char", "-"},
                    {"tight", false}
-                 ], [{"paragraph", [], ["MDEx"]}]},
-                {"item",
+                 ],
                  [
-                   {"list_type", "bullet"},
-                   {"marker_offset", 0},
-                   {"padding", 2},
-                   {"start", 1},
-                   {"delimiter", "period"},
-                   {"bullet_char", "-"},
-                   {"tight", false}
-                 ], [{"paragraph", [], ["Elixir"]}]}
+                   {"paragraph", [], ["foo"]},
+                   {"list",
+                    [
+                      {"list_type", "bullet"},
+                      {"marker_offset", 0},
+                      {"padding", 2},
+                      {"start", 1},
+                      {"delimiter", "period"},
+                      {"bullet_char", "-"},
+                      {"tight", true}
+                    ],
+                    [
+                      {"item",
+                       [
+                         {"list_type", "bullet"},
+                         {"marker_offset", 0},
+                         {"padding", 2},
+                         {"start", 1},
+                         {"delimiter", "period"},
+                         {"bullet_char", "-"},
+                         {"tight", false}
+                       ],
+                       [
+                         {"paragraph", [], ["bar"]},
+                         {"list",
+                          [
+                            {"list_type", "bullet"},
+                            {"marker_offset", 0},
+                            {"padding", 2},
+                            {"start", 1},
+                            {"delimiter", "period"},
+                            {"bullet_char", "-"},
+                            {"tight", true}
+                          ],
+                          [
+                            {"item",
+                             [
+                               {"list_type", "bullet"},
+                               {"marker_offset", 0},
+                               {"padding", 2},
+                               {"start", 1},
+                               {"delimiter", "period"},
+                               {"bullet_char", "-"},
+                               {"tight", false}
+                             ],
+                             [
+                               {"paragraph", [], ["baz"]},
+                               {"list",
+                                [
+                                  {"list_type", "bullet"},
+                                  {"marker_offset", 0},
+                                  {"padding", 2},
+                                  {"start", 1},
+                                  {"delimiter", "period"},
+                                  {"bullet_char", "-"},
+                                  {"tight", true}
+                                ],
+                                [
+                                  {"item",
+                                   [
+                                     {"list_type", "bullet"},
+                                     {"marker_offset", 0},
+                                     {"padding", 2},
+                                     {"start", 1},
+                                     {"delimiter", "period"},
+                                     {"bullet_char", "-"},
+                                     {"tight", false}
+                                   ], [{"paragraph", [], ["boo"]}]}
+                                ]}
+                             ]}
+                          ]}
+                       ]}
+                    ]}
+                 ]}
               ]}
            ]}
         ]
@@ -103,8 +170,9 @@ defmodule MDEx.ParseTest do
     test "ordered" do
       assert_parse_document(
         """
-        1) MDEx
-        2) Elixir
+        1. foo
+        2.
+        3. bar
         """,
         [
           {"document", [],
@@ -115,7 +183,7 @@ defmodule MDEx.ParseTest do
                 {"marker_offset", 0},
                 {"padding", 3},
                 {"start", 1},
-                {"delimiter", "paren"},
+                {"delimiter", "period"},
                 {"bullet_char", ""},
                 {"tight", true}
               ],
@@ -126,20 +194,30 @@ defmodule MDEx.ParseTest do
                    {"marker_offset", 0},
                    {"padding", 3},
                    {"start", 1},
-                   {"delimiter", "paren"},
+                   {"delimiter", "period"},
                    {"bullet_char", ""},
                    {"tight", false}
-                 ], [{"paragraph", [], ["MDEx"]}]},
+                 ], [{"paragraph", [], ["foo"]}]},
                 {"item",
                  [
                    {"list_type", "ordered"},
                    {"marker_offset", 0},
                    {"padding", 3},
                    {"start", 2},
-                   {"delimiter", "paren"},
+                   {"delimiter", "period"},
                    {"bullet_char", ""},
                    {"tight", false}
-                 ], [{"paragraph", [], ["Elixir"]}]}
+                 ], []},
+                {"item",
+                 [
+                   {"list_type", "ordered"},
+                   {"marker_offset", 0},
+                   {"padding", 3},
+                   {"start", 3},
+                   {"delimiter", "period"},
+                   {"bullet_char", ""},
+                   {"tight", false}
+                 ], [{"paragraph", [], ["bar"]}]}
               ]}
            ]}
         ]
