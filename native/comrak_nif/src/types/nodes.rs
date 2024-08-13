@@ -220,7 +220,7 @@ impl ExNode {
     // decode
     // [node, attrs, children] to ExNode
     fn decode_node<'a>(node: Vec<Term<'a>>) -> Self {
-        // println!("node: {:?}", node);
+        println!("node: {:?}", node);
 
         let name = node.get(0).expect("TODO");
         let name = ExNode::decode_node_name(name);
@@ -247,6 +247,7 @@ impl ExNode {
                 data: ExNodeData::Document,
                 children,
             },
+            // FIXME: front matter content
             "front_matter" => ExNode {
                 data: ExNodeData::FrontMatter("TODO".to_string()),
                 children,
@@ -255,37 +256,25 @@ impl ExNode {
                 data: ExNodeData::BlockQuote,
                 children,
             },
-            "list" => ExNode {
-                data: ExNodeData::List(ExNodeList {
-                    // FIXME: node list attrs
-                    list_type: ExListType::Bullet,
-                    marker_offset: 2,
-                    padding: 2,
-                    start: 1,
-                    delimiter: ExListDelimType::Period,
-                    bullet_char: 45,
-                    tight: true,
-                }),
-                children,
-            },
-            "item" => ExNode {
-                data: ExNodeData::Item(ExNodeList {
-                    // FIXME: node list attrs
-                    list_type: ExListType::Bullet,
-                    marker_offset: 2,
-                    padding: 2,
-                    start: 1,
-                    delimiter: ExListDelimType::Period,
-                    bullet_char: 45,
-                    tight: true,
-                }),
-                children,
-            },
+            "list" => {
+                let node_list = ExNodeList::from_attrs(attrs).unwrap();
+                ExNode {
+                    data: ExNodeData::List(node_list),
+                    children,
+                }
+            }
+            "item" => {
+                let node_list = ExNodeList::from_attrs(attrs).unwrap();
+                ExNode {
+                    data: ExNodeData::Item(node_list),
+                    children,
+                }
+            }
             "description_list" => ExNode {
                 data: ExNodeData::DescriptionList,
                 children,
             },
-            // FIXME
+            // FIXME: description list attrs
             "description_item" => ExNode {
                 data: ExNodeData::DescriptionItem(ExNodeDescriptionItem {
                     marker_offset: 0,
@@ -435,7 +424,7 @@ impl ExNode {
                 data: ExNodeData::Escaped,
                 children,
             },
-            &_ => todo!(),
+            &_ => todo!("TODO: handle missing or incorrect decode node"),
         }
     }
 
@@ -502,7 +491,7 @@ impl ExNode {
             parent
         };
 
-        // println!("exnode: {:?}", exnode);
+        println!("exnode: {:?}", exnode);
 
         match exnode {
             ExNode {
@@ -523,36 +512,12 @@ impl ExNode {
             ExNode {
                 data: ExNodeData::List(ref node_list),
                 children,
-            } => build(
-                NodeValue::List(NodeList {
-                    // FIXME: node list attrs
-                    list_type: comrak::nodes::ListType::Bullet,
-                    marker_offset: node_list.marker_offset,
-                    padding: node_list.padding,
-                    start: node_list.start,
-                    delimiter: comrak::nodes::ListDelimType::Period,
-                    bullet_char: node_list.bullet_char,
-                    tight: node_list.tight,
-                }),
-                children,
-            ),
+            } => build(NodeValue::List(node_list.to_node_list()), children),
 
             ExNode {
                 data: ExNodeData::Item(ref node_list),
                 children,
-            } => build(
-                NodeValue::Item(NodeList {
-                    // FIXME: node list attrs
-                    list_type: comrak::nodes::ListType::Bullet,
-                    marker_offset: node_list.marker_offset,
-                    padding: node_list.padding,
-                    start: node_list.start,
-                    delimiter: comrak::nodes::ListDelimType::Period,
-                    bullet_char: node_list.bullet_char,
-                    tight: node_list.tight,
-                }),
-                children,
-            ),
+            } => build(NodeValue::Item(node_list.to_node_list()), children),
 
             ExNode {
                 data: ExNodeData::DescriptionList,
@@ -833,7 +798,7 @@ impl<'a> From<&'a AstNode<'a>> for ExNode {
         let children = ast_node.children().map(Self::from).collect::<Vec<_>>();
         let node_value = &ast_node.data.borrow().value;
 
-        println!("encode astnode to exnode: {:?}", node_value);
+        // println!("encode astnode to exnode: {:?}", node_value);
 
         match node_value {
             NodeValue::Document => Self {
@@ -853,11 +818,11 @@ impl<'a> From<&'a AstNode<'a>> for ExNode {
 
             NodeValue::List(ref node_list) => Self {
                 data: ExNodeData::List(ExNodeList {
-                    list_type: ExListType::from(node_list.list_type),
+                    list_type: ExListType::from_list_type(node_list.list_type),
                     marker_offset: node_list.marker_offset,
                     padding: node_list.padding,
                     start: node_list.start,
-                    delimiter: ExListDelimType::from(node_list.delimiter),
+                    delimiter: ExListDelimType::from_list_delim_type(node_list.delimiter),
                     bullet_char: node_list.bullet_char,
                     tight: node_list.tight,
                 }),
@@ -866,11 +831,11 @@ impl<'a> From<&'a AstNode<'a>> for ExNode {
 
             NodeValue::Item(ref node_list) => Self {
                 data: ExNodeData::Item(ExNodeList {
-                    list_type: ExListType::from(node_list.list_type),
+                    list_type: ExListType::from_list_type(node_list.list_type),
                     marker_offset: node_list.marker_offset,
                     padding: node_list.padding,
                     start: node_list.start,
-                    delimiter: ExListDelimType::from(node_list.delimiter),
+                    delimiter: ExListDelimType::from_list_delim_type(node_list.delimiter),
                     bullet_char: node_list.bullet_char,
                     tight: node_list.tight,
                 }),
@@ -1121,7 +1086,7 @@ impl<'a> From<Term<'a>> for ExNode {
 // ExNode to [node, attrs, children]
 impl Encoder for ExNode {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
-        println!("encode exnode to list: {:?}", self);
+        // println!("encode exnode to list: {:?}", self);
 
         match self {
             // document
@@ -1809,11 +1774,76 @@ impl<'a> From<Term<'a>> for ExNodeAttrValue {
     }
 }
 
+impl ExNodeList {
+    fn default() -> Self {
+        ExNodeList {
+            list_type: ExListType::Bullet,
+            marker_offset: 0,
+            padding: 0,
+            start: 0,
+            delimiter: ExListDelimType::Period,
+            bullet_char: 0,
+            tight: false,
+        }
+    }
+
+    fn from_attrs<'a>(attrs: Vec<Term<'a>>) -> NifResult<Self> {
+        let mut node_list = Self::default();
+
+        for attr in attrs {
+            let (key, value) = attr.decode::<(String, Term)>().unwrap();
+
+            match key.as_str() {
+                "list_type" => node_list.list_type = ExListType::from_attr(value.decode()?),
+                "marker_offset" => node_list.marker_offset = value.decode()?,
+                "padding" => node_list.padding = value.decode()?,
+                "start" => node_list.start = value.decode()?,
+                "delimiter" => node_list.delimiter = ExListDelimType::from_attr(value.decode()?),
+                "tight" => node_list.tight = value.decode()?,
+                _ => {}
+            }
+        }
+
+        Ok(node_list)
+    }
+
+    fn to_node_list(&self) -> NodeList {
+        NodeList {
+            list_type: ExListType::to_list_type(&self.list_type),
+            marker_offset: self.marker_offset,
+            padding: self.padding,
+            start: self.start,
+            delimiter: ExListDelimType::to_list_delim_type(&self.delimiter),
+            bullet_char: self.bullet_char,
+            tight: self.tight,
+        }
+    }
+}
+
 impl ExListType {
-    fn from(list_type: ListType) -> Self {
+    fn default() -> Self {
+        Self::Bullet
+    }
+
+    fn from_list_type(list_type: ListType) -> Self {
         match list_type {
             ListType::Bullet => Self::Bullet,
             ListType::Ordered => Self::Ordered,
+        }
+    }
+
+    fn to_list_type(&self) -> ListType {
+        match self {
+            Self::Bullet => ListType::Bullet,
+            Self::Ordered => ListType::Ordered,
+        }
+    }
+
+    fn from_attr(list_type: &str) -> Self {
+        match list_type {
+            "bullet" => Self::Bullet,
+            "ordered" => Self::Ordered,
+            _ => Self::default(),
         }
     }
 }
@@ -1828,10 +1858,29 @@ impl ToString for ExListType {
 }
 
 impl ExListDelimType {
-    fn from(list_delim_type: ListDelimType) -> Self {
+    fn default() -> Self {
+        Self::Period
+    }
+
+    fn from_list_delim_type(list_delim_type: ListDelimType) -> Self {
         match list_delim_type {
             ListDelimType::Period => Self::Period,
             ListDelimType::Paren => Self::Paren,
+        }
+    }
+
+    fn to_list_delim_type(&self) -> ListDelimType {
+        match self {
+            Self::Period => ListDelimType::Period,
+            Self::Paren => ListDelimType::Paren,
+        }
+    }
+
+    fn from_attr(list_delim_type: &str) -> Self {
+        match list_delim_type {
+            "period" => Self::Period,
+            "paren" => Self::Paren,
+            _ => Self::default(),
         }
     }
 }
@@ -1846,7 +1895,7 @@ impl ToString for ExListDelimType {
 }
 
 fn char_to_string(c: u8) -> Result<String, &'static str> {
-    println!("char_to_string: {:?}", c);
+    // println!("char_to_string: {:?}", c);
 
     if c == 0 {
         return Ok("".to_string());

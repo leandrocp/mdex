@@ -2,15 +2,103 @@ defmodule MDEx.FormatTest do
   use ExUnit.Case
   doctest MDEx
 
-  @md_opts extension: [front_matter_delimiter: "---", table: true, tasklist: true, autolink: true, shortcodes: true]
+  @extension [
+    strikethrough: true,
+    tagfilter: true,
+    table: true,
+    autolink: true,
+    tasklist: true,
+    superscript: true,
+    footnotes: true,
+    description_lists: true,
+    front_matter_delimiter: "---",
+    multiline_block_quotes: true,
+    math_dollars: true,
+    math_code: true,
+    shortcodes: true,
+    underline: true,
+    spoiler: true,
+    greentext: true
+  ]
 
-  def assert_format(document, expected) do
-    ast = MDEx.parse_document(document, @md_opts)
-    assert MDEx.to_html(ast, @md_opts) == expected
+  def assert_format(document, expected, extension \\ []) do
+    opts = [
+      extension: Keyword.merge(@extension, extension)
+    ]
+
+    ast = MDEx.parse_document(document, opts)
+    assert MDEx.to_html(ast, opts) == expected
   end
 
   test "text" do
     assert_format("mdex", "<p>mdex</p>\n")
+  end
+
+  test "front matter" do
+    assert_format(
+      """
+      ---
+      title: MDEx
+      ---
+      """,
+      ""
+    )
+  end
+
+  test "block quote" do
+    assert_format(
+      """
+      > MDEx
+      """,
+      "<blockquote>\n<p>MDEx</p>\n</blockquote>\n"
+    )
+  end
+
+  describe "list" do
+    test "unordered" do
+      assert_format(
+        """
+        - foo
+          - bar
+            - baz
+              - boo
+        """,
+        """
+        <ul>
+        <li>foo
+        <ul>
+        <li>bar
+        <ul>
+        <li>baz
+        <ul>
+        <li>boo</li>
+        </ul>
+        </li>
+        </ul>
+        </li>
+        </ul>
+        </li>
+        </ul>
+        """
+      )
+    end
+
+    test "ordered" do
+      assert_format(
+        """
+        1. foo
+        2.
+        3. bar
+        """,
+        """
+        <ol>
+        <li>foo</li>
+        <li></li>
+        <li>bar</li>
+        </ol>
+        """
+      )
+    end
   end
 
   test "headings" do

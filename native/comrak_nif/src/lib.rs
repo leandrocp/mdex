@@ -66,6 +66,9 @@ fn to_html_with_options<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifRe
 fn tree_to_html(tree: ExNodeTree) -> String {
     // FIXME: validate tree[0] is a document
     let node = tree.first().unwrap();
+
+    // println!("tree_to_html: {:?}", node);
+
     node.format_document(&Options::default())
 }
 
@@ -79,6 +82,9 @@ fn tree_to_html_with_options(tree: ExNodeTree, options: ExOptions) -> String {
     };
     // FIXME: validate tree[0] is a document
     let node = tree.first().unwrap();
+
+    // println!("tree_to_html_with_options: {:?}", node);
+
     node.format_document(&comrak_options)
 }
 

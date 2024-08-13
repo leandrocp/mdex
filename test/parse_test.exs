@@ -54,7 +54,7 @@ defmodule MDEx.ParseTest do
   end
 
   describe "list" do
-    test "bullet" do
+    test "unordered" do
       assert_parse_document(
         """
         - MDEx
