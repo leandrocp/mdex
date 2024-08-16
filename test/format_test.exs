@@ -101,14 +101,20 @@ defmodule MDEx.FormatTest do
     end
   end
 
-  test "headings" do
+  test "description list" do
     assert_format(
       """
-      # one
-      ## two
-      ### three
+      MDEx
+
+      : Built with Elixir and Rust
       """,
-      "<h1>one</h1>\n<h2>two</h2>\n<h3>three</h3>\n"
+      """
+      <dl><dt>MDEx</dt>
+      <dd>
+      <p>Built with Elixir and Rust</p>
+      </dd>
+      </dl>
+      """
     )
   end
 
@@ -120,6 +126,18 @@ defmodule MDEx.FormatTest do
       ```
       """,
       "<pre><code class=\"language-elixir\">String.trim(&quot; MDEx &quot;)\n</code></pre>\n"
+    )
+  end
+
+
+  test "headings" do
+    assert_format(
+      """
+      # one
+      ## two
+      ### three
+      """,
+      "<h1>one</h1>\n<h2>two</h2>\n<h3>three</h3>\n"
     )
   end
 

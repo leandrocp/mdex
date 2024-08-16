@@ -220,7 +220,7 @@ impl ExNode {
     // decode
     // [node, attrs, children] to ExNode
     fn decode_node<'a>(node: Vec<Term<'a>>) -> Self {
-        println!("node: {:?}", node);
+        // println!("node: {:?}", node);
 
         let name = node.get(0).expect("TODO");
         let name = ExNode::decode_node_name(name);
@@ -274,14 +274,13 @@ impl ExNode {
                 data: ExNodeData::DescriptionList,
                 children,
             },
-            // FIXME: description list attrs
-            "description_item" => ExNode {
-                data: ExNodeData::DescriptionItem(ExNodeDescriptionItem {
-                    marker_offset: 0,
-                    padding: 2,
-                }),
-                children,
-            },
+            "description_item" => {
+                let description_item = ExNodeDescriptionItem::from_attrs(attrs).unwrap();
+                ExNode {
+                    data: ExNodeData::DescriptionItem(description_item),
+                    children,
+                }
+            }
             "description_term" => ExNode {
                 data: ExNodeData::DescriptionTerm,
                 children,
@@ -522,7 +521,7 @@ impl ExNode {
             ExNode {
                 data: ExNodeData::DescriptionList,
                 children,
-            } => build(NodeValue::DescriptionList, vec![]),
+            } => build(NodeValue::DescriptionList, children),
 
             ExNode {
                 data: ExNodeData::DescriptionItem(ref node_description_item),
@@ -538,12 +537,12 @@ impl ExNode {
             ExNode {
                 data: ExNodeData::DescriptionTerm,
                 children,
-            } => build(NodeValue::DescriptionTerm, vec![]),
+            } => build(NodeValue::DescriptionTerm, children),
 
             ExNode {
                 data: ExNodeData::DescriptionDetails,
                 children,
-            } => build(NodeValue::DescriptionDetails, vec![]),
+            } => build(NodeValue::DescriptionDetails, children),
 
             ExNode {
                 data: ExNodeData::CodeBlock(ref node_code_block),
@@ -1891,6 +1890,31 @@ impl ToString for ExListDelimType {
             ExListDelimType::Period => "period".to_string(),
             ExListDelimType::Paren => "paren".to_string(),
         }
+    }
+}
+
+impl ExNodeDescriptionItem {
+    fn default() -> Self {
+        ExNodeDescriptionItem {
+            marker_offset: 0,
+            padding: 0,
+        }
+    }
+
+    fn from_attrs<'a>(attrs: Vec<Term<'a>>) -> NifResult<Self> {
+        let mut node_description_item = Self::default();
+
+        for attr in attrs {
+            let (key, value) = attr.decode::<(String, Term)>().unwrap();
+
+            match key.as_str() {
+                "marker_offset" => node_description_item.marker_offset = value.decode()?,
+                "padding" => node_description_item.padding = value.decode()?,
+                _ => {}
+            }
+        }
+
+        Ok(node_description_item)
     }
 }
 
