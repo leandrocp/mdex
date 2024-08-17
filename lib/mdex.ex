@@ -42,9 +42,10 @@ defmodule MDEx do
   end
 
   def to_html(markdown) when is_list(markdown) do
-    markdown
-    |> maybe_wrap_document()
-    |> Native.tree_to_html()
+    raise "not yet implemented"
+    # markdown
+    # |> maybe_wrap_document()
+    # |> Native.tree_to_html()
   end
 
   @doc """
@@ -92,9 +93,10 @@ defmodule MDEx do
   end
 
   def to_html(markdown, opts) when is_list(markdown) and is_list(opts) do
-    markdown
-    |> maybe_wrap_document()
-    |> Native.tree_to_html_with_options(comrak_options(opts))
+    raise "not yet implemented"
+    # markdown
+    # |> maybe_wrap_document()
+    # |> Native.tree_to_html_with_options(comrak_options(opts))
   end
 
   defp comrak_options(opts) do
@@ -111,23 +113,24 @@ defmodule MDEx do
     }
   end
 
-  defp maybe_wrap_document([{"document", _, _} | _] = tree), do: tree
+  # TODO: check if comrak is able to format ast without wrapping it in a document
+  # defp maybe_wrap_document([{"document", _, _} | _] = tree), do: tree
 
-  defp maybe_wrap_document([fragment]) when is_tuple(fragment) do
-    [{"document", [], [fragment]}]
-  end
+  # defp maybe_wrap_document([fragment]) when is_tuple(fragment) do
+  #   [{"document", [], [fragment]}]
+  # end
 
-  defp maybe_wrap_document(fragment) when is_list(fragment) do
-    Enum.all?(fragment, &is_binary/1) ||
-      raise """
-      expected a list of nodes as [{"paragraph", [], ["text"]}] or ["text"]
+  # defp maybe_wrap_document(fragment) when is_list(fragment) do
+  #   Enum.all?(fragment, &is_binary/1) ||
+  #     raise """
+  #     expected a list of nodes as [{"paragraph", [], ["text"]}] or ["text"]
 
-      Got:
+  #     Got:
 
-        #{inspect(fragment)}
+  #       #{inspect(fragment)}
 
-      """
+  #     """
 
-    [{"document", [], [{"paragraph", [], fragment}]}]
-  end
+  #   [{"document", [], [{"paragraph", [], fragment}]}]
+  # end
 end

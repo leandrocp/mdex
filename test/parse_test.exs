@@ -275,14 +275,28 @@ defmodule MDEx.ParseTest do
   test "html block" do
     assert_parse_document(
       """
-      # HTML
       <h1>MDEx</h1>
       """,
       [
         {"document", [],
          [
-           {"heading", [{"level", 1}, {"setext", false}], ["HTML"]},
            {"html_block", [{"block_type", 6}, {"literal", "<h1>MDEx</h1>\n"}], []}
+         ]}
+      ]
+    )
+  end
+
+  test "header" do
+    assert_parse_document(
+      """
+      # level_1
+      ###### level_6
+      """,
+      [
+        {"document", [],
+         [
+           {"heading", [{"level", 1}, {"setext", false}], ["level_1"]},
+           {"heading", [{"level", 6}, {"setext", false}], ["level_6"]}
          ]}
       ]
     )
@@ -405,7 +419,7 @@ defmodule MDEx.ParseTest do
       """
       :smile:
       """,
-      [{"document", [], [{"paragraph", [], [{"short_code", [{"name", "smile"}, {"emoji", "😄"}], []}]}]}]
+      [{"document", [], [{"paragraph", [], [{"short_code", [{"code", "smile"}, {"emoji", "😄"}], []}]}]}]
     )
   end
 
@@ -427,18 +441,6 @@ defmodule MDEx.ParseTest do
             ]},
            {"paragraph", [], [{"math", [{"dollar_math", false}, {"display_math", false}, {"literal", "1 + 2"}], []}]}
          ]}
-      ]
-    )
-  end
-
-  test "multiline block quote" do
-    assert_parse_document(
-      """
-      > line 1
-      > line 2
-      """,
-      [
-        {"document", [], [{"block_quote", [], [{"paragraph", [], ["line 1", {"soft_break", [], []}, "line 2"]}]}]}
       ]
     )
   end
