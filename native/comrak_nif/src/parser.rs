@@ -2,6 +2,38 @@ use crate::types::nodes::{AttrValue, ExNode};
 use comrak::nodes::{
     AstNode, ListDelimType, ListType, NodeLink, NodeList, NodeValue, TableAlignment,
 };
+use rustler::{Encoder, Env, Term};
+
+impl<'a> Encoder for ExNode<'a> {
+    fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
+        match self {
+            Self::Text(text) => text.encode(env),
+
+            Self::Element {
+                name,
+                attrs,
+                children,
+            } => {
+                let mut attr_list = Vec::new();
+
+                for (key, value) in attrs {
+                    let attr_value = match value {
+                        AttrValue::U8(v) => (key, v.encode(env)),
+                        AttrValue::U32(v) => (key, v.encode(env)),
+                        AttrValue::Usize(v) => (key, v.encode(env)),
+                        AttrValue::Bool(v) => (key, v.encode(env)),
+                        AttrValue::Text(v) => (key, v.encode(env)),
+                        AttrValue::List(v) => (key, v.encode(env)),
+                    };
+
+                    attr_list.push(attr_value);
+                }
+
+                (name, attr_list, children).encode(env)
+            }
+        }
+    }
+}
 
 pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
     let node_data = node.data.borrow();
