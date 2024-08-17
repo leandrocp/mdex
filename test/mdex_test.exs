@@ -7,10 +7,10 @@ defmodule MDExTest do
     assert html == expected
   end
 
-  # test "wrap fragment in root document" do
-  #   assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == "<p>mdex</p>\n"
-  #   assert MDEx.to_html(["mdex", "test"]) == "<p>mdextest</p>\n"
-  # end
+  test "wrap fragment in root document" do
+    assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == "<p>mdex</p>\n"
+    assert MDEx.to_html(["mdex", "test"]) == "<p>mdextest</p>\n"
+  end
 
   describe "syntax highlighting" do
     test "enabled by default" do
