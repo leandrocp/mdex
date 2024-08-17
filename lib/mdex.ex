@@ -38,7 +38,7 @@ defmodule MDEx do
   def to_html(markdown)
 
   def to_html(markdown) when is_binary(markdown) do
-    Native.to_html(markdown)
+    Native.markdown_to_html(markdown)
   end
 
   def to_html(markdown) when is_list(markdown) do
@@ -88,7 +88,7 @@ defmodule MDEx do
   def to_html(markdown, opts)
 
   def to_html(markdown, opts) when is_binary(markdown) and is_list(opts) do
-    Native.to_html_with_options(markdown, comrak_options(opts))
+    Native.markdown_to_html_with_options(markdown, comrak_options(opts))
   end
 
   def to_html(markdown, opts) when is_list(markdown) and is_list(opts) do
