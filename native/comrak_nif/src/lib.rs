@@ -4,16 +4,17 @@
 #[macro_use]
 extern crate rustler;
 
+mod decoder;
+mod encoder;
 mod inkjet_adapter;
-mod parser;
 mod types;
 
 use ammonia::clean;
-use comrak::{markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
+use comrak::{format_commonmark, markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
+use encoder::to_elixir_ast;
 use inkjet_adapter::InkjetAdapter;
-use parser::to_elixir_ast;
 use rustler::{Encoder, Env, NifResult, Term};
-use types::options::*;
+use types::{nodes::ExNode, options::*};
 
 rustler::init!(
     "Elixir.MDEx.Native",
@@ -107,7 +108,34 @@ fn tree_to_html_with_options<'a>(
     tree: Term<'a>,
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
-    println!("tree: {:?}", tree);
+    todo!()
+    // let comrak_options = comrak::Options {
+    //     extension: extension_options_from_ex_options(&options),
+    //     parse: parse_options_from_ex_options(&options),
+    //     render: render_options_from_ex_options(&options),
+    // };
+
+    // println!("tree: {:?}", tree);
+
+    // let ex_node: ExNode = tree.decode()?;
+    // println!("ex_node: {:?}", ex_node);
+
+    // let arena = Arena::new();
+    // let comrak_ast = convert_ex_node_to_comrak(&arena, &ex_node);
+    // println!("comrak_ast: {:?}", comrak_ast);
+
+    // let mut buffer = vec![];
+    // format_commonmark(comrak_ast, &comrak_options, &mut buffer).unwrap();
+    // let out = String::from_utf8(buffer).unwrap();
+    // println!("out: {:?}", out);
+
+    // let unsafe_html = comrak::markdown_to_html(out.as_str(), &comrak_options);
+    // render(env, unsafe_html, options.features.sanitize)
+
+    // let node = to_astnode(tree);
+    // println!("astnode: {:?}", node);
+
+    // let d = tree.decode();
 
     //     // FIXME: syntax highlighting option
     //     let comrak_options = comrak::Options {
@@ -121,6 +149,4 @@ fn tree_to_html_with_options<'a>(
     //     // println!("tree_to_html_with_options: {:?}", node);
 
     //     node.format_document(&comrak_options)
-
-    todo!()
 }
