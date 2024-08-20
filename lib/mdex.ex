@@ -6,45 +6,74 @@ defmodule MDEx do
              |> String.split("<!-- MDOC -->")
              |> Enum.fetch!(1)
 
+  # TODO: doc shared opts
+  # TODO: explain that while MD is not supposed to fails, we might have extra steps that may cause errors so we use ok/error tuples
+  #      and in the future we might have more processes that maight cause errors so to avoid future breaking changes it's better
+  #      to introduce those now
+
   alias MDEx.Native
 
-  @type md_tree :: [md_node()]
+  @type md_ast :: [md_node()]
   @type md_node :: md_element() | md_text()
   @type md_element :: {name :: String.t(), attributes :: [md_attribute()], children :: [md_node()]}
   @type md_attribute :: {String.t(), term()}
   @type md_text :: String.t()
 
   @doc """
-  TODO
+  Parse a `markdown` binary and returns the AST or a `MDEx.EncodeError` exception struct if the parsing fails.
   """
-  @spec parse_document(String.t()) :: md_tree()
+  @spec parse_document(String.t()) :: {:ok, md_ast()} | {:error, MDEx.EncodeError.t()}
   def parse_document(markdown, opts \\ []) do
     Native.parse_document(markdown, comrak_options(opts))
   end
 
   @doc """
-  Convert `markdown` to HTML.
+  Same as `parse_document/1` but raises a `MDEX.EncodeError` if the parsing fails.
+  """
+  @spec parse_document!(String.t()) :: md_ast()
+  def parse_document!(markdown, opts \\ []) do
+    case Native.parse_document(markdown, comrak_options(opts)) do
+      {:ok, ast} -> ast
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert `markdown` to HTML using default CommonMark rules.
+
+  To customize the output, use `to_html/2`.
 
   ## Examples
 
       iex> MDEx.to_html("# MDEx")
-      "<h1>MDEx</h1>\\n"
+      {:ok, "<h1>MDEx</h1>\\n"}
 
       iex> MDEx.to_html("Implemented with:\\n1. Elixir\\n2. Rust")
-      "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"
+      {:ok, "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"}
 
   """
-  @spec to_html(String.t() | md_tree()) :: String.t()
-  def to_html(markdown)
+  @spec to_html(md_or_ast :: String.t() | md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_html(md_or_ast)
 
-  def to_html(markdown) when is_binary(markdown) do
-    Native.markdown_to_html(markdown)
+  def to_html(md_or_ast) when is_binary(md_or_ast) do
+    Native.markdown_to_html(md_or_ast)
   end
 
-  def to_html(markdown) when is_list(markdown) do
-    markdown
+  def to_html(md_or_ast) when is_list(md_or_ast) do
+    md_or_ast
     |> maybe_wrap_document()
-    |> Native.tree_to_html()
+    |> Native.ast_to_html()
+  end
+
+  @doc """
+  Same as `to_html/1` but raises `MDEx.DecodeError` if the conversion fails.
+  """
+  @spec to_html!(md_or_ast :: String.t() | md_ast()) :: String.t()
+  def to_html!(md_or_ast) do
+    case to_html(md_or_ast) do
+      {:ok, html} -> html
+      {:error, error} -> raise error
+    end
   end
 
   @doc """
@@ -69,32 +98,46 @@ defmodule MDEx do
   ## Examples
 
       iex> MDEx.to_html("# MDEx")
-      "<h1>MDEx</h1>\\n"
+      {:ok, "<h1>MDEx</h1>\\n"}
 
       iex> MDEx.to_html("Implemented with:\\n1. Elixir\\n2. Rust")
-      "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"
+      {:ok, "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"}
 
       iex> MDEx.to_html("Hello ~world~ there", extension: [strikethrough: true])
-      "<p>Hello <del>world</del> there</p>\\n"
+      {:ok, "<p>Hello <del>world</del> there</p>\\n"}
 
       iex> MDEx.to_html("<marquee>visit https://https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
-      "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"
+      {:ok, "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"}
 
       iex> MDEx.to_html("# Title with <script>console.log('dangerous script')</script>", render: [unsafe_: true], features: [sanitize: true])
-      "<h1>Title with </h1>\\n"
+      {:ok, "<h1>Title with </h1>\\n"}
 
   """
-  @spec to_html(String.t() | md_tree(), keyword()) :: String.t()
-  def to_html(markdown, opts)
+  @spec to_html(md_or_ast :: String.t() | md_ast(), keyword()) :: String.t()
+  def to_html(md_or_ast, opts)
 
-  def to_html(markdown, opts) when is_binary(markdown) and is_list(opts) do
-    Native.markdown_to_html_with_options(markdown, comrak_options(opts))
+  def to_html(md_or_ast, opts) when is_binary(md_or_ast) and is_list(opts) do
+    md_or_ast
+    |> Native.markdown_to_html_with_options(comrak_options(opts))
+    |> maybe_wrap_error()
   end
 
-  def to_html(markdown, opts) when is_list(markdown) and is_list(opts) do
-    markdown
+  def to_html(md_or_ast, opts) when is_list(md_or_ast) and is_list(opts) do
+    md_or_ast
     |> maybe_wrap_document()
-    |> Native.tree_to_html_with_options(comrak_options(opts))
+    |> Native.ast_to_html_with_options(comrak_options(opts))
+    |> maybe_wrap_error()
+  end
+
+  @doc """
+  Same as `to_html/2` but raises `MDEx.DecodeError` if the conversion fails.
+  """
+  @spec to_html!(md_or_ast :: String.t() | md_ast(), keyword()) :: String.t()
+  def to_html!(md_or_ast, opts) do
+    case to_html(md_or_ast, opts) do
+      {:ok, html} -> html
+      {:error, error} -> raise error
+    end
   end
 
   defp comrak_options(opts) do
@@ -131,4 +174,7 @@ defmodule MDEx do
 
     [{"document", [], [{"paragraph", [], fragment}]}]
   end
+
+  defp maybe_wrap_error({:ok, result}), do: {:ok, result}
+  defp maybe_wrap_error({:error, {reason, found}}), do: {:error, %MDEx.DecodeError{reason: reason, found: found}}
 end

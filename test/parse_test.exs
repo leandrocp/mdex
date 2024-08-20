@@ -26,7 +26,7 @@ defmodule MDEx.ParseTest do
       extension: Keyword.merge(@extension, extension)
     ]
 
-    assert MDEx.parse_document(document, opts) == expected
+    assert MDEx.parse_document(document, opts) == {:ok, expected}
   end
 
   test "text" do

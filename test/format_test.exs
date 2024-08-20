@@ -26,8 +26,20 @@ defmodule MDEx.FormatTest do
       extension: Keyword.merge(@extension, extension)
     ]
 
-    ast = MDEx.parse_document(document, opts)
-    assert MDEx.to_html(ast, opts) == expected
+    assert {:ok, ast} = MDEx.parse_document(document, opts)
+    assert MDEx.to_html(ast, opts) == {:ok, expected}
+  end
+
+  describe "error handling" do
+    test "invalid ast" do
+      assert {:error, %MDEx.DecodeError{reason: :invalid_ast, found: "{<<\"document\">>}"}} = MDEx.to_html([{"document"}], [])
+      assert {:error, %MDEx.DecodeError{reason: :invalid_ast, found: "{<<\"code\">>,[invalid],[]}"}} = MDEx.to_html([{"code", [:invalid], []}], [])
+      assert {:error, %MDEx.DecodeError{reason: :invalid_ast, found: "{<<\"code\">>,[{}],[]}"}} = MDEx.to_html([{"code", [{}], []}], [])
+      assert {:error, %MDEx.DecodeError{reason: :invalid_ast_node_attr_key, found: "offset"}} = MDEx.to_html([{"code", [{:offset, 1}], []}], [])
+
+      assert {:error, %MDEx.DecodeError{reason: :invalid_ast, found: "{<<\"code\">>,[{<<\"offset\">>}],[]}"}} =
+               MDEx.to_html([{"code", [{"offset"}], []}], [])
+    end
   end
 
   test "text" do

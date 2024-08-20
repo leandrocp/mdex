@@ -1,8 +1,54 @@
-use crate::types::nodes::{AttrValue, ExNode};
+use crate::types::nodes::{AttrValue, ExNode, NodeName};
 use comrak::nodes::{
     AstNode, ListDelimType, ListType, NodeLink, NodeList, NodeValue, TableAlignment,
 };
 use rustler::{Encoder, Env, Term};
+
+impl Encoder for NodeName {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
+        match self {
+            Self::Document => "document",
+            Self::FrontMatter => "front_matter",
+            Self::BlockQuote => "block_quote",
+            Self::List => "list",
+            Self::Item => "item",
+            Self::DescriptionList => "description_list",
+            Self::DescriptionItem => "description_item",
+            Self::DescriptionTerm => "description_term",
+            Self::DescriptionDetails => "description_details",
+            Self::CodeBlock => "code_block",
+            Self::HtmlBlock => "html_block",
+            Self::Paragraph => "paragraph",
+            Self::Heading => "heading",
+            Self::ThematicBreak => "themantic_break",
+            Self::FootnoteDefinition => "footnote_definition",
+            Self::Table => "table",
+            Self::TableRow => "table_row",
+            Self::TableCell => "table_cell",
+            Self::TaskItem => "task_item",
+            Self::SoftBreak => "soft_break",
+            Self::LineBreak => "line_break",
+            Self::Code => "code",
+            Self::HtmlInline => "html_inline",
+            Self::Emph => "emph",
+            Self::Strong => "strong",
+            Self::Strikethrough => "strikethrough",
+            Self::Superscript => "superscript",
+            Self::Link => "link",
+            Self::Image => "image",
+            Self::FootnoteReference => "footnote_reference",
+            Self::ShortCode => "short_code",
+            Self::Math => "math",
+            Self::MultilineBlockQuote => "multiline_block_quote",
+            Self::Escaped => "escaped",
+            Self::WikiLink => "wiki_link",
+            Self::Underline => "underline",
+            Self::SpoileredText => "spoilered_text",
+            Self::EscapedTag => "escaped_tag",
+        }
+        .encode(env)
+    }
+}
 
 impl<'a> Encoder for ExNode<'a> {
     fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
@@ -42,26 +88,26 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
         NodeValue::Text(ref text) => ExNode::Text(text.to_string()),
         _ => {
             let (name, attrs) = match node_data.value {
-                NodeValue::Document => ("document", vec![]),
+                NodeValue::Document => (NodeName::Document, vec![]),
                 NodeValue::FrontMatter(ref content) => (
-                    "front_matter",
+                    NodeName::FrontMatter,
                     vec![("content", AttrValue::Text(content.to_owned()))],
                 ),
-                NodeValue::BlockQuote => ("block_quote", vec![]),
-                NodeValue::List(ref attrs) => ("list", node_list_to_ast(attrs)),
-                NodeValue::Item(ref attrs) => ("item", node_list_to_ast(attrs)),
-                NodeValue::DescriptionList => ("description_list", vec![]),
+                NodeValue::BlockQuote => (NodeName::BlockQuote, vec![]),
+                NodeValue::List(ref attrs) => (NodeName::List, node_list_to_ast(attrs)),
+                NodeValue::Item(ref attrs) => (NodeName::Item, node_list_to_ast(attrs)),
+                NodeValue::DescriptionList => (NodeName::DescriptionList, vec![]),
                 NodeValue::DescriptionItem(ref attrs) => (
-                    "description_item",
+                    NodeName::DescriptionItem,
                     vec![
                         ("marker_offset", AttrValue::Usize(attrs.marker_offset)),
                         ("padding", AttrValue::Usize(attrs.padding)),
                     ],
                 ),
-                NodeValue::DescriptionTerm => ("description_term", vec![]),
-                NodeValue::DescriptionDetails => ("description_details", vec![]),
+                NodeValue::DescriptionTerm => (NodeName::DescriptionTerm, vec![]),
+                NodeValue::DescriptionDetails => (NodeName::DescriptionDetails, vec![]),
                 NodeValue::CodeBlock(ref attrs) => (
-                    "code_block",
+                    NodeName::CodeBlock,
                     vec![
                         ("fenced", AttrValue::Bool(attrs.fenced)),
                         (
@@ -75,30 +121,30 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
                     ],
                 ),
                 NodeValue::HtmlBlock(ref attrs) => (
-                    "html_block",
+                    NodeName::HtmlBlock,
                     vec![
                         ("block_type", AttrValue::U8(attrs.block_type)),
                         ("literal", AttrValue::Text(attrs.literal.to_owned())),
                     ],
                 ),
-                NodeValue::Paragraph => ("paragraph", vec![]),
+                NodeValue::Paragraph => (NodeName::Paragraph, vec![]),
                 NodeValue::Heading(ref attrs) => (
-                    "heading",
+                    NodeName::Heading,
                     vec![
                         ("level", AttrValue::U8(attrs.level)),
                         ("setext", AttrValue::Bool(attrs.setext)),
                     ],
                 ),
-                NodeValue::ThematicBreak => ("thematic_break", vec![]),
+                NodeValue::ThematicBreak => (NodeName::ThematicBreak, vec![]),
                 NodeValue::FootnoteDefinition(ref attrs) => (
-                    "footnote_definition",
+                    NodeName::FootnoteDefinition,
                     vec![
                         ("name", AttrValue::Text(attrs.name.to_owned())),
                         ("total_references", AttrValue::U32(attrs.total_references)),
                     ],
                 ),
                 NodeValue::FootnoteReference(ref attrs) => (
-                    "footnote_reference",
+                    NodeName::FootnoteReference,
                     vec![
                         ("name", AttrValue::Text(attrs.name.to_owned())),
                         ("ref_num", AttrValue::U32(attrs.ref_num)),
@@ -118,7 +164,7 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
                         .collect::<Vec<String>>();
 
                     (
-                        "table",
+                        NodeName::Table,
                         vec![
                             ("alignments", AttrValue::List(alignments)),
                             ("num_columns", AttrValue::Usize(attrs.num_columns)),
@@ -130,45 +176,46 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
                         ],
                     )
                 }
-                NodeValue::TableRow(ref header) => {
-                    ("table_row", vec![("header", AttrValue::Bool(*header))])
-                }
-                NodeValue::TableCell => ("table_cell", vec![]),
+                NodeValue::TableRow(ref header) => (
+                    NodeName::TableRow,
+                    vec![("header", AttrValue::Bool(*header))],
+                ),
+                NodeValue::TableCell => (NodeName::TableCell, vec![]),
                 NodeValue::TaskItem(ref symbol) => {
                     let symbol = symbol.unwrap_or(' ');
                     (
-                        "task_item",
+                        NodeName::TaskItem,
                         vec![("symbol", AttrValue::Text(symbol.to_string()))],
                     )
                 }
-                NodeValue::SoftBreak => ("soft_break", vec![]),
-                NodeValue::LineBreak => ("line_break", vec![]),
+                NodeValue::SoftBreak => (NodeName::SoftBreak, vec![]),
+                NodeValue::LineBreak => (NodeName::LineBreak, vec![]),
                 NodeValue::Code(ref attrs) => (
-                    "code",
+                    NodeName::Code,
                     vec![
                         ("num_backticks", AttrValue::Usize(attrs.num_backticks)),
                         ("literal", AttrValue::Text(attrs.literal.to_owned())),
                     ],
                 ),
                 NodeValue::HtmlInline(ref raw_html) => (
-                    "html_inline",
+                    NodeName::HtmlInline,
                     vec![("raw_html", AttrValue::Text(raw_html.to_owned()))],
                 ),
-                NodeValue::Emph => ("emph", vec![]),
-                NodeValue::Strong => ("strong", vec![]),
-                NodeValue::Strikethrough => ("strikethrough", vec![]),
-                NodeValue::Superscript => ("superscript", vec![]),
-                NodeValue::Link(ref attrs) => ("link", node_link_to_ast(attrs)),
-                NodeValue::Image(ref attrs) => ("image", node_link_to_ast(attrs)),
+                NodeValue::Emph => (NodeName::Emph, vec![]),
+                NodeValue::Strong => (NodeName::Strong, vec![]),
+                NodeValue::Strikethrough => (NodeName::Strikethrough, vec![]),
+                NodeValue::Superscript => (NodeName::Superscript, vec![]),
+                NodeValue::Link(ref attrs) => (NodeName::Link, node_link_to_ast(attrs)),
+                NodeValue::Image(ref attrs) => (NodeName::Image, node_link_to_ast(attrs)),
                 NodeValue::ShortCode(ref attrs) => (
-                    "short_code",
+                    NodeName::ShortCode,
                     vec![
                         ("code", AttrValue::Text(attrs.code.to_owned())),
                         ("emoji", AttrValue::Text(attrs.emoji.to_owned())),
                     ],
                 ),
                 NodeValue::Math(ref attrs) => (
-                    "math",
+                    NodeName::Math,
                     vec![
                         ("dollar_math", AttrValue::Bool(attrs.dollar_math)),
                         ("display_math", AttrValue::Bool(attrs.display_math)),
@@ -176,21 +223,21 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
                     ],
                 ),
                 NodeValue::MultilineBlockQuote(ref attrs) => (
-                    "multiline_block_quote",
+                    NodeName::MultilineBlockQuote,
                     vec![
                         ("fence_length", AttrValue::Usize(attrs.fence_length)),
                         ("fence_offset", AttrValue::Usize(attrs.fence_offset)),
                     ],
                 ),
-                NodeValue::Escaped => ("escaped", vec![]),
+                NodeValue::Escaped => (NodeName::Escaped, vec![]),
                 NodeValue::WikiLink(ref attrs) => (
-                    "wiki_link",
+                    NodeName::WikiLink,
                     vec![("url", AttrValue::Text(attrs.url.to_owned()))],
                 ),
-                NodeValue::Underline => ("underline", vec![]),
-                NodeValue::SpoileredText => ("spoilered_text", vec![]),
+                NodeValue::Underline => (NodeName::Underline, vec![]),
+                NodeValue::SpoileredText => (NodeName::SpoileredText, vec![]),
                 NodeValue::EscapedTag(ref tag) => (
-                    "escaped_tag",
+                    NodeName::EscapedTag,
                     vec![("tag", AttrValue::Text(tag.to_owned()))],
                 ),
                 NodeValue::Text(_) => unreachable!(),

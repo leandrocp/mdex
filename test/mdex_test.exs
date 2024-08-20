@@ -3,7 +3,7 @@ defmodule MDExTest do
   doctest MDEx
 
   defp assert_output(input, expected, opts \\ []) do
-    html = MDEx.to_html(input, opts)
+    assert {:ok, html} = MDEx.to_html(input, opts)
     assert html == expected
   end
 

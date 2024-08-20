@@ -56,6 +56,6 @@ defmodule MDEx.Native do
   def markdown_to_html(_md), do: :erlang.nif_error(:nif_not_loaded)
   def markdown_to_html_with_options(_md, _options), do: :erlang.nif_error(:nif_not_loaded)
   def parse_document(_md, _options), do: :erlang.nif_error(:nif_not_loaded)
-  def tree_to_html(_tree), do: :erlang.nif_error(:nif_not_loaded)
-  def tree_to_html_with_options(_tree, _options), do: :erlang.nif_error(:nif_not_loaded)
+  def ast_to_html(_ast), do: :erlang.nif_error(:nif_not_loaded)
+  def ast_to_html_with_options(_ast, _options), do: :erlang.nif_error(:nif_not_loaded)
 end

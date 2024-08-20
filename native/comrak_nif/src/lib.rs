@@ -10,11 +10,12 @@ mod inkjet_adapter;
 mod types;
 
 use ammonia::clean;
-use comrak::{format_commonmark, markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
+use comrak::{markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
+use decoder::ex_node_to_comrak_ast;
 use encoder::to_elixir_ast;
 use inkjet_adapter::InkjetAdapter;
-use rustler::{Encoder, Env, NifResult, Term};
-use types::{nodes::ExNode, options::*};
+use rustler::{Decoder, Encoder, Env, NifResult, Term};
+use types::{atoms::ok, options::*};
 
 rustler::init!(
     "Elixir.MDEx.Native",
@@ -22,17 +23,18 @@ rustler::init!(
         parse_document,
         markdown_to_html,
         markdown_to_html_with_options,
-        tree_to_html,
-        tree_to_html_with_options
+        ast_to_html,
+        ast_to_html_with_options
     ]
 );
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> String {
+fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
     let inkjet_adapter = InkjetAdapter::default();
     let mut plugins = ComrakPlugins::default();
     plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
-    markdown_to_html_with_plugins(md, &Options::default(), &plugins)
+    let html = markdown_to_html_with_plugins(md, &Options::default(), &plugins);
+    Ok((ok(), html).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -58,22 +60,22 @@ fn markdown_to_html_with_options<'a>(
             let mut plugins = ComrakPlugins::default();
             plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
             let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);
-            render(env, unsafe_html, options.features.sanitize)
+            maybe_sanitize(env, unsafe_html, options.features.sanitize)
         }
         None => {
             let unsafe_html = comrak::markdown_to_html(md, &comrak_options);
-            render(env, unsafe_html, options.features.sanitize)
+            maybe_sanitize(env, unsafe_html, options.features.sanitize)
         }
     }
 }
 
-fn render(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
+fn maybe_sanitize(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
     let html = match sanitize {
         true => clean(&unsafe_html),
         false => unsafe_html,
     };
 
-    rustler::serde::to_term(env, html).map_err(|err| err.into())
+    Ok((ok(), html).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -86,12 +88,13 @@ fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<T
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
     let ex_ast = to_elixir_ast(root);
-    Ok(vec![ex_ast].encode(env))
+    let result = (ok(), vec![ex_ast]).encode(env);
+    Ok(result)
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn tree_to_html<'a>(env: Env<'a>, tree: Term<'a>) -> NifResult<Term<'a>> {
-    println!("tree: {:?}", tree);
+fn ast_to_html<'a>(env: Env<'a>, ast: Term<'a>) -> NifResult<Term<'a>> {
+    println!("tree: {:?}", ast);
     // // FIXME: validate tree[0] is a document
     // let node = tree.first().unwrap();
 
@@ -103,50 +106,32 @@ fn tree_to_html<'a>(env: Env<'a>, tree: Term<'a>) -> NifResult<Term<'a>> {
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn tree_to_html_with_options<'a>(
+fn ast_to_html_with_options<'a>(
     env: Env<'a>,
-    tree: Term<'a>,
+    ast: Term<'a>,
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
-    todo!()
-    // let comrak_options = comrak::Options {
-    //     extension: extension_options_from_ex_options(&options),
-    //     parse: parse_options_from_ex_options(&options),
-    //     render: render_options_from_ex_options(&options),
-    // };
+    println!("ast: {:?}", ast);
 
-    // println!("tree: {:?}", tree);
+    let ex_node = types::nodes::ExNode::decode(ast)?;
 
-    // let ex_node: ExNode = tree.decode()?;
-    // println!("ex_node: {:?}", ex_node);
+    let arena = Arena::new();
+    let comrak_ast = ex_node_to_comrak_ast(&arena, &ex_node);
+    println!("comrak_ast: {:?}", comrak_ast);
 
-    // let arena = Arena::new();
-    // let comrak_ast = convert_ex_node_to_comrak(&arena, &ex_node);
-    // println!("comrak_ast: {:?}", comrak_ast);
+    let comrak_options = comrak::Options {
+        extension: extension_options_from_ex_options(&options),
+        parse: parse_options_from_ex_options(&options),
+        render: render_options_from_ex_options(&options),
+    };
 
-    // let mut buffer = vec![];
-    // format_commonmark(comrak_ast, &comrak_options, &mut buffer).unwrap();
-    // let out = String::from_utf8(buffer).unwrap();
-    // println!("out: {:?}", out);
+    // FIXME: plugins
+    // FIXME: error handling format_html and from_utf8
 
-    // let unsafe_html = comrak::markdown_to_html(out.as_str(), &comrak_options);
-    // render(env, unsafe_html, options.features.sanitize)
+    let mut buffer = vec![];
+    comrak::format_html(comrak_ast, &comrak_options, &mut buffer).unwrap();
+    let out = String::from_utf8(buffer).unwrap();
+    println!("out: {:?}", out);
 
-    // let node = to_astnode(tree);
-    // println!("astnode: {:?}", node);
-
-    // let d = tree.decode();
-
-    //     // FIXME: syntax highlighting option
-    //     let comrak_options = comrak::Options {
-    //         extension: extension_options_from_ex_options(&options),
-    //         parse: parse_options_from_ex_options(&options),
-    //         render: render_options_from_ex_options(&options),
-    //     };
-    //     // FIXME: validate tree[0] is a document
-    //     let node = tree.first().unwrap();
-
-    //     // println!("tree_to_html_with_options: {:?}", node);
-
-    //     node.format_document(&comrak_options)
+    Ok((ok(), out).encode(env))
 }
