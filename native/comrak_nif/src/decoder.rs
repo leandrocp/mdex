@@ -237,7 +237,7 @@ fn attrs_to_node_list(attrs: Vec<(&str, AttrValue)>) -> NodeList {
         match value {
             "bullet" => ListType::Bullet,
             "ordered" => ListType::Ordered,
-            _ => ListType::Bullet,
+            _ => ListType::default(),
         }
     };
 
@@ -245,7 +245,7 @@ fn attrs_to_node_list(attrs: Vec<(&str, AttrValue)>) -> NodeList {
         match value {
             "period" => ListDelimType::Period,
             "paren" => ListDelimType::Paren,
-            _ => ListDelimType::Period,
+            _ => ListDelimType::default(),
         }
     };
 
