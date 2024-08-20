@@ -1,6 +1,6 @@
 use crate::types::nodes::{AttrValue, ExNode, NodeName};
 use comrak::{
-    nodes::{AstNode, NodeCodeBlock, NodeList, NodeValue},
+    nodes::{AstNode, ListDelimType, ListType, NodeCodeBlock, NodeList, NodeValue},
     Arena,
 };
 use rustler::{Binary, Decoder, Encoder, Env, Error, NifResult, Term};
@@ -134,6 +134,11 @@ fn decode_node<'a>(term: &Term<'a>) -> NifResult<ExNode<'a>> {
 
 // FIXME:: error handle
 fn string_to_char(s: String) -> u8 {
+    println!("string_to_char: {:?}", s);
+    if s.len() == 0 {
+        return 0;
+    }
+
     s.chars().next().unwrap() as u8
 }
 
@@ -228,11 +233,33 @@ fn attrs_to_node_list(attrs: Vec<(&str, AttrValue)>) -> NodeList {
     println!("list attrs: {:?}", attrs);
     let mut list = NodeList::default();
 
+    let to_list_type = |value: &str| -> ListType {
+        match value {
+            "bullet" => ListType::Bullet,
+            "ordered" => ListType::Ordered,
+            _ => ListType::Bullet,
+        }
+    };
+
+    let to_delim_type = |value: &str| -> ListDelimType {
+        match value {
+            "period" => ListDelimType::Period,
+            "paren" => ListDelimType::Paren,
+            _ => ListDelimType::Period,
+        }
+    };
+
     for (key, value) in attrs {
         match (key, value) {
+            ("list_type", AttrValue::Text(ref value)) => {
+                list.list_type = to_list_type(value.as_str())
+            }
             ("marker_offset", AttrValue::Usize(ref value)) => list.marker_offset = *value,
             ("padding", AttrValue::Usize(ref value)) => list.padding = *value,
             ("start", AttrValue::Usize(ref value)) => list.start = *value,
+            ("delimiter", AttrValue::Text(ref value)) => {
+                list.delimiter = to_delim_type(value.as_str())
+            }
             ("bullet_char", AttrValue::Text(ref value)) => {
                 list.bullet_char = string_to_char(value.clone())
             }

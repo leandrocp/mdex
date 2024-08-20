@@ -103,7 +103,7 @@ defmodule MDEx.FormatTest do
         3. bar
         """,
         """
-        <ol>
+        <ol start="0">
         <li>foo</li>
         <li></li>
         <li>bar</li>
