@@ -94,15 +94,23 @@ fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<T
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn ast_to_html<'a>(env: Env<'a>, ast: Term<'a>) -> NifResult<Term<'a>> {
-    println!("tree: {:?}", ast);
-    // // FIXME: validate tree[0] is a document
-    // let node = tree.first().unwrap();
+    let ex_node = types::nodes::ExNode::decode(ast)?;
 
-    // // println!("tree_to_html: {:?}", node);
+    let arena = Arena::new();
+    let comrak_ast = ex_node_to_comrak_ast(&arena, &ex_node);
 
-    // node.format_document(&Options::default())
+    // FIXME: error handling format_html and from_utf8
 
-    todo!()
+    let inkjet_adapter = InkjetAdapter::default();
+    let mut plugins = ComrakPlugins::default();
+    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+
+    let mut buffer = vec![];
+    comrak::format_html_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
+        .unwrap();
+    let out = String::from_utf8(buffer).unwrap();
+
+    Ok((ok(), out).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -111,13 +119,10 @@ fn ast_to_html_with_options<'a>(
     ast: Term<'a>,
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
-    println!("ast: {:?}", ast);
-
     let ex_node = types::nodes::ExNode::decode(ast)?;
 
     let arena = Arena::new();
     let comrak_ast = ex_node_to_comrak_ast(&arena, &ex_node);
-    println!("comrak_ast: {:?}", comrak_ast);
 
     let comrak_options = comrak::Options {
         extension: extension_options_from_ex_options(&options),
@@ -131,7 +136,6 @@ fn ast_to_html_with_options<'a>(
     let mut buffer = vec![];
     comrak::format_html(comrak_ast, &comrak_options, &mut buffer).unwrap();
     let out = String::from_utf8(buffer).unwrap();
-    println!("out: {:?}", out);
 
     Ok((ok(), out).encode(env))
 }

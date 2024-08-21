@@ -377,8 +377,8 @@ defmodule MDEx.ParseTest do
               {"tight", true}
             ],
             [
-              {"task_item", [{"symbol", "x"}], [{"paragraph", [], ["Done"]}]},
-              {"task_item", [{"symbol", " "}], [{"paragraph", [], ["Not done"]}]}
+              {"task_item", [{"checked", true}, {"symbol", "x"}], [{"paragraph", [], ["Done"]}]},
+              {"task_item", [{"checked", false}], [{"paragraph", [], ["Not done"]}]}
             ]}
          ]}
       ]

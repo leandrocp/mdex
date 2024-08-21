@@ -182,10 +182,15 @@ pub fn to_elixir_ast<'a>(node: &'a AstNode<'a>) -> ExNode {
                 ),
                 NodeValue::TableCell => (NodeName::TableCell, vec![]),
                 NodeValue::TaskItem(ref symbol) => {
-                    let symbol = symbol.unwrap_or(' ');
                     (
                         NodeName::TaskItem,
-                        vec![("symbol", AttrValue::Text(symbol.to_string()))],
+                        match symbol {
+                            Some(symbol) => vec![
+                                ("checked", AttrValue::Bool(true)),
+                                ("symbol", AttrValue::Text(symbol.to_string())),
+                            ],
+                            None => vec![("checked", AttrValue::Bool(false))],
+                        },
                     )
                 }
                 NodeValue::SoftBreak => (NodeName::SoftBreak, vec![]),

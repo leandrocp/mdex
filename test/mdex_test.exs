@@ -8,8 +8,8 @@ defmodule MDExTest do
   end
 
   test "wrap fragment in root document" do
-    assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == "<p>mdex</p>\n"
-    assert MDEx.to_html(["mdex", "test"]) == "<p>mdextest</p>\n"
+    assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == {:ok, "<p>mdex</p>\n"}
+    assert MDEx.to_html(["mdex", "test"]) == {:ok, "<p>mdextest</p>\n"}
   end
 
   describe "syntax highlighting" do
