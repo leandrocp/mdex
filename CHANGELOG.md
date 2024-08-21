@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0-dev
+
+### Enhancements
+  * Added `parse_document/1` and `parse_document/2` to parse Markdown to AST
+  * Added `traverse_and_update/2` and `attribute/2` to manipulate AST
+  * Added `to_html!/1` and `to_html!/2`
+  * Changed `to_html/1` and `to_html/2` to accept AST as input
+  * Added examples directory to show how to use the new APIs
+
+### Breaking changes
+  * `to_html/1` and `to_html/2` now returns `{:ok, String.t()}` or `{:error, %MDEx.DecodeError{}}` instead of just `String.t()`
+    The reason is because now they may accept an AST as input which may cause decoding errors.
+    Replace with `to_html!/1` and `to_html!/2` to have a similar behavior as before.
+
 ## 0.1.18 (2024-07-13)
 
 ### Enhancements
