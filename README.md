@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter for Elixir.
+  A CommonMark-compliant fast and extensible Markdown parser and formatter for Elixir.
 </p>
 
 <p align="center">
@@ -26,10 +26,11 @@
 
 ## Features
 
-- Fast. Check out the [benchmark](https://github.com/leandrocp/mdex#benchmark)
-- Compatible with the [CommonMark spec](https://spec.commonmark.org) and the [GitHub Flavored Markdown Spec](https://github.github.com/gfm/)
-- Binary is precompiled, no need to compile anything
-- Code syntax highlighting, performed by [Autumn](https://github.com/leandrocp/autumn)
+Compliant with [CommonMark](https://spec.commonmark.org) and [GitHub Flavored Markdown](https://github.github.com/gfm) specifications with extra [extensions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
+as Wiki Links, Discord Markdown tags, and emoji. Also supports syntax highlighting out-of-the-box using the [Autumn](https://github.com/leandrocp/autumn) library.
+
+Under the hood it's calling the [comrak](https://crates.io/crates/comrak) APIs to process Markdown,
+a fast Rust crate that ports the cmark fork maintained by GitHub, a widely and well adopted Markdown implementation.
 
 Check out some samples at https://mdex-c31.pages.dev
 
@@ -52,16 +53,117 @@ Mix.install([{:mdex, "~> 0.1"}])
 ```
 
 ```elixir
-MDEx.to_html("# Hello")
-#=> "<h1>Hello</h1>\n"
+MDEx.to_html!("# Hello")
+"<h1>Hello</h1>\n"
 ```
 
-And you can change how the markdown is parsed and formatted by passing options to `MDEx.to_html/2` to enable more features:
+```elixir
+MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
+"<h1>Hello 😄</h1>\n"
+```
+
+## Parsing
+
+Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document.
+
+The data structure shape is exactly the same as the one used by [Floki](https://github.com/philss/floki) so we can reuse the same APIs and keep the same mental model when
+working with these documents, either Markdown or HTML, where each node is represented as:
+
+```elixir
+{name, attributes, children}
+```
+
+Example:
+
+```elixir
+MDEx.parse_document!("# Hello")
+[{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
+```
+
+Note that text nodes have no attributes nor children, so it's represented as a string inside a list.
+
+You can find the full AST spec on the MDEx module types section.
+
+## Formatting
+
+Converts the AST to a human-readable document, most commonly to HTML, example:
+
+```elixir
+MDEx.to_html!([{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}])
+"<h1>Hello</h1>\n"
+```
+
+_More formats can be added in the future through plugins._
+
+Any missing attribute will be filled with the default value, and extra attributes will be ignored. So you could have the same result with:
+
+```elixir
+MDEx.to_html!([{"document", [], [{"heading", [], ["Hello"]}]}])
+"<h1>Hello</h1>\n"
+```
+
+Default values are defined on a best-case scenario but as a good practice you should provide all attributes for each node.
+
+Trying to format malformed ASTs will return a `{:error, %DecodeError{}}` describing what and where the error occurred, example:
+
+```elixir
+{:error, decode_error} = MDEx.to_html([{"code", [{1, "foo"}], []}], [])
+{:error,
+ %MDEx.DecodeError{
+   reason: :attr_key_not_string,
+   found: "1",
+   node: "(<<\"code\">>, [{1,<<\"foo\">>}], [])",
+   attr: "(1, <<\"foo\">>)",
+   kind: "Integer"
+ }}
+
+decode_error |> Exception.message() |> IO.puts()
+# invalid attribute key
+#
+# Expected an attribute key encoded as UTF-8 binary
+#
+# Got:
+#
+#   1
+#
+# Type:
+#
+#   Integer
+#
+# In this node:
+#
+#   (<<"code">>, [{1,<<"foo">>}], [])
+#
+# In this attribute:
+#
+#   (1, <<"foo">>)
+```
+
+## Options
+
+You can enable extensions and change the output of the generated Markdown by passing any of the available [Comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html)
+as keyword lists or also an additional `:features` option.
+
+_The full documentation and list of all options with description and examples can be found on the links below:_
+
+* `:extension` - https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html
+* `:parse` - https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html
+* `:render` - https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html
+* `:features` - see the available options below
+
+### Features Options
+
+* `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
+* `:syntax_highlight_theme` (default `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
+you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: "adwaita_dark"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme
+* `:syntax_highlight_inline_style` (default `true`) - embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code
+
+See some examples below on how to use the provided options:
 
 ### GitHub Flavored Markdown with [emojis](https://www.webfx.com/tools/emoji-cheat-sheet/)
 
 ```elixir
-MDEx.to_html(
+MDEx.to_html!(
   ~S"""
   # GitHub Flavored Markdown :rocket:
 
@@ -95,48 +197,48 @@ MDEx.to_html(
      escape: true
   ]
 ) |> IO.puts()
-#=> <p>GitHub Flavored Markdown 🚀</p>
-#=> <ul>
-#=>   <li><input type="checkbox" checked="" disabled="" /> Task A</li>
-#=>   <li><input type="checkbox" checked="" disabled="" /> Task B</li>
-#=>   <li><input type="checkbox" disabled="" /> Task C</li>
-#=> </ul>
-#=> <table>
-#=>   <thead>
-#=>     <tr>
-#=>       <th>Feature</th>
-#=>       <th>Status</th>
-#=>     </tr>
-#=>   </thead>
-#=>   <tbody>
-#=>     <tr>
-#=>       <td>Fast</td>
-#=>       <td>✅</td>
-#=>     </tr>
-#=>     <tr>
-#=>       <td>GFM</td>
-#=>       <td>✅</td>
-#=>     </tr>
-#=>   </tbody>
-#=> </table>
-#=> <p>Check out the spec at <a href="https://github.github.com/gfm/">https://github.github.com/gfm/</a></p>
+# <p>GitHub Flavored Markdown 🚀</p>
+# <ul>
+#   <li><input type="checkbox" checked="" disabled="" /> Task A</li>
+#   <li><input type="checkbox" checked="" disabled="" /> Task B</li>
+#   <li><input type="checkbox" disabled="" /> Task C</li>
+# </ul>
+# <table>
+#   <thead>
+#     <tr>
+#       <th>Feature</th>
+#       <th>Status</th>
+#     </tr>
+#   </thead>
+#   <tbody>
+#     <tr>
+#       <td>Fast</td>
+#       <td>✅</td>
+#     </tr>
+#     <tr>
+#       <td>GFM</td>
+#       <td>✅</td>
+#     </tr>
+#   </tbody>
+# </table>
+# <p>Check out the spec at <a href="https://github.github.com/gfm/">https://github.github.com/gfm/</a></p>
 ```
 
 ### Code Syntax Highlighting
 
 ````elixir
-MDEx.to_html(~S"""
+MDEx.to_html!(~S"""
 ```elixir
 String.upcase("elixir")
 ```
 """,
 features: [syntax_highlight_theme: "catppuccin_latte"]
 ) |> IO.puts()
-#=> <pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">
-#=>   <code class=\"language-elixir\" translate=\"no\">
-#=>     <span class=\"namespace\" style=\"color: #61AFEF;\">String</span><span class=\"operator\" style=\"color: #C678DD;\">.</span><span class=\"function\" style=\"color: #61AFEF;\">upcase</span><span class=\"\" style=\"color: #ABB2BF;\">(</span><span class=\"string\" style=\"color: #98C379;\">&quot;elixir&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">)</span>
-#=>   </code>
-#=> </pre>
+# <pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">
+#   <code class=\"language-elixir\" translate=\"no\">
+#     <span class=\"namespace\" style=\"color: #61AFEF;\">String</span><span class=\"operator\" style=\"color: #C678DD;\">.</span><span class=\"function\" style=\"color: #61AFEF;\">upcase</span><span class=\"\" style=\"color: #ABB2BF;\">(</span><span class=\"string\" style=\"color: #98C379;\">&quot;elixir&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">)</span>
+#   </code>
+# </pre>
 ````
 
 ## Demo and Samples
@@ -147,8 +249,9 @@ A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and 
 
 - [BeaconCMS](https://github.com/BeaconCMS/beacon)
 - [Tableau](https://github.com/elixir-tools/tableau)
+- And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
-_Using it and want your project listed here? Please send a PR!_
+_Are you using MDEx and want to list your project here? Please send a PR!_
 
 ## Benchmark
 
@@ -170,14 +273,16 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 
 ## Motivation
 
-* `earmark` is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
-* `md` is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
-* `markdown` is not precompiled and has not received updates in a while.
-* `cmark` is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archieved on Apr 2024
+MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible. None of the existing libraries described below met all these requirements at the time.
+
+* [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
+* [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
+* [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
+* [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archieved on Apr 2024
 
 _Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
 
-To finish, a friendly reminder that all libs have their own strengths and trade-offs.
+To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suit your needs.
 
 ## Looking for help with your Elixir project?
 
@@ -190,6 +295,7 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 ## Acknowledgements
 
-* Use Rust's [comrak crate](https://crates.io/crates/comrak) under the hood.
-* [Logo](https://www.flaticon.com/free-icons/rpg) created by by Freepik - Flaticon
+* [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
+* [Floki](https://hex.pm/packages/floki) for the AST manipulation
+* [Logo](https://www.flaticon.com/free-icons/rpg) created by Freepik - Flaticon
 * [Logo font](https://github.com/quoteunquoteapps/CourierPrime) designed by [Alan Greene](https://github.com/a-dg)

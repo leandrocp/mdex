@@ -3,9 +3,46 @@ defmodule MDExTest do
   doctest MDEx
 
   defp assert_output(input, expected, opts \\ []) do
-    html = MDEx.to_html(input, opts)
-    # IO.puts(html) # debug
+    assert {:ok, html} = MDEx.to_html(input, opts)
     assert html == expected
+  end
+
+  test "wrap fragment in root document" do
+    assert MDEx.to_html([]) == {:ok, "<p></p>\n"}
+    assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == {:ok, "<p>mdex</p>\n"}
+    assert MDEx.to_html(["mdex", "test"]) == {:ok, "<p>mdextest</p>\n"}
+  end
+
+  describe "error handling" do
+    test "invalid ast" do
+      assert {:error, %MDEx.DecodeError{reason: :missing_node_field, found: "{<<\"document\">>}"}} = MDEx.to_html([{"document"}], [])
+
+      assert {:error, %MDEx.DecodeError{reason: :node_name_not_string, found: "invalid", kind: "Atom", node: "(invalid, [], [])"}} =
+               MDEx.to_html([{:invalid, [], []}], [])
+
+      assert {:error, %MDEx.DecodeError{reason: :unknown_node_name, found: "unknown", node: "(<<\"unknown\">>, [], [])"}} =
+               MDEx.to_html([{"unknown", [], []}], [])
+
+      assert {:error,
+              %MDEx.DecodeError{
+                reason: :missing_attr_field,
+                found: "[{<<\"literal\">>}]",
+                node: "(<<\"code\">>, [{<<\"literal\">>}], [])"
+              }} = MDEx.to_html([{"code", [{"literal"}], []}], [])
+
+      assert {:error, %MDEx.DecodeError{reason: :attr_key_not_string, found: "1", kind: "Integer", node: "(<<\"code\">>, [{1,<<\"foo\">>}], [])"}} =
+               MDEx.to_html([{"code", [{1, "foo"}], []}], [])
+
+      assert {:error,
+              %MDEx.DecodeError{
+                reason: :unknown_attr_value,
+                attr: "(\"literal\", nil)",
+                found: "nil",
+                kind: "Atom",
+                node: "(<<\"code\">>, [{<<\"literal\">>,nil}], [])"
+              }} =
+               MDEx.to_html([{"code", [{"literal", nil}], []}], [])
+    end
   end
 
   describe "syntax highlighting" do
@@ -99,5 +136,44 @@ defmodule MDExTest do
 
   test "render emoji shortcodes" do
     assert_output(":rocket:", "<p>🚀</p>\n", extension: [shortcodes: true])
+  end
+
+  describe "parse_document" do
+    assert MDEx.parse_document!("# Level 1") == [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Level 1"]}]}]
+
+    assert MDEx.parse_document!("""
+           <script type="module">
+             mermaid.initialize({ startOnLoad: true })
+           </script>
+           """) ==
+             [
+               {"document", [],
+                [
+                  {"html_block",
+                   [{"block_type", 1}, {"literal", "<script type=\"module\">\n  mermaid.initialize({ startOnLoad: true })\n</script>\n"}], []}
+                ]}
+             ]
+  end
+
+  describe "traverse_and_update" do
+    test "append child" do
+      ast =
+        "# Test"
+        |> MDEx.parse_document!()
+        |> MDEx.traverse_and_update(fn
+          {"document", attrs, children} ->
+            # FIXME: add parse_fragment that returns only the child without document + paragraph
+            child = MDEx.parse_document!("`foo = 1`")
+            {"document", attrs, children ++ child}
+
+          other ->
+            other
+        end)
+
+      assert MDEx.to_html!(ast) == """
+             <h1>Test</h1>
+             <p><code>foo = 1</code></p>
+             """
+    end
   end
 end

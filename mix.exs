@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.1.19-dev"
+  @version "0.2.0-dev"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -18,8 +18,7 @@ defmodule MDEx.MixProject do
       aliases: aliases(),
       name: "MDEx",
       homepage_url: "https://github.com/leandrocp/mdex",
-      description:
-        "A fast 100% CommonMark-compatible GitHub Flavored Markdown parser and formatter."
+      description: "A CommonMark-compliant fast and extensible Markdown parser and formatter."
     ]
   end
 
@@ -46,11 +45,13 @@ defmodule MDEx.MixProject do
         native/comrak_nif/.cargo
         native/comrak_nif/Cargo.*
         native/comrak_nif/Cross.toml
-        checksum-Elixir.MDEx.Native.exs
+        examples
         mix.exs
+        benchmark.exs
         README.md
         LICENSE.md
         CHANGELOG.md
+        checksum-Elixir.MDEx.Native.exs
       ]
     ]
   end
