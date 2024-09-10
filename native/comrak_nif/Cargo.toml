@@ -20,7 +20,7 @@ comrak = { version = "0.26", features = ["shortcodes"] }
 ammonia = "4.0"
 phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
-tree-sitter-highlight = "0.20"
+tree-sitter-highlight = "0.23"
 v_htmlescape = "0.15"
 autumn = { path = "vendor/autumn" }
 log = "0.4"
