@@ -5,6 +5,8 @@ Mix.install([
 ])
 
 defmodule MDEx.LiveView do
+  # unescape HTML entities
+  # https://github.com/sasa1977/erlangelist/blob/c5ddea9180732e56095b1a20b930dd5f686a62c0/site/lib/erlangelist/web/blog/code_highlighter.ex#L48-L62
   entities = [{"&amp;", ?&}, {"&lt;", ?<}, {"&gt;", ?>}, {"&quot;", ?"}, {"&#39;", ?'}]
 
   for {encoded, decoded} <- entities do
