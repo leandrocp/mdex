@@ -2,11 +2,11 @@ defmodule MDEx.Sigil do
   @doc """
   The `~MD` sigil for parsing and formatting Markdown.
 
-  Most options are enabled by default, otherwise use the regular `to_html/2` function to customize them for particular cases.
+  Most options are enabled by default, otherwise use the regular `MDEx.to_html/2` function to customize them for particular cases.
 
   ## Modifiers
 
-    * `a` - calls `parse_document!/2` to return the document AST instead of HTML
+    * `a` - calls `MDEx.parse_document!/2` to return the document AST instead of HTML
 
   ## Examples
 
