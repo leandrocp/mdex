@@ -1,6 +1,6 @@
 defmodule MDEx.Sigil do
   @doc """
-  The `~MD` sigil for parsing and formatting Markdown.
+  The `~M` sigil for parsing and formatting Markdown.
 
   Most options are enabled by default, otherwise use the regular `MDEx.to_html/2` function to customize them for particular cases.
 
@@ -10,15 +10,16 @@ defmodule MDEx.Sigil do
 
   ## Examples
 
-      iex> ~MD|# Hello|
+      iex> ~M|# Hello|
       "<h1>Hello</h1>"
 
-      iex> ~MD|# Hello|a
+      iex> ~M|# Hello|a
       [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
 
-  Note that you should `import MDEx.Sigil` to use the `~MD` sigil.
+  Note that you should `import MDEx.Sigil` to use the `~M` sigil.
   """
-  defmacro sigil_MD({:<<>>, _meta, [md]}, modifiers) do
+  # TODO: deprecated ~M and add ~MD when we start requiring min Elixir 1.15
+  defmacro sigil_M({:<<>>, _meta, [md]}, modifiers) do
     opts = [
       extension: [
         strikethrough: true,

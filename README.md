@@ -65,13 +65,13 @@ MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 ```elixir
 import MDEx.Sigil
 
-~MD|# Hello from `~MD` sigil|
-"<h1>Hello from <code>~MD</code> sigil</h1>\n"
+~M|# Hello from `~M` sigil|
+"<h1>Hello from <code>~M</code> sigil</h1>\n"
 
-~MD|`~MD` can return the AST too|a
+~M|`~M` can return the AST too|a
 [
   {"document", [],
-   [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~MD"}], []}, " can return the AST too"]}]}
+   [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~M"}], []}, " can return the AST too"]}]}
 ]
 ```
 
