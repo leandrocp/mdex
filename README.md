@@ -62,6 +62,19 @@ MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>\n"
 ```
 
+```elixir
+import MDEx.Sigil
+
+~MD|# Hello from `~MD` sigil|
+"<h1>Hello from <code>~MD</code> sigil</h1>\n"
+
+~MD|`~MD` can return the AST too|a
+[
+  {"document", [],
+   [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~MD"}], []}, " can return the AST too"]}]}
+]
+```
+
 ## Parsing
 
 Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document.
