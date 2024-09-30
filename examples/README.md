@@ -37,7 +37,9 @@ elixir highlight.exs && open highlight.html
 
 ## LiveView
 
-Convert markdown to a LiveView HEEx template supporting Phoenix components
+Convert markdown to a LiveView HEEx template supporting Phoenix components.
+
+Inspired by https://twitter.com/pepicrft/status/1714694213642637538
 
 ```sh
 iex live_view.exs
