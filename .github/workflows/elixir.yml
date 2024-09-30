@@ -18,6 +18,7 @@ jobs:
       MDEX_BUILD: 1
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - elixir: "1.13.0"
