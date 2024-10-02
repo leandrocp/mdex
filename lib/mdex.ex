@@ -167,6 +167,63 @@ defmodule MDEx do
     end
   end
 
+  @doc """
+  Convert an AST to Commonmark using default options.
+
+  To customize the output, use `to_commonmark/2`.
+
+  ## Examples
+
+      iex> MDEx.to_commonmark(MDEx.parse_document!("# MDEx"))
+      {:ok, "# MDEx\\n"}
+  """
+
+  @spec to_commonmark(ast :: md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_commonmark(ast) do
+    Native.ast_to_commonmark(ast)
+  end
+
+  @doc """
+  Same as `to_commonmark/1` but raises `MDEx.DecodeError` if the conversion fails.
+  """
+  @spec to_commonmark!(ast :: md_ast()) :: String.t()
+  def to_commonmark!(ast) do
+    case to_commonmark(ast) do
+      {:ok, md} -> md
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert an AST to Commonmark with custom options.
+
+  ## Options
+
+  See the [Options](#module-options) section for the available options.
+
+  ## Examples
+
+      iex> MDEx.to_commonmark(MDEx.parse_document!("# MDEx"), [])
+      {:ok, "# MDEx\\n"}
+
+  """
+  def to_commonmark(md_or_ast, opts) when is_list(md_or_ast) do
+    md_or_ast
+    |> maybe_wrap_document()
+    |> Native.ast_to_commonmark_with_options(comrak_options(opts))
+  end
+
+  @doc """
+  Same as `to_commonmark/2` but raises `MDEx.DecodeError` if the conversion fails.
+  """
+  @spec to_commonmark!(ast :: md_ast(), keyword()) :: String.t()
+  def to_commonmark!(ast, opts) do
+    case to_commonmark(ast, opts) do
+      {:ok, md} -> md
+      {:error, error} -> raise error
+    end
+  end
+
   defp comrak_options(opts) do
     extension = Keyword.get(opts, :extension, %{})
     parse = Keyword.get(opts, :parse, %{})
@@ -204,8 +261,12 @@ defmodule MDEx do
 
   defp maybe_wrap_error({:ok, result}), do: {:ok, result}
   defp maybe_wrap_error({:error, {reason, found}}), do: {:error, %MDEx.DecodeError{reason: reason, found: found}}
-  defp maybe_wrap_error({:error, {reason, found, node}}), do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node}}
-  defp maybe_wrap_error({:error, {reason, found, node, kind}}), do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node, kind: kind}}
+
+  defp maybe_wrap_error({:error, {reason, found, node}}),
+    do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node}}
+
+  defp maybe_wrap_error({:error, {reason, found, node, kind}}),
+    do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node, kind: kind}}
 
   defp maybe_wrap_error({:error, {reason, found, node, attr, kind}}),
     do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node, attr: attr, kind: kind}}
