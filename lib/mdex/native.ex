@@ -58,4 +58,6 @@ defmodule MDEx.Native do
   def parse_document(_md, _options), do: :erlang.nif_error(:nif_not_loaded)
   def ast_to_html(_ast), do: :erlang.nif_error(:nif_not_loaded)
   def ast_to_html_with_options(_ast, _options), do: :erlang.nif_error(:nif_not_loaded)
+  def ast_to_commonmark(_ast), do: :erlang.nif_error(:nif_not_loaded)
+  def ast_to_commonmark_with_options(_ast, _options), do: :erlang.nif_error(:nif_not_loaded)
 end

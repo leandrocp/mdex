@@ -20,6 +20,18 @@ defmodule MDEx.FormatTest do
     greentext: true
   ]
 
+  def assert_commonmark(document, extension \\ []) do
+    opts = [
+      extension: Keyword.merge(@extension, extension),
+      render: [unsafe_: true]
+    ]
+
+    assert {:ok, ast} = MDEx.parse_document(document, opts)
+    assert {:ok, markdown} = MDEx.to_commonmark(ast, opts)
+
+    assert markdown == document
+  end
+
   def assert_format(document, expected, extension \\ []) do
     opts = [
       extension: Keyword.merge(@extension, extension),
@@ -28,12 +40,21 @@ defmodule MDEx.FormatTest do
 
     assert {:ok, ast} = MDEx.parse_document(document, opts)
     assert {:ok, html} = MDEx.to_html(ast, opts)
+
     # IO.puts(html)
     assert html == expected
   end
 
   test "text" do
     assert_format("mdex", "<p>mdex</p>\n")
+
+    assert_commonmark("""
+    mdex
+    """)
+
+    assert_commonmark("""
+    Hello ~world~ there
+    """)
   end
 
   test "front matter" do
@@ -54,6 +75,10 @@ defmodule MDEx.FormatTest do
       """,
       "<blockquote>\n<p>MDEx</p>\n</blockquote>\n"
     )
+
+    assert_commonmark("""
+    > MDEx
+    """)
   end
 
   describe "list" do
