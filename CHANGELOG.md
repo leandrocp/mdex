@@ -3,6 +3,7 @@
 ## 0.2.0-dev
 
 ### Enhancements
+  * Added `to_commonmark/1` and `to_commonmark/2` to convert an AST to CommonMark - [#70](https://github.com/leandrocp/mdex/pull/70) by @jonklein
   * Added `~M` sigil with `a` (AST) modifier (defaults to HTML without the modifier)
   * Added `parse_document/1` and `parse_document/2` to parse Markdown to AST
   * Added `traverse_and_update/2` and `attribute/2` to manipulate AST

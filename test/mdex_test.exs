@@ -13,7 +13,7 @@ defmodule MDExTest do
     assert MDEx.to_html(["mdex", "test"]) == {:ok, "<p>mdextest</p>\n"}
   end
 
-  describe "error handling" do
+  describe "to_html error handling" do
     test "invalid ast" do
       assert {:error, %MDEx.DecodeError{reason: :missing_node_field, found: "{<<\"document\">>}"}} = MDEx.to_html([{"document"}], [])
 
@@ -42,6 +42,12 @@ defmodule MDExTest do
                 node: "(<<\"code\">>, [{<<\"literal\">>,nil}], [])"
               }} =
                MDEx.to_html([{"code", [{"literal", nil}], []}], [])
+    end
+  end
+
+  describe "to_commonmark error handling" do
+    test "invalid ast" do
+      assert {:error, %MDEx.DecodeError{found: "[]", reason: :empty}} = MDEx.to_commonmark([])
     end
   end
 

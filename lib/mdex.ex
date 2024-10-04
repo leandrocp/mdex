@@ -9,14 +9,27 @@ defmodule MDEx do
   alias MDEx.Native
 
   @typedoc """
-  The AST (Abstract Syntax Tree) representation of a markdown document.
+  The AST (Abstract Syntax Tree) representation of a Markdown document.
 
-  It's composed by a list of nodes and usually the root node is a `document` element.
+  It's composed by a list of nodes starting with the `document` root node.
+
+  ## Example
+
+      [
+        {"document", [], [
+          {"heading", [{"level", 1}], ["Elixir"]}
+        ]}
+      ]
+
+  See `t:md_node/0` for more info.
+
   """
   @type md_ast :: [md_node()]
 
   @typedoc """
-  Each node of the AST can be either an element or a text.
+  Each node of the AST document.
+
+  Represented either as a tuple or a string.
   """
   @type md_node :: md_element() | md_text()
 
@@ -47,6 +60,10 @@ defmodule MDEx do
   @doc """
   Parse a `markdown` binary and returns the AST.
 
+  ## Options
+
+  See the [Options](#module-options) section for the available options.
+
   ## Example
 
       iex> MDEx.parse_document!("# Languages\\n Elixir and Rust")
@@ -67,7 +84,7 @@ defmodule MDEx do
       ]
 
   """
-  @spec parse_document(String.t()) :: {:ok, md_ast()} | {:error, term()}
+  @spec parse_document(String.t(), keyword()) :: {:ok, md_ast()} | {:error, term()}
   def parse_document(markdown, opts \\ []) do
     Native.parse_document(markdown, comrak_options(opts))
   end
@@ -75,7 +92,7 @@ defmodule MDEx do
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
   """
-  @spec parse_document!(String.t()) :: md_ast()
+  @spec parse_document!(String.t(), keyword()) :: md_ast()
   def parse_document!(markdown, opts \\ []) do
     case Native.parse_document(markdown, comrak_options(opts)) do
       {:ok, ast} -> ast
@@ -168,19 +185,20 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert an AST to Commonmark using default options.
+  Convert an AST to CommonMark using default options.
 
   To customize the output, use `to_commonmark/2`.
 
   ## Examples
 
-      iex> MDEx.to_commonmark(MDEx.parse_document!("# MDEx"))
+      iex> MDEx.parse_document!("# MDEx") |> MDEx.to_commonmark()
       {:ok, "# MDEx\\n"}
   """
-
   @spec to_commonmark(ast :: md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_commonmark(ast) do
-    Native.ast_to_commonmark(ast)
+    ast
+    |> Native.ast_to_commonmark()
+    |> maybe_wrap_error()
   end
 
   @doc """
@@ -195,7 +213,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert an AST to Commonmark with custom options.
+  Convert an AST to CommonMark with custom options.
 
   ## Options
 
@@ -203,14 +221,16 @@ defmodule MDEx do
 
   ## Examples
 
-      iex> MDEx.to_commonmark(MDEx.parse_document!("# MDEx"), [])
+      iex> MDEx.parse_document!("# MDEx", []) |> MDEx.to_commonmark()
       {:ok, "# MDEx\\n"}
 
   """
-  def to_commonmark(md_or_ast, opts) when is_list(md_or_ast) do
-    md_or_ast
+  @spec to_commonmark(ast :: md_ast(), keyword()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_commonmark(ast, opts) when is_list(opts) do
+    ast
     |> maybe_wrap_document()
     |> Native.ast_to_commonmark_with_options(comrak_options(opts))
+    |> maybe_wrap_error()
   end
 
   @doc """
@@ -260,7 +280,9 @@ defmodule MDEx do
   end
 
   defp maybe_wrap_error({:ok, result}), do: {:ok, result}
-  defp maybe_wrap_error({:error, {reason, found}}), do: {:error, %MDEx.DecodeError{reason: reason, found: found}}
+
+  defp maybe_wrap_error({:error, {reason, found}}),
+    do: {:error, %MDEx.DecodeError{reason: reason, found: found}}
 
   defp maybe_wrap_error({:error, {reason, found, node}}),
     do: {:error, %MDEx.DecodeError{reason: reason, found: found, node: node}}

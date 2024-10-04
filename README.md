@@ -32,7 +32,10 @@ as Wiki Links, Discord Markdown tags, and emoji. Also supports syntax highlighti
 Under the hood it's calling the [comrak](https://crates.io/crates/comrak) APIs to process Markdown,
 a fast Rust crate that ports the cmark fork maintained by GitHub, a widely and well adopted Markdown implementation.
 
-Check out some samples at https://mdex-c31.pages.dev
+The AST format is based on [Floki](https://hex.pm/packages/floki) so the same API to manipulate HTML can be used to manipulate Markdown documents.
+Check out some examples at [mdex/examples/](https://github.com/leandrocp/mdex/tree/main/examples)
+
+And some samples are available at https://mdex-c31.pages.dev
 
 ## Installation
 
@@ -106,7 +109,7 @@ MDEx.to_html!([{"document", [], [{"heading", [{"level", 1}, {"setext", false}], 
 "<h1>Hello</h1>\n"
 ```
 
-_More formats can be added in the future through plugins._
+_More formats can be added in the future._
 
 Any missing attribute will be filled with the default value, and extra attributes will be ignored. So you could have the same result with:
 
@@ -117,7 +120,7 @@ MDEx.to_html!([{"document", [], [{"heading", [], ["Hello"]}]}])
 
 Default values are defined on a best-case scenario but as a good practice you should provide all attributes for each node.
 
-Trying to format malformed ASTs will return a `{:error, %DecodeError{}}` describing what and where the error occurred, example:
+Trying to format malformed ASTs will return a `{:error, %DecodeError{}}` describing what and where the error occurred, for example:
 
 ```elixir
 {:error, decode_error} = MDEx.to_html([{"code", [{1, "foo"}], []}], [])
@@ -291,7 +294,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 * [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
 * [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
 * [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
-* [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archieved on Apr 2024
+* [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
 
 _Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
 
