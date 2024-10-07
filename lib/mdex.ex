@@ -315,7 +315,7 @@ defmodule MDEx do
 
   # https://github.com/philss/floki/blob/28c9ed8d10d851b63ec87fb8ab9c5acd3c7ea90c/lib/floki.ex#L670
   @doc """
-  Returns a list with attribute values for a given `attribute_name`.
+  Returns a list with attribute values for a given `attribute_name`, otherwise returns an empty list.
 
   ## Example
 
@@ -325,6 +325,13 @@ defmodule MDEx do
       ...>   []
       ...> }, "literal")
       ["graph TD;\\n  A-->B;"]
+
+      iex> MDEx.attribute({
+      ...>   "code_block",
+      ...>   [{"info", "mermaid"}, {"literal", "graph TD;\\n  A-->B;"}],
+      ...>   []
+      ...> }, "other")
+      []
 
   """
   @spec attribute(md_ast() | md_node(), String.t()) :: list()

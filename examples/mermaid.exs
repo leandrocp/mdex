@@ -25,6 +25,13 @@ sequenceDiagram
     John->>Bob: How about you?
     Bob-->>John: Jolly good!
 ```
+
+The following script is used to load the mermaid library and initialize it:
+
+```js
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true });
+```
 """
 
 mermaid = """
@@ -45,15 +52,16 @@ html =
 
     # inject the mermaid <pre> block without escaping the content
     {"code_block", _attrs, children} = node ->
-      [code] = MDEx.attribute(node, "literal")
+      with ["mermaid"] <- MDEx.attribute(node, "info"),
+           [code] <- MDEx.attribute(node, "literal") do
+        code = """
+        <pre class="mermaid">#{code}</pre>
+        """
 
-      code = """
-      <pre class="mermaid">
-        #{code}
-      </pre>
-      """
-
-      {"html_block", [{"literal", code}], children}
+        {"html_block", [{"literal", code}], children}
+      else
+        _ -> node
+      end
 
     node ->
       node
