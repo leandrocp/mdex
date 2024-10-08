@@ -31,10 +31,10 @@ defmodule MDEx.Sigil do
 
   ## Modifiers
 
-    * `a` - converts Markdown to AST, equivalent to calling `MDEx.parse_document!/2`
-    * `c` - converts AST to Markdown, equivalent to calling `MDEx.to_commonmark!/2`
+    * `AST` - converts Markdown to AST, equivalent to calling `MDEx.parse_document!/2`
+    * `MD` - converts AST to Markdown, equivalent to calling `MDEx.to_commonmark!/2`
 
-  Without a modifier it converts Markdown to HTML, equivalent to calling `MDEx.to_html!/2`.
+  Without a modifier it converts the input (either Markdown or AST) to HTML, equivalent to calling `MDEx.to_html!/2`.
 
   Note that you should `import MDEx.Sigil` to use the `~M` or `~m` sigils.
 
@@ -49,7 +49,7 @@ defmodule MDEx.Sigil do
   """
 
   @doc """
-  The `~M` sigil converts between CommonMark, HTML, and AST without interpolation or escaping.
+  The `~M` sigil converts between CommonMark, HTML, and AST without interpolation.
 
   ## Examples
 
@@ -57,26 +57,31 @@ defmodule MDEx.Sigil do
       iex> ~M|# Hello|
       "<h1>Hello</h1>"
 
-      # markdown to AST
+      # markdown to ast
       iex> ~M|# Hello|AST
       [{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]
 
-      # AST to markdown
+      # ast to markdown
       iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|MD
       "# Hello"
+
+      # ast to html
+      iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|
+      "<h1>Hello</h1>"
 
   """
   defmacro sigil_M({:<<>>, _meta, [expr]}, modifiers) do
     doc =
       cond do
-        ?a in modifiers ->
+        modifiers == ~c"AST" ->
           MDEx.parse_document!(expr, @opts)
 
-        ?c in modifiers ->
-          MDEx.Sigil.to_commonmark!(expr) |> String.trim()
+        modifiers == ~c"MD" ->
+          MDEx.Sigil.to_commonmark!(expr)
 
+        # HTML
         :default ->
-          MDEx.to_html!(expr, @opts) |> String.trim()
+          MDEx.Sigil.to_html!(expr)
       end
 
     Macro.escape(doc)
@@ -87,43 +92,80 @@ defmodule MDEx.Sigil do
 
   ## Examples
 
-      iex> ~M|# Hello|
-      "<h1>Hello</h1>"
+      iex> lang = "elixir"
 
-      iex> ~M|# Hello|a
-      [{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]
+      # markdown to html
+      iex> ~m|`lang = \#{lang}`|
+      "<p><code>lang = elixir</code></p>"
 
-      iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|c
-      "# Hello"
+      # markdown to ast
+      iex> ~m|`lang = \#{lang}`|AST
+      [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = elixir"}], []}]}]}]
+
+      # ast to markdown
+      iex> ~m[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}|"}], []}]}]}]|MD
+      "`lang = elixir`"
+
+      # ast to html
+      iex> ~m[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}|"}], []}]}]}]|
+      "<p><code>lang = elixir</code></p>"
 
   """
   defmacro sigil_m({:<<>>, _, [binary]}, modifiers) when is_binary(binary) do
-    if ?c in modifiers do
-      binary = Macro.unescape_string(binary)
+    cond do
+      modifiers == ~c"AST" ->
+        binary
+        |> Macro.unescape_string()
+        |> MDEx.parse_document!(@opts)
+        |> Macro.escape()
 
-      quote do
-        MDEx.Sigil.to_commonmark!(unquote(binary))
-      end
-    else
-      binary
-      |> Macro.unescape_string()
-      |> convert(modifiers)
-      |> Macro.escape()
+      modifiers == ~c"MD" ->
+        binary = Macro.unescape_string(binary)
+
+        quote do
+          MDEx.Sigil.to_commonmark!(unquote(binary))
+        end
+
+      # HTML
+      :default ->
+        binary
+        |> Macro.unescape_string()
+        |> MDEx.Sigil.to_html!()
+        |> Macro.escape()
     end
   end
 
   defmacro sigil_m({:<<>>, meta, pieces}, modifiers) do
     binary = {:<<>>, meta, unescape_tokens(pieces)}
 
-    if ?c in modifiers do
-      quote do
-        MDEx.Sigil.to_commonmark!(unquote(binary))
-      end
-    else
-      quote do
-        MDEx.Sigil.convert(unquote(binary), unquote(modifiers))
-      end
+    cond do
+      modifiers == ~c"AST" ->
+        quote do
+          MDEx.parse_document!(unquote(binary), unquote(@opts))
+        end
+
+      modifiers == ~c"MD" ->
+        quote do
+          MDEx.Sigil.to_commonmark!(unquote(binary))
+        end
+
+      # HTML
+      :default ->
+        quote do
+          MDEx.Sigil.to_html!(unquote(binary))
+        end
     end
+  end
+
+  @doc false
+  def to_html!(expr) do
+    with {:ok, [{:{}, _, _}] = quoted} <- Code.string_to_quoted(expr),
+         {ast, _} <- Code.eval_quoted(quoted) do
+      MDEx.to_html!(ast, @opts)
+    else
+      _ -> MDEx.to_html!(expr, @opts)
+    end
+    |> String.trim()
   end
 
   @doc false
@@ -133,7 +175,10 @@ defmodule MDEx.Sigil do
     case Code.string_to_quoted(expr) do
       {:ok, [{:{}, _, _}] = quoted} ->
         {ast, _} = Code.eval_quoted(quoted)
-        MDEx.to_commonmark!(ast, @opts)
+
+        ast
+        |> MDEx.to_commonmark!(@opts)
+        |> String.trim()
 
       {:ok, quoted} ->
         other =
@@ -153,17 +198,6 @@ defmodule MDEx.Sigil do
 
       error ->
         error
-    end
-  end
-
-  @doc false
-  def convert(expr, modifiers) do
-    cond do
-      ?a in modifiers ->
-        MDEx.parse_document!(expr, @opts)
-
-      :default ->
-        MDEx.to_html!(expr, @opts)
     end
   end
 

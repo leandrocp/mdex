@@ -2,42 +2,67 @@ defmodule MDEx.SigilTest do
   use ExUnit.Case
   import MDEx.Sigil
 
-  describe "sigil_m without modifiers" do
-    @expected "<p><code>lang = :elixir</code></p>\n"
-
-    test "without interpolation" do
-      assert ~m|`lang = :elixir`| == @expected
+  describe "sigil_M" do
+    test "markdown to html" do
+      assert ~M|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>"
     end
 
-    test "with interpolation" do
-      lang = ":elixir"
-      assert ~m|`lang = #{lang}`| == @expected
-    end
-  end
-
-  describe "sigil_m with AST modifier" do
-    @expected [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]
-
-    test "without interpolation" do
-      assert ~m|`lang = :elixir`|a == @expected
+    test "markdown to ast" do
+      assert ~M|`lang = :elixir`|AST == [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]
     end
 
-    test "with interpolation" do
-      lang = ":elixir"
-      assert ~m|`lang = #{lang}`|a == @expected
+    test "ast to html" do
+      assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
+               "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "ast to markdown" do
+      assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
+               "`lang = :elixir`"
     end
   end
 
-  describe "sigil_m with CommonMark modifier" do
-    @expected "`lang = :elixir`\n"
-
-    test "without interpolation" do
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|c == @expected
+  describe "sigil_m without interpolation" do
+    test "markdown to html" do
+      assert ~m|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>"
     end
 
-    test "with interpolation" do
-      lang = ":elixir"
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{lang}"}], []}]}]}]|c == @expected
+    test "markdown to ast" do
+      assert ~m|`lang = :elixir`|AST == [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]
+    end
+
+    test "ast to html" do
+      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
+               "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "ast to markdown" do
+      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
+               "`lang = :elixir`"
+    end
+  end
+
+  describe "sigil_m with interpolation" do
+    @lang :elixir
+
+    test "markdown to html" do
+      assert ~m|`lang = #{inspect(@lang)}`| == "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "markdown to ast" do
+      assert ~m|`lang = #{inspect(@lang)}`|AST == [
+               {"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}
+             ]
+    end
+
+    test "ast to html" do
+      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]| ==
+               "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "ast to markdown" do
+      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]|MD ==
+               "`lang = :elixir`"
     end
   end
 end
