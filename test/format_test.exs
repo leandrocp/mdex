@@ -68,6 +68,17 @@ defmodule MDEx.FormatTest do
     )
   end
 
+  test "thematic break" do
+    assert_format(
+      """
+      ---
+      # Heading
+
+      """,
+      "<hr />\n<h1>Heading</h1>\n"
+    )
+  end
+
   test "block quote" do
     assert_format(
       """

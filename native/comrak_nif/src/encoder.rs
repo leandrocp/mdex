@@ -20,7 +20,7 @@ impl Encoder for NodeName {
             Self::HtmlBlock => "html_block",
             Self::Paragraph => "paragraph",
             Self::Heading => "heading",
-            Self::ThematicBreak => "themantic_break",
+            Self::ThematicBreak => "thematic_break",
             Self::FootnoteDefinition => "footnote_definition",
             Self::Table => "table",
             Self::TableRow => "table_row",
