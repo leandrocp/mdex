@@ -165,7 +165,6 @@ defmodule MDEx.Sigil do
     else
       _ -> MDEx.to_html!(expr, @opts)
     end
-    |> String.trim()
   end
 
   @doc false
@@ -175,10 +174,7 @@ defmodule MDEx.Sigil do
     case Code.string_to_quoted(expr) do
       {:ok, [{:{}, _, _}] = quoted} ->
         {ast, _} = Code.eval_quoted(quoted)
-
-        ast
-        |> MDEx.to_commonmark!(@opts)
-        |> String.trim()
+        MDEx.to_commonmark!(ast, @opts)
 
       {:ok, quoted} ->
         other =

@@ -65,18 +65,24 @@ MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>\n"
 ```
 
+## Sigils
+
 ```elixir
 import MDEx.Sigil
 
 ~M|# Hello from `~M` sigil|
 "<h1>Hello from <code>~M</code> sigil</h1>\n"
 
-~M|`~M` can return the AST too|a
+~M|`~M` can return the AST too|AST
 [
-  {"document", [],
-   [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~M"}], []}, " can return the AST too"]}]}
+  {"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~M"}], []}, " can return the AST too"]}]}
 ]
+
+~m|[{"document", [], [{"paragraph", [], ["interpolation in the ", {"code", [{"num_backticks", 1}, {"literal", "#{"AST"}"}], []}, " as well"]}]}]|MD
+"interpolation in the `AST` as well\n"
 ```
+
+See https://hexdocs.pm/mdex/MDEx.Sigil.html for more examples.
 
 ## Parsing
 

@@ -4,7 +4,7 @@ defmodule MDEx.SigilTest do
 
   describe "sigil_M" do
     test "markdown to html" do
-      assert ~M|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>"
+      assert ~M|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "markdown to ast" do
@@ -13,18 +13,18 @@ defmodule MDEx.SigilTest do
 
     test "ast to html" do
       assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
-               "<p><code>lang = :elixir</code></p>"
+               "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
       assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
-               "`lang = :elixir`"
+               "`lang = :elixir`\n"
     end
   end
 
   describe "sigil_m without interpolation" do
     test "markdown to html" do
-      assert ~m|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>"
+      assert ~m|`lang = :elixir`| == "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "markdown to ast" do
@@ -33,12 +33,12 @@ defmodule MDEx.SigilTest do
 
     test "ast to html" do
       assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
-               "<p><code>lang = :elixir</code></p>"
+               "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
       assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
-               "`lang = :elixir`"
+               "`lang = :elixir`\n"
     end
   end
 
@@ -46,7 +46,7 @@ defmodule MDEx.SigilTest do
     @lang :elixir
 
     test "markdown to html" do
-      assert ~m|`lang = #{inspect(@lang)}`| == "<p><code>lang = :elixir</code></p>"
+      assert ~m|`lang = #{inspect(@lang)}`| == "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "markdown to ast" do
@@ -57,12 +57,12 @@ defmodule MDEx.SigilTest do
 
     test "ast to html" do
       assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]| ==
-               "<p><code>lang = :elixir</code></p>"
+               "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
       assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]|MD ==
-               "`lang = :elixir`"
+               "`lang = :elixir`\n"
     end
   end
 end
