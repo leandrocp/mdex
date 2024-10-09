@@ -55,19 +55,19 @@ defmodule MDEx.Sigil do
 
       # markdown to html
       iex> ~M|# Hello|
-      "<h1>Hello</h1>"
+      "<h1>Hello</h1>\n"
 
       # markdown to ast
       iex> ~M|# Hello|AST
-      [{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]
+      [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
 
       # ast to markdown
       iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|MD
-      "# Hello"
+      "# Hello\n"
 
       # ast to html
       iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|
-      "<h1>Hello</h1>"
+      "<h1>Hello</h1>\n"
 
   """
   defmacro sigil_M({:<<>>, _meta, [expr]}, modifiers) do
@@ -96,19 +96,19 @@ defmodule MDEx.Sigil do
 
       # markdown to html
       iex> ~m|`lang = \#{lang}`|
-      "<p><code>lang = elixir</code></p>"
+      "<p><code>lang = elixir</code></p>\n"
 
       # markdown to ast
       iex> ~m|`lang = \#{lang}`|AST
       [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = elixir"}], []}]}]}]
 
       # ast to markdown
-      iex> ~m[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}|"}], []}]}]}]|MD
-      "`lang = elixir`"
+      iex> ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}"}], []}]}]}]|MD
+      "`lang = elixir`\n"
 
       # ast to html
-      iex> ~m[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}|"}], []}]}]}]|
-      "<p><code>lang = elixir</code></p>"
+      iex> ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = \#{lang}"}], []}]}]}]|
+      "<p><code>lang = elixir</code></p>\n"
 
   """
   defmacro sigil_m({:<<>>, _, [binary]}, modifiers) when is_binary(binary) do
