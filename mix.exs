@@ -92,11 +92,12 @@ defmodule MDEx.MixProject do
 
   defp aliases do
     [
-      generate_checksum: "rustler_precompiled.download MDEx.Native --all --print",
+      "deps.vendorize": ["cmd cp -rv ../autumn/native/autumn native/comrak_nif/vendor"],
+      "gen.checksum": "rustler_precompiled.download MDEx.Native --all --print",
+      "gen.samples": "mdex.generate_samples",
       "format.all": ["format", "rust.fmt"],
       "rust.lint": ["cmd cargo clippy --manifest-path=native/comrak_nif/Cargo.toml -- -Dwarnings"],
       "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"],
-      vendorize_deps: ["cmd cp -rv ../autumn/native/autumn native/comrak_nif/vendor"]
     ]
   end
 end
