@@ -1,4 +1,6 @@
 defmodule Mix.Tasks.Mdex.GenerateSamples do
+  @moduledoc false
+
   use Mix.Task
 
   @shortdoc "Generate samples."
@@ -63,7 +65,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
   defp generate(filename, url) do
     Mix.shell().info("#{filename} - #{url}")
 
-    md = MDEx.to_html(download_source(url), features: [syntax_highlight_theme: "github_light"])
+    md = MDEx.to_html!(download_source(url), features: [syntax_highlight_theme: "github_light"])
 
     html =
       EEx.eval_string(@layout,
@@ -136,7 +138,7 @@ defmodule Mix.Tasks.Mdex.GenerateSamples do
         |> Path.join()
         |> File.read!()
 
-      md = MDEx.to_html(md, features: [syntax_highlight_theme: theme])
+      md = MDEx.to_html!(md, features: [syntax_highlight_theme: theme])
 
       html =
         EEx.eval_string(@layout,

@@ -29,14 +29,14 @@
 <body>
   
   <h1>Req</h1>
-<p><a href="https://github.com/wojtekmach/req/blob/main/LICENSE.md"><img src="https://img.shields.io/hexpm/l/req.svg" alt="License" /></a>
+<p><a href="https://github.com/wojtekmach/req/actions/workflows/ci.yml"><img src="https://github.com/wojtekmach/req/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+<a href="https://github.com/wojtekmach/req/blob/main/LICENSE.md"><img src="https://img.shields.io/hexpm/l/req.svg" alt="License" /></a>
 <a href="https://hex.pm/packages/req"><img src="https://img.shields.io/hexpm/v/req.svg" alt="Version" /></a>
-<a href="https://github.com/wojtekmach/req/actions/workflows/ci.yml"><img src="https://github.com/wojtekmach/req/actions/workflows/ci.yml/badge.svg" alt="CI" /></a></p>
-<p><a href="https://hexdocs.pm/req">Docs</a></p>
+<a href="https://hexdocs.pm/req"><img src="https://img.shields.io/badge/documentation-gray.svg" alt="Hex Docs" /></a></p>
 <p>Req is a batteries-included HTTP client for Elixir.</p>
 <p>With just a couple lines of code:</p>
 <pre class="autumn-hl" style="background-color: #ffffff; color: #57606a;"><code class="language-elixir" translate="no"><span class="ahl-namespace" style="color: #953800;">Mix</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">install</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span>
-  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.4.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span>
+  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.5.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span>
 <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span>
 
 <span class="ahl-namespace" style="color: #953800;">Req</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">get!</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-string" style="color: #0a3069;">&quot;https:&#x2f;&#x2f;api.github.com&#x2f;repos&#x2f;wojtekmach&#x2f;req&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">body</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span><span class="ahl-string" style="color: #0a3069;">&quot;description&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span>
@@ -55,10 +55,16 @@ write new ones.</p>
 <p>Extensibility via request, response, and error steps.</p>
 </li>
 <li>
-<p>Request body compression and automatic response body decompression (via <a href="https://hexdocs.pm/req/Req.Steps.html#compress_body/1"><code>compress_body</code></a>, <a href="https://hexdocs.pm/req/Req.Steps.html#compressed/1"><code>compressed</code></a>, and <a href="https://hexdocs.pm/req/Req.Steps.html#decompress_body/1"><code>decompress_body</code></a> steps). Supports gzip, brotli, and zstd decompression.</p>
+<p>Request body compression (via <a href="https://hexdocs.pm/req/Req.Steps.html#compress_body/1"><code>compress_body</code></a> step)</p>
 </li>
 <li>
-<p>Request body encoding and automatic response body decoding (via <a href="https://hexdocs.pm/req/Req.Steps.html#encode_body/1"><code>encode_body</code></a> and <a href="https://hexdocs.pm/req/Req.Steps.html#decode_body/1"><code>decode_body</code></a> steps.)</p>
+<p>Automatic response body decompression (via <a href="https://hexdocs.pm/req/Req.Steps.html#compressed/1"><code>compressed</code></a> and <a href="https://hexdocs.pm/req/Req.Steps.html#decompress_body/1"><code>decompress_body</code></a> steps). Supports gzip, brotli, and zstd.</p>
+</li>
+<li>
+<p>Request body encoding. Supports urlencoded and multipart forms, and JSON. See <a href="https://hexdocs.pm/req/Req.Steps.html#encode_body/1"><code>encode_body</code></a>.</p>
+</li>
+<li>
+<p>Automatic response body decoding (via <a href="https://hexdocs.pm/req/Req.Steps.html#decode_body/1"><code>decode_body</code></a> step.)</p>
 </li>
 <li>
 <p>Encode params as query string (via <a href="https://hexdocs.pm/req/Req.Steps.html#put_params/1"><code>put_params</code></a> step.)</p>
@@ -112,7 +118,7 @@ write new ones.</p>
 <h2>Usage</h2>
 <p>The easiest way to use Req is with <a href="https://hexdocs.pm/mix/Mix.html#install/2"><code>Mix.install/2</code></a> (requires Elixir v1.12+):</p>
 <pre class="autumn-hl" style="background-color: #ffffff; color: #57606a;"><code class="language-elixir" translate="no"><span class="ahl-namespace" style="color: #953800;">Mix</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">install</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span>
-  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.4.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span>
+  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.5.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span>
 <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span>
 
 <span class="ahl-namespace" style="color: #953800;">Req</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">get!</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-string" style="color: #0a3069;">&quot;https:&#x2f;&#x2f;api.github.com&#x2f;repos&#x2f;wojtekmach&#x2f;req&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">body</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span><span class="ahl-string" style="color: #0a3069;">&quot;description&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span>
@@ -176,10 +182,10 @@ Here are some examples:</p>
 </ul>
 <p>And here is how they can be used:</p>
 <pre class="autumn-hl" style="background-color: #ffffff; color: #57606a;"><code class="language-elixir" translate="no"><span class="ahl-namespace" style="color: #953800;">Mix</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">install</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span>
-  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.4.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
+  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.5.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
   <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_easyhtml</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.1.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
-  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_s3</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.1.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
-  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_hex</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.1.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
+  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_s3</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.2.3&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
+  <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_hex</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.2.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span>
   <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">{</span><span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">:req_github_oauth</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string" style="color: #0a3069;">&quot;~&gt; 0.1.0&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">}</span>
 <span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span>
 
@@ -196,15 +202,8 @@ Here are some examples:</p>
 <span class="ahl-comment" style="color: #57606a;">#    Elixir is a dynamic, functional language for building scalable and maintainable applications.</span>
 <span class="ahl-comment" style="color: #57606a;">#  &lt;&#x2f;h5&gt;]</span>
 
-<span class="ahl-namespace" style="color: #953800;">Req</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">get!</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-variable" style="color: #24292f;">req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">url: </span><span class="ahl-string" style="color: #0a3069;">&quot;s3:&#x2f;&#x2f;ossci-datasets&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">body</span>
-<span class="ahl-comment" style="color: #57606a;">#=&gt;</span>
-<span class="ahl-comment" style="color: #57606a;"># [</span>
-<span class="ahl-comment" style="color: #57606a;">#   &quot;mnist&#x2f;&quot;,</span>
-<span class="ahl-comment" style="color: #57606a;">#   &quot;mnist&#x2f;t10k-images-idx3-ubyte.gz&quot;,</span>
-<span class="ahl-comment" style="color: #57606a;">#   &quot;mnist&#x2f;t10k-labels-idx1-ubyte.gz&quot;,</span>
-<span class="ahl-comment" style="color: #57606a;">#   &quot;mnist&#x2f;train-images-idx3-ubyte.gz&quot;,</span>
-<span class="ahl-comment" style="color: #57606a;">#   &quot;mnist&#x2f;train-labels-idx1-ubyte.gz&quot;</span>
-<span class="ahl-comment" style="color: #57606a;"># ]</span>
+<span class="ahl-namespace" style="color: #953800;">Req</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">get!</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-variable" style="color: #24292f;">req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">url: </span><span class="ahl-string" style="color: #0a3069;">&quot;s3:&#x2f;&#x2f;ossci-datasets&#x2f;mnist&#x2f;t10k-images-idx3-ubyte.gz&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">body</span>
+<span class="ahl-comment" style="color: #57606a;">#=&gt; &lt;&lt;0, 0, 8, 3, ...&gt;&gt;</span>
 
 <span class="ahl-namespace" style="color: #953800;">Req</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">get!</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">(</span><span class="ahl-variable" style="color: #24292f;">req</span><span class="ahl-punctuation ahl-delimiter" style="color: #24292f;">,</span> <span class="ahl-string ahl-special ahl-symbol" style="color: #0a3069;">url: </span><span class="ahl-string" style="color: #0a3069;">&quot;https:&#x2f;&#x2f;repo.hex.pm&#x2f;tarballs&#x2f;req-0.1.0.tar&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">)</span><span class="ahl-operator" style="color: #0a3069;">.</span><span class="ahl-function" style="color: #8250df;">body</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span><span class="ahl-string" style="color: #0a3069;">&quot;metadata.config&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">[</span><span class="ahl-string" style="color: #0a3069;">&quot;links&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #24292f;">]</span>
 <span class="ahl-comment" style="color: #57606a;">#=&gt; %{&quot;GitHub&quot; =&gt; &quot;https:&#x2f;&#x2f;github.com&#x2f;wojtekmach&#x2f;req&quot;}</span>
@@ -235,7 +234,7 @@ Here are some examples:</p>
 <li><a href="https://www.youtube.com/watch?v=NxWgvHRN6mI" title="Req: A batteries included HTTP client for Elixir">Req: A batteries included HTTP client for Elixir - Elixir Kenya, 2022-08-26</a></li>
 </ul>
 <h2>Acknowledgments</h2>
-<p>Req is built on top of <a href="https://github.com/sneako/finch">Finch</a> and is inspired by <a href="https://curl.se">cURL</a>, <a href="https://docs.python-requests.org/en/master/">Requests</a>, <a href="https://github.com/teamon/tesla">Tesla</a>, and many other HTTP clients - thank you!</p>
+<p>Req is built on top of <a href="https://github.com/sneako/finch">Finch</a> and is inspired by <a href="https://curl.se">cURL</a>, <a href="https://docs.python-requests.org/en/master/">Requests</a>, <a href="https://github.com/elixir-tesla/tesla">Tesla</a>, and many other HTTP clients - thank you!</p>
 <h2>License</h2>
 <p>Copyright (c) 2021 Wojtek Mach</p>
 <p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
