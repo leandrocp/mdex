@@ -9,7 +9,6 @@ mod encoder;
 mod inkjet_adapter;
 mod types;
 
-use ammonia::clean;
 use comrak::{markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
 use decoder::ex_node_to_comrak_ast;
 use encoder::to_elixir_ast;
@@ -70,15 +69,6 @@ fn markdown_to_html_with_options<'a>(
             maybe_sanitize(env, unsafe_html, options.features.sanitize)
         }
     }
-}
-
-fn maybe_sanitize(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
-    let html = match sanitize {
-        true => clean(&unsafe_html),
-        false => unsafe_html,
-    };
-
-    Ok((ok(), html).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -229,4 +219,13 @@ fn ast_to_commonmark_with_options<'a>(
             maybe_sanitize(env, unsafe_html, options.features.sanitize)
         }
     }
+}
+
+fn maybe_sanitize(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
+    let html = match sanitize {
+        true => ammonia::clean(&unsafe_html),
+        false => unsafe_html,
+    };
+
+    Ok((ok(), html).encode(env))
 }

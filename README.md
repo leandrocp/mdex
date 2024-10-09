@@ -95,6 +95,43 @@ title = "Hello from variable"
 
 See all modifiers and examples at https://hexdocs.pm/mdex/MDEx.Sigil.html
 
+## Safety
+
+For security reasons, every piece of raw HTML is omitted from the output by default:
+
+```elixir
+MDEx.to_html!("<h1>Hello</h1>")
+"<!-- raw HTML omitted -->\n"
+```
+
+That's not very useful for most cases, so you can render raw HTML but escaping it for safety:
+
+```elixir
+MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
+"&lt;h1&gt;Hello&lt;/h1&gt;\n"
+```
+
+If the input is provided by external sources, it might be a good idea to sanitize it instead of just escaping it,
+for extra security:
+
+```elixir
+MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true])
+"<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>\n"
+```
+
+Note that you must pass the `unsafe_: true` option to first generate the raw HTML in order to sanitize it.
+
+All sanization rules are defined in the [ammonia docs](https://docs.rs/ammonia/latest/ammonia/fn.clean.html).
+For example, the link in the example below was marked as `noopener noreferrer` to prevent attacks.
+
+If those rules are too strict and you really trust the input, or you really need to render raw HTML,
+then you can just render it directly without escaping nor sanitizing:
+
+```elixir
+MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe_: true])
+"<script>alert('hello')</script>\n"
+```
+
 ## Parsing
 
 Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document.
@@ -186,10 +223,10 @@ _The full documentation and list of all options with description and examples ca
 
 ### Features Options
 
-* `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia). Might be useful paired with `render: [unsafe_: true]`
-* `:syntax_highlight_theme` (default `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
+* `:sanitize` (defaults to `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info.
+* `:syntax_highlight_theme` (defaults to `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
 you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: "adwaita_dark"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme
-* `:syntax_highlight_inline_style` (default `true`) - embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code
+* `:syntax_highlight_inline_style` (defaults to `true`) - embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code
 
 See some examples below on how to use the provided options:
 

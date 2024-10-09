@@ -182,4 +182,28 @@ defmodule MDExTest do
              """
     end
   end
+
+  describe "security" do
+    test "omit raw html by default" do
+      assert MDEx.to_html!("<h1>test</h1>") == "<!-- raw HTML omitted -->\n"
+    end
+
+    test "escape raw html" do
+      assert MDEx.to_html!("<h1>test</h1>", render: [escape: true]) == "&lt;h1&gt;test&lt;/h1&gt;\n"
+    end
+
+    test "render raw html" do
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true]) == "<h1>test</h1>\n"
+    end
+
+    test "sanitize unsafe raw html" do
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: true]) == "<h1>test</h1>\n"
+
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true]) ==
+               "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>\n"
+
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: true]) ==
+               "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>\n"
+    end
+  end
 end
