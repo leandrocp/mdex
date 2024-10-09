@@ -67,22 +67,33 @@ MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 
 ## Sigils
 
+Convert between Markdown, HTML, and AST.
+
 ```elixir
 import MDEx.Sigil
+```
 
+```elixir
 ~M|# Hello from `~M` sigil|
 "<h1>Hello from <code>~M</code> sigil</h1>\n"
+```
 
+```elixir
 ~M|`~M` can return the AST too|AST
 [
   {"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~M"}], []}, " can return the AST too"]}]}
 ]
-
-~m|[{"document", [], [{"paragraph", [], ["interpolation in the ", {"code", [{"num_backticks", 1}, {"literal", "#{"AST"}"}], []}, " as well"]}]}]|MD
-"interpolation in the `AST` as well\n"
+"<h1>Hello</h1>\n"
 ```
 
-See https://hexdocs.pm/mdex/MDEx.Sigil.html for more examples.
+```elixir
+title = "Hello from variable"
+
+~m|[{"document", [], [{"heading", [], ["#{title}"]}]}]|
+"<h1>Hello from variable</h1>\n"
+```
+
+See all modifiers and examples at https://hexdocs.pm/mdex/MDEx.Sigil.html
 
 ## Parsing
 
@@ -175,7 +186,7 @@ _The full documentation and list of all options with description and examples ca
 
 ### Features Options
 
-* `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia).\n Recommended if passing `render: [unsafe_: true]`
+* `:sanitize` (default `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia). Might be useful paired with `render: [unsafe_: true]`
 * `:syntax_highlight_theme` (default `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
 you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: "adwaita_dark"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme
 * `:syntax_highlight_inline_style` (default `true`) - embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code
@@ -295,10 +306,10 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 
 ## Motivation
 
-MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible. None of the existing libraries described below met all these requirements at the time.
+MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible by consumer of the library.
 
 * [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
-* [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" which is probably the cause for failing to parse many documents.
+* [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" and CommonMark was a requirement to parse many existing files.
 * [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
 * [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
 
