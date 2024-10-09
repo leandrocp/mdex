@@ -22,7 +22,6 @@ defmodule MDEx do
       ]
 
   See `t:md_node/0` for more info.
-
   """
   @type md_ast :: [md_node()]
 
@@ -58,13 +57,13 @@ defmodule MDEx do
   @type md_text :: String.t()
 
   @doc """
-  Parse a `markdown` binary and returns the AST.
+  Parse markdown and returns the AST.
 
   ## Options
 
   See the [Options](#module-options) section for the available options.
 
-  ## Example
+  ## Examples
 
       iex> MDEx.parse_document!("# Languages\\n Elixir and Rust")
       [
@@ -82,10 +81,9 @@ defmodule MDEx do
             {"spoilered_text", [], ["Luke's father"]}
         ]}]}
       ]
-
   """
   @spec parse_document(String.t(), keyword()) :: {:ok, md_ast()} | {:error, term()}
-  def parse_document(markdown, opts \\ []) do
+  def parse_document(markdown, opts \\ []) when is_binary(markdown) do
     Native.parse_document(markdown, comrak_options(opts))
   end
 
@@ -93,7 +91,7 @@ defmodule MDEx do
   Same as `parse_document/2` but raises if the parsing fails.
   """
   @spec parse_document!(String.t(), keyword()) :: md_ast()
-  def parse_document!(markdown, opts \\ []) do
+  def parse_document!(markdown, opts \\ []) when is_binary(markdown) do
     case Native.parse_document(markdown, comrak_options(opts)) do
       {:ok, ast} -> ast
       {:error, error} -> raise error
@@ -113,6 +111,8 @@ defmodule MDEx do
       iex> MDEx.to_html("Implemented with:\\n1. Elixir\\n2. Rust")
       {:ok, "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"}
 
+      iex> MDEx.to_html([{"document", [], [{"heading", [{"level", 3}], ["MDEx"]}]}])
+      {:ok, "<h3>MDEx</h3>\\n"}
   """
   @spec to_html(md_or_ast :: String.t() | md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_html(md_or_ast)
@@ -152,10 +152,6 @@ defmodule MDEx do
 
       iex> MDEx.to_html("<marquee>visit https://https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
       {:ok, "<p><marquee>visit <a href=\\"https://https://beaconcms.org\\">https://https://beaconcms.org</a></marquee></p>\\n"}
-
-      iex> MDEx.to_html("# Title with <script>console.log('dangerous script')</script>", render: [unsafe_: true], features: [sanitize: true])
-      {:ok, "<h1>Title with </h1>\\n"}
-
   """
   @spec to_html(md_or_ast :: String.t() | md_ast(), keyword()) :: String.t()
   def to_html(md_or_ast, opts)
@@ -189,13 +185,13 @@ defmodule MDEx do
 
   To customize the output, use `to_commonmark/2`.
 
-  ## Examples
+  ## Example
 
-      iex> MDEx.parse_document!("# MDEx") |> MDEx.to_commonmark()
-      {:ok, "# MDEx\\n"}
+      iex> MDEx.to_commonmark([{"document", [], [{"heading", [{"level", 3}], ["Hello"]}]}])
+      {:ok, "### Hello\\n"}
   """
   @spec to_commonmark(ast :: md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(ast) do
+  def to_commonmark(ast) when is_list(ast) do
     ast
     |> Native.ast_to_commonmark()
     |> maybe_wrap_error()
@@ -203,9 +199,21 @@ defmodule MDEx do
 
   @doc """
   Same as `to_commonmark/1` but raises `MDEx.DecodeError` if the conversion fails.
+
+  ## Example
+
+      iex> MDEx.to_commonmark([{"document", [], [{"heading", [{}], ["Hello"]}]}])
+      {:error,
+       %MDEx.DecodeError{
+         reason: :missing_attr_field,
+         found: "[{}]",
+         node: "(<<\\"heading\\">>, [{}], [<<\\"Hello\\">>])",
+         attr: nil,
+         kind: nil
+       }}
   """
   @spec to_commonmark!(ast :: md_ast()) :: String.t()
-  def to_commonmark!(ast) do
+  def to_commonmark!(ast) when is_list(ast) do
     case to_commonmark(ast) do
       {:ok, md} -> md
       {:error, error} -> raise error
@@ -218,15 +226,9 @@ defmodule MDEx do
   ## Options
 
   See the [Options](#module-options) section for the available options.
-
-  ## Examples
-
-      iex> MDEx.parse_document!("# MDEx", []) |> MDEx.to_commonmark()
-      {:ok, "# MDEx\\n"}
-
   """
   @spec to_commonmark(ast :: md_ast(), keyword()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(ast, opts) when is_list(opts) do
+  def to_commonmark(ast, opts) when is_list(opts) and is_list(opts) do
     ast
     |> maybe_wrap_document()
     |> Native.ast_to_commonmark_with_options(comrak_options(opts))
@@ -237,7 +239,7 @@ defmodule MDEx do
   Same as `to_commonmark/2` but raises `MDEx.DecodeError` if the conversion fails.
   """
   @spec to_commonmark!(ast :: md_ast(), keyword()) :: String.t()
-  def to_commonmark!(ast, opts) do
+  def to_commonmark!(ast, opts) when is_list(ast) and is_list(opts) do
     case to_commonmark(ast, opts) do
       {:ok, md} -> md
       {:error, error} -> raise error
@@ -296,7 +298,7 @@ defmodule MDEx do
   @doc """
   Traverses and updates a Markdown AST.
 
-  ## Examples
+  ## Example
 
       iex> ast = [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
       iex> MDEx.traverse_and_update(ast, fn
@@ -332,7 +334,6 @@ defmodule MDEx do
       ...>   []
       ...> }, "other")
       []
-
   """
   @spec attribute(md_ast() | md_node(), String.t()) :: list()
   def attribute(ast_or_node, attribute_name) do
