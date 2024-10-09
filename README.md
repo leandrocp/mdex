@@ -111,8 +111,7 @@ MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
 "&lt;h1&gt;Hello&lt;/h1&gt;\n"
 ```
 
-If the input is provided by external sources, it might be a good idea to sanitize it instead of just escaping it,
-for extra security:
+If the input is provided by external sources, it might be a good idea to sanitize it instead for extra security:
 
 ```elixir
 MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true])
