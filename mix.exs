@@ -35,7 +35,8 @@ defmodule MDEx.MixProject do
       links: %{
         Changelog: "https://hexdocs.pm/mdex/changelog.html",
         GitHub: @source_url,
-        comrak: "https://crates.io/crates/comrak"
+        comrak: "https://crates.io/crates/comrak",
+        DockYard: "https://dockyard.com"
       },
       files: ~w[
         lib/mdex.ex
