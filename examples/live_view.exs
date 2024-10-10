@@ -10,17 +10,34 @@ defmodule MDEx.LiveView do
   entities = [{"&amp;", ?&}, {"&lt;", ?<}, {"&gt;", ?>}, {"&quot;", ?"}, {"&#39;", ?'}]
 
   for {encoded, decoded} <- entities do
-    def unescape_html(unquote(encoded) <> rest) do
+    defp unescape_html(unquote(encoded) <> rest) do
       [unquote(decoded) | unescape_html(rest)]
     end
   end
 
-  def unescape_html(<<c, rest::binary>>) do
+  defp unescape_html(<<c, rest::binary>>) do
     [c | unescape_html(rest)]
   end
 
-  def unescape_html(<<>>) do
+  defp unescape_html(<<>>) do
     []
+  end
+
+  # unescape all but <pre> tags
+  # MDEx eventually should mark which tags must be preserved
+  # instead of trying to guess it, but it works
+  # for a simple example or for simple use cases
+  def unescape(html) do
+    ~r/(<pre.*?<\/pre>)/s
+    |> Regex.split(html, include_captures: true)
+    |> Enum.map(fn part ->
+      if String.starts_with?(part, "<pre") do
+        part
+      else
+        unescape_html(part)
+      end
+    end)
+    |> Enum.join()
   end
 
   # https://github.com/phoenixframework/phoenix_live_view/blob/1b1c9bc5e24fbb01dad24ce29279f852cf0ae6f6/lib/phoenix_component.ex#L791
@@ -33,7 +50,7 @@ defmodule MDEx.LiveView do
       expr
       # manipulate MDEx options here
       |> MDEx.to_html!()
-      |> MDEx.LiveView.unescape_html()
+      |> MDEx.LiveView.unescape()
       |> IO.iodata_to_binary()
 
     options = [
@@ -73,8 +90,15 @@ defmodule DemoLive do
     ## Examples
 
     * `.link` with `:href` expression - <.link href={URI.parse("https://elixir-lang.org")}>link to elixir-lang.org</.link>
-
     * `.link` with an @assign in `:patch` (see console logs) - <.link patch={@path}>link to @path</.link>
+
+    ```php
+    <?php echo 'Hello, World!'; ?>
+    ```
+
+    ```heex
+    <%= @hello %>
+    ```
     """
   end
 end
