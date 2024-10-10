@@ -4,8 +4,7 @@ Mix.install([
 
 opts = [
   extension: [autolink: true],
-  render: [unsafe_: true],
-  features: [sanitize: false]
+  render: [unsafe_: true]
 ]
 
 markdown = """

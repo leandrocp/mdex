@@ -74,7 +74,7 @@ defmodule DemoLive do
 
     * `.link` with `:href` expression - <.link href={URI.parse("https://elixir-lang.org")}>link to elixir-lang.org</.link>
 
-    * `.link` with an @assign in `:patch` (see console logs) -  <.link patch={@path}>link to @path</.link>
+    * `.link` with an @assign in `:patch` (see console logs) - <.link patch={@path}>link to @path</.link>
     """
   end
 end

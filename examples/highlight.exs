@@ -3,7 +3,7 @@ Mix.install([
 ])
 
 opts = [
-  render: [unsafe_: true, escape: false]
+  render: [unsafe_: true]
 ]
 
 markdown = """
