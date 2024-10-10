@@ -9,21 +9,37 @@ defmodule MDEx.HEEx do
   entities = [{"&amp;", ?&}, {"&lt;", ?<}, {"&gt;", ?>}, {"&quot;", ?"}, {"&#39;", ?'}]
 
   for {encoded, decoded} <- entities do
-    def unescape_html(unquote(encoded) <> rest), do: [unquote(decoded) | unescape_html(rest)]
+    defp unescape_html(unquote(encoded) <> rest), do: [unquote(decoded) | unescape_html(rest)]
   end
 
-  def unescape_html(<<c, rest::binary>>), do: [c | unescape_html(rest)]
-  def unescape_html(<<>>), do: []
+  defp unescape_html(<<c, rest::binary>>), do: [c | unescape_html(rest)]
+  defp unescape_html(<<>>), do: []
+
+  # unescape all but <pre> tags
+  # MDEx eventually should mark which tags must be preserved
+  # instead of trying to guess it, but it works
+  # for a simple example or for simple use cases
+  defp unescape(html) do
+    ~r/(<pre.*?<\/pre>)/s
+    |> Regex.split(html, include_captures: true)
+    |> Enum.map(fn part ->
+      if String.starts_with?(part, "<pre") do
+        part
+      else
+        unescape_html(part)
+      end
+    end)
+    |> Enum.join()
+  end
 
   def to_html!(markdown, assigns \\ %{}) do
     opts = [
-      render: [unsafe_: true],
-      features: [sanitize: true]
+      render: [unsafe_: true]
     ]
 
     markdown
     |> MDEx.to_html!(opts)
-    |> unescape_html()
+    |> unescape()
     |> IO.iodata_to_binary()
     |> render_heex!(assigns)
   end
@@ -49,7 +65,7 @@ defmodule MDEx.HEEx do
     Phoenix.HTML.Safe.to_iodata(rendered)
   end
 
-  def env do
+  defp env do
     import Phoenix.Component, warn: false
     __ENV__
   end
@@ -64,6 +80,14 @@ markdown = """
 
 * `.link` with `:href` expression - <.link href={URI.parse("https://elixir-lang.org")}>link to elixir-lang.org</.link>
 * `.link` with an @assign - <.link href={@path}>link to @path</.link>
+
+```php
+<?php echo 'Hello, World!'; ?>
+```
+
+```heex
+<%= @hello %>
+```
 """
 
 html = MDEx.HEEx.to_html!(markdown, %{path: "https://elixir-lang.org"})
