@@ -35,6 +35,14 @@ Render `==` as `<mark>` tags as described at https://www.markdownguide.org/exten
 elixir highlight.exs && open highlight.html
 ```
 
+## HEEx
+
+Render Markdown with HEEx syntax and Phoenix Components
+
+```sh
+elixir heex.exs && open heex.html
+```
+
 ## LiveView
 
 Convert markdown to a LiveView HEEx template supporting Phoenix components.

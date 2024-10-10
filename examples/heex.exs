@@ -60,7 +60,7 @@ markdown = """
 
 ## Examples
 
-@path = <%= @path %>
+`@path = <%= @path %>`
 
 * `.link` with `:href` expression - <.link href={URI.parse("https://elixir-lang.org")}>link to elixir-lang.org</.link>
 * `.link` with an @assign - <.link href={@path}>link to @path</.link>
