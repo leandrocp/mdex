@@ -42,6 +42,7 @@ defmodule MDEx.HEEx do
     |> unescape()
     |> IO.iodata_to_binary()
     |> render_heex!(assigns)
+    |> IO.iodata_to_binary()
   end
 
   defp render_heex!(html, assigns) do
