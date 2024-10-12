@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.3.0-dev
+
 ## 0.2.0 (2024-10-09)
 
 ### Breaking changes
