@@ -1,28 +1,11 @@
 Mix.install([
   {:mdex, path: ".."},
   {:phoenix_live_view, "~> 0.20"},
-  {:phoenix_playground, "~> 0.1"}
+  {:phoenix_playground, "~> 0.1"},
+  {:html_entities, "~> 0.5"}
 ])
 
 defmodule MDEx.LiveView do
-  # unescape HTML entities
-  # https://github.com/sasa1977/erlangelist/blob/c5ddea9180732e56095b1a20b930dd5f686a62c0/site/lib/erlangelist/web/blog/code_highlighter.ex#L48-L62
-  entities = [{"&amp;", ?&}, {"&lt;", ?<}, {"&gt;", ?>}, {"&quot;", ?"}, {"&#39;", ?'}]
-
-  for {encoded, decoded} <- entities do
-    defp unescape_html(unquote(encoded) <> rest) do
-      [unquote(decoded) | unescape_html(rest)]
-    end
-  end
-
-  defp unescape_html(<<c, rest::binary>>) do
-    [c | unescape_html(rest)]
-  end
-
-  defp unescape_html(<<>>) do
-    []
-  end
-
   # unescape all but <pre> tags
   # MDEx eventually should mark which tags must be preserved
   # instead of trying to guess it, but it works
@@ -34,7 +17,7 @@ defmodule MDEx.LiveView do
       if String.starts_with?(part, "<pre") do
         part
       else
-        unescape_html(part)
+        HtmlEntities.decode(part)
       end
     end)
     |> Enum.join()
@@ -99,6 +82,8 @@ defmodule DemoLive do
     ```heex
     <%= @hello %>
     ```
+
+    Elixir was created by José Valim.
     """
   end
 end

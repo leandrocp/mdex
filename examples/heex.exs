@@ -1,20 +1,10 @@
 Mix.install([
   {:mdex, path: ".."},
-  {:phoenix_live_view, "~> 0.20"}
+  {:phoenix_live_view, "~> 0.20"},
+  {:html_entities, "~> 0.5"}
 ])
 
 defmodule MDEx.HEEx do
-  # unescape HTML entities
-  # https://github.com/sasa1977/erlangelist/blob/c5ddea9180732e56095b1a20b930dd5f686a62c0/site/lib/erlangelist/web/blog/code_highlighter.ex#L48-L62
-  entities = [{"&amp;", ?&}, {"&lt;", ?<}, {"&gt;", ?>}, {"&quot;", ?"}, {"&#39;", ?'}]
-
-  for {encoded, decoded} <- entities do
-    defp unescape_html(unquote(encoded) <> rest), do: [unquote(decoded) | unescape_html(rest)]
-  end
-
-  defp unescape_html(<<c, rest::binary>>), do: [c | unescape_html(rest)]
-  defp unescape_html(<<>>), do: []
-
   # unescape all but <pre> tags
   # MDEx eventually should mark which tags must be preserved
   # instead of trying to guess it, but it works
@@ -26,10 +16,11 @@ defmodule MDEx.HEEx do
       if String.starts_with?(part, "<pre") do
         part
       else
-        unescape_html(part)
+        HtmlEntities.decode(part)
       end
     end)
     |> Enum.join()
+    |> IO.iodata_to_binary()
   end
 
   def to_html!(markdown, assigns \\ %{}) do
@@ -40,9 +31,7 @@ defmodule MDEx.HEEx do
     markdown
     |> MDEx.to_html!(opts)
     |> unescape()
-    |> IO.iodata_to_binary()
     |> render_heex!(assigns)
-    |> IO.iodata_to_binary()
   end
 
   defp render_heex!(html, assigns) do
@@ -63,7 +52,9 @@ defmodule MDEx.HEEx do
       |> EEx.compile_string(opts)
       |> Code.eval_quoted([assigns: assigns], env)
 
-    Phoenix.HTML.Safe.to_iodata(rendered)
+    rendered
+    |> Phoenix.HTML.Safe.to_iodata()
+    |> IO.iodata_to_binary()
   end
 
   defp env do
@@ -89,6 +80,8 @@ markdown = """
 ```heex
 <%= @hello %>
 ```
+
+Elixir was created by José Valim.
 """
 
 html = MDEx.HEEx.to_html!(markdown, %{path: "https://elixir-lang.org"})
