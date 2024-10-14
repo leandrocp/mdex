@@ -29,10 +29,27 @@ defmodule MDEx.LiveView do
       raise "~M requires a variable named \"assigns\" to exist and be set to a map"
     end
 
+    # manipulate MDEx options here
+    opts = [
+      extension: [
+        strikethrough: true,
+        tagfilter: true,
+        table: true,
+        tasklist: true,
+        footnotes: true,
+        shortcodes: true
+      ],
+      parse: [
+        relaxed_tasklist_matching: true
+      ],
+      render: [
+        unsafe_: true
+      ]
+    ]
+
     md =
       expr
-      # manipulate MDEx options here
-      |> MDEx.to_html!()
+      |> MDEx.to_html!(opts)
       |> MDEx.LiveView.unescape()
       |> IO.iodata_to_binary()
 

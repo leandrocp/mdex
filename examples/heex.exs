@@ -25,7 +25,20 @@ defmodule MDEx.HEEx do
 
   def to_html!(markdown, assigns \\ %{}) do
     opts = [
-      render: [unsafe_: true]
+      extension: [
+        strikethrough: true,
+        tagfilter: true,
+        table: true,
+        tasklist: true,
+        footnotes: true,
+        shortcodes: true
+      ],
+      parse: [
+        relaxed_tasklist_matching: true
+      ],
+      render: [
+        unsafe_: true
+      ]
     ]
 
     markdown
