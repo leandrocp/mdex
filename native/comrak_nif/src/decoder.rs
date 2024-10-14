@@ -15,7 +15,7 @@ use comrak::{
     Arena,
 };
 use rustler::{Binary, Decoder, Encoder, Env, Error, NifResult, Term};
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug)]
 pub enum DecodeError {
@@ -155,10 +155,11 @@ fn decode_node<'a>(term: &Term<'a>) -> NifResult<ExNode<'a>> {
         node: format!("{:?}", node),
     })?;
 
-    let attrs: Vec<(Term, Term)> = node.1.decode().map_err(|_| DecodeError::MissingAttrField {
-        found: format!("{:?}", node.1),
-        node: format!("{:?}", node),
-    })?;
+    let attrs: HashMap<Term, Term> =
+        node.1.decode().map_err(|_| DecodeError::MissingAttrField {
+            found: format!("{:?}", node.1),
+            node: format!("{:?}", node),
+        })?;
 
     let attrs = attrs
         .into_iter()
@@ -188,7 +189,7 @@ fn decode_node<'a>(term: &Term<'a>) -> NifResult<ExNode<'a>> {
 
             Ok((key, attr_value))
         })
-        .collect::<Result<Vec<_>, Error>>()?;
+        .collect::<Result<HashMap<_, _>, Error>>()?;
 
     let children: Vec<Term> = node.2.decode().map_err(|_| DecodeError::InvalidStructure {
         found: format!("E7 {:?}", node.1),
@@ -222,28 +223,15 @@ pub fn ex_node_to_comrak_ast<'a>(
             let node_value = match name {
                 NodeName::Document => AstNode::from(NodeValue::Document),
                 NodeName::FrontMatter => {
-                    let mut front_matter = NodeValue::FrontMatter("".to_string());
-
-                    for (key, value) in attrs {
-                        match (key, value) {
-                            (&"content", AttrValue::Text(ref value)) => {
-                                front_matter = NodeValue::FrontMatter(value.clone())
-                            }
-                            (attr_name, attr_value) => {
-                                unknown_attr("front_matter", attr_name, attr_value)
-                            }
-                        }
+                    if let Some(AttrValue::Text(content)) = attrs.get("content") {
+                        AstNode::from(NodeValue::FrontMatter(content.clone()))
+                    } else {
+                        AstNode::from(NodeValue::FrontMatter("".to_string()))
                     }
-
-                    AstNode::from(front_matter)
                 }
                 NodeName::BlockQuote => AstNode::from(NodeValue::BlockQuote),
-                NodeName::List => {
-                    AstNode::from(NodeValue::List(attrs_to_node_list("list", attrs.to_vec())))
-                }
-                NodeName::Item => {
-                    AstNode::from(NodeValue::Item(attrs_to_node_list("item", attrs.to_vec())))
-                }
+                NodeName::List => AstNode::from(NodeValue::List(attrs_to_node_list("list", attrs))),
+                NodeName::Item => AstNode::from(NodeValue::Item(attrs_to_node_list("item", attrs))),
                 NodeName::DescriptionList => AstNode::from(NodeValue::DescriptionList),
                 NodeName::DescriptionItem => {
                     let mut node = NodeDescriptionItem::default();
@@ -436,10 +424,9 @@ pub fn ex_node_to_comrak_ast<'a>(
                     AstNode::from(table_row)
                 }
                 NodeName::TableCell => AstNode::from(NodeValue::TableCell),
-                NodeName::TaskItem => AstNode::from(NodeValue::TaskItem(attrs_to_task_item(
-                    "task_item",
-                    attrs.to_vec(),
-                ))),
+                NodeName::TaskItem => {
+                    AstNode::from(NodeValue::TaskItem(attrs_to_task_item("task_item", attrs)))
+                }
                 NodeName::SoftBreak => AstNode::from(NodeValue::SoftBreak),
                 NodeName::LineBreak => AstNode::from(NodeValue::LineBreak),
                 NodeName::Code => {
@@ -485,13 +472,10 @@ pub fn ex_node_to_comrak_ast<'a>(
                 NodeName::Strong => AstNode::from(NodeValue::Strong),
                 NodeName::Strikethrough => AstNode::from(NodeValue::Strikethrough),
                 NodeName::Superscript => AstNode::from(NodeValue::Superscript),
-                NodeName::Link => {
-                    AstNode::from(NodeValue::Link(attrs_to_node_link("link", attrs.to_vec())))
+                NodeName::Link => AstNode::from(NodeValue::Link(attrs_to_node_link("link", attrs))),
+                NodeName::Image => {
+                    AstNode::from(NodeValue::Image(attrs_to_node_link("image", attrs)))
                 }
-                NodeName::Image => AstNode::from(NodeValue::Image(attrs_to_node_link(
-                    "image",
-                    attrs.to_vec(),
-                ))),
                 NodeName::ShortCode => {
                     let mut node = NodeShortCode {
                         code: "".to_string(),
@@ -632,7 +616,7 @@ fn unknown_attr(node_name: &str, attr_name: &str, attr_value: &AttrValue) {
     );
 }
 
-fn attrs_to_node_list(node_name: &str, attrs: Vec<(&str, AttrValue)>) -> NodeList {
+fn attrs_to_node_list(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> NodeList {
     let mut list = NodeList::default();
 
     let to_list_type = |value: &str| -> ListType {
@@ -653,44 +637,44 @@ fn attrs_to_node_list(node_name: &str, attrs: Vec<(&str, AttrValue)>) -> NodeLis
 
     for (key, value) in attrs {
         match (key, value) {
-            ("list_type", AttrValue::Text(ref value)) => {
+            (&"list_type", AttrValue::Text(ref value)) => {
                 list.list_type = to_list_type(value.as_str())
             }
-            ("marker_offset", AttrValue::Usize(ref value)) => list.marker_offset = *value,
-            ("marker_offset", AttrValue::U8(ref value)) => list.marker_offset = *value as usize,
-            ("padding", AttrValue::Usize(ref value)) => list.padding = *value,
-            ("padding", AttrValue::U8(ref value)) => list.padding = *value as usize,
-            ("start", AttrValue::Usize(ref value)) => list.start = *value,
-            ("start", AttrValue::U8(ref value)) => list.start = *value as usize,
-            ("delimiter", AttrValue::Text(ref value)) => {
+            (&"marker_offset", AttrValue::Usize(ref value)) => list.marker_offset = *value,
+            (&"marker_offset", AttrValue::U8(ref value)) => list.marker_offset = *value as usize,
+            (&"padding", AttrValue::Usize(ref value)) => list.padding = *value,
+            (&"padding", AttrValue::U8(ref value)) => list.padding = *value as usize,
+            (&"start", AttrValue::Usize(ref value)) => list.start = *value,
+            (&"start", AttrValue::U8(ref value)) => list.start = *value as usize,
+            (&"delimiter", AttrValue::Text(ref value)) => {
                 list.delimiter = to_delim_type(value.as_str())
             }
-            ("bullet_char", AttrValue::Text(ref value)) => {
+            (&"bullet_char", AttrValue::Text(ref value)) => {
                 list.bullet_char = string_to_char(value.clone())
             }
-            ("tight", AttrValue::Bool(ref value)) => list.tight = *value,
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (&"tight", AttrValue::Bool(ref value)) => list.tight = *value,
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 
     list
 }
 
-fn attrs_to_task_item(node_name: &str, attrs: Vec<(&str, AttrValue)>) -> Option<char> {
+fn attrs_to_task_item(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> Option<char> {
     let mut symbol = None;
 
     for (key, value) in attrs {
         match (key, value) {
-            ("checked", AttrValue::Bool(false)) => return None,
-            ("symbol", AttrValue::Text(ref value)) => symbol = value.chars().next(),
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (&"checked", AttrValue::Bool(false)) => return None,
+            (&"symbol", AttrValue::Text(ref value)) => symbol = value.chars().next(),
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 
     symbol
 }
 
-fn attrs_to_node_link(node_name: &str, attrs: Vec<(&str, AttrValue)>) -> NodeLink {
+fn attrs_to_node_link(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> NodeLink {
     let mut link = NodeLink {
         url: "".to_string(),
         title: "".to_string(),
@@ -698,9 +682,9 @@ fn attrs_to_node_link(node_name: &str, attrs: Vec<(&str, AttrValue)>) -> NodeLin
 
     for (key, value) in attrs {
         match (key, value) {
-            ("url", AttrValue::Text(ref value)) => link.url = value.clone(),
-            ("title", AttrValue::Text(ref value)) => link.title = value.clone(),
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (&"url", AttrValue::Text(ref value)) => link.url = value.clone(),
+            (&"title", AttrValue::Text(ref value)) => link.title = value.clone(),
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 

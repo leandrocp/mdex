@@ -59,14 +59,14 @@ defmodule MDEx.Sigil do
 
       # markdown to ast
       iex> ~M|# Hello|AST
-      [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
+      [{"document", %{}, [{"heading", %{"level" => 1, "setext" => false}, ["Hello"]}]}]
 
       # ast to markdown
-      iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|MD
+      iex> ~M|[{"document", %{}, [{"heading", %{"level" => 1}, ["Hello"]}]}]|MD
       "# Hello\n"
 
       # ast to html
-      iex> ~M|[{"document", [], [{"heading", [{"level", 1}], ["Hello"]}]}]|
+      iex> ~M|[{"document", %{}, [{"heading", %{"level" => 1}, ["Hello"]}]}]|
       "<h1>Hello</h1>\n"
 
   """

@@ -29,7 +29,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "text" do
-    assert_parse_document("mdex", [{"document", [], [{"paragraph", [], ["mdex"]}]}])
+    assert_parse_document("mdex", [{"document", %{}, [{"paragraph", %{}, ["mdex"]}]}])
   end
 
   test "front matter" do
@@ -39,7 +39,7 @@ defmodule MDEx.ParseTest do
       title: MDEx
       ---
       """,
-      [{"document", [], [{"front_matter", [{"content", "---\ntitle: MDEx\n---\n"}], []}]}]
+      [{"document", %{}, [{"front_matter", %{"content" => "---\ntitle: MDEx\n---\n"}, []}]}]
     )
   end
 
@@ -48,7 +48,7 @@ defmodule MDEx.ParseTest do
       """
       > MDEx
       """,
-      [{"document", [], [{"block_quote", [], [{"paragraph", [], ["MDEx"]}]}]}]
+      [{"document", %{}, [{"block_quote", %{}, [{"paragraph", %{}, ["MDEx"]}]}]}]
     )
   end
 
@@ -62,98 +62,98 @@ defmodule MDEx.ParseTest do
               - boo
         """,
         [
-          {"document", [],
+          {"document", %{},
            [
              {"list",
-              [
-                {"list_type", "bullet"},
-                {"marker_offset", 0},
-                {"padding", 2},
-                {"start", 1},
-                {"delimiter", "period"},
-                {"bullet_char", "-"},
-                {"tight", true}
-              ],
+              %{
+                "list_type" => "bullet",
+                "marker_offset" => 0,
+                "padding" => 2,
+                "start" => 1,
+                "delimiter" => "period",
+                "bullet_char" => "-",
+                "tight" => true
+              },
               [
                 {"item",
+                 %{
+                   "list_type" => "bullet",
+                   "marker_offset" => 0,
+                   "padding" => 2,
+                   "start" => 1,
+                   "delimiter" => "period",
+                   "bullet_char" => "-",
+                   "tight" => false
+                 },
                  [
-                   {"list_type", "bullet"},
-                   {"marker_offset", 0},
-                   {"padding", 2},
-                   {"start", 1},
-                   {"delimiter", "period"},
-                   {"bullet_char", "-"},
-                   {"tight", false}
-                 ],
-                 [
-                   {"paragraph", [], ["foo"]},
+                   {"paragraph", %{}, ["foo"]},
                    {"list",
-                    [
-                      {"list_type", "bullet"},
-                      {"marker_offset", 0},
-                      {"padding", 2},
-                      {"start", 1},
-                      {"delimiter", "period"},
-                      {"bullet_char", "-"},
-                      {"tight", true}
-                    ],
+                    %{
+                      "list_type" => "bullet",
+                      "marker_offset" => 0,
+                      "padding" => 2,
+                      "start" => 1,
+                      "delimiter" => "period",
+                      "bullet_char" => "-",
+                      "tight" => true
+                    },
                     [
                       {"item",
+                       %{
+                         "list_type" => "bullet",
+                         "marker_offset" => 0,
+                         "padding" => 2,
+                         "start" => 1,
+                         "delimiter" => "period",
+                         "bullet_char" => "-",
+                         "tight" => false
+                       },
                        [
-                         {"list_type", "bullet"},
-                         {"marker_offset", 0},
-                         {"padding", 2},
-                         {"start", 1},
-                         {"delimiter", "period"},
-                         {"bullet_char", "-"},
-                         {"tight", false}
-                       ],
-                       [
-                         {"paragraph", [], ["bar"]},
+                         {"paragraph", %{}, ["bar"]},
                          {"list",
-                          [
-                            {"list_type", "bullet"},
-                            {"marker_offset", 0},
-                            {"padding", 2},
-                            {"start", 1},
-                            {"delimiter", "period"},
-                            {"bullet_char", "-"},
-                            {"tight", true}
-                          ],
+                          %{
+                            "list_type" => "bullet",
+                            "marker_offset" => 0,
+                            "padding" => 2,
+                            "start" => 1,
+                            "delimiter" => "period",
+                            "bullet_char" => "-",
+                            "tight" => true
+                          },
                           [
                             {"item",
+                             %{
+                               "list_type" => "bullet",
+                               "marker_offset" => 0,
+                               "padding" => 2,
+                               "start" => 1,
+                               "delimiter" => "period",
+                               "bullet_char" => "-",
+                               "tight" => false
+                             },
                              [
-                               {"list_type", "bullet"},
-                               {"marker_offset", 0},
-                               {"padding", 2},
-                               {"start", 1},
-                               {"delimiter", "period"},
-                               {"bullet_char", "-"},
-                               {"tight", false}
-                             ],
-                             [
-                               {"paragraph", [], ["baz"]},
+                               {"paragraph", %{}, ["baz"]},
                                {"list",
-                                [
-                                  {"list_type", "bullet"},
-                                  {"marker_offset", 0},
-                                  {"padding", 2},
-                                  {"start", 1},
-                                  {"delimiter", "period"},
-                                  {"bullet_char", "-"},
-                                  {"tight", true}
-                                ],
+                                %{
+                                  "list_type" => "bullet",
+                                  "marker_offset" => 0,
+                                  "padding" => 2,
+                                  "start" => 1,
+                                  "delimiter" => "period",
+                                  "bullet_char" => "-",
+                                  "tight" => true
+                                },
                                 [
                                   {"item",
-                                   [
-                                     {"list_type", "bullet"},
-                                     {"marker_offset", 0},
-                                     {"padding", 2},
-                                     {"start", 1},
-                                     {"delimiter", "period"},
-                                     {"bullet_char", "-"},
-                                     {"tight", false}
-                                   ], [{"paragraph", [], ["boo"]}]}
+                                   %{
+                                     "list_type" => "bullet",
+                                     "marker_offset" => 0,
+                                     "padding" => 2,
+                                     "start" => 1,
+                                     "delimiter" => "period",
+                                     "bullet_char" => "-",
+                                     "tight" => false
+                                   }, [{"paragraph", %{}, ["boo"]}]}
                                 ]}
                              ]}
                           ]}
@@ -174,49 +174,49 @@ defmodule MDEx.ParseTest do
         3. bar
         """,
         [
-          {"document", [],
+          {"document", %{},
            [
              {"list",
+              %{
+                "list_type" => "ordered",
+                "marker_offset" => 0,
+                "padding" => 3,
+                "start" => 1,
+                "delimiter" => "period",
+                "bullet_char" => "",
+                "tight" => true
+              },
               [
-                {"list_type", "ordered"},
-                {"marker_offset", 0},
-                {"padding", 3},
-                {"start", 1},
-                {"delimiter", "period"},
-                {"bullet_char", ""},
-                {"tight", true}
-              ],
-              [
                 {"item",
-                 [
-                   {"list_type", "ordered"},
-                   {"marker_offset", 0},
-                   {"padding", 3},
-                   {"start", 1},
-                   {"delimiter", "period"},
-                   {"bullet_char", ""},
-                   {"tight", false}
-                 ], [{"paragraph", [], ["foo"]}]},
+                 %{
+                   "list_type" => "ordered",
+                   "marker_offset" => 0,
+                   "padding" => 3,
+                   "start" => 1,
+                   "delimiter" => "period",
+                   "bullet_char" => "",
+                   "tight" => false
+                 }, [{"paragraph", %{}, ["foo"]}]},
                 {"item",
-                 [
-                   {"list_type", "ordered"},
-                   {"marker_offset", 0},
-                   {"padding", 3},
-                   {"start", 2},
-                   {"delimiter", "period"},
-                   {"bullet_char", ""},
-                   {"tight", false}
-                 ], []},
+                 %{
+                   "list_type" => "ordered",
+                   "marker_offset" => 0,
+                   "padding" => 3,
+                   "start" => 2,
+                   "delimiter" => "period",
+                   "bullet_char" => "",
+                   "tight" => false
+                 }, []},
                 {"item",
-                 [
-                   {"list_type", "ordered"},
-                   {"marker_offset", 0},
-                   {"padding", 3},
-                   {"start", 3},
-                   {"delimiter", "period"},
-                   {"bullet_char", ""},
-                   {"tight", false}
-                 ], [{"paragraph", [], ["bar"]}]}
+                 %{
+                   "list_type" => "ordered",
+                   "marker_offset" => 0,
+                   "padding" => 3,
+                   "start" => 3,
+                   "delimiter" => "period",
+                   "bullet_char" => "",
+                   "tight" => false
+                 }, [{"paragraph", %{}, ["bar"]}]}
               ]}
            ]}
         ]
@@ -232,14 +232,14 @@ defmodule MDEx.ParseTest do
       : Built with Elixir and Rust
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"description_list", [],
+           {"description_list", %{},
             [
-              {"description_item", [{"marker_offset", 0}, {"padding", 2}],
+              {"description_item", %{"marker_offset" => 0, "padding" => 2},
                [
-                 {"description_term", [], [{"paragraph", [], ["MDEx"]}]},
-                 {"description_details", [], [{"paragraph", [], ["Built with Elixir and Rust"]}]}
+                 {"description_term", %{}, [{"paragraph", %{}, ["MDEx"]}]},
+                 {"description_details", %{}, [{"paragraph", %{}, ["Built with Elixir and Rust"]}]}
                ]}
             ]}
          ]}
@@ -255,17 +255,17 @@ defmodule MDEx.ParseTest do
       ```
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
            {"code_block",
-            [
-              {"fenced", true},
-              {"fence_char", "`"},
-              {"fence_length", 3},
-              {"fence_offset", 0},
-              {"info", "elixir"},
-              {"literal", "String.trim(\" MDEx \")\n"}
-            ], []}
+            %{
+              "fenced" => true,
+              "fence_char" => "`",
+              "fence_length" => 3,
+              "fence_offset" => 0,
+              "info" => "elixir",
+              "literal" => "String.trim(\" MDEx \")\n"
+            }, []}
          ]}
       ]
     )
@@ -277,9 +277,9 @@ defmodule MDEx.ParseTest do
       <h1>MDEx</h1>
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"html_block", [{"block_type", 6}, {"literal", "<h1>MDEx</h1>\n"}], []}
+           {"html_block", %{"block_type" => 6, "literal" => "<h1>MDEx</h1>\n"}, []}
          ]}
       ]
     )
@@ -292,10 +292,10 @@ defmodule MDEx.ParseTest do
       ###### level_6
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"heading", [{"level", 1}, {"setext", false}], ["level_1"]},
-           {"heading", [{"level", 6}, {"setext", false}], ["level_6"]}
+           {"heading", %{"level" => 1, "setext" => false}, ["level_1"]},
+           {"heading", %{"level" => 6, "setext" => false}, ["level_6"]}
          ]}
       ]
     )
@@ -309,10 +309,10 @@ defmodule MDEx.ParseTest do
       [^1]: ref
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"paragraph", [], ["footnote", {"footnote_reference", [{"name", "1"}, {"ref_num", 1}, {"ix", 1}], []}]},
-           {"footnote_definition", [{"name", "1"}, {"total_references", 1}], [{"paragraph", [], ["ref"]}]}
+           {"paragraph", %{}, ["footnote", {"footnote_reference", %{"name" => "1", "ref_num" => 1, "ix" => 1}, []}]},
+           {"footnote_definition", %{"name" => "1", "total_references" => 1}, [{"paragraph", %{}, ["ref"]}]}
          ]}
       ]
     )
@@ -326,12 +326,12 @@ defmodule MDEx.ParseTest do
       | baz | bim |
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"table", [{"alignments", ["none", "none"]}, {"num_columns", 2}, {"num_rows", 1}, {"num_nonempty_cells", 2}],
+           {"table", %{"alignments" => ["none", "none"], "num_columns" => 2, "num_rows" => 1, "num_nonempty_cells" => 2},
             [
-              {"table_row", [{"header", true}], [{"table_cell", [], ["foo"]}, {"table_cell", [], ["bar"]}]},
-              {"table_row", [{"header", false}], [{"table_cell", [], ["baz"]}, {"table_cell", [], ["bim"]}]}
+              {"table_row", %{"header" => true}, [{"table_cell", %{}, ["foo"]}, {"table_cell", %{}, ["bar"]}]},
+              {"table_row", %{"header" => false}, [{"table_cell", %{}, ["baz"]}, {"table_cell", %{}, ["bim"]}]}
             ]}
          ]}
       ]
@@ -344,12 +344,12 @@ defmodule MDEx.ParseTest do
       bar | baz
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"table", [{"alignments", ["center", "right"]}, {"num_columns", 2}, {"num_rows", 1}, {"num_nonempty_cells", 2}],
+           {"table", %{"alignments" => ["center", "right"], "num_columns" => 2, "num_rows" => 1, "num_nonempty_cells" => 2},
             [
-              {"table_row", [{"header", true}], [{"table_cell", [], ["abc"]}, {"table_cell", [], ["defghi"]}]},
-              {"table_row", [{"header", false}], [{"table_cell", [], ["bar"]}, {"table_cell", [], ["baz"]}]}
+              {"table_row", %{"header" => true}, [{"table_cell", %{}, ["abc"]}, {"table_cell", %{}, ["defghi"]}]},
+              {"table_row", %{"header" => false}, [{"table_cell", %{}, ["bar"]}, {"table_cell", %{}, ["baz"]}]}
             ]}
          ]}
       ]
@@ -363,21 +363,21 @@ defmodule MDEx.ParseTest do
       * [ ] Not done
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
            {"list",
+            %{
+              "list_type" => "bullet",
+              "marker_offset" => 0,
+              "padding" => 2,
+              "start" => 1,
+              "delimiter" => "period",
+              "bullet_char" => "*",
+              "tight" => true
+            },
             [
-              {"list_type", "bullet"},
-              {"marker_offset", 0},
-              {"padding", 2},
-              {"start", 1},
-              {"delimiter", "period"},
-              {"bullet_char", "*"},
-              {"tight", true}
-            ],
-            [
-              {"task_item", [{"checked", true}, {"symbol", "x"}], [{"paragraph", [], ["Done"]}]},
-              {"task_item", [{"checked", false}], [{"paragraph", [], ["Not done"]}]}
+              {"task_item", %{"checked" => true, "symbol" => "x"}, [{"paragraph", %{}, ["Done"]}]},
+              {"task_item", %{"checked" => false}, [{"paragraph", %{}, ["Not done"]}]}
             ]}
          ]}
       ]
@@ -391,7 +391,7 @@ defmodule MDEx.ParseTest do
 
       [foo]
       """,
-      [{"document", [], [{"paragraph", [], [{"link", [{"url", "/url"}, {"title", "title"}], ["foo"]}]}]}]
+      [{"document", %{}, [{"paragraph", %{}, [{"link", %{"url" => "/url", "title" => "title"}, ["foo"]}]}]}]
     )
   end
 
@@ -400,7 +400,7 @@ defmodule MDEx.ParseTest do
       """
       ![foo](/url "title")
       """,
-      [{"document", [], [{"paragraph", [], [{"image", [{"url", "/url"}, {"title", "title"}], ["foo"]}]}]}]
+      [{"document", %{}, [{"paragraph", %{}, [{"image", %{"url" => "/url", "title" => "title"}, ["foo"]}]}]}]
     )
   end
 
@@ -409,7 +409,7 @@ defmodule MDEx.ParseTest do
       """
       `String.trim(" MDEx ")`
       """,
-      [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "String.trim(\" MDEx \")"}], []}]}]}]
+      [{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "String.trim(\" MDEx \")"}, []}]}]}]
     )
   end
 
@@ -418,7 +418,7 @@ defmodule MDEx.ParseTest do
       """
       :smile:
       """,
-      [{"document", [], [{"paragraph", [], [{"short_code", [{"code", "smile"}, {"emoji", "😄"}], []}]}]}]
+      [{"document", %{}, [{"paragraph", %{}, [{"short_code", %{"code" => "smile", "emoji" => "😄"}, []}]}]}]
     )
   end
 
@@ -430,15 +430,15 @@ defmodule MDEx.ParseTest do
       $`1 + 2`$
       """,
       [
-        {"document", [],
+        {"document", %{},
          [
-           {"paragraph", [],
+           {"paragraph", %{},
             [
-              {"math", [{"dollar_math", true}, {"display_math", false}, {"literal", "1 + 2"}], []},
+              {"math", %{"dollar_math" => true, "display_math" => false, "literal" => "1 + 2"}, []},
               " and ",
-              {"math", [{"dollar_math", true}, {"display_math", true}, {"literal", "x = y"}], []}
+              {"math", %{"dollar_math" => true, "display_math" => true, "literal" => "x = y"}, []}
             ]},
-           {"paragraph", [], [{"math", [{"dollar_math", false}, {"display_math", false}, {"literal", "1 + 2"}], []}]}
+           {"paragraph", %{}, [{"math", %{"dollar_math" => false, "display_math" => false, "literal" => "1 + 2"}, []}]}
          ]}
       ]
     )
@@ -450,7 +450,7 @@ defmodule MDEx.ParseTest do
         """
         [[repo|https://github.com/leandrocp/mdex]]
         """,
-        [{"document", [], [{"paragraph", [], [{"wiki_link", [{"url", "https://github.com/leandrocp/mdex"}], ["repo"]}]}]}],
+        [{"document", %{}, [{"paragraph", %{}, [{"wiki_link", %{"url" => "https://github.com/leandrocp/mdex"}, ["repo"]}]}]}],
         wikilinks_title_before_pipe: true
       )
     end
@@ -460,7 +460,7 @@ defmodule MDEx.ParseTest do
         """
         [[https://github.com/leandrocp/mdex|repo]]
         """,
-        [{"document", [], [{"paragraph", [], [{"wiki_link", [{"url", "https://github.com/leandrocp/mdex"}], ["repo"]}]}]}],
+        [{"document", %{}, [{"paragraph", %{}, [{"wiki_link", %{"url" => "https://github.com/leandrocp/mdex"}, ["repo"]}]}]}],
         wikilinks_title_after_pipe: true
       )
     end
@@ -471,7 +471,7 @@ defmodule MDEx.ParseTest do
       """
       Darth Vader is ||Luke's father||
       """,
-      [{"document", [], [{"paragraph", [], ["Darth Vader is ", {"spoilered_text", [], ["Luke's father"]}]}]}]
+      [{"document", %{}, [{"paragraph", %{}, ["Darth Vader is ", {"spoilered_text", %{}, ["Luke's father"]}]}]}]
     )
   end
 
@@ -483,8 +483,8 @@ defmodule MDEx.ParseTest do
       > three
       """,
       [
-        {"document", [],
-         [{"block_quote", [], [{"paragraph", [], ["one"]}, {"block_quote", [], [{"paragraph", [], ["two"]}]}, {"paragraph", [], ["three"]}]}]}
+        {"document", %{},
+         [{"block_quote", %{}, [{"paragraph", %{}, ["one"]}, {"block_quote", %{}, [{"paragraph", %{}, ["two"]}]}, {"paragraph", %{}, ["three"]}]}]}
       ]
     )
   end

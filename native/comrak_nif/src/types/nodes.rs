@@ -1,5 +1,5 @@
 use rustler::NifUntaggedEnum;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Clone, PartialEq, NifUntaggedEnum)]
 pub enum AttrValue {
@@ -104,9 +104,8 @@ impl FromStr for NodeName {
 #[derive(Debug, Clone)]
 pub enum ExNode<'a> {
     Element {
-        // name: &'a str,
         name: NodeName,
-        attrs: Vec<(&'a str, AttrValue)>,
+        attrs: HashMap<&'a str, AttrValue>,
         children: Vec<ExNode<'a>>,
     },
     Text(String),

@@ -9,7 +9,7 @@ defmodule MDExTest do
 
   test "wrap fragment in root document" do
     assert MDEx.to_html([]) == {:ok, "<p></p>\n"}
-    assert MDEx.to_html([{"paragraph", [], ["mdex"]}]) == {:ok, "<p>mdex</p>\n"}
+    assert MDEx.to_html([{"paragraph", %{}, ["mdex"]}]) == {:ok, "<p>mdex</p>\n"}
     assert MDEx.to_html(["mdex", "test"]) == {:ok, "<p>mdextest</p>\n"}
   end
 
@@ -30,8 +30,8 @@ defmodule MDExTest do
                 node: "(<<\"code\">>, [{<<\"literal\">>}], [])"
               }} = MDEx.to_html([{"code", [{"literal"}], []}], [])
 
-      assert {:error, %MDEx.DecodeError{reason: :attr_key_not_string, found: "1", kind: "Integer", node: "(<<\"code\">>, [{1,<<\"foo\">>}], [])"}} =
-               MDEx.to_html([{"code", [{1, "foo"}], []}], [])
+      assert {:error, %MDEx.DecodeError{reason: :attr_key_not_string, found: "1", kind: "Integer", node: "(<<\"code\">>, \#{1=><<\"foo\">>}, [])"}} =
+               MDEx.to_html([{"code", %{1 => "foo"}, []}], [])
 
       assert {:error,
               %MDEx.DecodeError{
@@ -39,9 +39,9 @@ defmodule MDExTest do
                 attr: "(\"literal\", nil)",
                 found: "nil",
                 kind: "Atom",
-                node: "(<<\"code\">>, [{<<\"literal\">>,nil}], [])"
+                node: "(<<\"code\">>, \#{<<\"literal\">>=>nil}, [])"
               }} =
-               MDEx.to_html([{"code", [{"literal", nil}], []}], [])
+               MDEx.to_html([{"code", %{"literal" => nil}, []}], [])
     end
   end
 
@@ -145,7 +145,7 @@ defmodule MDExTest do
   end
 
   describe "parse_document" do
-    assert MDEx.parse_document!("# Level 1") == [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Level 1"]}]}]
+    assert MDEx.parse_document!("# Level 1") == [{"document", %{}, [{"heading", %{"level" => 1, "setext" => false}, ["Level 1"]}]}]
 
     assert MDEx.parse_document!("""
            <script type="module">
@@ -153,10 +153,10 @@ defmodule MDExTest do
            </script>
            """) ==
              [
-               {"document", [],
+               {"document", %{},
                 [
                   {"html_block",
-                   [{"block_type", 1}, {"literal", "<script type=\"module\">\n  mermaid.initialize({ startOnLoad: true })\n</script>\n"}], []}
+                   %{"block_type" => 1, "literal" => "<script type=\"module\">\n  mermaid.initialize({ startOnLoad: true })\n</script>\n"}, []}
                 ]}
              ]
   end
