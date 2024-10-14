@@ -81,15 +81,15 @@ import MDEx.Sigil
 ```elixir
 ~M|`~M` can return the AST too|AST
 [
-  {"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "~M"}], []}, " can return the AST too"]}]}
+  {"document", %{},
+   [{"paragraph", %{}, [{"code", %{"literal" => "~M", "num_backticks" => 1}, []}, " can return the AST too"]}]}
 ]
-"<h1>Hello</h1>\n"
 ```
 
 ```elixir
 title = "Hello from variable"
 
-~m|[{"document", [], [{"heading", [], ["#{title}"]}]}]|
+~m|[{"document", %{}, [{"heading", %{}, ["#{title}"]}]}]|
 "<h1>Hello from variable</h1>\n"
 ```
 
@@ -135,7 +135,7 @@ MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe_: true])
 
 Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document.
 
-The data structure shape is exactly the same as the one used by [Floki](https://github.com/philss/floki) so we can reuse the same APIs and keep the same mental model when
+The data structure shape is exactly the same as the one used by [Floki](https://github.com/philss/floki) (with `:attributes_as_maps = true`) so we can reuse the same APIs and keep the same mental model when
 working with these documents, either Markdown or HTML, where each node is represented as:
 
 ```elixir
@@ -146,7 +146,7 @@ Example:
 
 ```elixir
 MDEx.parse_document!("# Hello")
-[{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
+[{"document", %{}, [{"heading", %{"level", 1, "setext", false}, ["Hello"]}]}]
 ```
 
 Note that text nodes have no attributes nor children, so it's represented as a string inside a list.
@@ -158,7 +158,7 @@ You can find the full AST spec on the MDEx module types section.
 Converts the AST to a human-readable document, most commonly to HTML, example:
 
 ```elixir
-MDEx.to_html!([{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}])
+MDEx.to_html!([{"document", %{}, [{"heading", %{"level" => 1, "setext" => false}, ["Hello"]}]}])
 "<h1>Hello</h1>\n"
 ```
 
@@ -167,7 +167,7 @@ _More formats can be added in the future._
 Any missing attribute will be filled with the default value, and extra attributes will be ignored. So you could have the same result with:
 
 ```elixir
-MDEx.to_html!([{"document", [], [{"heading", [], ["Hello"]}]}])
+MDEx.to_html!([{"document", %{}, [{"heading", %{}, ["Hello"]}]}])
 "<h1>Hello</h1>\n"
 ```
 
@@ -176,12 +176,12 @@ Default values are defined on a best-case scenario but as a good practice you sh
 Trying to format malformed ASTs will return a `{:error, %DecodeError{}}` describing what and where the error occurred, for example:
 
 ```elixir
-{:error, decode_error} = MDEx.to_html([{"code", [{1, "foo"}], []}], [])
+{:error, decode_error} = MDEx.to_html([{"code", %{1 => "foo"}, []}], [])
 {:error,
  %MDEx.DecodeError{
    reason: :attr_key_not_string,
    found: "1",
-   node: "(<<\"code\">>, [{1,<<\"foo\">>}], [])",
+   node: "(<<\"code\">>, \#{1=><<\"foo\">>}, [])",
    attr: "(1, <<\"foo\">>)",
    kind: "Integer"
  }}
@@ -193,19 +193,19 @@ decode_error |> Exception.message() |> IO.puts()
 #
 # Got:
 #
-#   1
+# 1
 #
 # Type:
 #
 #   Integer
-#
+
 # In this node:
-#
-#   (<<"code">>, [{1,<<"foo">>}], [])
-#
+
+#  (<<"code">>, #{1=><<"foo">>}, [])
+
 # In this attribute:
-#
-#   (1, <<"foo">>)
+
+#  (1, <<"foo">>)
 ```
 
 ## Options
@@ -263,7 +263,10 @@ MDEx.to_html!(
   ],
   render: [
      github_pre_lang: true,
-     escape: true
+     unsafe_: true,
+  ],
+  features: [
+    sanitize: true
   ]
 ) |> IO.puts()
 # <p>GitHub Flavored Markdown 🚀</p>
