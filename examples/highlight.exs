@@ -28,7 +28,7 @@ ast =
               |> Enum.map(fn
                 "==" <> rest ->
                   marked_text = "<mark>" <> String.replace_suffix(rest, "==", "</mark>")
-                  {"html_block", [{"literal", marked_text}], []}
+                  {"html_block", %{"literal" => marked_text}, []}
 
                 text ->
                   text

@@ -96,14 +96,14 @@ html =
       {"document", attrs, children ++ tailwind}
 
     # inject a html block to render a note alert
-    {"block_quote", _attrs, [{"paragraph", [], ["[!NOTE]", _note_attrs, note_content]}]} ->
+    {"block_quote", _attrs, [{"paragraph", %{}, ["[!NOTE]", _note_attrs, note_content]}]} ->
       alert = note_html.(note_content)
-      {"html_block", [{"literal", alert}], []}
+      {"html_block", %{"literal" => alert}, []}
 
     # inject a html block to render a caution alert
-    {"block_quote", _attrs, [{"paragraph", [], ["[!CAUTION]", _note_attrs, note_content]}]} ->
+    {"block_quote", _attrs, [{"paragraph", %{}, ["[!CAUTION]", _note_attrs, note_content]}]} ->
       alert = caution_html.(note_content)
-      {"html_block", [{"literal", alert}], []}
+      {"html_block", %{"literal" => alert}, []}
 
     node ->
       node

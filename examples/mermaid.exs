@@ -50,17 +50,12 @@ html =
       {"document", attrs, children ++ mermaid}
 
     # inject the mermaid <pre> block without escaping the content
-    {"code_block", _attrs, children} = node ->
-      with ["mermaid"] <- MDEx.attribute(node, "info"),
-           [code] <- MDEx.attribute(node, "literal") do
-        code = """
-        <pre class="mermaid">#{code}</pre>
-        """
+    {"code_block", %{"info" => "mermaid", "literal" => code}, children} ->
+      code = """
+      <pre class="mermaid">#{code}</pre>
+      """
 
-        {"html_block", [{"literal", code}], children}
-      else
-        _ -> node
-      end
+      {"html_block", %{"literal" => code}, children}
 
     node ->
       node
