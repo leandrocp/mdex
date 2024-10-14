@@ -15,14 +15,18 @@ In this example we'll render blockquotes as alerts.
 Ref https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts
 
 > [!NOTE]
-> Useful information that users should know, even when skimming content.
+> ### Render this note block as Markdown
+> See more at https://github.com/leandrocp/mdex
 
 > [!CAUTION]
-> Advises about risks or negative outcomes of certain actions.
+> <h3 class="text-lg text-red-500">Render this caution block as HTML</h3>
+> See more at <a href="https://github.com/leandrocp/mdex" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">MDEx repo</a>
 """
 
-note_html = fn content ->
-  """
+note_block = fn content ->
+  content = MDEx.to_html!(content, opts)
+
+  alert = """
   <div class="max-w-md rounded-lg border bg-background p-4 shadow-sm mt-10" role="alert">
     <div class="flex items-center gap-2">
       <svg
@@ -51,10 +55,14 @@ note_html = fn content ->
     </p>
   </div>
   """
+
+  {"html_block", %{"literal" => alert}, []}
 end
 
-caution_html = fn content ->
-  """
+caution_block = fn content ->
+  content = MDEx.to_html!(content, opts)
+
+  alert = """
   <div class="max-w-md rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm mt-10" role="alert">
     <div class="flex items-center gap-2">
       <svg
@@ -80,6 +88,8 @@ caution_html = fn content ->
     </p>
   </div>
   """
+
+  {"html_block", %{"literal" => alert}, []}
 end
 
 html =
@@ -96,14 +106,18 @@ html =
       {"document", attrs, children ++ tailwind}
 
     # inject a html block to render a note alert
-    {"block_quote", _attrs, [{"paragraph", %{}, ["[!NOTE]", _note_attrs, note_content]}]} ->
-      alert = note_html.(note_content)
-      {"html_block", %{"literal" => alert}, []}
+    {"block_quote", %{}, [{"paragraph", %{}, ["[!NOTE]" | rest]}]} ->
+      note_block.(rest)
+
+    {"block_quote", %{}, [{"paragraph", %{}, ["[!NOTE]"]} | rest]} ->
+      note_block.(rest)
 
     # inject a html block to render a caution alert
-    {"block_quote", _attrs, [{"paragraph", %{}, ["[!CAUTION]", _note_attrs, note_content]}]} ->
-      alert = caution_html.(note_content)
-      {"html_block", %{"literal" => alert}, []}
+    {"block_quote", %{}, [{"paragraph", %{}, ["[!CAUTION]" | rest]}]} ->
+      caution_block.(rest)
+
+    {"block_quote", %{}, [{"paragraph", %{}, ["[!CAUTION]"]} | rest]} ->
+      caution_block.(rest)
 
     node ->
       node

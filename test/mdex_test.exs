@@ -8,9 +8,9 @@ defmodule MDExTest do
   end
 
   test "wrap fragment in root document" do
-    assert MDEx.to_html([]) == {:ok, "<p></p>\n"}
+    assert MDEx.to_html([]) == {:ok, ""}
     assert MDEx.to_html([{"paragraph", %{}, ["mdex"]}]) == {:ok, "<p>mdex</p>\n"}
-    assert MDEx.to_html(["mdex", "test"]) == {:ok, "<p>mdextest</p>\n"}
+    assert MDEx.to_html(["mdex", "test"]) == {:ok, "mdextest"}
   end
 
   describe "to_html error handling" do

@@ -121,7 +121,7 @@ defmodule MDEx do
     Native.markdown_to_html(md_or_ast)
   end
 
-  def to_html(md_or_ast) when is_list(md_or_ast) do
+  def to_html(md_or_ast) do
     md_or_ast
     |> maybe_wrap_document()
     |> Native.ast_to_html()
@@ -162,7 +162,7 @@ defmodule MDEx do
     |> maybe_wrap_error()
   end
 
-  def to_html(md_or_ast, opts) when is_list(md_or_ast) and is_list(opts) do
+  def to_html(md_or_ast, opts) when is_list(opts) do
     md_or_ast
     |> maybe_wrap_document()
     |> Native.ast_to_html_with_options(comrak_options(opts))
@@ -260,25 +260,10 @@ defmodule MDEx do
     }
   end
 
-  # TODO: check if comrak is able to format ast without wrapping it in a document
-  defp maybe_wrap_document([{"document", _, _} | _] = tree), do: tree
+  def maybe_wrap_document([{"document", _, _} | _] = tree), do: tree
 
-  defp maybe_wrap_document([fragment]) when is_tuple(fragment) do
-    [{"document", %{}, [fragment]}]
-  end
-
-  defp maybe_wrap_document(fragment) when is_list(fragment) do
-    Enum.all?(fragment, &is_binary/1) ||
-      raise """
-      expected a list of nodes as [{"paragraph", [], ["text"]}] or ["text"]
-
-      Got:
-
-        #{inspect(fragment)}
-
-      """
-
-    [{"document", %{}, [{"paragraph", %{}, fragment}]}]
+  def maybe_wrap_document(fragment) do
+    [{"document", %{}, List.wrap(fragment)}]
   end
 
   defp maybe_wrap_error({:ok, result}), do: {:ok, result}
