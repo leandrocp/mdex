@@ -60,24 +60,7 @@ impl<'a> Encoder for ExNode<'a> {
                 name,
                 attrs,
                 children,
-            } => {
-                // let mut attr_list = Vec::new();
-
-                // for (key, value) in attrs {
-                //     let attr_value = match value {
-                //         AttrValue::U8(v) => (key, v.encode(env)),
-                //         AttrValue::U32(v) => (key, v.encode(env)),
-                //         AttrValue::Usize(v) => (key, v.encode(env)),
-                //         AttrValue::Bool(v) => (key, v.encode(env)),
-                //         AttrValue::Text(v) => (key, v.encode(env)),
-                //         AttrValue::List(v) => (key, v.encode(env)),
-                //     };
-
-                //     attr_list.push(attr_value);
-                // }
-
-                (name, attrs, children).encode(env)
-            }
+            } => (name, attrs, children).encode(env),
         }
     }
 }

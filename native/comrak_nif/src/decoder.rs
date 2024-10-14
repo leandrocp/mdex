@@ -653,7 +653,7 @@ fn attrs_to_node_list(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> Node
                 list.bullet_char = string_to_char(value.clone())
             }
             (&"tight", AttrValue::Bool(ref value)) => list.tight = *value,
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 
@@ -667,7 +667,7 @@ fn attrs_to_task_item(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> Opti
         match (key, value) {
             (&"checked", AttrValue::Bool(false)) => return None,
             (&"symbol", AttrValue::Text(ref value)) => symbol = value.chars().next(),
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 
@@ -684,7 +684,7 @@ fn attrs_to_node_link(node_name: &str, attrs: &HashMap<&str, AttrValue>) -> Node
         match (key, value) {
             (&"url", AttrValue::Text(ref value)) => link.url = value.clone(),
             (&"title", AttrValue::Text(ref value)) => link.title = value.clone(),
-            (attr_name, attr_value) => unknown_attr(node_name, attr_name, &attr_value),
+            (attr_name, attr_value) => unknown_attr(node_name, attr_name, attr_value),
         }
     }
 
