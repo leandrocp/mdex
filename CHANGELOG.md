@@ -2,6 +2,10 @@
 
 ## 0.3.0-dev
 
+### Breaking changes
+  * Represent attrs as map instead of list, ie: `%{"num_backticks" => 1, "literal" => ":elixir"}` instead of `[{"num_backticks", 1}, {"literal", ":elixir"}]`.
+  * Removed `MDEx.attribute/2` in favor of pattern matching key/value pairs in the attrs map directly.
+
 ## 0.2.0 (2024-10-09)
 
 ### Breaking changes
