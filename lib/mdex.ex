@@ -16,8 +16,8 @@ defmodule MDEx do
   ## Example
 
       [
-        {"document", [], [
-          {"heading", [{"level", 1}], ["Elixir"]}
+        {"document", %{}, [
+          {"heading", %{"level" => 1}, ["Elixir"]}
         ]}
       ]
 
@@ -37,7 +37,7 @@ defmodule MDEx do
 
   ## Example
 
-      {"heading", [{"level", 1}, {"setext", false}], children}
+      {"heading", %{"level" => 1, "setext" => false}, children}
   """
   @type md_element :: {name :: String.t(), attributes :: [md_attribute()], children :: [md_node()]}
 
@@ -46,10 +46,10 @@ defmodule MDEx do
 
   ## Examples
 
-      {"level", 1}
-      {"delimiter", "period"}
+      %{"level" => 1}
+      %{"delimiter" => "period"}
   """
-  @type md_attribute :: {String.t(), term()}
+  @type md_attribute :: %{required(String.t()) => term()}
 
   @typedoc """
   Text element. It has no attributes or children so it's represented just as a string.
@@ -67,18 +67,18 @@ defmodule MDEx do
 
       iex> MDEx.parse_document!("# Languages\\n Elixir and Rust")
       [
-        {"document", [], [
-          {"heading", [{"level", 1}, {"setext", false}], ["Languages"]},
-          {"paragraph", [], ["Elixir and Rust"]}
+        {"document", %{}, [
+          {"heading", %{"level" => 1, "setext" => false}, ["Languages"]},
+          {"paragraph", %{}, ["Elixir and Rust"]}
         ]}
       ]
 
       iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
       [
-        {"document", [], [
-          {"paragraph", [], [
+        {"document", %{}, [
+          {"paragraph", %{}, [
             "Darth Vader is ",
-            {"spoilered_text", [], ["Luke's father"]}
+            {"spoilered_text", %{}, ["Luke's father"]}
         ]}]}
       ]
   """
@@ -111,7 +111,7 @@ defmodule MDEx do
       iex> MDEx.to_html("Implemented with:\\n1. Elixir\\n2. Rust")
       {:ok, "<p>Implemented with:</p>\\n<ol>\\n<li>Elixir</li>\\n<li>Rust</li>\\n</ol>\\n"}
 
-      iex> MDEx.to_html([{"document", [], [{"heading", [{"level", 3}], ["MDEx"]}]}])
+      iex> MDEx.to_html([{"document", %{}, [{"heading", %{"level" => 3}, ["MDEx"]}]}])
       {:ok, "<h3>MDEx</h3>\\n"}
   """
   @spec to_html(md_or_ast :: String.t() | md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
@@ -187,7 +187,7 @@ defmodule MDEx do
 
   ## Example
 
-      iex> MDEx.to_commonmark([{"document", [], [{"heading", [{"level", 3}], ["Hello"]}]}])
+      iex> MDEx.to_commonmark([{"document", %{}, [{"heading", %{"level" => 3}, ["Hello"]}]}])
       {:ok, "### Hello\\n"}
   """
   @spec to_commonmark(ast :: md_ast()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
@@ -202,12 +202,12 @@ defmodule MDEx do
 
   ## Example
 
-      iex> MDEx.to_commonmark([{"document", [], [{"heading", [{}], ["Hello"]}]}])
+      iex> MDEx.to_commonmark([{"document", %{}, [{"heading", nil, ["Hello"]}]}])
       {:error,
        %MDEx.DecodeError{
          reason: :missing_attr_field,
-         found: "[{}]",
-         node: "(<<\\"heading\\">>, [{}], [<<\\"Hello\\">>])",
+         found: "nil",
+         node: "(<<\\"heading\\">>, nil, [<<\\"Hello\\">>])",
          attr: nil,
          kind: nil
        }}
@@ -264,7 +264,7 @@ defmodule MDEx do
   defp maybe_wrap_document([{"document", _, _} | _] = tree), do: tree
 
   defp maybe_wrap_document([fragment]) when is_tuple(fragment) do
-    [{"document", [], [fragment]}]
+    [{"document", %{}, [fragment]}]
   end
 
   defp maybe_wrap_document(fragment) when is_list(fragment) do
@@ -278,7 +278,7 @@ defmodule MDEx do
 
       """
 
-    [{"document", [], [{"paragraph", [], fragment}]}]
+    [{"document", %{}, [{"paragraph", %{}, fragment}]}]
   end
 
   defp maybe_wrap_error({:ok, result}), do: {:ok, result}
@@ -300,12 +300,13 @@ defmodule MDEx do
 
   ## Example
 
-      iex> ast = [{"document", [], [{"heading", [{"level", 1}, {"setext", false}], ["Hello"]}]}]
+      iex> ast = [{"document", %{}, [{"heading", %{"level" => 1, "setext" => false}, ["Hello"]}]}]
       iex> MDEx.traverse_and_update(ast, fn
-      ...>   {"heading", _attrs, children} -> {"heading", [{"level", 2}], children}
+      ...>   {"heading", %{"level" => 6}, children} -> {"heading", %{"level" => 6}, children}
+      ...>   {"heading", %{"level" => level}, children} -> {"heading", %{"level" => level + 1}, children}
       ...>   other -> other
       ...> end)
-      [{"document", [], [{"heading", [{"level", 2}], ["Hello"]}]}]
+      [{"document", %{}, [{"heading", %{"level" => 2}, ["Hello"]}]}]
 
   See more on the [examples](https://github.com/leandrocp/mdex/tree/main/examples) directory.
   """
@@ -314,65 +315,4 @@ defmodule MDEx do
           (md_node() -> md_node() | [md_node()] | nil)
         ) :: md_node() | md_ast()
   defdelegate traverse_and_update(ast, fun), to: MDEx.Traversal
-
-  # https://github.com/philss/floki/blob/28c9ed8d10d851b63ec87fb8ab9c5acd3c7ea90c/lib/floki.ex#L670
-  @doc """
-  Returns a list with attribute values for a given `attribute_name`, otherwise returns an empty list.
-
-  ## Example
-
-      iex> MDEx.attribute({
-      ...>   "code_block",
-      ...>   [{"info", "mermaid"}, {"literal", "graph TD;\\n  A-->B;"}],
-      ...>   []
-      ...> }, "literal")
-      ["graph TD;\\n  A-->B;"]
-
-      iex> MDEx.attribute({
-      ...>   "code_block",
-      ...>   [{"info", "mermaid"}, {"literal", "graph TD;\\n  A-->B;"}],
-      ...>   []
-      ...> }, "other")
-      []
-  """
-  @spec attribute(md_ast() | md_node(), String.t()) :: list()
-  def attribute(ast_or_node, attribute_name) do
-    attribute_values(ast_or_node, attribute_name)
-  end
-
-  defp attribute_values(element, attr_name) when is_tuple(element) do
-    attribute_values([element], attr_name)
-  end
-
-  defp attribute_values(elements, attr_name) do
-    values =
-      Enum.reduce(
-        elements,
-        [],
-        fn
-          {_, attributes, _}, acc ->
-            case attribute_match?(attributes, attr_name) do
-              {_attr_name, value} ->
-                [value | acc]
-
-              _ ->
-                acc
-            end
-
-          _, acc ->
-            acc
-        end
-      )
-
-    Enum.reverse(values)
-  end
-
-  defp attribute_match?(attributes, attribute_name) do
-    Enum.find(
-      attributes,
-      fn {attr_name, _} ->
-        attr_name == attribute_name
-      end
-    )
-  end
 end

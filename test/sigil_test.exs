@@ -8,16 +8,18 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to ast" do
-      assert ~M|`lang = :elixir`|AST == [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]
+      assert ~M|`lang = :elixir`|AST == [
+               {"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}
+             ]
     end
 
     test "ast to html" do
-      assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
+      assert ~M|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}]| ==
                "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
-      assert ~M|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
+      assert ~M|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}]|MD ==
                "`lang = :elixir`\n"
     end
   end
@@ -28,16 +30,18 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to ast" do
-      assert ~m|`lang = :elixir`|AST == [{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]
+      assert ~m|`lang = :elixir`|AST == [
+               {"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}
+             ]
     end
 
     test "ast to html" do
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]| ==
+      assert ~M|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}]| ==
                "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}]|MD ==
+      assert ~M|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}]|MD ==
                "`lang = :elixir`\n"
     end
   end
@@ -51,17 +55,17 @@ defmodule MDEx.SigilTest do
 
     test "markdown to ast" do
       assert ~m|`lang = #{inspect(@lang)}`|AST == [
-               {"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = :elixir"}], []}]}]}
+               {"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = :elixir"}, []}]}]}
              ]
     end
 
     test "ast to html" do
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]| ==
+      assert ~m|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = #{inspect(@lang)}"}, []}]}]}]| ==
                "<p><code>lang = :elixir</code></p>\n"
     end
 
     test "ast to markdown" do
-      assert ~m|[{"document", [], [{"paragraph", [], [{"code", [{"num_backticks", 1}, {"literal", "lang = #{inspect(@lang)}"}], []}]}]}]|MD ==
+      assert ~m|[{"document", %{}, [{"paragraph", %{}, [{"code", %{"num_backticks" => 1, "literal" => "lang = #{inspect(@lang)}"}, []}]}]}]|MD ==
                "`lang = :elixir`\n"
     end
   end
