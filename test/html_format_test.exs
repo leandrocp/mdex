@@ -29,7 +29,7 @@ defmodule MDEx.FormatTest do
     assert {:ok, ast} = MDEx.parse_document(document, opts)
     assert {:ok, markdown} = MDEx.to_commonmark(ast, opts)
 
-    assert markdown == document
+    assert markdown == String.trim(document)
   end
 
   def assert_format(document, expected, extension \\ []) do
@@ -38,11 +38,11 @@ defmodule MDEx.FormatTest do
       render: [unsafe_: true]
     ]
 
-    assert {:ok, ast} = MDEx.parse_document(document, opts)
-    assert {:ok, html} = MDEx.to_html(ast, opts)
+    assert {:ok, doc} = MDEx.parse_document(document, opts)
+    assert {:ok, html} = MDEx.to_html(doc, opts)
 
     # IO.puts(html)
-    assert html == expected
+    assert html == String.trim(expected)
   end
 
   test "text" do
@@ -349,7 +349,7 @@ defmodule MDEx.FormatTest do
         """
         [[https://github.com/leandrocp/mdex|repo]]
         """,
-        "<p><a href=\"https://github.com/leandrocp/mdex\" data-wikilink=\"true\">repo</a></p>\n",
+        "<p><a href=\"https://github.com/leandrocp/mdex\" data-wikilink=\"true\">repo</a></p>",
         wikilinks_title_after_pipe: true
       )
     end
@@ -360,7 +360,7 @@ defmodule MDEx.FormatTest do
       """
       Darth Vader is ||Luke's father||
       """,
-      "<p>Darth Vader is <span class=\"spoiler\">Luke's father</span></p>\n"
+      "<p>Darth Vader is <span class=\"spoiler\">Luke's father</span></p>"
     )
   end
 
