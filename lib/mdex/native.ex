@@ -53,11 +53,24 @@ defmodule MDEx.Native do
     mode: mode,
     force_build: System.get_env("MDEX_BUILD") in ["1", "true"]
 
+  # markdown
+  #   - to document (parse)
+  #   - to html
+  #   - to xml
+  def parse_document(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
   def markdown_to_html(_md), do: :erlang.nif_error(:nif_not_loaded)
-  def markdown_to_html_with_options(_md, _options), do: :erlang.nif_error(:nif_not_loaded)
-  def parse_document(_md, _options), do: :erlang.nif_error(:nif_not_loaded)
-  def ast_to_html(_ast), do: :erlang.nif_error(:nif_not_loaded)
-  def ast_to_html_with_options(_ast, _options), do: :erlang.nif_error(:nif_not_loaded)
-  def ast_to_commonmark(_ast), do: :erlang.nif_error(:nif_not_loaded)
-  def ast_to_commonmark_with_options(_ast, _options), do: :erlang.nif_error(:nif_not_loaded)
+  def markdown_to_html_with_options(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
+  def markdown_to_xml(_md), do: :erlang.nif_error(:nif_not_loaded)
+  def markdown_to_xml_with_options(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
+
+  # document
+  #   - to markdown (commonmark)
+  #   - to html
+  #   - to xml
+  def document_to_commonmark(_doc), do: :erlang.nif_error(:nif_not_loaded)
+  def document_to_commonmark_with_options(_doc, _opts), do: :erlang.nif_error(:nif_not_loaded)
+  def document_to_html(_doc), do: :erlang.nif_error(:nif_not_loaded)
+  def document_to_html_with_options(_doc, _opts), do: :erlang.nif_error(:nif_not_loaded)
+  def document_to_xml(_doc), do: :erlang.nif_error(:nif_not_loaded)
+  def document_to_xml_with_options(_doc, _opts), do: :erlang.nif_error(:nif_not_loaded)
 end

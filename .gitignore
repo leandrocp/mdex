@@ -36,3 +36,5 @@ checksum-*.exs
 /.elixir_ls/
 
 /examples/*.html
+
+mise.toml

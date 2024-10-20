@@ -2,9 +2,23 @@
 
 ## 0.3.0-dev
 
+Be aware, this version introduces major breaking changes:
+- AST format has changed
+- Sigils `~m` and `~M` now returns `%MDEx.Document{}` instead of a Markdown string (use the `MD` modifier to have the old behavior)
+
+These changes enables the implementation of protocols to improve the manipulation of the AST.
+
+See the examples and the [MDEx.Document](https://hexdocs.pm/mdex/MDEx.Document.html) module for more info.
+
 ### Breaking changes
-  * Represent attrs as map instead of list, ie: `%{"num_backticks" => 1, "literal" => ":elixir"}` instead of `[{"num_backticks", 1}, {"literal", ":elixir"}]`.
+  * Changed the AST format from `{name, attributes, children}` to structs as `%MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Hello"}]}`
+  * Sigils `~m` and `~M` now returns `%MDEx.Document{}` instead of a Markdown string
   * Removed `MDEx.attribute/2` in favor of pattern matching key/value pairs in the attrs map directly.
+
+### Enhancements
+  * New AST format based on structs
+  * Introduced modifiers `HTML`, `XML`, and `MD` for both sigils `~m` and `~M`
+  * Introduced `MDEx.Document.traverse_and_update/3` with the `acc` argument
 
 ## 0.2.0 (2024-10-09)
 
