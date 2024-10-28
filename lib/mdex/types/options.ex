@@ -44,7 +44,8 @@ defmodule MDEx.Types.RenderOptions do
             ignore_setext: false,
             ignore_empty_links: false,
             gfm_quirks: false,
-            prefer_fenced: false
+            prefer_fenced: false,
+            figure_with_caption: false
 end
 
 defmodule MDEx.Types.FeaturesOptions do
