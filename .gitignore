@@ -34,5 +34,6 @@ mdex-*.tar
 checksum-*.exs
 
 /.elixir_ls/
+/.lexical/
 
 /examples/*.html
