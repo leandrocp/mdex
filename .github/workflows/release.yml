@@ -93,7 +93,7 @@ jobs:
           variant: ${{ matrix.job.variant }}
 
       - name: Artifact attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: ${{ steps.build-crate.outputs.file-path }}
 
