@@ -12,7 +12,7 @@ pub struct InkjetAdapter<'a> {
     inline_style: bool,
 }
 
-impl<'a> Default for InkjetAdapter<'a> {
+impl Default for InkjetAdapter<'_> {
     fn default() -> Self {
         let default_theme = themes::theme("onedark").unwrap();
 
@@ -37,7 +37,7 @@ impl<'a> InkjetAdapter<'a> {
     }
 }
 
-impl<'a> SyntaxHighlighterAdapter for InkjetAdapter<'a> {
+impl SyntaxHighlighterAdapter for InkjetAdapter<'_> {
     fn write_highlighted(
         &self,
         output: &mut dyn Write,
