@@ -176,7 +176,7 @@ The complete list of nodes is listed in the [documentation](https://hexdocs.pm/m
 Formatting is the process of converting from one format to another, for example from AST or Markdown to HTML.
 Formatting to XML and to Markdown is also supported.
 
-You can use [MDEx.Document.parse_document/2](https://hexdocs.pm/mdex/MDEx.Document.html#parse_document/2) to generate an AST or any of the `to_*` functions
+You can use [MDEx.parse_document/2](https://hexdocs.pm/mdex/MDEx.Document.html#parse_document/2) to generate an AST or any of the `to_*` functions
 to convert to Markdown (CommonMark), HTML, or XML.
 
 ## Options
