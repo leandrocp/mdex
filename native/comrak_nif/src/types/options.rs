@@ -67,6 +67,7 @@ pub struct ExRenderOptions {
     pub ignore_empty_links: bool,
     pub gfm_quirks: bool,
     pub prefer_fenced: bool,
+    pub figure_with_caption: bool,
 }
 
 #[derive(Debug, NifStruct)]
@@ -146,6 +147,7 @@ pub fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
     render_options.ignore_empty_links = options.render.ignore_empty_links;
     render_options.gfm_quirks = options.render.gfm_quirks;
     render_options.prefer_fenced = options.render.prefer_fenced;
+    render_options.figure_with_caption = options.render.figure_with_caption;
 
     render_options
 }
