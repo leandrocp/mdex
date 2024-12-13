@@ -256,6 +256,7 @@ dependencies = [
  "serde",
  "tree-sitter",
  "tree-sitter-highlight",
+ "typed-arena",
  "v_htmlescape",
 ]
 

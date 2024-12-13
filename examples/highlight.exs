@@ -2,50 +2,50 @@ Mix.install([
   {:mdex, path: ".."}
 ])
 
-opts = [
-  render: [unsafe_: true]
-]
+defmodule HighlightExample do
+  import MDEx.Sigil
 
-markdown = """
-# Highlight Example
+  def run do
+    opts = [
+      render: [unsafe_: true]
+    ]
 
-Transform double equal signals into `<mark>` tags as described at https://www.markdownguide.org/extended-syntax/#highlight
+    markdown = ~M"""
+    # Highlight Example
 
-==Because== I need to highlight these ==very important words== and also these ==other words too==
-"""
+    Transform double equal signals into `<mark>` tags as described at https://www.markdownguide.org/extended-syntax/#highlight
 
-ast =
-  markdown
-  |> MDEx.parse_document!()
-  |> MDEx.traverse_and_update(fn
-    # wrap each pair of == with <mark> tags
-    {node, attrs, children} ->
-      children =
-        Enum.reduce(children, [], fn
-          child, _acc when is_binary(child) ->
-            new =
-              Regex.split(~r/==.*?==/, child, include_captures: true, trim: true)
-              |> Enum.map(fn
+    ==Because== I need to highlight these ==very important words== and also these ==other words too==
+    """
+
+    document =
+      Kernel.update_in(markdown, [:document, Access.key!(:nodes), Access.all(), :text], fn %MDEx.Text{literal: literal} ->
+        # break each text literal into blocks separated by =={text}==
+        case Regex.split(~r/==.*?==/, literal, include_captures: true, trim: true) do
+          # single text means no == == found
+          [text] ->
+            %MDEx.Text{literal: text}
+
+          # return HtmlBlock <mark> for each == or just text
+          blocks ->
+            blocks =
+              Enum.map(blocks, fn
                 "==" <> rest ->
                   marked_text = "<mark>" <> String.replace_suffix(rest, "==", "</mark>")
-                  {"html_block", %{"literal" => marked_text}, []}
+                  %MDEx.HtmlBlock{literal: marked_text}
 
                 text ->
-                  text
+                  %MDEx.Text{literal: text}
               end)
 
-            Enum.reverse(new)
+            %MDEx.Paragraph{nodes: blocks}
+        end
+      end)
 
-          child, acc ->
-            [child | acc]
-        end)
-        |> Enum.reverse()
+    html = MDEx.to_html!(document, opts)
+    File.write!("highlight.html", html)
+    IO.puts(html)
+  end
+end
 
-      {node, attrs, children}
-  end)
-
-html = MDEx.to_html!(ast, opts)
-
-File.write!("highlight.html", html)
-
-IO.puts(html)
+HighlightExample.run()

@@ -32,7 +32,7 @@ as Wiki Links, Discord Markdown tags, and emoji. Also supports syntax highlighti
 Under the hood it's calling the [comrak](https://crates.io/crates/comrak) APIs to process Markdown,
 a fast Rust crate that ports the cmark fork maintained by GitHub, a widely and well adopted Markdown implementation.
 
-The AST format is based on [Floki](https://hex.pm/packages/floki) so the same API to manipulate HTML can be used to manipulate Markdown documents.
+The AST structure is based on [Floki](https://hex.pm/packages/floki) so a similar API to manipulate HTML can be used to manipulate Markdown documents.
 Check out some examples at [mdex/examples/](https://github.com/leandrocp/mdex/tree/main/examples)
 
 And some samples are available at https://mdex-c31.pages.dev
@@ -56,162 +56,135 @@ Mix.install([{:mdex, "~> 0.2"}])
 ```
 
 ```elixir
-MDEx.to_html!("# Hello")
-"<h1>Hello</h1>\n"
+iex> MDEx.to_html!("# Hello")
+"<h1>Hello</h1>"
 ```
 
 ```elixir
-MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
-"<h1>Hello 😄</h1>\n"
+iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
+"<h1>Hello 😄</h1>"
 ```
 
 ## Sigils
 
-Convert between Markdown, HTML, and AST.
+Convert and generate AST, Markdown (CommonMark), HTML, and XML formats.
+
+First, import the sigils:
 
 ```elixir
-import MDEx.Sigil
+iex> import MDEx.Sigil
 ```
 
 ```elixir
-~M|# Hello from `~M` sigil|
-"<h1>Hello from <code>~M</code> sigil</h1>\n"
+iex> import MDEx.Sigil
+iex> ~M|# Hello from `~M` sigil|
+%MDEx.Document{
+  nodes: [
+    %MDEx.Heading{
+      nodes: [
+        %MDEx.Text{literal: "Hello from "},
+        %MDEx.Code{num_backticks: 1, literal: "~M"},
+        %MDEx.Text{literal: " sigil"}
+      ],
+      level: 1,
+      setext: false
+    }
+  ]
+}
 ```
 
 ```elixir
-~M|`~M` can return the AST too|AST
-[
-  {"document", %{},
-   [{"paragraph", %{}, [{"code", %{"literal" => "~M", "num_backticks" => 1}, []}, " can return the AST too"]}]}
-]
+iex> import MDEx.Sigil
+iex> ~M|`~M` also converts to HTML format|HTML
+"<p><code>~M</code> also converts to HTML format</p>"
 ```
 
 ```elixir
-title = "Hello from variable"
-
-~m|[{"document", %{}, [{"heading", %{}, ["#{title}"]}]}]|
-"<h1>Hello from variable</h1>\n"
+iex> import MDEx.Sigil
+iex> ~M|and to XML as well|XML
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <text xml:space=\"preserve\">and to XML as well</text>\n  </paragraph>\n</document>\n"
 ```
 
-See all modifiers and examples at https://hexdocs.pm/mdex/MDEx.Sigil.html
+Use [~m](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_m/2) to interpolate variables:
+
+```elixir
+iex> import MDEx.Sigil
+iex> lang = :elixir
+iex> ~m|`lang = #{inspect(lang)}`|
+%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+```
+
+See more info at https://hexdocs.pm/mdex/MDEx.Sigil.html
 
 ## Safety
 
 For security reasons, every piece of raw HTML is omitted from the output by default:
 
 ```elixir
-MDEx.to_html!("<h1>Hello</h1>")
-"<!-- raw HTML omitted -->\n"
+iex> MDEx.to_html!("<h1>Hello</h1>")
+"<!-- raw HTML omitted -->"
 ```
 
-That's not very useful for most cases, so you can render raw HTML but escaping it for safety:
+That's not very useful for most cases, but you can render raw HTML and escape it instead:
 
 ```elixir
-MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
-"&lt;h1&gt;Hello&lt;/h1&gt;\n"
+iex> MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
+"&lt;h1&gt;Hello&lt;/h1&gt;"
 ```
 
 If the input is provided by external sources, it might be a good idea to sanitize it instead for extra security:
 
 ```elixir
-MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true])
-"<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>\n"
+iex> MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true])
+"<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 ```
 
 Note that you must pass the `unsafe_: true` option to first generate the raw HTML in order to sanitize it.
 
-All sanization rules are defined in the [ammonia docs](https://docs.rs/ammonia/latest/ammonia/fn.clean.html).
+All sanitization rules are defined in the [ammonia docs](https://docs.rs/ammonia/latest/ammonia/fn.clean.html).
 For example, the link in the example below was marked as `noopener noreferrer` to prevent attacks.
 
 If those rules are too strict and you really trust the input, or you really need to render raw HTML,
 then you can just render it directly without escaping nor sanitizing:
 
 ```elixir
-MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe_: true])
-"<script>alert('hello')</script>\n"
+iex> MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe_: true])
+"<script>alert('hello')</script>"
 ```
 
 ## Parsing
 
-Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document.
+Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document programmatically.
 
-The data structure shape is exactly the same as the one used by [Floki](https://github.com/philss/floki) (with `:attributes_as_maps = true`) so we can reuse the same APIs and keep the same mental model when
-working with these documents, either Markdown or HTML, where each node is represented as:
-
-```elixir
-{name, attributes, children}
-```
-
-Example:
+The data structure format is inspired on [Floki](https://github.com/philss/floki) (with `:attributes_as_maps = true`) so we can keep similar APIs and keep the same mental model when
+working with these documents, either Markdown or HTML, where each node is represented as a struct holding the node name as the struct name and its attributes and children, for eg:
 
 ```elixir
-MDEx.parse_document!("# Hello")
-[{"document", %{}, [{"heading", %{"level", 1, "setext", false}, ["Hello"]}]}]
+%MDEx.Heading{
+  level: 1
+  nodes: [...],
+}
 ```
 
-Note that text nodes have no attributes nor children, so it's represented as a string inside a list.
+The parent node that represents the root of the document is the [MDEx.Document](https://hexdocs.pm/mdex/MDEx.Document.html) struct,
+where you can find more more information about the AST and what operations are available.
 
-You can find the full AST spec on the MDEx module types section.
+The complete list of nodes is listed in the [documentation](https://hexdocs.pm/mdex/), section `Document Nodes`.
 
 ## Formatting
 
-Converts the AST to a human-readable document, most commonly to HTML, example:
+Formatting is the process of converting from one format to another, for example from AST or Markdown to HTML.
+Formatting to XML and to Markdown is also supported.
 
-```elixir
-MDEx.to_html!([{"document", %{}, [{"heading", %{"level" => 1, "setext" => false}, ["Hello"]}]}])
-"<h1>Hello</h1>\n"
-```
-
-_More formats can be added in the future._
-
-Any missing attribute will be filled with the default value, and extra attributes will be ignored. So you could have the same result with:
-
-```elixir
-MDEx.to_html!([{"document", %{}, [{"heading", %{}, ["Hello"]}]}])
-"<h1>Hello</h1>\n"
-```
-
-Default values are defined on a best-case scenario but as a good practice you should provide all attributes for each node.
-
-Trying to format malformed ASTs will return a `{:error, %DecodeError{}}` describing what and where the error occurred, for example:
-
-```elixir
-{:error, decode_error} = MDEx.to_html([{"code", %{1 => "foo"}, []}], [])
-{:error,
- %MDEx.DecodeError{
-   reason: :attr_key_not_string,
-   found: "1",
-   node: "(<<\"code\">>, \#{1=><<\"foo\">>}, [])",
-   attr: "(1, <<\"foo\">>)",
-   kind: "Integer"
- }}
-
-decode_error |> Exception.message() |> IO.puts()
-# invalid attribute key
-#
-# Expected an attribute key encoded as UTF-8 binary
-#
-# Got:
-#
-# 1
-#
-# Type:
-#
-#   Integer
-
-# In this node:
-
-#  (<<"code">>, #{1=><<"foo">>}, [])
-
-# In this attribute:
-
-#  (1, <<"foo">>)
-```
+You can use [MDEx.Document.parse_document/2](https://hexdocs.pm/mdex/MDEx.Document.html#parse_document/2) to generate an AST or any of the `to_*` functions
+to convert to Markdown (CommonMark), HTML, or XML.
 
 ## Options
 
-You can enable extensions and change the output of the generated Markdown by passing any of the available [Comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html)
-as keyword lists or also an additional `:features` option.
+Use options to change the behavior and the generated output.
+
+All the [comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html) are available as keyword lists,
+and an additional `:features` option to extend it further.
 
 _The full documentation and list of all options with description and examples can be found on the links below:_
 
@@ -232,68 +205,68 @@ See some examples below on how to use the provided options:
 ### GitHub Flavored Markdown with [emojis](https://www.webfx.com/tools/emoji-cheat-sheet/)
 
 ```elixir
-MDEx.to_html!(
-  ~S"""
-  # GitHub Flavored Markdown :rocket:
+MDEx.to_html!(~S"""
+# GitHub Flavored Markdown :rocket:
 
-  - [x] Task A
-  - [x] Task B
-  - [ ] Task C
+- [x] Task A
+- [x] Task B
+- [ ] Task C
 
-  | Feature | Status |
-  | ------- | ------ |
-  | Fast | :white_check_mark: |
-  | GFM  | :white_check_mark: |
+| Feature | Status |
+| ------- | ------ |
+| Fast | :white_check_mark: |
+| GFM  | :white_check_mark: |
 
-  Check out the spec at https://github.github.com/gfm/
-  """,
-  extension: [
-    strikethrough: true,
-    tagfilter: true,
-    table: true,
-    autolink: true,
-    tasklist: true,
-    footnotes: true,
-    shortcodes: true,
-  ],
-  parse: [
-    smart: true,
-    relaxed_tasklist_matching: true,
-    relaxed_autolinks: true
-  ],
-  render: [
-     github_pre_lang: true,
-     unsafe_: true,
-  ],
-  features: [
-    sanitize: true
-  ]
-) |> IO.puts()
-# <p>GitHub Flavored Markdown 🚀</p>
-# <ul>
-#   <li><input type="checkbox" checked="" disabled="" /> Task A</li>
-#   <li><input type="checkbox" checked="" disabled="" /> Task B</li>
-#   <li><input type="checkbox" disabled="" /> Task C</li>
-# </ul>
-# <table>
-#   <thead>
-#     <tr>
-#       <th>Feature</th>
-#       <th>Status</th>
-#     </tr>
-#   </thead>
-#   <tbody>
-#     <tr>
-#       <td>Fast</td>
-#       <td>✅</td>
-#     </tr>
-#     <tr>
-#       <td>GFM</td>
-#       <td>✅</td>
-#     </tr>
-#   </tbody>
-# </table>
-# <p>Check out the spec at <a href="https://github.github.com/gfm/">https://github.github.com/gfm/</a></p>
+Check out the spec at https://github.github.com/gfm/
+""",
+extension: [
+  strikethrough: true,
+  tagfilter: true,
+  table: true,
+  autolink: true,
+  tasklist: true,
+  footnotes: true,
+  shortcodes: true,
+],
+parse: [
+  smart: true,
+  relaxed_tasklist_matching: true,
+  relaxed_autolinks: true
+],
+render: [
+  github_pre_lang: true,
+  unsafe_: true,
+],
+features: [
+  sanitize: true
+]) |> IO.puts()
+"""
+<p>GitHub Flavored Markdown 🚀</p>
+<ul>
+  <li><input type="checkbox" checked="" disabled="" /> Task A</li>
+  <li><input type="checkbox" checked="" disabled="" /> Task B</li>
+  <li><input type="checkbox" disabled="" /> Task C</li>
+</ul>
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fast</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>GFM</td>
+      <td>✅</td>
+    </tr>
+  </tbody>
+</table>
+<p>Check out the spec at <a href="https://github.github.com/gfm/">https://github.github.com/gfm/</a></p>
+"""
 ```
 
 ### Code Syntax Highlighting
@@ -306,11 +279,13 @@ String.upcase("elixir")
 """,
 features: [syntax_highlight_theme: "catppuccin_latte"]
 ) |> IO.puts()
-# <pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">
-#   <code class=\"language-elixir\" translate=\"no\">
-#     <span class=\"namespace\" style=\"color: #61AFEF;\">String</span><span class=\"operator\" style=\"color: #C678DD;\">.</span><span class=\"function\" style=\"color: #61AFEF;\">upcase</span><span class=\"\" style=\"color: #ABB2BF;\">(</span><span class=\"string\" style=\"color: #98C379;\">&quot;elixir&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">)</span>
-#   </code>
-# </pre>
+"""
+<pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">
+  <code class=\"language-elixir\" translate=\"no\">
+    <span class=\"namespace\" style=\"color: #61AFEF;\">String</span><span class=\"operator\" style=\"color: #C678DD;\">.</span><span class=\"function\" style=\"color: #61AFEF;\">upcase</span><span class=\"\" style=\"color: #ABB2BF;\">(</span><span class=\"string\" style=\"color: #98C379;\">&quot;elixir&quot;</span><span class=\"\" style=\"color: #ABB2BF;\">)</span>
+  </code>
+</pre>
+"""
 ````
 
 ## Demo and Samples
@@ -321,6 +296,9 @@ A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and 
 
 - [BeaconCMS](https://github.com/BeaconCMS/beacon)
 - [Tableau](https://github.com/elixir-tools/tableau)
+- [Bonfire](https://github.com/bonfire-networks/bonfire-app)
+- [00](https://github.com/technomancy-dev/00)
+- [Plural Console](https://github.com/pluralsh/console)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
@@ -345,7 +323,7 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 
 ## Motivation
 
-MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible by consumer of the library.
+MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible by consumers of the library.
 
 * [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
 * [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" and CommonMark was a requirement to parse many existing files.

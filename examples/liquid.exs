@@ -3,39 +3,30 @@ Mix.install([
   {:solid, "~> 0.15"}
 ])
 
-markdown = """
-# [Liquid](https://shopify.github.io/liquid/) Example
+defmodule LiquidExample do
+  def run do
+    markdown = """
+    # [Liquid](https://shopify.github.io/liquid/) Example
 
-{{ lang.name | capitalize }}
-"""
+    ## Lang
+    {{ lang.name | capitalize }}
 
-assigns = %{"lang" => %{"name" => "elixir"}}
+    ## Projects {% assign projects = "phoenix, phoenix, live_view, beacon" | split: ", " %}
+    {{ projects | uniq | join: ", " }}
 
-html =
-  markdown
-  |> MDEx.parse_document!()
-  |> MDEx.traverse_and_update(fn
-    # render each text as liquid template
-    {node, attrs, children} ->
-      children =
-        Enum.reduce(children, [], fn
-          child, acc when is_binary(child) ->
-            with {:ok, template} <- Solid.parse(child),
-                 {:ok, rendered} <- Solid.render(template, assigns) do
-              [to_string(rendered) | acc]
-            else
-              _ -> [child | acc]
-            end
+    Updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}
+    """
 
-          child, acc ->
-            [child | acc]
-        end)
-        |> Enum.reverse()
+    assigns = %{"lang" => %{"name" => "elixir"}}
 
-      {node, attrs, children}
-  end)
-  |> MDEx.to_html!()
+    with {:ok, parsed} <- Solid.parse(markdown),
+         {:ok, rendered} <- Solid.render(parsed, assigns) do
+      binary = IO.iodata_to_binary(rendered)
+      html = MDEx.to_html!(binary)
+      File.write!("liquid.html", html)
+      IO.puts(html)
+    end
+  end
+end
 
-File.write!("liquid.html", html)
-
-IO.puts(html)
+LiquidExample.run()
