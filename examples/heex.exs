@@ -1,6 +1,6 @@
 Mix.install([
   {:mdex, path: ".."},
-  {:phoenix_live_view, "~> 0.20"},
+  {:phoenix_live_view, "~> 1.0"},
   {:html_entities, "~> 0.5"}
 ])
 
