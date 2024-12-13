@@ -4,7 +4,6 @@
 #[macro_use]
 extern crate rustler;
 
-mod encoder;
 mod inkjet_adapter;
 mod types;
 
