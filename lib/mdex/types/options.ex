@@ -17,6 +17,7 @@ defmodule MDEx.Types.ExtensionOptions do
             wikilinks_title_after_pipe: false,
             wikilinks_title_before_pipe: false,
             underline: false,
+            subscript: false,
             spoiler: false,
             greentext: false
 end

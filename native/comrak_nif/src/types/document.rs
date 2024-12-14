@@ -56,6 +56,7 @@ pub enum NewNode {
     Escaped(ExEscaped),
     WikiLink(ExWikiLink),
     Underline(ExUnderline),
+    Subscript(ExSubscript),
     SpoileredText(ExSpoileredText),
     EscapedTag(ExEscapedTag),
 }
@@ -100,6 +101,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Escaped(n) => n.into(),
             NewNode::WikiLink(n) => n.into(),
             NewNode::Underline(n) => n.into(),
+            NewNode::Subscript(n) => n.into(),
             NewNode::SpoileredText(n) => n.into(),
             NewNode::EscapedTag(n) => n.into(),
         }
@@ -165,6 +167,7 @@ pub struct ExList {
     pub delimiter: ExListDelimType,
     pub bullet_char: String,
     pub tight: bool,
+    pub is_task_list: bool,
 }
 
 impl From<ExList> for NodeValue {
@@ -183,6 +186,7 @@ impl From<ExList> for NodeValue {
             },
             bullet_char: string_to_char(node.bullet_char),
             tight: node.tight,
+            is_task_list: node.is_task_list,
         })
     }
 }
@@ -198,6 +202,7 @@ pub struct ExListItem {
     pub delimiter: ExListDelimType,
     pub bullet_char: String,
     pub tight: bool,
+    pub is_task_list: bool,
 }
 
 impl From<ExListItem> for NodeValue {
@@ -216,6 +221,7 @@ impl From<ExListItem> for NodeValue {
             },
             bullet_char: string_to_char(node.bullet_char),
             tight: node.tight,
+            is_task_list: node.is_task_list,
         })
     }
 }
@@ -237,6 +243,7 @@ pub struct ExDescriptionItem {
     pub nodes: Vec<NewNode>,
     pub marker_offset: usize,
     pub padding: usize,
+    pub tight: bool,
 }
 
 impl From<ExDescriptionItem> for NodeValue {
@@ -244,6 +251,7 @@ impl From<ExDescriptionItem> for NodeValue {
         NodeValue::DescriptionItem(comrak::nodes::NodeDescriptionItem {
             marker_offset: node.marker_offset,
             padding: node.padding,
+            tight: node.tight,
         })
     }
 }
@@ -695,6 +703,18 @@ impl From<ExUnderline> for NodeValue {
 }
 
 #[derive(Debug, Clone, PartialEq, NifStruct)]
+#[module = "MDEx.Subscript"]
+pub struct ExSubscript {
+    pub nodes: Vec<NewNode>,
+}
+
+impl From<ExSubscript> for NodeValue {
+    fn from(_node: ExSubscript) -> Self {
+        NodeValue::Subscript
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, NifStruct)]
 #[module = "MDEx.SpoileredText"]
 pub struct ExSpoileredText {
     pub nodes: Vec<NewNode>,
@@ -751,6 +771,7 @@ pub fn ex_document_to_comrak_ast<'a>(
     | NewNode::MultilineBlockQuote(ExMultilineBlockQuote { nodes, .. })
     | NewNode::WikiLink(ExWikiLink { nodes, .. })
     | NewNode::Underline(ExUnderline { nodes })
+    | NewNode::Subscript(ExSubscript { nodes })
     | NewNode::SpoileredText(ExSpoileredText { nodes })
     | NewNode::EscapedTag(ExEscapedTag { nodes, .. }) = new_node
     {
@@ -791,6 +812,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             },
             bullet_char: char_to_string(attrs.bullet_char).unwrap_or_default(),
             tight: attrs.tight,
+            is_task_list: attrs.is_task_list,
         }),
 
         NodeValue::Item(ref attrs) => NewNode::ListItem(ExListItem {
@@ -808,6 +830,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             },
             bullet_char: char_to_string(attrs.bullet_char).unwrap_or_default(),
             tight: attrs.tight,
+            is_task_list: attrs.is_task_list,
         }),
 
         NodeValue::DescriptionList => {
@@ -818,6 +841,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             nodes: children,
             marker_offset: attrs.marker_offset,
             padding: attrs.padding,
+            tight: attrs.tight,
         }),
 
         NodeValue::DescriptionTerm => {
@@ -964,6 +988,8 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
         }),
 
         NodeValue::Underline => NewNode::Underline(ExUnderline { nodes: children }),
+
+        NodeValue::Subscript => NewNode::Subscript(ExSubscript { nodes: children }),
 
         NodeValue::SpoileredText => NewNode::SpoileredText(ExSpoileredText { nodes: children }),
 

@@ -253,6 +253,7 @@ defmodule MDEx.Document do
           | MDEx.Escaped.t()
           | MDEx.WikiLink.t()
           | MDEx.Underline.t()
+          | MDEx.Subscript.t()
           | MDEx.SpoileredText.t()
           | MDEx.EscapedTag.t()
 
@@ -306,6 +307,7 @@ defmodule MDEx.Document do
       MDEx.Escaped,
       MDEx.WikiLink,
       MDEx.Underline,
+      MDEx.Subscript,
       MDEx.SpoileredText,
       MDEx.EscapedTag
     ]
@@ -395,9 +397,19 @@ defmodule MDEx.List do
           start: non_neg_integer(),
           delimiter: :period | :paren,
           bullet_char: String.t(),
-          tight: boolean()
+          tight: boolean(),
+          is_task_list: boolean()
         }
-  defstruct nodes: [], list_type: :bullet, marker_offset: 0, padding: 2, start: 1, delimiter: :period, bullet_char: "-", tight: true
+  defstruct nodes: [],
+            list_type: :bullet,
+            marker_offset: 0,
+            padding: 2,
+            start: 1,
+            delimiter: :period,
+            bullet_char: "-",
+            tight: true,
+            is_task_list: false
+
   use MDEx.Document.Access
 end
 
@@ -416,9 +428,19 @@ defmodule MDEx.ListItem do
           start: non_neg_integer(),
           delimiter: :period | :paren,
           bullet_char: String.t(),
-          tight: boolean()
+          tight: boolean(),
+          is_task_list: boolean()
         }
-  defstruct nodes: [], list_type: :bullet, marker_offset: 0, padding: 2, start: 1, delimiter: :period, bullet_char: "-", tight: true
+  defstruct nodes: [],
+            list_type: :bullet,
+            marker_offset: 0,
+            padding: 2,
+            start: 1,
+            delimiter: :period,
+            bullet_char: "-",
+            tight: true,
+            is_task_list: false
+
   use MDEx.Document.Access
 end
 
@@ -439,8 +461,8 @@ defmodule MDEx.DescriptionItem do
   See `MDEx.DescriptionList`
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], marker_offset: non_neg_integer(), padding: non_neg_integer()}
-  defstruct nodes: [], marker_offset: 0, padding: 0
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], marker_offset: non_neg_integer(), padding: non_neg_integer(), tight: boolean()}
+  defstruct nodes: [], marker_offset: 0, padding: 0, tight: false
   use MDEx.Document.Access
 end
 
@@ -807,6 +829,16 @@ defmodule MDEx.Underline do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.Subscript do
+  @moduledoc """
+  Subscript.
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: []
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.SpoileredText do
   @moduledoc """
   Spoilered text.
@@ -866,6 +898,7 @@ defimpl Enumerable,
     MDEx.Escaped,
     MDEx.WikiLink,
     MDEx.Underline,
+    MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.EscapedTag
   ] do
@@ -949,6 +982,7 @@ defimpl String.Chars,
     MDEx.Escaped,
     MDEx.WikiLink,
     MDEx.Underline,
+    MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.EscapedTag
   ] do

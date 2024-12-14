@@ -53,7 +53,7 @@ defmodule MDEx.FormatTest do
     """)
 
     assert_commonmark("""
-    Hello ~world~ there
+    Hello ~~world~~ there
     """)
   end
 
@@ -147,7 +147,8 @@ defmodule MDEx.FormatTest do
       : Built with Elixir and Rust
       """,
       """
-      <dl><dt>MDEx</dt>
+      <dl>
+      <dt>MDEx</dt>
       <dd>
       <p>Built with Elixir and Rust</p>
       </dd>

@@ -394,7 +394,8 @@ defmodule MDEx.ParseTest do
             start: 1,
             delimiter: :period,
             bullet_char: "*",
-            tight: true
+            tight: true,
+            is_task_list: true
           }
         ]
       }
