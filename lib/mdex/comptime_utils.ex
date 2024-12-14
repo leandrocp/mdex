@@ -1,4 +1,4 @@
-# Original https://github.com/elixir-explorer/explorer/blob/a96052dd2cc967d362a06d208fd3cc7dc64cead1/lib/explorer/comptime_utils.ex
+# https://github.com/elixir-explorer/explorer/blob/d11216282bbdb0dcaef2519c2bfefda46c2981e0/lib/explorer/comptime_utils.ex
 
 defmodule MDEx.ComptimeUtils do
   @moduledoc false
