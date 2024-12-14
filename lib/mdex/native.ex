@@ -54,7 +54,7 @@ defmodule MDEx.Native do
     # We don't use any features of newer NIF versions, so 2.15 is enough.
     nif_versions: ["2.15"],
     mode: mode,
-    force_build: System.get_env("EXPLORER_BUILD") in ["1", "true"]
+    force_build: System.get_env("MDEX_BUILD") in ["1", "true"]
 
   # markdown
   #   - to document (parse)
