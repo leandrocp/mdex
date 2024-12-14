@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = { version = "0.33", features = [
+rustler = { version = "0.35", features = [
     "derive",
     "nif_version_2_15",
     "serde",
