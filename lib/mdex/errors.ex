@@ -43,3 +43,24 @@ defmodule MDEx.DecodeError do
     """
   end
 end
+
+defmodule MDEx.InvalidSelector do
+  @moduledoc """
+  Invalid Access key selector.
+  """
+
+  defexception [:selector]
+
+  @type t() :: %__MODULE__{selector: term()}
+
+  def message(%__MODULE__{selector: selector}) do
+    """
+    invalid Access key selector
+
+    Got:
+
+      #{inspect(selector)}
+
+    """
+  end
+end
