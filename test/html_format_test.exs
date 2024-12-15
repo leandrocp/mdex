@@ -1,4 +1,4 @@
-defmodule MDEx.FormatTest do
+defmodule MDEx.HTMLFormatTest do
   use ExUnit.Case
 
   @extension [
@@ -374,5 +374,9 @@ defmodule MDEx.FormatTest do
       """,
       "<blockquote>\n<p>one</p>\n<blockquote>\n<p>two</p>\n</blockquote>\n<p>three</p>\n</blockquote>\n"
     )
+  end
+
+  test "subscript" do
+    assert_format("H~2~O", "<p>H<sub>2</sub>O</p>", subscript: true)
   end
 end

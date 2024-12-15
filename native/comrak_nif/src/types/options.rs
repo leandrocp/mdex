@@ -20,6 +20,7 @@ pub struct ExExtensionOptions {
     pub wikilinks_title_after_pipe: bool,
     pub wikilinks_title_before_pipe: bool,
     pub underline: bool,
+    pub subscript: bool,
     pub spoiler: bool,
     pub greentext: bool,
 }
@@ -113,6 +114,7 @@ pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOption
     extension_options.wikilinks_title_after_pipe = options.extension.wikilinks_title_after_pipe;
     extension_options.wikilinks_title_before_pipe = options.extension.wikilinks_title_before_pipe;
     extension_options.underline = options.extension.underline;
+    extension_options.subscript = options.extension.subscript;
     extension_options.spoiler = options.extension.spoiler;
     extension_options.greentext = options.extension.greentext;
 
