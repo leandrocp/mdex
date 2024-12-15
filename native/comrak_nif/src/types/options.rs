@@ -20,6 +20,7 @@ pub struct ExExtensionOptions {
     pub wikilinks_title_after_pipe: bool,
     pub wikilinks_title_before_pipe: bool,
     pub underline: bool,
+    pub subscript: bool,
     pub spoiler: bool,
     pub greentext: bool,
 }
@@ -68,6 +69,8 @@ pub struct ExRenderOptions {
     pub gfm_quirks: bool,
     pub prefer_fenced: bool,
     pub figure_with_caption: bool,
+    pub tasklist_classes: bool,
+    pub ol_width: usize,
 }
 
 #[derive(Debug, NifStruct)]
@@ -111,6 +114,7 @@ pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOption
     extension_options.wikilinks_title_after_pipe = options.extension.wikilinks_title_after_pipe;
     extension_options.wikilinks_title_before_pipe = options.extension.wikilinks_title_before_pipe;
     extension_options.underline = options.extension.underline;
+    extension_options.subscript = options.extension.subscript;
     extension_options.spoiler = options.extension.spoiler;
     extension_options.greentext = options.extension.greentext;
 
@@ -148,6 +152,8 @@ pub fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
     render_options.gfm_quirks = options.render.gfm_quirks;
     render_options.prefer_fenced = options.render.prefer_fenced;
     render_options.figure_with_caption = options.render.figure_with_caption;
+    render_options.tasklist_classes = options.render.tasklist_classes;
+    render_options.ol_width = options.render.ol_width;
 
     render_options
 }

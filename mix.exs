@@ -102,6 +102,7 @@ defmodule MDEx.MixProject do
           MDEx.Escaped,
           MDEx.WikiLink,
           MDEx.Underline,
+          MDEx.Subscript,
           MDEx.SpoileredText,
           MDEx.EscapedTag
         ]

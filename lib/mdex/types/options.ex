@@ -17,6 +17,7 @@ defmodule MDEx.Types.ExtensionOptions do
             wikilinks_title_after_pipe: false,
             wikilinks_title_before_pipe: false,
             underline: false,
+            subscript: false,
             spoiler: false,
             greentext: false
 end
@@ -45,7 +46,9 @@ defmodule MDEx.Types.RenderOptions do
             ignore_empty_links: false,
             gfm_quirks: false,
             prefer_fenced: false,
-            figure_with_caption: false
+            figure_with_caption: false,
+            tasklist_classes: false,
+            ol_width: 1
 end
 
 defmodule MDEx.Types.FeaturesOptions do

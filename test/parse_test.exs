@@ -394,7 +394,8 @@ defmodule MDEx.ParseTest do
             start: 1,
             delimiter: :period,
             bullet_char: "*",
-            tight: true
+            tight: true,
+            is_task_list: true
           }
         ]
       }
@@ -629,6 +630,16 @@ defmodule MDEx.ParseTest do
           }
         ]
       }
+    )
+  end
+
+  test "subscript" do
+    assert_parse_document(
+      "H~2~O",
+      %MDEx.Document{
+        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "H"}, %MDEx.Subscript{nodes: [%MDEx.Text{literal: "2"}]}, %MDEx.Text{literal: "O"}]}]
+      },
+      extension: [subscript: true]
     )
   end
 end
