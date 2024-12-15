@@ -6,19 +6,25 @@ Be aware, this version introduces major breaking changes:
 - AST format has changed
 - Sigils `~m` and `~M` now returns `%MDEx.Document{}` instead of a Markdown string (use the `MD` modifier to have the old behavior)
 
-These changes enables the implementation of protocols to improve the manipulation of the AST.
-
-See the examples and the [MDEx.Document](https://hexdocs.pm/mdex/MDEx.Document.html) module for more info.
+These changes enables the implementation of protocols to improve the manipulation of the AST,
+see the [MDEx.Document](https://hexdocs.pm/mdex/MDEx.Document.html) module and [examples](https://github.com/leandrocp/mdex/tree/main/examples) for more info.
 
 ### Breaking changes
   * Changed the AST format from `{name, attributes, children}` to structs as `%MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Hello"}]}`
   * Sigils `~m` and `~M` now returns `%MDEx.Document{}` instead of a Markdown string
-  * Removed `MDEx.attribute/2` in favor of pattern matching key/value pairs in the attrs map directly.
+  * Removed `MDEx.attribute/2` in favor of pattern matching key/value pairs in node structs
 
 ### Enhancements
   * New AST format based on structs
   * Introduced modifiers `HTML`, `XML`, and `MD` for both sigils `~m` and `~M`
-  * Introduced `MDEx.Document.traverse_and_update/3` with the `acc` argument
+  * Introduced `MDEx.traverse_and_update/3` with the `acc` argument
+  * Updated autumn to properly escape curly braces in HEEx template on LiveView 1.0
+  * Updated comrak to v0.31
+      - New node `MDEx.Subscript`
+      - New attr `is_task_item` in list nodes
+      - New option `render.figure_with_caption`
+      - New option `render.tasklist_classes`
+      - New option `render.ol_width`
 
 ## 0.2.0 (2024-10-09)
 
