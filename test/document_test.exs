@@ -400,4 +400,13 @@ defmodule MDEx.DocumentTest do
                }
     end
   end
+
+  test "modulefy!" do
+    assert_raise MDEx.InvalidSelector, fn ->
+      MDEx.Document.Access.modulefy!(nil)
+    end
+
+    assert MDEx.Document.Access.modulefy!(:code) == MDEx.Code
+    assert MDEx.Document.Access.modulefy!(:code_block) == MDEx.CodeBlock
+  end
 end

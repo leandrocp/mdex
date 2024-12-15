@@ -24,7 +24,7 @@ defmodule MDEx.Document.Access do
   end
 
   def fetch(document, selector) when is_atom(selector) do
-    selector = modulefy(selector)
+    selector = modulefy!(selector)
 
     case Enum.filter(document, fn %node{} -> node == selector end) do
       [] -> :error
@@ -57,7 +57,7 @@ defmodule MDEx.Document.Access do
   end
 
   def get_and_update(document, selector, fun) when is_atom(selector) do
-    selector = modulefy(selector)
+    selector = modulefy!(selector)
 
     {document, {_, old}} =
       MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
@@ -116,7 +116,7 @@ defmodule MDEx.Document.Access do
   end
 
   def pop(document, key, default) when is_atom(key) do
-    key = modulefy(key)
+    key = modulefy!(key)
 
     {new, {_, old}} =
       MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
@@ -137,10 +137,15 @@ defmodule MDEx.Document.Access do
     {old || default, new}
   end
 
-  defp modulefy(selector) when is_atom(selector) do
+  @doc false
+  def modulefy!(nil = _selector), do: raise(%MDEx.InvalidSelector{selector: nil})
+
+  def modulefy!(selector) when is_atom(selector) do
     case Atom.to_string(selector) do
       "Elixir." <> name -> Module.concat([name])
       atom -> Module.concat(["MDEx", Macro.camelize(atom)])
     end
   end
+
+  def modulefy!(selector), do: raise(%MDEx.InvalidSelector{selector: selector})
 end
