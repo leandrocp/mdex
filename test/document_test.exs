@@ -403,7 +403,7 @@ defmodule MDEx.DocumentTest do
 
   test "modulefy!" do
     assert_raise MDEx.InvalidSelector, fn ->
-      MDEx.Document.Access.modulefy!(nil) == 1
+      MDEx.Document.Access.modulefy!(nil)
     end
 
     assert MDEx.Document.Access.modulefy!(:code) == MDEx.Code
