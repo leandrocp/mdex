@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-dev
+## 0.3.0 (2024-12-16)
 
 Be aware, this version introduces major breaking changes:
 - AST format has changed
