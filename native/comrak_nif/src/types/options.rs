@@ -73,7 +73,7 @@ pub struct ExRenderOptions {
     pub ol_width: usize,
 }
 
-#[derive(Debug, NifStruct)]
+#[derive(Debug, NifStruct, Default)]
 #[module = "MDEx.Types.FeaturesOptions"]
 pub struct ExFeaturesOptions {
     pub sanitize: bool,
