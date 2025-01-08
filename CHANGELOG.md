@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 (2025-01-08)
+
+### Enhancements
+  * HTML: encode `{` and `}` as `&lbrace;` and `&rbrace;` to avoid LiveView syntax errors in HEEx templates
+
 ## 0.3.0 (2024-12-16)
 
 Be aware, this version introduces major breaking changes:
