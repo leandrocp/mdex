@@ -123,8 +123,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
-        """,
-        render: [escape: true]
+        """
       )
     end
   end
