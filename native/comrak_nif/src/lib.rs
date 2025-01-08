@@ -7,7 +7,7 @@ extern crate rustler;
 mod inkjet_adapter;
 mod types;
 
-use comrak::{markdown_to_html_with_plugins, Arena, ComrakPlugins, Options};
+use comrak::{Arena, ComrakPlugins, Options};
 use inkjet_adapter::InkjetAdapter;
 use rustler::{Encoder, Env, NifResult, Term};
 use types::{atoms::ok, document::*, options::*};
@@ -47,7 +47,8 @@ fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
     let inkjet_adapter = InkjetAdapter::default();
     let mut plugins = ComrakPlugins::default();
     plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
-    let html = markdown_to_html_with_plugins(md, &Options::default(), &plugins);
+    let unsafe_html = comrak::markdown_to_html_with_plugins(md, &Options::default(), &plugins);
+    let html = html_post_process(unsafe_html, ExFeaturesOptions::default().sanitize);
     Ok((ok(), html).encode(env))
 }
 
@@ -74,12 +75,14 @@ fn markdown_to_html_with_options<'a>(
             );
             let mut plugins = ComrakPlugins::default();
             plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
-            let unsafe_html = markdown_to_html_with_plugins(md, &comrak_options, &plugins);
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
+            let html = html_post_process(unsafe_html, options.features.sanitize);
+            Ok((ok(), html).encode(env))
         }
         None => {
             let unsafe_html = comrak::markdown_to_html(md, &comrak_options);
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let html = html_post_process(unsafe_html, options.features.sanitize);
+            Ok((ok(), html).encode(env))
         }
     }
 }
@@ -196,16 +199,14 @@ fn document_to_commonmark_with_options(
                 &plugins,
             )
             .unwrap();
-            let unsafe_html = String::from_utf8(buffer).unwrap();
-
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let document = String::from_utf8(buffer).unwrap();
+            Ok((ok(), document).encode(env))
         }
         None => {
             let mut buffer = vec![];
             comrak::format_commonmark(comrak_ast, &comrak_options, &mut buffer).unwrap();
-            let unsafe_html = String::from_utf8(buffer).unwrap();
-
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let document = String::from_utf8(buffer).unwrap();
+            Ok((ok(), document).encode(env))
         }
     }
 }
@@ -221,10 +222,10 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
 
     let mut buffer = vec![];
-    comrak::format_html_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
-        .unwrap();
-    let html = String::from_utf8(buffer).unwrap();
-
+    let options = Options::default();
+    comrak::format_html_with_plugins(comrak_ast, &options, &mut buffer, &plugins).unwrap();
+    let unsafe_html = String::from_utf8(buffer).unwrap();
+    let html = html_post_process(unsafe_html, ExFeaturesOptions::default().sanitize);
     Ok((ok(), html).encode(env))
 }
 
@@ -260,15 +261,15 @@ fn document_to_html_with_options(
             comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
                 .unwrap();
             let unsafe_html = String::from_utf8(buffer).unwrap();
-
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let html = html_post_process(unsafe_html, options.features.sanitize);
+            Ok((ok(), html).encode(env))
         }
         None => {
             let mut buffer = vec![];
             comrak::format_commonmark(comrak_ast, &comrak_options, &mut buffer).unwrap();
             let unsafe_html = String::from_utf8(buffer).unwrap();
-
-            maybe_sanitize(env, unsafe_html, options.features.sanitize)
+            let html = html_post_process(unsafe_html, options.features.sanitize);
+            Ok((ok(), html).encode(env))
         }
     }
 }
@@ -339,11 +340,12 @@ fn document_to_xml_with_options(
     }
 }
 
-fn maybe_sanitize(env: Env, unsafe_html: String, sanitize: bool) -> NifResult<Term> {
+// https://github.com/p-jackson/entities/blob/1d166204433c2ee7931251a5494f94c7e35be9d6/src/entities.rs
+fn html_post_process(unsafe_html: String, sanitize: bool) -> String {
     let html = match sanitize {
         true => ammonia::clean(&unsafe_html),
         false => unsafe_html,
     };
 
-    Ok((ok(), html).encode(env))
+    html.replace('{', "&lbrace;").replace('}', "&rbrace;")
 }

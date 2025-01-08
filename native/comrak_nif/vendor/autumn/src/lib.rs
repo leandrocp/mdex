@@ -111,8 +111,8 @@ pub fn inner_highlights(
                 .expect("source bounds should be in bounds!");
             let span = v_htmlescape::escape(span)
                 .to_string()
-                .replace('{', "&#123")
-                .replace('}', "&#125");
+                .replace('{', "&lbrace;")
+                .replace('}', "&rbrace;");
             output.push_str(&span);
         }
         HighlightEvent::HighlightStart(idx) => {
@@ -178,13 +178,30 @@ mod tests {
     }
 
     #[test]
-    fn test_escape() {
+    fn test_escape_curly_braces_in_code_block() {
         let theme = themes::theme("onedark").unwrap();
-        let output = highlight_source_code("fun = &({&1})", Language::Elixir, theme, None, true);
-
-        assert_eq!(
-            output,
-            "<pre class=\"autumn-hl\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"language-elixir\" translate=\"no\"><span class=\"ahl-variable\" style=\"color: #ABB2BF;\">fun</span> <span class=\"ahl-operator\" style=\"color: #C678DD;\">=</span> <span class=\"ahl-operator\" style=\"color: #C678DD;\">&amp;</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">(</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&#123</span><span class=\"ahl-operator\" style=\"color: #C678DD;\">&amp;</span><span class=\"ahl-operator\" style=\"color: #C678DD;\">1</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&#125</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">)</span></code></pre>"
+        let output = highlight_source_code(
+            "```\n{:my_var, MyApp.Mod}\n```",
+            Language::Elixir,
+            theme,
+            None,
+            true,
         );
+
+        assert_eq!(output, "<pre class=\"autumn-hl\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"language-elixir\" translate=\"no\">```\n<span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&lbrace;</span><span class=\"ahl-string ahl-special ahl-symbol\" style=\"color: #98C379;\">:my_var</span><span class=\"ahl-punctuation ahl-delimiter\" style=\"color: #ABB2BF;\">,</span> <span class=\"ahl-namespace\" style=\"color: #61AFEF;\">MyApp.Mod</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&rbrace;</span>\n```</code></pre>");
+    }
+
+    #[test]
+    fn test_escape_curly_braces_in_inline_code() {
+        let theme = themes::theme("onedark").unwrap();
+        let output = highlight_source_code(
+            "`{:my_var, MyApp.Mod}`",
+            Language::Elixir,
+            theme,
+            None,
+            true,
+        );
+
+        assert_eq!(output, "<pre class=\"autumn-hl\" style=\"background-color: #282C34; color: #ABB2BF;\"><code class=\"language-elixir\" translate=\"no\">`<span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&lbrace;</span><span class=\"ahl-string ahl-special ahl-symbol\" style=\"color: #98C379;\">:my_var</span><span class=\"ahl-punctuation ahl-delimiter\" style=\"color: #ABB2BF;\">,</span> <span class=\"ahl-namespace\" style=\"color: #61AFEF;\">MyApp.Mod</span><span class=\"ahl-punctuation ahl-bracket\" style=\"color: #ABB2BF;\">&rbrace;</span>`</code></pre>");
     }
 }
