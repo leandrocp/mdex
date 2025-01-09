@@ -115,17 +115,6 @@ defmodule MDExTest do
         features: [syntax_highlight_inline_style: false]
       )
     end
-
-    test "encode curly braces in inline code" do
-      assert_output(
-        ~S"""
-        `{:mdex, "~> 0.1"}`
-        """,
-        ~S"""
-        <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
-        """
-      )
-    end
   end
 
   test "render emoji shortcodes" do
@@ -202,6 +191,28 @@ defmodule MDExTest do
 
       assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: true]) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
+    end
+
+    test "encode curly braces in inline code" do
+      assert_output(
+        ~S"""
+        `{:mdex, "~> 0.1"}`
+        """,
+        ~S"""
+        <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
+        """
+      )
+    end
+
+    test "preserve curly braces outside inline code" do
+      assert_output(
+        ~S"""
+        # {Title} `{:code}`
+        """,
+        ~S"""
+        <h1>{Title} <code>&lbrace;:code&rbrace;</code></h1>
+        """
+      )
     end
   end
 
