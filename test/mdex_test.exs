@@ -216,6 +216,20 @@ defmodule MDExTest do
     end
   end
 
+  describe "safe html" do
+    test "sanitize" do
+      assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>", true, false, false) == "<span>tag</span>"
+    end
+
+    test "escape tags" do
+      assert MDEx.safe_html("<span>tag</span>", false, true, false) == "&lt;span&gt;tag&lt;&#x2f;span&gt;"
+    end
+
+    test "escape curly braces in code tags" do
+      assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>", false, false, true) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
+    end
+  end
+
   describe "to_commonmark" do
     test "document to commonmark with default options" do
       assert MDEx.to_commonmark!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"

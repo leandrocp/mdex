@@ -602,4 +602,9 @@ defmodule MDEx do
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
+
+  # TODO: spec/docs
+  def safe_html(unsafe_html, sanitize, escape_tags, escape_curly_braces_in_code) do
+    Native.safe_html(unsafe_html, sanitize, escape_tags, escape_curly_braces_in_code)
+  end
 end
