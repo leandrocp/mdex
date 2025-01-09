@@ -16,7 +16,7 @@ rustler = { version = "0.33", features = [
     "serde",
 ] }
 serde = "1.0"
-comrak = { version = "0.31", features = ["shortcodes"] }
+comrak = { version = "0.33", features = ["shortcodes"] }
 ammonia = "4.0"
 phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
@@ -25,6 +25,7 @@ v_htmlescape = "0.15"
 autumn = { path = "vendor/autumn" }
 log = "0.4"
 lazy_static = "1.5"
+typed-arena = "2.0.2"
 inkjet = { version = "0.10.5", default-features = false, features = [
     "html",
     "language-bash",
@@ -81,7 +82,6 @@ inkjet = { version = "0.10.5", default-features = false, features = [
     "language-yaml",
     "language-zig",
 ] }
-typed-arena = "2.0.2"
 
 [features]
 default = ["nif_version_2_15"]

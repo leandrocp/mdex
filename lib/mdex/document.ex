@@ -241,6 +241,7 @@ defmodule MDEx.Document do
           | MDEx.LineBreak.t()
           | MDEx.Code.t()
           | MDEx.HtmlInline.t()
+          | MDEx.Raw.t()
           | MDEx.Emph.t()
           | MDEx.Strong.t()
           | MDEx.Strikethrough.t()
@@ -295,6 +296,7 @@ defmodule MDEx.Document do
       MDEx.LineBreak,
       MDEx.Code,
       MDEx.HtmlInline,
+      MDEx.Raw,
       MDEx.Emph,
       MDEx.Strong,
       MDEx.Strikethrough,
@@ -695,6 +697,16 @@ defmodule MDEx.HtmlInline do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.Raw do
+  @moduledoc """
+  A Raw output node. This will be inserted verbatim into CommonMark and HTML output. It can only be created programmatically, and is never parsed from input.
+  """
+
+  @type t :: %__MODULE__{literal: String.t()}
+  defstruct literal: ""
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.Emph do
   @moduledoc """
   Emphasis.
@@ -886,6 +898,7 @@ defimpl Enumerable,
     MDEx.LineBreak,
     MDEx.Code,
     MDEx.HtmlInline,
+    MDEx.Raw,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,
@@ -970,6 +983,7 @@ defimpl String.Chars,
     MDEx.LineBreak,
     MDEx.Code,
     MDEx.HtmlInline,
+    MDEx.Raw,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,

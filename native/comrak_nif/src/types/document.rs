@@ -44,6 +44,7 @@ pub enum NewNode {
     LineBreak(ExLineBreak),
     Code(ExCode),
     HtmlInline(ExHtmlInline),
+    Raw(ExRaw),
     Emph(ExEmph),
     Strong(ExStrong),
     Strikethrough(ExStrikethrough),
@@ -89,6 +90,7 @@ impl From<NewNode> for NodeValue {
             NewNode::LineBreak(n) => n.into(),
             NewNode::Code(n) => n.into(),
             NewNode::HtmlInline(n) => n.into(),
+            NewNode::Raw(n) => n.into(),
             NewNode::Emph(n) => n.into(),
             NewNode::Strong(n) => n.into(),
             NewNode::Strikethrough(n) => n.into(),
@@ -534,6 +536,18 @@ impl From<ExHtmlInline> for NodeValue {
 }
 
 #[derive(Debug, Clone, PartialEq, NifStruct)]
+#[module = "MDEx.Raw"]
+pub struct ExRaw {
+    pub literal: String,
+}
+
+impl From<ExRaw> for NodeValue {
+    fn from(node: ExRaw) -> Self {
+        NodeValue::Raw(node.literal.to_string())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, NifStruct)]
 #[module = "MDEx.Emph"]
 pub struct ExEmph {
     pub nodes: Vec<NewNode>,
@@ -938,6 +952,10 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
         }),
 
         NodeValue::HtmlInline(ref literal) => NewNode::HtmlInline(ExHtmlInline {
+            literal: literal.to_string(),
+        }),
+
+        NodeValue::Raw(ref literal) => NewNode::Raw(ExRaw {
             literal: literal.to_string(),
         }),
 

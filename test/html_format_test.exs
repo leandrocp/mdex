@@ -379,4 +379,16 @@ defmodule MDEx.HTMLFormatTest do
   test "subscript" do
     assert_format("H~2~O", "<p>H<sub>2</sub>O</p>", subscript: true)
   end
+
+  test "raw" do
+    ast = %MDEx.Document{
+      nodes: [
+        %MDEx.Raw{
+          literal: "&lbrace; <!-- literal --> &rbrace;"
+        }
+      ]
+    }
+
+    assert MDEx.to_html(ast) == {:ok, "&lbrace; <!-- literal --> &rbrace;"}
+  end
 end
