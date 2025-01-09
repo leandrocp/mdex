@@ -208,9 +208,20 @@ defmodule MDExTest do
       assert_output(
         ~S"""
         # {Title} `{:code}`
+
+        - Elixir {:ex}
+
+        ```elixir
+        {:ok, "code"}
+        ```
         """,
         ~S"""
         <h1>{Title} <code>&lbrace;:code&rbrace;</code></h1>
+        <ul>
+        <li>Elixir {:ex}</li>
+        </ul>
+        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol" style="color: #98C379;">:ok</span><span class="ahl-punctuation ahl-delimiter" style="color: #ABB2BF;">,</span> <span class="ahl-string" style="color: #98C379;">&quot;code&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&rbrace;</span>
+        </code></pre>
         """
       )
     end
