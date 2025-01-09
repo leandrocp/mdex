@@ -90,6 +90,7 @@ defmodule MDEx.MixProject do
           MDEx.LineBreak,
           MDEx.Code,
           MDEx.HtmlInline,
+          MDEx.Raw,
           MDEx.Emph,
           MDEx.Strong,
           MDEx.Strikethrough,

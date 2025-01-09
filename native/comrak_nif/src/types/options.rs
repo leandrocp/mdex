@@ -91,69 +91,59 @@ pub struct ExOptions {
 }
 
 pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOptions {
-    let mut extension_options = ExtensionOptions::default();
-
-    extension_options.strikethrough = options.extension.strikethrough;
-    extension_options.tagfilter = options.extension.tagfilter;
-    extension_options.table = options.extension.table;
-    extension_options.autolink = options.extension.autolink;
-    extension_options.tasklist = options.extension.tasklist;
-    extension_options.superscript = options.extension.superscript;
-    extension_options
-        .header_ids
-        .clone_from(&options.extension.header_ids);
-    extension_options.footnotes = options.extension.footnotes;
-    extension_options.description_lists = options.extension.description_lists;
-    extension_options
-        .front_matter_delimiter
-        .clone_from(&options.extension.front_matter_delimiter);
-    extension_options.multiline_block_quotes = options.extension.multiline_block_quotes;
-    extension_options.math_dollars = options.extension.math_dollars;
-    extension_options.math_code = options.extension.math_code;
-    extension_options.shortcodes = options.extension.shortcodes;
-    extension_options.wikilinks_title_after_pipe = options.extension.wikilinks_title_after_pipe;
-    extension_options.wikilinks_title_before_pipe = options.extension.wikilinks_title_before_pipe;
-    extension_options.underline = options.extension.underline;
-    extension_options.subscript = options.extension.subscript;
-    extension_options.spoiler = options.extension.spoiler;
-    extension_options.greentext = options.extension.greentext;
-
-    extension_options
+    ExtensionOptions::<'_> {
+        strikethrough: options.extension.strikethrough,
+        tagfilter: options.extension.tagfilter,
+        table: options.extension.table,
+        autolink: options.extension.autolink,
+        tasklist: options.extension.tasklist,
+        superscript: options.extension.superscript,
+        header_ids: options.extension.header_ids.clone(),
+        footnotes: options.extension.footnotes,
+        description_lists: options.extension.description_lists,
+        front_matter_delimiter: options.extension.front_matter_delimiter.clone(),
+        multiline_block_quotes: options.extension.multiline_block_quotes,
+        math_dollars: options.extension.math_dollars,
+        math_code: options.extension.math_code,
+        shortcodes: options.extension.shortcodes,
+        wikilinks_title_after_pipe: options.extension.wikilinks_title_after_pipe,
+        wikilinks_title_before_pipe: options.extension.wikilinks_title_before_pipe,
+        underline: options.extension.underline,
+        subscript: options.extension.subscript,
+        spoiler: options.extension.spoiler,
+        greentext: options.extension.greentext,
+        ..Default::default()
+    }
 }
 
 pub fn parse_options_from_ex_options(options: &ExOptions) -> ParseOptions {
-    let mut parse_options = ParseOptions::default();
-
-    parse_options.smart = options.parse.smart;
-    parse_options
-        .default_info_string
-        .clone_from(&options.parse.default_info_string);
-    parse_options.relaxed_tasklist_matching = options.parse.relaxed_tasklist_matching;
-    parse_options.relaxed_autolinks = options.parse.relaxed_autolinks;
-
-    parse_options
+    ParseOptions::<'_> {
+        smart: options.parse.smart,
+        default_info_string: options.parse.default_info_string.clone(),
+        relaxed_tasklist_matching: options.parse.relaxed_tasklist_matching,
+        relaxed_autolinks: options.parse.relaxed_autolinks,
+        ..Default::default()
+    }
 }
 
 pub fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
-    let mut render_options = RenderOptions::default();
-
-    render_options.hardbreaks = options.render.hardbreaks;
-    render_options.github_pre_lang = options.render.github_pre_lang;
-    render_options.full_info_string = options.render.full_info_string;
-    render_options.width = options.render.width;
-    render_options.unsafe_ = options.render.unsafe_;
-    render_options.escape = options.render.escape;
-    render_options.list_style = ListStyleType::from(options.render.list_style.clone());
-    render_options.sourcepos = options.render.sourcepos;
-    render_options.experimental_inline_sourcepos = options.render.experimental_inline_sourcepos;
-    render_options.escaped_char_spans = options.render.escaped_char_spans;
-    render_options.ignore_setext = options.render.ignore_setext;
-    render_options.ignore_empty_links = options.render.ignore_empty_links;
-    render_options.gfm_quirks = options.render.gfm_quirks;
-    render_options.prefer_fenced = options.render.prefer_fenced;
-    render_options.figure_with_caption = options.render.figure_with_caption;
-    render_options.tasklist_classes = options.render.tasklist_classes;
-    render_options.ol_width = options.render.ol_width;
-
-    render_options
+    RenderOptions {
+        hardbreaks: options.render.hardbreaks,
+        github_pre_lang: options.render.github_pre_lang,
+        full_info_string: options.render.full_info_string,
+        width: options.render.width,
+        unsafe_: options.render.unsafe_,
+        escape: options.render.escape,
+        list_style: ListStyleType::from(options.render.list_style.clone()),
+        sourcepos: options.render.sourcepos,
+        experimental_inline_sourcepos: options.render.experimental_inline_sourcepos,
+        escaped_char_spans: options.render.escaped_char_spans,
+        ignore_setext: options.render.ignore_setext,
+        ignore_empty_links: options.render.ignore_empty_links,
+        gfm_quirks: options.render.gfm_quirks,
+        prefer_fenced: options.render.prefer_fenced,
+        figure_with_caption: options.render.figure_with_caption,
+        tasklist_classes: options.render.tasklist_classes,
+        ol_width: options.render.ol_width,
+    }
 }
