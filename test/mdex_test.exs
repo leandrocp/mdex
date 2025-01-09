@@ -218,15 +218,21 @@ defmodule MDExTest do
 
   describe "safe html" do
     test "sanitize" do
-      assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>", true, false, false) == "<span>tag</span>"
+      assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>",
+               sanitize: true,
+               escape_tags: false,
+               escape_curly_braces_in_code: false
+             ) == "<span>tag</span>"
     end
 
     test "escape tags" do
-      assert MDEx.safe_html("<span>tag</span>", false, true, false) == "&lt;span&gt;tag&lt;&#x2f;span&gt;"
+      assert MDEx.safe_html("<span>tag</span>", sanitize: false, escape_tags: true, escape_curly_braces_in_code: false) ==
+               "&lt;span&gt;tag&lt;&#x2f;span&gt;"
     end
 
     test "escape curly braces in code tags" do
-      assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>", false, false, true) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
+      assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>", sanitize: false, escape_tags: false, escape_curly_braces_in_code: true) ==
+               "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
     end
   end
 

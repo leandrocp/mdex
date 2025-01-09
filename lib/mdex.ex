@@ -604,7 +604,10 @@ defmodule MDEx do
   defp maybe_trim(error), do: error
 
   # TODO: spec/docs
-  def safe_html(unsafe_html, sanitize, escape_tags, escape_curly_braces_in_code) do
+  def safe_html(unsafe_html, opts) do
+    sanitize = Keyword.get(opts, :sanitize, true)
+    escape_tags = Keyword.get(opts, :escape_tags, true)
+    escape_curly_braces_in_code = Keyword.get(opts, :escape_curly_braces_in_code, true)
     Native.safe_html(unsafe_html, sanitize, escape_tags, escape_curly_braces_in_code)
   end
 end
