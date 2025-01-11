@@ -606,23 +606,23 @@ defmodule MDEx do
   @doc """
   Utility function to sanitize and escape HTML.
 
-  ## Example
+  ## Examples
 
       iex> MDEx.safe_html("<script>console.log('attack')</script>")
       ""
 
-      iex> MDEx.safe_html("<span>Hello</span>")
-      "&lt;span&gt;Hello&lt;&#x2f;span&gt;"
-
       iex> MDEx.safe_html("<h1>{'Example:'}</h1><code>{:ok, 'MDEx'}</code>")
       "&lt;h1&gt;{&#x27;Example:&#x27;}&lt;&#x2f;h1&gt;&lt;code&gt;&lbrace;:ok, &#x27;MDEx&#x27;&rbrace;&lt;&#x2f;code&gt;"
+
+      iex> MDEx.safe_html("<h1>{'Example:'}</h1><code>{:ok, 'MDEx'}</code>", escape: [content: false])
+      "<h1>{'Example:'}</h1><code>&lbrace;:ok, 'MDEx'&rbrace;</code>"
 
   ## Options
 
     - `:sanitize` - clean HTML using these rules https://docs.rs/ammonia/latest/ammonia/fn.clean.html. Defaults to `true`.
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
-                  `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
-                  `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
+        - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
+        - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
   """
   def safe_html(unsafe_html, opts \\ []) when is_binary(unsafe_html) and is_list(opts) do
     sanitize = opt(opts, [:sanitize], true)
