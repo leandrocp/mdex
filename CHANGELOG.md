@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Enhancements
+  * Add `MDEx.safe_html/2` to sanitize and escape HTML content
+
+### Fixes
+  * HTML: encode `{` and `}` only inside `<code>` tags to avoid disabling LiveView expressions
+
 ## 0.3.1 (2025-01-08)
 
 ### Enhancements
