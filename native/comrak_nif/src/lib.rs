@@ -358,13 +358,13 @@ pub fn safe_html(
     env: Env<'_>,
     unsafe_html: String,
     sanitize: bool,
-    escape_tags: bool,
+    escape_content: bool,
     escape_curly_braces_in_code: bool,
 ) -> NifResult<Term<'_>> {
     Ok(do_safe_html(
         unsafe_html,
         sanitize,
-        escape_tags,
+        escape_content,
         escape_curly_braces_in_code,
     )
     .encode(env))
@@ -374,7 +374,7 @@ pub fn safe_html(
 fn do_safe_html(
     unsafe_html: String,
     sanitize: bool,
-    escape_tags: bool,
+    escape_content: bool,
     escape_curly_braces_in_code: bool,
 ) -> String {
     let html = match sanitize {
@@ -404,7 +404,7 @@ fn do_safe_html(
         false => html,
     };
 
-    let html = match escape_tags {
+    let html = match escape_content {
         true => v_htmlescape::escape(&html).to_string(),
         false => html,
     };

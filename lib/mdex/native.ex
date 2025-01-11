@@ -56,7 +56,7 @@ defmodule MDEx.Native do
     mode: mode,
     force_build: System.get_env("MDEX_BUILD") in ["1", "true"]
 
-  def safe_html(_unsafe_html, _sanitize, _escape_tags, _escape_curly_braces_in_code), do: :erlang.nif_error(:nif_not_loaded)
+  def safe_html(_unsafe_html, _sanitize, _escape_content, _escape_curly_braces_in_code), do: :erlang.nif_error(:nif_not_loaded)
 
   # markdown
   #   - to document (parse)
