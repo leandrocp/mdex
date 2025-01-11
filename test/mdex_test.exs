@@ -115,17 +115,6 @@ defmodule MDExTest do
         features: [syntax_highlight_inline_style: false]
       )
     end
-
-    test "encode curly braces in inline code" do
-      assert_output(
-        ~S"""
-        `{:mdex, "~> 0.1"}`
-        """,
-        ~S"""
-        <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
-        """
-      )
-    end
   end
 
   test "render emoji shortcodes" do
@@ -202,6 +191,69 @@ defmodule MDExTest do
 
       assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: true]) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
+    end
+
+    test "encode curly braces in inline code" do
+      assert_output(
+        ~S"""
+        `{:mdex, "~> 0.1"}`
+        """,
+        ~S"""
+        <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
+        """
+      )
+    end
+
+    test "preserve curly braces outside inline code" do
+      assert_output(
+        ~S"""
+        # {Title} `{:code}`
+
+        - Elixir {:ex}
+
+        ```elixir
+        {:ok, "code"}
+        ```
+        """,
+        ~S"""
+        <h1>{Title} <code>&lbrace;:code&rbrace;</code></h1>
+        <ul>
+        <li>Elixir {:ex}</li>
+        </ul>
+        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol" style="color: #98C379;">:ok</span><span class="ahl-punctuation ahl-delimiter" style="color: #ABB2BF;">,</span> <span class="ahl-string" style="color: #98C379;">&quot;code&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&rbrace;</span>
+        </code></pre>
+        """
+      )
+    end
+  end
+
+  describe "safe html" do
+    test "sanitize" do
+      assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>",
+               sanitize: true,
+               escape: [content: false, curly_braces_in_code: false]
+             ) == "<span>tag</span>"
+    end
+
+    test "escape tags" do
+      assert MDEx.safe_html("<span>content</span>",
+               sanitize: false,
+               escape: [content: true, curly_braces_in_code: false]
+             ) == "&lt;span&gt;content&lt;&#x2f;span&gt;"
+    end
+
+    test "escape curly braces in code tags" do
+      assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>",
+               sanitize: false,
+               escape: [content: false, curly_braces_in_code: true]
+             ) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
+    end
+
+    test "enable all by default" do
+      assert MDEx.safe_html(
+               "<span>{:example} <code class=\"lang-ex\" data-foo=\"{:val}\">{:ok, 'foo'}</code></span><script>console.log('hello')</script>"
+             ) ==
+               "&lt;span&gt;{:example} &lt;code&gt;&lbrace;:ok, &#x27;foo&#x27;&rbrace;&lt;&#x2f;code&gt;&lt;&#x2f;span&gt;"
     end
   end
 
