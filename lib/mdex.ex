@@ -603,11 +603,38 @@ defmodule MDEx do
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
 
-  # TODO: spec/docs
-  def safe_html(unsafe_html, opts) do
-    sanitize = Keyword.get(opts, :sanitize, true)
-    escape_tags = Keyword.get(opts, :escape_tags, true)
-    escape_curly_braces_in_code = Keyword.get(opts, :escape_curly_braces_in_code, true)
-    Native.safe_html(unsafe_html, sanitize, escape_tags, escape_curly_braces_in_code)
+  @doc """
+  Utility function to sanitize and escape HTML.
+
+  ## Example
+
+      iex> MDEx.safe_html("<script>console.log('attack')</script>")
+      ""
+
+      iex> MDEx.safe_html("<span>Hello</span>")
+      "&lt;span&gt;Hello&lt;&#x2f;span&gt;"
+
+      iex> MDEx.safe_html("<h1>{'Example:'}</h1><code>{:ok, 'MDEx'}</code>")
+      "&lt;h1&gt;{&#x27;Example:&#x27;}&lt;&#x2f;h1&gt;&lt;code&gt;&lbrace;:ok, &#x27;MDEx&#x27;&rbrace;&lt;&#x2f;code&gt;"
+
+  ## Options
+
+    - `:sanitize` - clean HTML using these rules https://docs.rs/ammonia/latest/ammonia/fn.clean.html. Defaults to `true`.
+    - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
+                  `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
+                  `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
+  """
+  def safe_html(unsafe_html, opts \\ []) when is_binary(unsafe_html) and is_list(opts) do
+    sanitize = opt(opts, [:sanitize],  true)
+    escape_content = opt(opts, [:escape, :content], true)
+    escape_curly_braces_in_code = opt(opts, [:escape, :curly_braces_in_code], true)
+    Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
+  end
+
+  defp opt(opts, keys, default) do
+     case get_in(opts, keys) do
+        nil -> default
+        val -> val
+     end
   end
 end

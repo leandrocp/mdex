@@ -382,18 +382,16 @@ fn do_safe_html(
         false => unsafe_html,
     };
 
-    let html = match escape_tags {
-        true => v_htmlescape::escape(&html).to_string(),
-        false => html,
-    };
-
     let html = match escape_curly_braces_in_code {
         true => rewrite_str(
             &html,
             RewriteStrSettings {
-                element_content_handlers: vec![text!("code", |t| {
-                    t.replace(
-                        &t.as_str().replace('{', "&lbrace;").replace('}', "&rbrace;"),
+                element_content_handlers: vec![text!("code", |chunk| {
+                    chunk.replace(
+                        &chunk
+                            .as_str()
+                            .replace('{', "&lbrace;")
+                            .replace('}', "&rbrace;"),
                         ContentType::Html,
                     );
 
@@ -406,5 +404,12 @@ fn do_safe_html(
         false => html,
     };
 
-    html
+    let html = match escape_tags {
+        true => v_htmlescape::escape(&html).to_string(),
+        false => html,
+    };
+
+    // TODO: not so clean solution to undo double escaping, could be better
+    html.replace("&amp;lbrace;", "&lbrace;")
+        .replace("&amp;rbrace;", "&rbrace;")
 }
