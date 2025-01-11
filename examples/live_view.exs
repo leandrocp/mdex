@@ -98,6 +98,7 @@ defmodule DemoLive do
 
     ```heex
     <%= @hello %>
+    { @hello }
     ```
 
     Elixir was created by José Valim.

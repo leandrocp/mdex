@@ -92,6 +92,7 @@ markdown = """
 
 ```heex
 <%= @hello %>
+{ @hello }
 ```
 
 Elixir was created by José Valim.
