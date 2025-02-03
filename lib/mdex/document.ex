@@ -322,7 +322,7 @@ defmodule MDEx.Document do
 
   See the [Access](#module-access) section for examples.
   """
-  @spec fetch(t(), selector()) :: {:ok, md_node()} | :error
+  @spec fetch(t(), selector()) :: {:ok, [md_node()]} | :error
   def fetch(document, selector), do: MDEx.Document.Access.fetch(document, selector)
 
   @doc """

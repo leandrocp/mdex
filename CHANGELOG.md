@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3
+
+### Fixes
+  * Fix `MDEx.Document.fetch/2` spec
+
 ## 0.3.2 (2025-01-11)
 
 ### Enhancements
