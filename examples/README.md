@@ -57,3 +57,13 @@ To replicate this example in a real application, copy the `MDEx.LiveView` module
 then import it in your LiveView or in your application `Web` module (see `DemoLive` in the example).
 
 Note that you can change the options passed to `MDEx.to_html!/2` in the `sigil_M` macro.
+
+## NimblePublisher + LiveView
+
+Build your blog posts using the [NimblePublisher](https://github.com/dashbitco/nimble_publisher) library and serve them with LiveView.
+
+```sh
+iex nimble_publisher.exs
+```
+
+Open [localhost:4000](http://localhost:4000) to view the rendered blog post.
