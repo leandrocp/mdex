@@ -104,8 +104,8 @@ version = "0.1.0"
 dependencies = [
  "inkjet",
  "phf 0.11.3",
- "tree-sitter",
- "tree-sitter-highlight",
+ "tree-sitter 0.20.10",
+ "tree-sitter-highlight 0.20.1",
  "v_htmlescape",
 ]
 
@@ -293,8 +293,8 @@ dependencies = [
  "phf 0.11.3",
  "rustler",
  "serde",
- "tree-sitter",
- "tree-sitter-highlight",
+ "tree-sitter 0.20.10",
+ "tree-sitter-highlight 0.25.2",
  "typed-arena",
  "v_htmlescape",
 ]
@@ -750,8 +750,8 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "toml",
- "tree-sitter",
- "tree-sitter-highlight",
+ "tree-sitter 0.20.10",
+ "tree-sitter-highlight 0.20.1",
  "v_htmlescape",
 ]
 
@@ -1426,6 +1426,7 @@ version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d434192e7da787e94a6ea7e9670b26a036d0ca41e0b7efb2676dd32bae872949"
 dependencies = [
+ "indexmap",
  "itoa",
  "memchr",
  "ryu",
@@ -1496,6 +1497,12 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
 
 [[package]]
 name = "string_cache"
@@ -1746,6 +1753,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4"
+dependencies = [
+ "cc",
+ "regex",
+ "regex-syntax",
+ "serde_json",
+ "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "tree-sitter-highlight"
 version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1753,8 +1774,26 @@ checksum = "042342584c5a7a0b833d9fc4e2bdab3f9868ddc6c4b339a1e01451c6720868bc"
 dependencies = [
  "regex",
  "thiserror 1.0.69",
- "tree-sitter",
+ "tree-sitter 0.20.10",
 ]
+
+[[package]]
+name = "tree-sitter-highlight"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "457164f56e8dbbd0dc620c239bd7e2eb6025b76e4d1593a690bd4d9ed37bf168"
+dependencies = [
+ "regex",
+ "streaming-iterator",
+ "thiserror 2.0.11",
+ "tree-sitter 0.25.2",
+]
+
+[[package]]
+name = "tree-sitter-language"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 
 [[package]]
 name = "typed-arena"
