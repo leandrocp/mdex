@@ -12,6 +12,7 @@ defmodule MDEx.HTMLFormatTest do
     description_lists: true,
     front_matter_delimiter: "---",
     multiline_block_quotes: true,
+    alerts: true,
     math_dollars: true,
     math_code: true,
     shortcodes: true,
@@ -390,5 +391,17 @@ defmodule MDEx.HTMLFormatTest do
     }
 
     assert MDEx.to_html(ast) == {:ok, "&lbrace; <!-- literal --> &rbrace;"}
+  end
+
+  test "alerts" do
+    assert_format(
+      "> [!note]\n> Something of note",
+      "<div class=\"markdown-alert markdown-alert-note\">\n<p class=\"markdown-alert-title\">Note</p>\n<p>Something of note</p>\n</div>"
+    )
+
+    assert_format(
+      "> [!caution]\n> Ops",
+      "<div class=\"markdown-alert markdown-alert-caution\">\n<p class=\"markdown-alert-title\">Caution</p>\n<p>Ops</p>\n</div>"
+    )
   end
 end

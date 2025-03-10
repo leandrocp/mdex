@@ -14,6 +14,7 @@ pub struct ExExtensionOptions {
     pub description_lists: bool,
     pub front_matter_delimiter: Option<String>,
     pub multiline_block_quotes: bool,
+    pub alerts: bool,
     pub math_dollars: bool,
     pub math_code: bool,
     pub shortcodes: bool,
@@ -71,6 +72,7 @@ pub struct ExRenderOptions {
     pub figure_with_caption: bool,
     pub tasklist_classes: bool,
     pub ol_width: usize,
+    pub experimental_minimize_commonmark: bool,
 }
 
 #[derive(Debug, NifStruct, Default)]
@@ -103,6 +105,7 @@ pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOption
         description_lists: options.extension.description_lists,
         front_matter_delimiter: options.extension.front_matter_delimiter.clone(),
         multiline_block_quotes: options.extension.multiline_block_quotes,
+        alerts: options.extension.alerts,
         math_dollars: options.extension.math_dollars,
         math_code: options.extension.math_code,
         shortcodes: options.extension.shortcodes,
@@ -112,7 +115,8 @@ pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOption
         subscript: options.extension.subscript,
         spoiler: options.extension.spoiler,
         greentext: options.extension.greentext,
-        ..Default::default()
+        image_url_rewriter: None,
+        link_url_rewriter: None,
     }
 }
 
@@ -122,7 +126,7 @@ pub fn parse_options_from_ex_options(options: &ExOptions) -> ParseOptions {
         default_info_string: options.parse.default_info_string.clone(),
         relaxed_tasklist_matching: options.parse.relaxed_tasklist_matching,
         relaxed_autolinks: options.parse.relaxed_autolinks,
-        ..Default::default()
+        broken_link_callback: None,
     }
 }
 
@@ -145,5 +149,6 @@ pub fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
         figure_with_caption: options.render.figure_with_caption,
         tasklist_classes: options.render.tasklist_classes,
         ol_width: options.render.ol_width,
+        experimental_minimize_commonmark: options.render.experimental_minimize_commonmark,
     }
 }

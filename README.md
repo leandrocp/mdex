@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  A CommonMark-compliant fast and extensible Markdown parser and formatter for Elixir.
+  An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features.
 </p>
 
 <p align="center">

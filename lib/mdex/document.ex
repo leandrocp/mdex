@@ -257,6 +257,7 @@ defmodule MDEx.Document do
           | MDEx.Subscript.t()
           | MDEx.SpoileredText.t()
           | MDEx.EscapedTag.t()
+          | MDEx.Alert.t()
 
   @typedoc """
   Selector to match a node in a document.
@@ -311,7 +312,8 @@ defmodule MDEx.Document do
       MDEx.Underline,
       MDEx.Subscript,
       MDEx.SpoileredText,
-      MDEx.EscapedTag
+      MDEx.EscapedTag,
+      MDEx.Alert
     ]
   end
 
@@ -871,6 +873,32 @@ defmodule MDEx.EscapedTag do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.Alert do
+  @moduledoc """
+  GitHub and GitLab style alerts / admonitions.
+
+  See [GitHub](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts)
+  and [GitLab](https://docs.gitlab.com/user/markdown/#alerts) docs.
+  """
+
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          alert_type: :note | :tip | :important | :warning | :caution,
+          title: String.t() | nil,
+          multiline: boolean(),
+          fence_length: non_neg_integer(),
+          fence_offset: non_neg_integer()
+        }
+  defstruct nodes: [],
+            alert_type: :note,
+            title: nil,
+            multiline: false,
+            fence_length: 0,
+            fence_offset: 0
+
+  use MDEx.Document.Access
+end
+
 defimpl Enumerable,
   for: [
     MDEx.Document,
@@ -913,7 +941,8 @@ defimpl Enumerable,
     MDEx.Underline,
     MDEx.Subscript,
     MDEx.SpoileredText,
-    MDEx.EscapedTag
+    MDEx.EscapedTag,
+    MDEx.Alert
   ] do
   def count(_), do: {:error, __MODULE__}
   def member?(_, _), do: {:error, __MODULE__}
@@ -998,7 +1027,8 @@ defimpl String.Chars,
     MDEx.Underline,
     MDEx.Subscript,
     MDEx.SpoileredText,
-    MDEx.EscapedTag
+    MDEx.EscapedTag,
+    MDEx.Alert
   ] do
   def to_string(node) do
     Kernel.to_string(%MDEx.Document{nodes: [node]})

@@ -55,7 +55,6 @@ fn markdown_to_html_with_options<'a>(
         parse: parse_options_from_ex_options(&options),
         render: render_options_from_ex_options(&options),
     };
-
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
             let inkjet_adapter = InkjetAdapter::new(
