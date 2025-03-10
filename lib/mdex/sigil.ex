@@ -8,6 +8,7 @@ defmodule MDEx.Sigil do
       superscript: true,
       footnotes: true,
       description_lists: true,
+      # need both multiline block quotes and alerts to enable github/gitlab multiline alerts
       multiline_block_quotes: true,
       alerts: true,
       math_dollars: true,
