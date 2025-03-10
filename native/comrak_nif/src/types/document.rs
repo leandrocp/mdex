@@ -60,6 +60,7 @@ pub enum NewNode {
     Subscript(ExSubscript),
     SpoileredText(ExSpoileredText),
     EscapedTag(ExEscapedTag),
+    Alert(ExAlert),
 }
 
 impl From<NewNode> for NodeValue {
@@ -106,6 +107,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Subscript(n) => n.into(),
             NewNode::SpoileredText(n) => n.into(),
             NewNode::EscapedTag(n) => n.into(),
+            NewNode::Alert(n) => n.into(),
         }
     }
 }
@@ -739,6 +741,7 @@ impl From<ExSpoileredText> for NodeValue {
         NodeValue::SpoileredText
     }
 }
+
 #[derive(Debug, Clone, PartialEq, NifStruct)]
 #[module = "MDEx.EscapedTag"]
 pub struct ExEscapedTag {
@@ -749,6 +752,45 @@ pub struct ExEscapedTag {
 impl From<ExEscapedTag> for NodeValue {
     fn from(node: ExEscapedTag) -> Self {
         NodeValue::EscapedTag(node.literal.to_string())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, NifUnitEnum, Default)]
+pub enum ExAlertType {
+    #[default]
+    Note,
+    Tip,
+    Important,
+    Warning,
+    Caution,
+}
+
+#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[module = "MDEx.Alert"]
+pub struct ExAlert {
+    pub nodes: Vec<NewNode>,
+    pub alert_type: ExAlertType,
+    pub title: Option<String>,
+    pub multiline: bool,
+    pub fence_length: usize,
+    pub fence_offset: usize,
+}
+
+impl From<ExAlert> for NodeValue {
+    fn from(node: ExAlert) -> Self {
+        NodeValue::Alert(comrak::nodes::NodeAlert {
+            alert_type: match node.alert_type {
+                ExAlertType::Note => comrak::nodes::AlertType::Note,
+                ExAlertType::Tip => comrak::nodes::AlertType::Tip,
+                ExAlertType::Important => comrak::nodes::AlertType::Important,
+                ExAlertType::Warning => comrak::nodes::AlertType::Warning,
+                ExAlertType::Caution => comrak::nodes::AlertType::Caution,
+            },
+            title: node.title,
+            multiline: node.multiline,
+            fence_length: node.fence_length,
+            fence_offset: node.fence_offset,
+        })
     }
 }
 
@@ -787,7 +829,8 @@ pub fn ex_document_to_comrak_ast<'a>(
     | NewNode::Underline(ExUnderline { nodes })
     | NewNode::Subscript(ExSubscript { nodes })
     | NewNode::SpoileredText(ExSpoileredText { nodes })
-    | NewNode::EscapedTag(ExEscapedTag { nodes, .. }) = new_node
+    | NewNode::EscapedTag(ExEscapedTag { nodes, .. })
+    | NewNode::Alert(ExAlert { nodes, .. }) = new_node
     {
         for node in nodes {
             let child = ex_document_to_comrak_ast(arena, node);
@@ -1014,6 +1057,21 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
         NodeValue::EscapedTag(ref literal) => NewNode::EscapedTag(ExEscapedTag {
             nodes: children,
             literal: literal.to_string(),
+        }),
+
+        NodeValue::Alert(ref attrs) => NewNode::Alert(ExAlert {
+            nodes: children,
+            alert_type: match attrs.alert_type {
+                comrak::nodes::AlertType::Note => ExAlertType::Note,
+                comrak::nodes::AlertType::Tip => ExAlertType::Tip,
+                comrak::nodes::AlertType::Important => ExAlertType::Important,
+                comrak::nodes::AlertType::Warning => ExAlertType::Warning,
+                comrak::nodes::AlertType::Caution => ExAlertType::Caution,
+            },
+            title: attrs.title.to_owned(),
+            multiline: attrs.multiline,
+            fence_length: attrs.fence_length,
+            fence_offset: attrs.fence_offset,
         }),
     }
 }

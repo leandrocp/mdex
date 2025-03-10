@@ -9,6 +9,7 @@ defmodule MDEx.Sigil do
       footnotes: true,
       description_lists: true,
       multiline_block_quotes: true,
+      alerts: true,
       math_dollars: true,
       math_code: true,
       shortcodes: true,

@@ -19,7 +19,8 @@ defmodule MDEx.Types.ExtensionOptions do
             underline: false,
             subscript: false,
             spoiler: false,
-            greentext: false
+            greentext: false,
+            alerts: false
 end
 
 defmodule MDEx.Types.ParseOptions do
@@ -48,7 +49,8 @@ defmodule MDEx.Types.RenderOptions do
             prefer_fenced: false,
             figure_with_caption: false,
             tasklist_classes: false,
-            ol_width: 1
+            ol_width: 1,
+            experimental_minimize_commonmark: false
 end
 
 defmodule MDEx.Types.FeaturesOptions do
