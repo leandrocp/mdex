@@ -4,7 +4,7 @@
 
 ### Enhancements
   * Added support for [GitHub](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts)
-    and [GitLab](https://docs.gitlab.com/user/markdown/#multiline-blockquote) alerts.
+    and [GitLab](https://docs.gitlab.com/user/markdown/#alerts) alerts.
   * Process alerts by default in Sigils.
   * Added `:experimental_minimize_commonmark` render option.
 
