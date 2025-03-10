@@ -115,7 +115,8 @@ pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOption
         subscript: options.extension.subscript,
         spoiler: options.extension.spoiler,
         greentext: options.extension.greentext,
-        ..Default::default()
+        image_url_rewriter: None,
+        link_url_rewriter: None,
     }
 }
 
@@ -125,7 +126,7 @@ pub fn parse_options_from_ex_options(options: &ExOptions) -> ParseOptions {
         default_info_string: options.parse.default_info_string.clone(),
         relaxed_tasklist_matching: options.parse.relaxed_tasklist_matching,
         relaxed_autolinks: options.parse.relaxed_autolinks,
-        ..Default::default()
+        broken_link_callback: None,
     }
 }
 
