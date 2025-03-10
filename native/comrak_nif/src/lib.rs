@@ -14,7 +14,6 @@ use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
 use types::{atoms::ok, document::*, options::*};
 
-
 rustler::init!("Elixir.MDEx.Native");
 
 #[rustler::nif(schedule = "DirtyCpu")]
