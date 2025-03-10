@@ -14,23 +14,8 @@ use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
 use types::{atoms::ok, document::*, options::*};
 
-rustler::init!(
-    "Elixir.MDEx.Native",
-    [
-        safe_html,
-        parse_document,
-        markdown_to_html,
-        markdown_to_html_with_options,
-        markdown_to_xml,
-        markdown_to_xml_with_options,
-        document_to_commonmark,
-        document_to_commonmark_with_options,
-        document_to_html,
-        document_to_html_with_options,
-        document_to_xml,
-        document_to_xml_with_options,
-    ]
-);
+
+rustler::init!("Elixir.MDEx.Native");
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
