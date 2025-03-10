@@ -8,6 +8,12 @@
   * Process alerts by default in Sigils.
   * Added `:experimental_minimize_commonmark` render option.
 
+### Docs
+  * Add nimble_publisher example by @PJUllrich
+
+### Chores
+  * Add sample Dockerfile for debugging
+
 ## 0.3.3 (2025-02-03)
 
 ### Fixes
