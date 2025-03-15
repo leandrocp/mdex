@@ -119,7 +119,7 @@ pub struct ExDocument {
 }
 
 impl From<ExDocument> for NodeValue {
-    fn from(node: ExDocument) -> Self {
+    fn from(_node: ExDocument) -> Self {
         NodeValue::Document
     }
 }
@@ -143,7 +143,7 @@ pub struct ExBlockQuote {
 }
 
 impl From<ExBlockQuote> for NodeValue {
-    fn from(node: ExBlockQuote) -> Self {
+    fn from(_node: ExBlockQuote) -> Self {
         NodeValue::BlockQuote
     }
 }
@@ -236,7 +236,7 @@ pub struct ExDescriptionList {
 }
 
 impl From<ExDescriptionList> for NodeValue {
-    fn from(node: ExDescriptionList) -> Self {
+    fn from(_node: ExDescriptionList) -> Self {
         NodeValue::DescriptionList
     }
 }
@@ -267,7 +267,7 @@ pub struct ExDescriptionTerm {
 }
 
 impl From<ExDescriptionTerm> for NodeValue {
-    fn from(node: ExDescriptionTerm) -> Self {
+    fn from(_node: ExDescriptionTerm) -> Self {
         NodeValue::DescriptionTerm
     }
 }
@@ -279,7 +279,7 @@ pub struct ExDescriptionDetails {
 }
 
 impl From<ExDescriptionDetails> for NodeValue {
-    fn from(node: ExDescriptionDetails) -> Self {
+    fn from(_node: ExDescriptionDetails) -> Self {
         NodeValue::DescriptionDetails
     }
 }
@@ -333,7 +333,7 @@ pub struct ExParagraph {
 }
 
 impl From<ExParagraph> for NodeValue {
-    fn from(node: ExParagraph) -> Self {
+    fn from(_node: ExParagraph) -> Self {
         NodeValue::Paragraph
     }
 }
