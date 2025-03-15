@@ -17,6 +17,7 @@ rustler = { version = "0.36", features = [
 ] }
 serde = "1.0"
 comrak = { version = "0.36", features = ["shortcodes"] }
+autumnus = "0.1"
 ammonia = "4.0"
 v_htmlescape = "0.15"
 log = "0.4"
