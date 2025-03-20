@@ -7,7 +7,7 @@ extern crate rustler;
 mod inkjet_adapter;
 mod types;
 
-use comrak::{Arena, ComrakPlugins, Options};
+use comrak::{Arena, ComrakPlugins, ExtensionOptions, Options, ParseOptions, RenderOptions};
 use inkjet_adapter::InkjetAdapter;
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
@@ -19,9 +19,9 @@ rustler::init!("Elixir.MDEx.Native");
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
@@ -51,9 +51,9 @@ fn markdown_to_html_with_options<'a>(
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
@@ -98,9 +98,9 @@ fn markdown_to_xml_with_options<'a>(
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
 
     let arena = Arena::new();
@@ -165,9 +165,9 @@ fn document_to_commonmark_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
 
     match &options.features.syntax_highlight_theme {
@@ -236,9 +236,9 @@ fn document_to_html_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
 
     match &options.features.syntax_highlight_theme {
@@ -298,9 +298,9 @@ fn document_to_xml_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: extension_options_from_ex_options(&options),
-        parse: parse_options_from_ex_options(&options),
-        render: render_options_from_ex_options(&options),
+        extension: ExtensionOptions::from(options.extension),
+        parse: ParseOptions::from(options.parse),
+        render: RenderOptions::from(options.render),
     };
 
     match &options.features.syntax_highlight_theme {

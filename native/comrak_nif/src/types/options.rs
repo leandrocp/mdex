@@ -25,12 +25,54 @@ pub struct ExExtensionOptions {
     pub greentext: bool,
 }
 
+impl From<ExExtensionOptions> for ExtensionOptions<'_> {
+    fn from(options: ExExtensionOptions) -> Self {
+        ExtensionOptions {
+            strikethrough: options.strikethrough,
+            tagfilter: options.tagfilter,
+            table: options.table,
+            autolink: options.autolink,
+            tasklist: options.tasklist,
+            superscript: options.superscript,
+            header_ids: options.header_ids,
+            footnotes: options.footnotes,
+            description_lists: options.description_lists,
+            front_matter_delimiter: options.front_matter_delimiter,
+            multiline_block_quotes: options.multiline_block_quotes,
+            alerts: options.alerts,
+            math_dollars: options.math_dollars,
+            math_code: options.math_code,
+            shortcodes: options.shortcodes,
+            wikilinks_title_after_pipe: options.wikilinks_title_after_pipe,
+            wikilinks_title_before_pipe: options.wikilinks_title_before_pipe,
+            underline: options.underline,
+            subscript: options.subscript,
+            spoiler: options.spoiler,
+            greentext: options.greentext,
+            image_url_rewriter: None,
+            link_url_rewriter: None,
+        }
+    }
+}
+
 #[derive(Debug, NifMap)]
 pub struct ExParseOptions {
     pub smart: bool,
     pub default_info_string: Option<String>,
     pub relaxed_tasklist_matching: bool,
     pub relaxed_autolinks: bool,
+}
+
+impl From<ExParseOptions> for ParseOptions<'_> {
+    fn from(options: ExParseOptions) -> Self {
+        ParseOptions {
+            smart: options.smart,
+            default_info_string: options.default_info_string,
+            relaxed_tasklist_matching: options.relaxed_tasklist_matching,
+            relaxed_autolinks: options.relaxed_autolinks,
+            broken_link_callback: None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, NifUnitEnum)]
@@ -72,6 +114,31 @@ pub struct ExRenderOptions {
     pub experimental_minimize_commonmark: bool,
 }
 
+impl From<ExRenderOptions> for RenderOptions {
+    fn from(options: ExRenderOptions) -> Self {
+        RenderOptions {
+            hardbreaks: options.hardbreaks,
+            github_pre_lang: options.github_pre_lang,
+            full_info_string: options.full_info_string,
+            width: options.width,
+            unsafe_: options.unsafe_,
+            escape: options.escape,
+            list_style: ListStyleType::from(options.list_style),
+            sourcepos: options.sourcepos,
+            experimental_inline_sourcepos: options.experimental_inline_sourcepos,
+            escaped_char_spans: options.escaped_char_spans,
+            ignore_setext: options.ignore_setext,
+            ignore_empty_links: options.ignore_empty_links,
+            gfm_quirks: options.gfm_quirks,
+            prefer_fenced: options.prefer_fenced,
+            figure_with_caption: options.figure_with_caption,
+            tasklist_classes: options.tasklist_classes,
+            ol_width: options.ol_width,
+            experimental_minimize_commonmark: options.experimental_minimize_commonmark,
+        }
+    }
+}
+
 #[derive(Debug, NifMap, Default)]
 pub struct ExFeaturesOptions {
     pub sanitize: bool,
@@ -85,65 +152,4 @@ pub struct ExOptions {
     pub parse: ExParseOptions,
     pub render: ExRenderOptions,
     pub features: ExFeaturesOptions,
-}
-
-pub fn extension_options_from_ex_options(options: &ExOptions) -> ExtensionOptions {
-    ExtensionOptions::<'_> {
-        strikethrough: options.extension.strikethrough,
-        tagfilter: options.extension.tagfilter,
-        table: options.extension.table,
-        autolink: options.extension.autolink,
-        tasklist: options.extension.tasklist,
-        superscript: options.extension.superscript,
-        header_ids: options.extension.header_ids.clone(),
-        footnotes: options.extension.footnotes,
-        description_lists: options.extension.description_lists,
-        front_matter_delimiter: options.extension.front_matter_delimiter.clone(),
-        multiline_block_quotes: options.extension.multiline_block_quotes,
-        alerts: options.extension.alerts,
-        math_dollars: options.extension.math_dollars,
-        math_code: options.extension.math_code,
-        shortcodes: options.extension.shortcodes,
-        wikilinks_title_after_pipe: options.extension.wikilinks_title_after_pipe,
-        wikilinks_title_before_pipe: options.extension.wikilinks_title_before_pipe,
-        underline: options.extension.underline,
-        subscript: options.extension.subscript,
-        spoiler: options.extension.spoiler,
-        greentext: options.extension.greentext,
-        image_url_rewriter: None,
-        link_url_rewriter: None,
-    }
-}
-
-pub fn parse_options_from_ex_options(options: &ExOptions) -> ParseOptions {
-    ParseOptions::<'_> {
-        smart: options.parse.smart,
-        default_info_string: options.parse.default_info_string.clone(),
-        relaxed_tasklist_matching: options.parse.relaxed_tasklist_matching,
-        relaxed_autolinks: options.parse.relaxed_autolinks,
-        broken_link_callback: None,
-    }
-}
-
-pub fn render_options_from_ex_options(options: &ExOptions) -> RenderOptions {
-    RenderOptions {
-        hardbreaks: options.render.hardbreaks,
-        github_pre_lang: options.render.github_pre_lang,
-        full_info_string: options.render.full_info_string,
-        width: options.render.width,
-        unsafe_: options.render.unsafe_,
-        escape: options.render.escape,
-        list_style: ListStyleType::from(options.render.list_style.clone()),
-        sourcepos: options.render.sourcepos,
-        experimental_inline_sourcepos: options.render.experimental_inline_sourcepos,
-        escaped_char_spans: options.render.escaped_char_spans,
-        ignore_setext: options.render.ignore_setext,
-        ignore_empty_links: options.render.ignore_empty_links,
-        gfm_quirks: options.render.gfm_quirks,
-        prefer_fenced: options.render.prefer_fenced,
-        figure_with_caption: options.render.figure_with_caption,
-        tasklist_classes: options.render.tasklist_classes,
-        ol_width: options.render.ol_width,
-        experimental_minimize_commonmark: options.render.experimental_minimize_commonmark,
-    }
 }
