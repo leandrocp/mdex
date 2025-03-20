@@ -488,7 +488,9 @@ defmodule MDEx do
 
   def to_html(input) do
     if is_fragment(input) do
-      to_html(%Document{nodes: List.wrap(input)})
+      input
+      |> Document.wrap()
+      |> to_html()
     else
       {:error, %InvalidInputError{found: input}}
     end
@@ -646,14 +648,14 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(md_or_doc :: String.t() | Document.t()) ::
+  @spec to_xml(input()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(md_or_doc)
+  def to_xml(input)
 
-  def to_xml(md_or_doc) when is_binary(md_or_doc) do
-    md_or_doc
+  def to_xml(input) when is_binary(input) do
+    input
     |> Native.markdown_to_xml()
 
     # |> maybe_trim()
@@ -669,20 +671,22 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(md_or_doc) do
-    if is_fragment(md_or_doc) do
-      to_xml(%Document{nodes: List.wrap(md_or_doc)})
+  def to_xml(input) do
+    if is_fragment(input) do
+      input
+      |> Document.wrap()
+      |> to_xml()
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_xml/1` but raises an error if the conversion fails.
   """
-  @spec to_xml!(md_or_doc :: String.t() | Document.t()) :: String.t()
-  def to_xml!(md_or_doc) do
-    case to_xml(md_or_doc) do
+  @spec to_xml!(input()) :: String.t()
+  def to_xml!(input) do
+    case to_xml(input) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
@@ -731,14 +735,14 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(md_or_doc :: String.t() | Document.t(), options()) ::
+  @spec to_xml(input(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(md_or_doc, options)
+  def to_xml(input, options)
 
-  def to_xml(md_or_doc, options) when is_binary(md_or_doc) and is_list(options) do
-    md_or_doc
+  def to_xml(input, options) when is_binary(input) and is_list(options) do
+    input
     |> Native.markdown_to_xml_with_options(comrak_options(options))
 
     # |> maybe_wrap_error()
@@ -754,20 +758,22 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(md_or_doc, options) do
-    if is_fragment(md_or_doc) do
-      to_xml(%Document{nodes: List.wrap(md_or_doc)}, options)
+  def to_xml(input, options) do
+    if is_fragment(input) do
+      input
+      |> Document.wrap()
+      |> to_xml(options)
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_xml/2` but raises error if the conversion fails.
   """
-  @spec to_xml!(md_or_doc :: String.t() | Document.t(), options()) :: String.t()
-  def to_xml!(md_or_doc, options) do
-    case to_xml(md_or_doc, options) do
+  @spec to_xml!(input(), options()) :: String.t()
+  def to_xml!(input, options) do
+    case to_xml(input, options) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
