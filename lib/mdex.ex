@@ -13,12 +13,55 @@ defmodule MDEx do
 
   import MDEx.Document, only: [is_fragment: 1]
 
+  @extension_options [
+    strikethrough: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [strikethrough extension](https://github.github.com/gfm/#strikethrough-extension-) from the GFM spec."
+    ],
+  ]
+
+  @features_options [
+    sanitize: [
+      type: :boolean,
+      default: false,
+      doc: "sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info."
+    ],
+    syntax_highlight_theme: [
+      type: :string,
+      default: "onedark",
+      doc:
+        "syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes), you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: \"adwaita_dark\"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme."
+    ],
+    syntax_highlight_inline_style: [
+      type: :boolean,
+      default: true,
+      doc: "embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code."
+      ]
+
+  ]
+
+  @options [
+    extension: [
+      type: :keyword_list,
+      default: [],
+      doc: "Enable Markdown extensions. ",
+      keys: @extension_options
+    ],
+    features: [
+      type: :keyword_list,
+      default: [],
+      doc: "Enable extra features. ",
+      keys: @features_options
+    ]
+  ]
+
   @doc """
   Parse a `markdown` string and returns a `MDEx.Document`.
 
   ## Options
 
-  See the [Options](#module-options) section for the available `opts`.
+  See `new/1` for the available options.
 
   ## Examples
 
@@ -207,7 +250,7 @@ defmodule MDEx do
 
   ## Options
 
-  See the [Options](#module-options) section for the available options.
+  See `new/1` for the available options.
 
   ## Examples
 
@@ -376,7 +419,7 @@ defmodule MDEx do
 
   ## Options
 
-  See the [Options](#module-options) section for the available options.
+  See `new/1` for the available options.
 
   ## Examples
 
@@ -491,7 +534,7 @@ defmodule MDEx do
 
   ## Options
 
-  See the [Options](#module-options) section for the available options.
+  See `new/1` for the available options.
   """
   @spec to_commonmark(Document.t(), keyword()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_commonmark(%Document{} = doc, opts) when is_list(opts) do
@@ -636,5 +679,35 @@ defmodule MDEx do
       nil -> default
       val -> val
     end
+  end
+
+  @doc """
+  Returns a new `MDEx.Pipe` instance.
+
+  Once the pipe has all transformations you want, call either one of the following functions to format it:
+
+  - `MDEx.to_html/1`
+  - `MDEx.to_xml/1`
+  - `MDEx.to_commonmark/1`
+
+  ## Options
+
+  Use options to change the behavior of the generated output.
+
+  All the [comrak options](https://docs.rs/comrak/latest/comrak/struct.Options.html) are available as keyword lists,
+  and an additional `:features` option to extend it further.
+
+  #{NimbleOptions.docs(@options)}
+
+  The original `comrak` documentation for each group can be found at:
+
+  * [extension](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
+  * [parse](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)
+  * [render](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)
+
+  """
+  @spec new(keyword()) :: MDEx.Pipe.t()
+  def new(opts \\ []) do
+    MDEx.Pipe.new(opts)
   end
 end

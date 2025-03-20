@@ -65,7 +65,12 @@ defmodule MDEx.MixProject do
       source_url: @source_url,
       extras: ["CHANGELOG.md"],
       groups_for_modules: [
-        "Document Nodes": [
+        Plugins: [
+          MDEx.Pipe
+        ],
+        "Document Structure": [
+          MDEx.Document,
+          MDEx.Alert,
           MDEx.FrontMatter,
           MDEx.BlockQuote,
           MDEx.List,
@@ -131,6 +136,7 @@ defmodule MDEx.MixProject do
     [
       {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
+      {:nimble_options, "~> 1.0"},
       {:ex_doc, "~> 0.34", only: :dev}
     ]
   end

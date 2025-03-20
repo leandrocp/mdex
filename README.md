@@ -44,7 +44,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.2"}
+    {:mdex, "~> 0.4"}
   ]
 end
 ```
@@ -179,28 +179,7 @@ Formatting to XML and to Markdown is also supported.
 You can use [MDEx.parse_document/2](https://hexdocs.pm/mdex/MDEx.html#parse_document/2) to generate an AST or any of the `to_*` functions
 to convert to Markdown (CommonMark), HTML, or XML.
 
-## Options
-
-Use options to change the behavior and the generated output.
-
-All the [comrak Options](https://docs.rs/comrak/latest/comrak/struct.Options.html) are available as keyword lists,
-and an additional `:features` option to extend it further.
-
-_The full documentation and list of all options with description and examples can be found on the links below:_
-
-* `:extension` - https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html
-* `:parse` - https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html
-* `:render` - https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html
-* `:features` - see the available options below
-
-### Features Options
-
-* `:sanitize` (defaults to `false`) - sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info.
-* `:syntax_highlight_theme` (defaults to `"onedark"`) - syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes),
-you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: "adwaita_dark"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme
-* `:syntax_highlight_inline_style` (defaults to `true`) - embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code
-
-See some examples below on how to use the provided options:
+## Examples
 
 ### GitHub Flavored Markdown with [emojis](https://www.webfx.com/tools/emoji-cheat-sheet/)
 
