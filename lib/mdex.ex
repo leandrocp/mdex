@@ -469,6 +469,9 @@ defmodule MDEx do
   def to_html(input)
 
   def to_html(%MDEx.Pipe{} = pipe) do
+    pipe
+    |> MDEx.Pipe.run()
+    |> then(&to_html(&1.document, &1.options))
   end
 
   def to_html(input) when is_binary(input) do
