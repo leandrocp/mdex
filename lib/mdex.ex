@@ -130,7 +130,7 @@ defmodule MDEx do
     smart: [
       type: :boolean,
       default: false,
-      doc: "Punctuation (quotes, full-stops and hyphens) are converted into ‘smart’ punctuation."
+      doc: "Punctuation (quotes, full-stops and hyphens) are converted into 'smart' punctuation."
     ],
     default_info_string: [
       type: {:or, [:string, nil]},
@@ -257,7 +257,7 @@ defmodule MDEx do
       doc: "sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info."
     ],
     syntax_highlight_theme: [
-      type: :string,
+      type: {:or, [:string, nil]},
       default: "onedark",
       doc:
         "syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes), you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: \"adwaita_dark\"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme."
@@ -272,7 +272,7 @@ defmodule MDEx do
 
   @options [
     document: [
-      type: {:or, [:string, {:struct, MDEx.Document}]},
+      type: {:or, [:string, {:struct, MDEx.Document}, nil]},
       default: "",
       doc: "Markdown document, either a string or a `MDEx.Document` struct."
     ],
@@ -904,17 +904,27 @@ defmodule MDEx do
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
   defp comrak_options(options) do
-    extension = Keyword.get(options, :extension, %{})
-    parse = Keyword.get(options, :parse, %{})
-    render = Keyword.get(options, :render, %{})
-    features = Keyword.get(options, :features, %{})
+    built_in_options =
+      NimbleOptions.validate!(
+        [
+          document: options[:document],
+          extension: options[:extension] || [],
+          parse: options[:parse] || [],
+          render: options[:render] || [],
+          features: options[:features] || []
+        ],
+        @options
+      )
 
-    %MDEx.Types.Options{
-      extension: struct(MDEx.Types.ExtensionOptions, extension),
-      parse: struct(MDEx.Types.ParseOptions, parse),
-      render: struct(MDEx.Types.RenderOptions, render),
-      features: struct(MDEx.Types.FeaturesOptions, features)
-    }
+    options
+    |> Map.new()
+    |> Map.merge(%{
+      document: built_in_options[:document],
+      extension: Map.new(built_in_options[:extension]),
+      parse: Map.new(built_in_options[:parse]),
+      render: Map.new(built_in_options[:render]),
+      features: Map.new(built_in_options[:features])
+    })
   end
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}

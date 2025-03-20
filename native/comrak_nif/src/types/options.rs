@@ -1,7 +1,6 @@
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.Types.ExtensionOptions"]
+#[derive(Debug, NifMap)]
 pub struct ExExtensionOptions {
     pub strikethrough: bool,
     pub tagfilter: bool,
@@ -26,8 +25,7 @@ pub struct ExExtensionOptions {
     pub greentext: bool,
 }
 
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.Types.ParseOptions"]
+#[derive(Debug, NifMap)]
 pub struct ExParseOptions {
     pub smart: bool,
     pub default_info_string: Option<String>,
@@ -52,8 +50,7 @@ impl From<ExListStyleType> for ListStyleType {
     }
 }
 
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.Types.RenderOptions"]
+#[derive(Debug, NifMap)]
 pub struct ExRenderOptions {
     pub hardbreaks: bool,
     pub github_pre_lang: bool,
@@ -75,16 +72,14 @@ pub struct ExRenderOptions {
     pub experimental_minimize_commonmark: bool,
 }
 
-#[derive(Debug, NifStruct, Default)]
-#[module = "MDEx.Types.FeaturesOptions"]
+#[derive(Debug, NifMap, Default)]
 pub struct ExFeaturesOptions {
     pub sanitize: bool,
     pub syntax_highlight_theme: Option<String>,
     pub syntax_highlight_inline_style: Option<bool>,
 }
 
-#[derive(Debug, NifStruct)]
-#[module = "MDEx.Types.Options"]
+#[derive(Debug, NifMap)]
 pub struct ExOptions {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,
