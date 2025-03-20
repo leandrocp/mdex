@@ -79,7 +79,7 @@ defmodule MDEx.Document do
 
   The key can also be modules, atoms, and even functions! For example:
 
-  - Fetchs all Code nodes, either by `MDEx.Code` module or the `:code` atom representing the Code node
+  - Fetches all Code nodes, either by `MDEx.Code` module or the `:code` atom representing the Code node
 
   ```elixir
   iex> doc = ~M\"""
@@ -318,6 +318,9 @@ defmodule MDEx.Document do
   end
 
   def is_fragment(_), do: false
+
+  def wrap(%MDEx.Document{} = document), do: document
+  def wrap(nodes), do: %MDEx.Document{nodes: List.wrap(nodes)}
 
   @doc """
   Callback implementation for `Access.fetch/2`.
