@@ -67,7 +67,7 @@ defmodule MDEx.Pipe do
     defp transform(pipe) do
       script_node = script_node(pipe)
 
-      document = 
+      document =
         MDEx.traverse_and_update(pipe.document, fn
           # inject the mermaid script into the document
           %MDEx.Document{nodes: nodes} = document ->
@@ -136,11 +136,56 @@ defmodule MDEx.Pipe do
     }
   end
 
+  @doc """
+  Registers a list of valid options that can be used in the pipeline.
+
+  This function is used by plugins to declare which options they accept. When options are merged
+  later using `merge_options/2`, only registered options are allowed. If an unregistered option
+  is provided, an `ArgumentError` will be raised with a helpful "did you mean?" suggestion.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
+      iex> pipe.options
+      [mermaid_version: "11"]
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> pipe = MDEx.Pipe.merge_options(pipe, invalid_option: "value")
+      ** (ArgumentError) unknown option :invalid_option
+
+  """
   @spec register_options(t(), [atom()]) :: t()
   def register_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     update_in(pipe.registered_options, &MapSet.union(&1, MapSet.new(options)))
   end
 
+  @doc """
+  Merges new options into the pipeline's existing options.
+
+  This function validates that all options being merged have been previously registered using
+  `register_options/2`. If any unregistered options are provided, an `ArgumentError` will be raised.
+
+  The options are merged using `Keyword.merge/2`, which means that if the same option is provided
+  multiple times, the last value will be used.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
+      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "12")
+      iex> pipe.options
+      [mermaid_version: "12"]
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> pipe = MDEx.Pipe.merge_options(pipe, [mermaid_version: "11", invalid_option: "value"])
+      ** (ArgumentError) unknown option :invalid_option
+
+  """
   @spec merge_options(t(), keyword()) :: t()
   def merge_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     validate_options(pipe, options)
@@ -181,28 +226,135 @@ defmodule MDEx.Pipe do
     if score < current, do: best, else: {option, score}
   end
 
+  @doc """
+  Retrieves an option value from the pipeline.
+
+  Returns the value of the option if it exists, otherwise returns the default value.
+  This is typically used by plugins to access their configuration options.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
+      iex> MDEx.Pipe.get_option(pipe, :mermaid_version)
+      "11"
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
+      iex> MDEx.Pipe.get_option(pipe, :mermaid_version, "latest")
+      "latest"
+
+  """
   @spec get_option(t(), atom(), term()) :: term()
   def get_option(%MDEx.Pipe{} = pipe, key, default \\ nil) when is_atom(key) do
     Keyword.get(pipe.options, key, default)
   end
 
+  @doc """
+  Retrieves a value from the pipeline's private storage.
+
+  The private storage is a map that can be used by plugins to store internal state or temporary
+  data that shouldn't be exposed as options. Returns the value if it exists, otherwise returns
+  the default value.
+
+  This is typically used by plugins to maintain state between steps or store data that shouldn't
+  be part of the public API.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.put_private(pipe, :cache_key, "abc123")
+      iex> MDEx.Pipe.get_private(pipe, :cache_key)
+      "abc123"
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> MDEx.Pipe.get_private(pipe, :non_existent_key, :not_found)
+      :not_found
+
+  """
   @spec get_private(t(), atom(), default) :: term() | default when default: var
   def get_private(%MDEx.Pipe{} = pipe, key, default \\ nil) when is_atom(key) do
     Map.get(pipe.private, key, default)
   end
 
+  @doc """
+  Updates a value in the pipeline's private storage using a function.
+
+  If the key exists, the function is called with the current value and the result is stored.
+  If the key doesn't exist, the default value is stored.
+
+  This is typically used by plugins to maintain state that needs to be updated based on its
+  current value, such as counters or accumulators.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.put_private(pipe, :counter, 1)
+      iex> pipe = MDEx.Pipe.update_private(pipe, :counter, 0, &(&1 + 1))
+      iex> MDEx.Pipe.get_private(pipe, :counter)
+      2
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.update_private(pipe, :new_key, 0, &(&1 + 1))
+      iex> MDEx.Pipe.get_private(pipe, :new_key)
+      0
+
+  """
   @spec update_private(t(), key :: atom(), default :: term(), (term() -> term())) :: t()
   def update_private(%MDEx.Pipe{} = pipe, key, default, fun) when is_atom(key) and is_function(fun, 1) do
     update_in(pipe.private, &Map.update(&1, key, default, fun))
   end
 
+  @doc """
+  Stores a value in the pipeline's private storage.
+
+  This function is used to store values that shouldn't be exposed as options but need to be
+  maintained between pipeline steps. The private storage is a map where plugins can store
+  internal state or temporary data.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.put_private(pipe, :cache_key, "abc123")
+      iex> MDEx.Pipe.get_private(pipe, :cache_key)
+      "abc123"
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.put_private(pipe, :temp_data, %{count: 1})
+      iex> pipe = MDEx.Pipe.put_private(pipe, :temp_data, %{count: 2})
+      iex> MDEx.Pipe.get_private(pipe, :temp_data)
+      %{count: 2}
+
+  """
   @spec put_private(t(), atom(), term()) :: t()
   def put_private(%MDEx.Pipe{} = pipe, key, value) when is_atom(key) do
     put_in(pipe.private[key], value)
   end
 
-  # TODO: error steps?
-  # @spec append_request_steps(t(), keyword(request_step())) :: t()
+  @doc """
+  Appends steps to the end of the pipeline's step list.
+
+  This function is used to add transformation steps that will be executed after any existing steps.
+  Each step can be either a function that takes a pipe as its argument, or a tuple of `{module, function, args}`.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.append_steps(pipe, transform: fn pipe -> %{pipe | document: "transformed"} end)
+      iex> pipe.current_steps
+      [:transform]
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.append_steps(pipe, [
+      ...>   step1: fn pipe -> %{pipe | document: "step1"} end,
+      ...>   step2: fn pipe -> %{pipe | document: "step2"} end
+      ...> ])
+      iex> pipe.current_steps
+      [:step1, :step2]
+
+  """
+  @spec append_steps(t(), keyword((t() -> t()) | {module(), atom(), list()})) :: t()
   def append_steps(pipe, steps) do
     %{
       pipe
@@ -211,7 +363,32 @@ defmodule MDEx.Pipe do
     }
   end
 
-  # @spec prepend_request_steps(t(), keyword(request_step())) :: t()
+  @doc """
+  Prepends steps to the beginning of the pipeline's step list.
+
+  This function is used to add transformation steps that will be executed before any existing steps.
+  Each step can be either a function that takes a pipe as its argument, or a tuple of `{module, function, args}`.
+
+  This is particularly useful for plugins that need to run their transformations before other steps,
+  such as when they need to modify the document structure before other plugins process it.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.prepend_steps(pipe, transform: fn pipe -> %{pipe | document: "transformed"} end)
+      iex> pipe.current_steps
+      [:transform]
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.prepend_steps(pipe, [
+      ...>   step1: fn pipe -> %{pipe | document: "step1"} end,
+      ...>   step2: fn pipe -> %{pipe | document: "step2"} end
+      ...> ])
+      iex> pipe.current_steps
+      [:step1, :step2]
+
+  """
+  @spec prepend_steps(t(), keyword((t() -> t()) | {module(), atom(), list()})) :: t()
   def prepend_steps(pipe, steps) do
     %{
       pipe
@@ -220,11 +397,44 @@ defmodule MDEx.Pipe do
     }
   end
 
+  @doc """
+  Halts the pipeline execution.
+
+  This function is used to stop the pipeline from processing any further steps. Once a pipeline
+  is halted, no more steps will be executed. This is useful for plugins that need to stop
+  processing when certain conditions are met or when an error occurs.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.Pipe.halt(pipe)
+      iex> pipe.halted
+      true
+
+  """
   @spec halt(t()) :: t()
   def halt(%MDEx.Pipe{} = pipe) do
     put_in(pipe.halted, true)
   end
 
+  @doc """
+  Halts the pipeline execution with an exception.
+
+  This function is used to stop the pipeline and return both the halted pipeline and the
+  exception that caused the halt. This is particularly useful for error handling in plugins,
+  allowing them to propagate errors up the pipeline while maintaining the pipeline's state.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.new()
+      iex> exception = %RuntimeError{message: "Something went wrong"}
+      iex> {pipe, error} = MDEx.Pipe.halt(pipe, exception)
+      iex> pipe.halted
+      true
+      iex> error
+      %RuntimeError{message: "Something went wrong"}
+
+  """
   @spec halt(t(), Exception.t()) :: {t(), Exception.t()}
   def halt(%MDEx.Pipe{} = pipe, %_{__exception__: true} = exception) do
     {put_in(pipe.halted, true), exception}
