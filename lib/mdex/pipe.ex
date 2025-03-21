@@ -110,31 +110,30 @@ defmodule MDEx.Pipe do
 
   """
 
-  defstruct document: "",
-            options: [],
+  defstruct document: nil,
+            options: [
+              document: "",
+              extension: [],
+              parse: [],
+              render: [],
+              features: []
+            ],
             registered_options: MapSet.new(),
             halted: false,
             steps: [],
             current_steps: [],
             private: %{}
 
+  @typedoc """
+  Pipeline state.
+  """
   @type t :: %__MODULE__{
-          document: String.t() | MDEx.Document.t(),
+          document: MDEx.Document.t(),
           options: MDEx.options(),
           halted: boolean(),
           steps: keyword(),
           private: map()
         }
-
-  @doc false
-  def new(options) do
-    {document, options} = Keyword.pop(options, :document)
-
-    %__MODULE__{
-      document: document,
-      options: options
-    }
-  end
 
   @doc """
   Registers a list of valid options that can be used in the pipeline.
@@ -193,6 +192,7 @@ defmodule MDEx.Pipe do
   end
 
   @doc false
+  @spec validate_options(t(), keyword()) :: boolean()
   def validate_options(%MDEx.Pipe{} = pipe, options) do
     validate_options(options, pipe.registered_options)
   end
@@ -212,7 +212,7 @@ defmodule MDEx.Pipe do
   end
 
   def validate_options([], _registered) do
-    :ok
+    true
   end
 
   defp did_you_mean(option, registered) do
@@ -441,19 +441,31 @@ defmodule MDEx.Pipe do
   end
 
   @doc false
-  @spec run(t()) :: {t(), formatted :: String.t() | error :: Exception.t()}
-  def run(pipe)
+  # parse options.document and put into pipe.document
+  def resolve_document(pipe) do
+    case MDEx.parse_document(pipe.options[:document], pipe.options) do
+      {:ok, document} ->
+        %{pipe | document: document}
 
-  def run(%MDEx.Pipe{document: document} = pipe) when is_binary(document) do
-    do_run(%{pipe | document: MDEx.parse_document!(document, pipe.options)})
+      {:error, error} ->
+        raise """
+        failed to parse document
+
+        expected a valid String or %MDEx.Document{} in options.document
+
+        Got:
+
+          #{inspect(pipe.options.document)}
+
+        """
+    end
   end
 
-  def run(%MDEx.Pipe{document: %MDEx.Document{}} = pipe) do
-    do_run(pipe)
-  end
-
-  def run(%MDEx.Pipe{document: document} = pipe) do
-    do_run(%{pipe | document: MDEx.Document.wrap(document)})
+  @doc false
+  def run(%MDEx.Pipe{} = pipe) do
+    pipe
+    |> resolve_document()
+    |> do_run()
   end
 
   defp do_run(%{current_steps: [step | rest]} = pipe) do

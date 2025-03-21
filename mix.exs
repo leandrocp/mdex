@@ -66,7 +66,8 @@ defmodule MDEx.MixProject do
       extras: ["CHANGELOG.md"],
       groups_for_modules: [
         Plugins: [
-          MDEx.Pipe
+          MDEx.Pipe,
+          MDEx.Steps
         ],
         "Document Structure": [
           MDEx.Document,

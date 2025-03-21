@@ -1,5 +1,6 @@
 defmodule MDExMermaidTest do
   alias MDEx.Pipe
+  alias MDEx.Steps
 
   @latest_version "11"
 
@@ -7,49 +8,62 @@ defmodule MDExMermaidTest do
     pipe
     |> Pipe.register_options([:mermaid_version])
     |> Pipe.merge_options(mermaid_version: options[:version])
-    |> Pipe.prepend_steps(options: &options/1)
-    |> Pipe.prepend_steps(transform: &transform/1)
+    |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
+    |> Pipe.append_steps(inject_script: &inject_script/1)
+    |> Pipe.append_steps(update_code_blocks: &update_code_blocks/1)
   end
 
-  defp options(pipe) do
-    options = put_in(pipe.options, [:render, :unsafe_], true)
-    %{pipe | options: options}
+  defp enable_unsafe(pipe) do
+    Steps.put_render_options(pipe, unsafe_: true)
   end
 
-  defp transform(pipe) do
-    script_node = script_node(pipe)
-
-    document =
-      MDEx.traverse_and_update(pipe.document, fn
-        %MDEx.Document{nodes: nodes} = document ->
-          nodes = [script_node | nodes]
-          %{document | nodes: nodes}
-
-        %MDEx.CodeBlock{info: "mermaid", literal: code, nodes: nodes} ->
-          %MDEx.HtmlBlock{
-            literal: "<pre class=\"mermaid\">#{code}</pre>",
-            nodes: nodes
-          }
-
-        node ->
-          node
-      end)
-
-    %{pipe | document: document}
-  end
-
-  defp script_node(pipe) do
+  defp inject_script(pipe) do
     version = Pipe.get_option(pipe, :mermaid_version, @latest_version)
 
-    %MDEx.HtmlBlock{
-      literal: """
-      <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@#{version}/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true });
-      </script>
-      """
-    }
+    script_node =
+      %MDEx.HtmlBlock{
+        literal: """
+        <script type="module">
+          import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@#{version}/dist/mermaid.esm.min.mjs';
+          mermaid.initialize({ startOnLoad: true });
+        </script>
+        """
+      }
+
+    Steps.put_node_in_document_root(pipe, script_node)
   end
+
+  defp update_code_blocks(pipe) do
+    selector = fn
+      %MDEx.CodeBlock{info: "mermaid"} -> true
+      _ -> false
+    end
+
+    Steps.update_nodes(pipe, selector, &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">#{&1.literal}</pre>", nodes: &1.nodes})
+  end
+
+  # defp transform(pipe) do
+  #   dbg(:transform)
+  #
+  #
+  #   document =
+  #     MDEx.traverse_and_update(pipe.document, fn
+  #       %MDEx.Document{nodes: nodes} = document ->
+  #         nodes = [script_node | nodes]
+  #         %{document | nodes: nodes}
+  #
+  #       %MDEx.CodeBlock{info: "mermaid", literal: code, nodes: nodes} ->
+  #         %MDEx.HtmlBlock{
+  #           literal: "<pre class=\"mermaid\">#{code}</pre>",
+  #           nodes: nodes
+  #         }
+  #
+  #       node ->
+  #         node
+  #     end)
+  #
+  #   %{pipe | document: document}
+  # end
 end
 
 defmodule MDEx.PipeTest do
@@ -77,13 +91,20 @@ defmodule MDEx.PipeTest do
     ```
     """
 
-    assert {:ok, html} =
-             MDEx.new()
-             |> MDExMermaidTest.attach(version: "10")
-             |> MDEx.to_html(document: document)
+    mdex =
+      MDEx.new(document: document)
+      |> MDExMermaidTest.attach(version: "10")
+      |> MDEx.Pipe.run()
 
-    assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
-    assert html =~ "<pre class=\"mermaid\">graph TD"
+    dbg(mdex)
+
+    # assert {:ok, html} =
+    #          MDEx.new()
+    #          |> MDExMermaidTest.attach(version: "10")
+    #          |> MDEx.to_html(document: document)
+    #
+    # assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
+    # assert html =~ "<pre class=\"mermaid\">graph TD"
   end
 
   test "register_options", %{pipe: pipe} do

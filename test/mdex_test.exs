@@ -28,6 +28,34 @@ defmodule MDExTest do
     end
   end
 
+  describe "new" do
+    test "default" do
+      assert %MDEx.Pipe{
+               document: nil,
+               options: [
+                 document: "",
+                 extension: [],
+                 parse: [],
+                 render: [],
+                 features: []
+               ],
+               halted: false
+             } = MDEx.new()
+    end
+
+    test "with options" do
+      assert %MDEx.Pipe{
+               options: [
+                 document: "new",
+                 extension: [],
+                 parse: [],
+                 render: [escape: true],
+                 features: []
+               ]
+             } = MDEx.new(document: "new", render: [escape: true])
+    end
+  end
+
   describe "syntax highlighting" do
     test "enabled by default" do
       assert_output(

@@ -14,11 +14,11 @@ defmodule MDEx do
   import MDEx.Document, only: [is_fragment: 1]
 
   @typedoc """
-  Data that can be processed as Markdown.
+  Data that can be processed as Markdown, ie: the initial input.
   """
   @type input :: String.t() | MDEx.Document.t() | MDEx.Pipe.t()
 
-  @extension_options [
+  @extension_options_schema [
     strikethrough: [
       type: :boolean,
       default: false,
@@ -126,7 +126,7 @@ defmodule MDEx do
     ]
   ]
 
-  @parse_options [
+  @parse_options_schema [
     smart: [
       type: :boolean,
       default: false,
@@ -150,7 +150,7 @@ defmodule MDEx do
     ]
   ]
 
-  @render_options [
+  @render_options_schema [
     hardbreaks: [
       type: :boolean,
       default: false,
@@ -250,7 +250,7 @@ defmodule MDEx do
     ]
   ]
 
-  @features_options [
+  @features_options_schema [
     sanitize: [
       type: :boolean,
       default: false,
@@ -270,7 +270,7 @@ defmodule MDEx do
     ]
   ]
 
-  @options [
+  @options_schema [
     document: [
       type: {:or, [:string, {:struct, MDEx.Document}, nil]},
       default: "",
@@ -281,36 +281,51 @@ defmodule MDEx do
       default: [],
       doc:
         "Enable extensions. See comrak's [ExtensionOptions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html) for more info and examples.",
-      keys: @extension_options
+      keys: @extension_options_schema
     ],
     parse: [
       type: :keyword_list,
       default: [],
       doc:
         "Configure parsing behavior. See comrak's [ParseOptions](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html) for more info and examples.",
-      keys: @parse_options
+      keys: @parse_options_schema
     ],
     render: [
       type: :keyword_list,
       default: [],
       doc:
         "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
-      keys: @render_options
+      keys: @render_options_schema
     ],
     features: [
       type: :keyword_list,
       default: [],
       doc: "Enable extra features. ",
-      keys: @features_options
+      keys: @features_options_schema
     ]
   ]
+
+  @doc false
+  def extension_options_schema, do: @extension_options_schema
+
+  @doc false
+  def render_options_schema, do: @render_options_schema
+
+  @doc false
+  def parse_options_schema, do: @parse_options_schema
+
+  @doc false
+  def features_options_schema, do: @features_options_schema
+
+  @doc false
+  def options_schema, do: @options_schema
 
   @typedoc """
   Options to customize the parsing and rendering of Markdown documents.
 
   See `new/1` for a full list.
   """
-  @type options() :: [unquote(NimbleOptions.option_typespec(@options))]
+  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
 
   @doc """
   Parse a `markdown` string and returns a `MDEx.Document`.
@@ -377,9 +392,21 @@ defmodule MDEx do
         }
   """
   @spec parse_document(String.t(), options()) :: {:ok, Document.t()} | {:error, term()}
-  def parse_document(markdown, options \\ []) when is_binary(markdown) do
+  def parse_document(markdown, options \\ [])
+
+  def parse_document(markdown, options) when is_binary(markdown) do
     Native.parse_document(markdown, comrak_options(options))
   end
+
+  def parse_document(%MDEx.Document{} = document, _options), do: {:ok, document}
+
+  def parse_document(document, options) when is_struct(document) do
+    document
+    |> MDEx.Document.wrap()
+    |> parse_document(options)
+  end
+
+  def parse_document(_pipe, _options), do: {:error, :invalid}
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
@@ -533,13 +560,8 @@ defmodule MDEx do
   def to_html(input, options)
 
   def to_html(%MDEx.Pipe{} = pipe, options) when is_list(options) do
-    pipe =
-      case options[:document] do
-        nil -> pipe
-        document -> %{pipe | document: document}
-      end
-
     pipe
+    |> MDEx.Steps.put_options(options)
     |> MDEx.Pipe.run()
     |> then(&to_html(&1.document, &1.options))
   end
@@ -913,27 +935,23 @@ defmodule MDEx do
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
   defp comrak_options(options) do
-    built_in_options =
+    comrak_options =
       NimbleOptions.validate!(
         [
-          document: options[:document],
           extension: options[:extension] || [],
           parse: options[:parse] || [],
           render: options[:render] || [],
           features: options[:features] || []
         ],
-        @options
+        @options_schema
       )
 
-    options
-    |> Map.new()
-    |> Map.merge(%{
-      document: built_in_options[:document],
-      extension: Map.new(built_in_options[:extension]),
-      parse: Map.new(built_in_options[:parse]),
-      render: Map.new(built_in_options[:render]),
-      features: Map.new(built_in_options[:features])
-    })
+    %{
+      extension: Map.new(comrak_options[:extension]),
+      parse: Map.new(comrak_options[:parse]),
+      render: Map.new(comrak_options[:render]),
+      features: Map.new(comrak_options[:features])
+    }
   end
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
@@ -995,7 +1013,7 @@ defmodule MDEx do
 
   See the full list below:
 
-  #{NimbleOptions.docs(@options)}
+  #{NimbleOptions.docs(@options_schema)}
 
   ## Examples
 
@@ -1032,7 +1050,8 @@ defmodule MDEx do
   """
   @spec new(options()) :: MDEx.Pipe.t()
   def new(options \\ []) do
-    options = NimbleOptions.validate!(options, @options)
-    MDEx.Pipe.new(options)
+    %MDEx.Pipe{}
+    |> MDEx.Steps.put_options(options)
+    |> MDEx.Steps.attach()
   end
 end
