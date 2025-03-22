@@ -1,3 +1,7 @@
+mod sanitize;
+
+pub use sanitize::*;
+
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 
 #[derive(Debug, NifStruct)]
@@ -75,10 +79,27 @@ pub struct ExRenderOptions {
     pub experimental_minimize_commonmark: bool,
 }
 
+#[derive(Debug, NifTaggedEnum, Default)]
+pub enum ExSanitizeOption {
+    #[default]
+    Clean,
+
+    Custom(Box<ExSanitizeCustom>),
+}
+
+impl ExSanitizeOption {
+    pub(crate) fn clean(&self, html: &str) -> String {
+        match self {
+            ExSanitizeOption::Clean => ammonia::clean(html),
+            ExSanitizeOption::Custom(custom) => custom.to_ammonia().clean(html).to_string(),
+        }
+    }
+}
+
 #[derive(Debug, NifStruct, Default)]
 #[module = "MDEx.Types.FeaturesOptions"]
 pub struct ExFeaturesOptions {
-    pub sanitize: bool,
+    pub sanitize: Option<ExSanitizeOption>,
     pub syntax_highlight_theme: Option<String>,
     pub syntax_highlight_inline_style: Option<bool>,
 }
