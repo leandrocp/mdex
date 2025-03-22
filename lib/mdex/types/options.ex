@@ -55,9 +55,34 @@ end
 
 defmodule MDEx.Types.FeaturesOptions do
   @moduledoc false
-  defstruct sanitize: false,
+  defstruct sanitize: nil,
             syntax_highlight_theme: "onedark",
             syntax_highlight_inline_style: true
+end
+
+defmodule MDEx.Types.SanitizeCustomSetAddRm do
+  @moduledoc false
+  defstruct set: nil,
+            add: nil,
+            rm: nil
+end
+
+defmodule MDEx.Types.SanitizeCustom do
+  @moduledoc false
+  defstruct base: :default,
+            tags: [],
+            clean_content_tags: [],
+            tag_attributes: [],
+            tag_attribute_values: [],
+            generic_attribute_prefixes: [],
+            generic_attributes: [],
+            url_schemes: [],
+            allowed_classes: [],
+            set_tag_attribute_values: [],
+            strip_comments: nil,
+            link_rel: :unset,
+            id_prefix: :unset,
+            url_relative: nil
 end
 
 defmodule MDEx.Types.Options do
