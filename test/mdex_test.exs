@@ -217,14 +217,14 @@ defmodule MDExTest do
                features: [
                  sanitize: [
                    base: :empty,
-                   tags: [set: ["h1"], add: ["a", "strong"], rm: ["strong"]],
-                   clean_content_tags: [add: ["script"]],
-                   tag_attributes: [add: %{"h1" => ["data-val"]}],
-                   tag_attribute_values: [add: %{"h1" => %{"data-x" => ["3"]}}],
-                   generic_attribute_prefixes: [set: ["x-"]],
-                   generic_attributes: [set: ["id"]],
-                   allowed_classes: [set: %{"h1" => ["xyz"]}],
-                   set_tag_attribute_values: [set: %{"h1" => %{"hello" => "world"}}, add: %{"h1" => %{"ola" => "mundo"}}, rm: %{"h1" => "hello"}],
+                   tags: %{set: ["h1"], add: ["a", "strong"], rm: ["strong"]},
+                   clean_content_tags: %{add: ["script"]},
+                   tag_attributes: %{add: %{"h1" => ["data-val"]}},
+                   tag_attribute_values: %{add: %{"h1" => %{"data-x" => ["3"]}}},
+                   generic_attribute_prefixes: %{set: ["x-"]},
+                   generic_attributes: %{set: ["id"]},
+                   allowed_classes: %{set: %{"h1" => ["xyz"]}},
+                   set_tag_attribute_values: %{set: %{"h1" => %{"hello" => "world"}}, add: %{"h1" => %{"ola" => "mundo"}}, rm: %{"h1" => "hello"}},
                    strip_comments: false,
                    link_rel: "no",
                    id_prefix: "user-content-"

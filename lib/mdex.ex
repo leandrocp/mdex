@@ -651,7 +651,7 @@ defmodule MDEx do
     - `:sanitize` - cleans HTML after rendering. Defaults to `:clean`.
         - `:clean` or `true` - uses these rules: https://docs.rs/ammonia/latest/ammonia/fn.clean.html
         - `nil` or `false` - do no sanitization.
-        - `[allowed_classes: %{"span" => "hidden"}, ...]` - use custom options. (TODO: elaborate)
+        - `[allowed_classes: %{set: %{"span" => "hidden"}}, ...]` - set custom options.
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
         - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
