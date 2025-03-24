@@ -4,4 +4,4 @@ default:
 dev-server:
     #!/usr/bin/env bash
     set -euo pipefail
-    python -m http.server
+    (cd priv && python -m http.server)
