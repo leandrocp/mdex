@@ -11,8 +11,6 @@ defmodule MDEx do
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
 
-  import MDEx.Document, only: [is_fragment: 1]
-
   @typedoc """
   Data that can be processed as Markdown, ie: the initial input.
   """
@@ -319,6 +317,21 @@ defmodule MDEx do
 
   @doc false
   def options_schema, do: @options_schema
+
+  @doc """
+  Returns `true` if node is a fragment of a document.
+
+  ## Examples
+
+      iex> MDEx.is_fragment(%MDEx.Heading{})
+      true
+
+      iex> MDEx.is_fragment(%MDEx.Document{})
+      false
+
+  """
+  @spec is_fragment(Document.md_node()) :: boolean()
+  def is_fragment(node), do: Document.is_fragment(node)
 
   @typedoc """
   Options to customize the parsing and rendering of Markdown documents.

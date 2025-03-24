@@ -2,7 +2,7 @@
 
 defmodule MDEx.Document do
   @moduledoc """
-  Tree representation of a CommonMark document.
+  Tree representation of a Markdown document.
 
   ```elixir
   %MDEx.Document{
@@ -309,7 +309,7 @@ defmodule MDEx.Document do
   @type t :: %__MODULE__{nodes: [md_node()]}
 
   @typedoc """
-  Fragment of a CommonMark document, a single node.
+  Fragment of a Markdown document, a single node.
   """
   @type md_node ::
           MDEx.FrontMatter.t()
