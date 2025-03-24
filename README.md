@@ -35,8 +35,6 @@ a fast Rust crate that ports the cmark fork maintained by GitHub, a widely and w
 The AST structure is based on [Floki](https://hex.pm/packages/floki) so a similar API to manipulate HTML can be used to manipulate Markdown documents.
 Check out some examples at [mdex/examples/](https://github.com/leandrocp/mdex/tree/main/examples)
 
-And some samples are available at https://mdex-c31.pages.dev
-
 ## Installation
 
 Add `:mdex` dependency:
@@ -290,7 +288,7 @@ features: [syntax_highlight_theme: "catppuccin_latte"]
 
 ## Demo and Samples
 
-A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library, or you can check out all [available samples](https://github.com/leandrocp/mdex/tree/main/priv/generated/samples) at https://mdex-c31.pages.dev
+A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library.
 
 ## Used By
 
