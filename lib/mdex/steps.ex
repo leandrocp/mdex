@@ -136,13 +136,19 @@ defmodule MDEx.Steps do
           %{document | nodes: nodes}
 
         false ->
-          document
+          raise """
+          expected a fragment node as %MDEx.Heading{}
+
+          Got:
+
+            #{inspect(node)}
+          """
       end
 
     %{pipe | document: document}
   end
 
-  def update_nodes(%Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
+  def update_node(%Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
     document =
       update_in(pipe.document, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
         fun.(node)

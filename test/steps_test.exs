@@ -91,13 +91,13 @@ defmodule MDEx.StepsTest do
     end
 
     test "top", %{pipe: pipe} do
-      assert %Pipe{document: %MDEx.Document{nodes: [%MDEx.HtmlBlock{}, %MDEx.Heading{}]}} =
-               Steps.put_node_in_document_root(pipe, %MDEx.HtmlBlock{literal: "<div>new</div>"}, :top)
+      assert %Pipe{document: %MDEx.Document{nodes: [%MDEx.HtmlBlock{literal: "<p>top</p>"}, %MDEx.Heading{level: 1}]}} =
+               Steps.put_node_in_document_root(pipe, %MDEx.HtmlBlock{literal: "<p>top</p>"}, :top)
     end
 
     test "bottom", %{pipe: pipe} do
-      assert %Pipe{document: %MDEx.Document{nodes: [%MDEx.Heading{}, %MDEx.HtmlBlock{}]}} =
-               Steps.put_node_in_document_root(pipe, %MDEx.HtmlBlock{literal: "<div>new</div>"}, :bottom)
+      assert %Pipe{document: %MDEx.Document{nodes: [%MDEx.Heading{level: 1}, %MDEx.HtmlBlock{literal: "<p>bottom</p>"}]}} =
+               Steps.put_node_in_document_root(pipe, %MDEx.HtmlBlock{literal: "<p>bottom</p>"}, :bottom)
     end
   end
 

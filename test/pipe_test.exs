@@ -39,31 +39,12 @@ defmodule MDExMermaidTest do
       _ -> false
     end
 
-    Steps.update_nodes(pipe, selector, &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">#{&1.literal}</pre>", nodes: &1.nodes})
+    Steps.update_node(
+      pipe,
+      selector,
+      &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">#{&1.literal}</pre>", nodes: &1.nodes}
+    )
   end
-
-  # defp transform(pipe) do
-  #   dbg(:transform)
-  #
-  #
-  #   document =
-  #     MDEx.traverse_and_update(pipe.document, fn
-  #       %MDEx.Document{nodes: nodes} = document ->
-  #         nodes = [script_node | nodes]
-  #         %{document | nodes: nodes}
-  #
-  #       %MDEx.CodeBlock{info: "mermaid", literal: code, nodes: nodes} ->
-  #         %MDEx.HtmlBlock{
-  #           literal: "<pre class=\"mermaid\">#{code}</pre>",
-  #           nodes: nodes
-  #         }
-  #
-  #       node ->
-  #         node
-  #     end)
-  #
-  #   %{pipe | document: document}
-  # end
 end
 
 defmodule MDEx.PipeTest do
@@ -75,46 +56,55 @@ defmodule MDEx.PipeTest do
     [pipe: MDEx.new()]
   end
 
-  test "plugin" do
-    document = """
-    # Project Diagram
+  describe "plugin" do
+    setup do
+      document = """
+      # Project Diagram
 
-    ```mermaid
-    graph TD
-        A[Enter Chart Definition] --> B(Preview)
-        B --> C{decide}
-        C --> D[Keep]
-        C --> E[Edit Definition]
-        E --> B
-        D --> F[Save Image and Code]
-        F --> B
-    ```
-    """
+      ```mermaid
+      graph TD
+          A[Enter Chart Definition] --> B(Preview)
+          B --> C{decide}
+          C --> D[Keep]
+          C --> E[Edit Definition]
+          E --> B
+          D --> F[Save Image and Code]
+          F --> B
+      ```
+      """
 
-    mdex =
-      MDEx.new(document: document)
-      |> MDExMermaidTest.attach(version: "10")
-      |> MDEx.Pipe.run()
+      [document: document]
+    end
 
-    dbg(mdex)
+    test ":document in new/1", %{document: document} do
+      assert {:ok, html} =
+               MDEx.new(document: document)
+               |> MDExMermaidTest.attach(version: "10")
+               |> MDEx.to_html()
 
-    # assert {:ok, html} =
-    #          MDEx.new()
-    #          |> MDExMermaidTest.attach(version: "10")
-    #          |> MDEx.to_html(document: document)
-    #
-    # assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
-    # assert html =~ "<pre class=\"mermaid\">graph TD"
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
+      assert html =~ "<pre class=\"mermaid\">graph TD"
+    end
+
+    test ":document in to_html/2", %{document: document} do
+      assert {:ok, html} =
+               MDEx.new()
+               |> MDExMermaidTest.attach(version: "10")
+               |> MDEx.to_html(document: document)
+
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
+      assert html =~ "<pre class=\"mermaid\">graph TD"
+    end
   end
 
-  test "register_options", %{pipe: pipe} do
-    assert %{registered_options: opts} = Pipe.register_options(pipe, [])
+  test "register_options" do
+    assert %{registered_options: opts} = Pipe.register_options(%MDEx.Pipe{}, [])
     assert MapSet.to_list(opts) == []
 
-    assert %{registered_options: opts} = Pipe.register_options(pipe, [:foo])
+    assert %{registered_options: opts} = Pipe.register_options(%MDEx.Pipe{}, [:foo])
     assert MapSet.to_list(opts) == [:foo]
 
-    assert %{registered_options: opts} = Pipe.register_options(pipe, [:foo, :foo])
+    assert %{registered_options: opts} = Pipe.register_options(%MDEx.Pipe{}, [:foo, :foo])
     assert MapSet.to_list(opts) == [:foo]
   end
 

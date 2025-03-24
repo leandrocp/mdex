@@ -480,7 +480,7 @@ defmodule MDEx.Pipe do
         pipe
 
       %MDEx.Pipe{} = pipe ->
-        run(%{pipe | current_steps: rest})
+        do_run(%{pipe | current_steps: rest})
     end
   end
 
