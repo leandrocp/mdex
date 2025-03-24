@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 0.4.1 (2025-03-24)
 
 ### Enhancements
