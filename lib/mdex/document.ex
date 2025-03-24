@@ -304,12 +304,12 @@ defmodule MDEx.Document do
   """
 
   @typedoc """
-  Tree representation of a CommonMark document.
+  Tree root of a Markdown document, including all children nodes.
   """
   @type t :: %__MODULE__{nodes: [md_node()]}
 
   @typedoc """
-  Fragment of a Markdown document, a single node.
+  Fragment of a Markdown document, a single node. May contain children nodes.
   """
   @type md_node ::
           MDEx.FrontMatter.t()
@@ -355,7 +355,11 @@ defmodule MDEx.Document do
           | MDEx.Alert.t()
 
   @typedoc """
-  Selector to match a node in a document.
+  Selector used to match nodes in the document.
+
+  Valid selectors can be the module or struct, an atom representing the node name, or a function that receives a node and returns a boolean.
+
+  See `MDEx.Document` for more info and examples.
   """
   @type selector :: md_node() | module() | atom() | (md_node() -> boolean())
 
