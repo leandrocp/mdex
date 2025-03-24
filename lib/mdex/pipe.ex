@@ -457,6 +457,10 @@ defmodule MDEx.Pipe do
 
           #{inspect(pipe.options.document)}
 
+        Error:
+
+          #{inspect(error)}
+
         """
     end
   end
