@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 (2025-03-24)
+
+### Enhancements
+  * Add target `arm-unknown-linux-gnueabihf` used by Raspberry Pi
+
 ## 0.4.0 (2025-03-10)
 
 ### Enhancements

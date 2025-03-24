@@ -4,8 +4,12 @@ defmodule MDEx.DocumentTest do
   doctest MDEx.Document, import: true
 
   @document ~M"""
+  # Languages
+
+  ## Elixir
   `elixir`
 
+  ## Rust
   `rust`
 
    more
@@ -26,8 +30,11 @@ defmodule MDEx.DocumentTest do
              end) ==
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                  ]
                }
@@ -39,7 +46,10 @@ defmodule MDEx.DocumentTest do
              end) ==
                %MDEx.Document{
                  nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "RUST"}]},
                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                  ]
@@ -60,8 +70,11 @@ defmodule MDEx.DocumentTest do
 
     test "fetch by function" do
       assert @document[&Map.has_key?(&1, :literal)] == [
-               %MDEx.Code{num_backticks: 1, literal: "elixir"},
-               %MDEx.Code{num_backticks: 1, literal: "rust"},
+               %MDEx.Text{literal: "Languages"},
+               %MDEx.Text{literal: "Elixir"},
+               %MDEx.Code{literal: "elixir", num_backticks: 1},
+               %MDEx.Text{literal: "Rust"},
+               %MDEx.Code{literal: "rust", num_backticks: 1},
                %MDEx.Text{literal: "more"}
              ]
     end
@@ -69,39 +82,50 @@ defmodule MDEx.DocumentTest do
     test "get and update by struct key" do
       assert MDEx.Document.get_and_update(@document, %MDEx.Text{literal: "more"}, fn node ->
                {node, %{node | literal: String.upcase(node.literal)}}
-             end) ==
-               {%MDEx.Text{literal: "more"},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
-                  ]
-                }}
+             end) == {
+               %MDEx.Text{literal: "more"},
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
+                 ]
+               }
+             }
 
       assert MDEx.Document.get_and_update(@document, %MDEx.Code{num_backticks: 1, literal: "rust"}, fn node ->
                {node, %{node | literal: String.upcase(node.literal)}}
-             end) ==
-               {%MDEx.Code{literal: "rust", num_backticks: 1},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "RUST", num_backticks: 1}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                  ]
-                }}
+             end) == {
+               %MDEx.Code{literal: "rust", num_backticks: 1},
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "RUST", num_backticks: 1}]},
+                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 ]
+               }
+             }
     end
 
     test "get and update by module key" do
       assert MDEx.Document.get_and_update(@document, MDEx.Text, fn node ->
                {node, %{node | literal: String.upcase(node.literal)}}
              end) ==
-               {%MDEx.Text{literal: "more"},
+               {%MDEx.Text{literal: "Languages"},
                 %MDEx.Document{
                   nodes: [
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "LANGUAGES"}], level: 1, setext: false},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
                     %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
                     %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
+                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                   ]
                 }}
 
@@ -111,7 +135,10 @@ defmodule MDEx.DocumentTest do
                {%MDEx.Code{num_backticks: 1, literal: "elixir"},
                 %MDEx.Document{
                   nodes: [
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
                     %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
                     %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                   ]
@@ -122,14 +149,19 @@ defmodule MDEx.DocumentTest do
       assert MDEx.Document.get_and_update(@document, :code, fn node ->
                {node, %{node | literal: String.upcase(node.literal)}}
              end) ==
-               {%MDEx.Code{num_backticks: 1, literal: "elixir"},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                  ]
-                }}
+               {
+                 %MDEx.Code{literal: "elixir", num_backticks: 1},
+                 %MDEx.Document{
+                   nodes: [
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1}]},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   ]
+                 }
+               }
     end
 
     test "get and update by function key" do
@@ -139,57 +171,79 @@ defmodule MDEx.DocumentTest do
                {%MDEx.Text{literal: "more"},
                 %MDEx.Document{
                   nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                    %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                    %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
                   ]
                 }}
     end
 
     test "pop by struct key" do
-      assert MDEx.Document.pop(@document, %MDEx.List{}, :default) ==
-               {:default,
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                  ]
-                }}
+      assert MDEx.Document.pop(@document, %MDEx.List{}, :default) == {
+               :default,
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 ]
+               }
+             }
 
       assert MDEx.Document.pop(@document, %MDEx.Text{literal: "more"}) ==
-               {%MDEx.Text{literal: "more"},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: []}
-                  ]
-                }}
+               {
+                 %MDEx.Text{literal: "more"},
+                 %MDEx.Document{
+                   nodes: [
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                     %MDEx.Paragraph{nodes: []}
+                   ]
+                 }
+               }
     end
 
     test "pop by module key" do
       assert MDEx.Document.pop(@document, MDEx.Code) ==
-               {%MDEx.Code{num_backticks: 1, literal: "elixir"},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: []},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                  ]
-                }}
+               {
+                 %MDEx.Code{literal: "elixir", num_backticks: 1},
+                 %MDEx.Document{
+                   nodes: [
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: []},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   ]
+                 }
+               }
     end
 
     test "pop by atom key" do
       assert MDEx.Document.pop(@document, :code) ==
-               {%MDEx.Code{num_backticks: 1, literal: "elixir"},
-                %MDEx.Document{
-                  nodes: [
-                    %MDEx.Paragraph{nodes: []},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                  ]
-                }}
+               {
+                 %MDEx.Code{literal: "elixir", num_backticks: 1},
+                 %MDEx.Document{
+                   nodes: [
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: []},
+                     %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                     %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   ]
+                 }
+               }
     end
   end
 
@@ -207,8 +261,11 @@ defmodule MDEx.DocumentTest do
              end) ==
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ex"}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rs"}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ex", num_backticks: 1}]},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rs", num_backticks: 1}]},
                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                  ]
                }
@@ -235,8 +292,16 @@ defmodule MDEx.DocumentTest do
       assert MDEx.traverse_and_update(@document, fn
                %MDEx.Code{} -> :pop
                node -> node
-             end) ==
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: []}, %MDEx.Paragraph{nodes: []}, %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}]}
+             end) == %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                 %MDEx.Paragraph{nodes: []},
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                 %MDEx.Paragraph{nodes: []},
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+               ]
+             }
     end
   end
 
@@ -335,7 +400,7 @@ defmodule MDEx.DocumentTest do
 
                _node, acc ->
                  acc
-             end) == 3
+             end) == 6
     end
 
     test "map" do
@@ -343,8 +408,14 @@ defmodule MDEx.DocumentTest do
                inspect(node)
              end) == [
                "MDEx.Document",
+               "MDEx.Heading",
+               "MDEx.Text",
+               "MDEx.Heading",
+               "MDEx.Text",
                "MDEx.Paragraph",
                "MDEx.Code",
+               "MDEx.Heading",
+               "MDEx.Text",
                "MDEx.Paragraph",
                "MDEx.Code",
                "MDEx.Paragraph",
@@ -353,7 +424,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "count" do
-      assert Enum.count(@document) == 7
+      assert Enum.count(@document) == 13
     end
 
     test "find" do
@@ -369,7 +440,10 @@ defmodule MDEx.DocumentTest do
       assert Enum.zip(@document, [1]) == [
                {%MDEx.Document{
                   nodes: [
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
+                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
                     %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                   ]

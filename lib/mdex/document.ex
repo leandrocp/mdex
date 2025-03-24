@@ -203,8 +203,103 @@ defmodule MDEx.Document do
 
   ## Traverse and Update
 
-  Finally you can use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
+  You can also use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
   to traverse each node of the AST and either update the nodes or do some calculation with an accumulator.
+
+  ## Examples
+
+  #### Update all code block nodes filtees by the `selector` function
+
+  _Add line "// Modified" in Rust block codes_:
+
+  ```elixir
+  iex> doc = ~M\"""
+  ...> # Code Examples
+  ...>
+  ...> ```elixir
+  ...> def hello do
+  ...>   :world
+  ...> end
+  ...> ```
+  ...>
+  ...> ```rust
+  ...> fn main() {
+  ...>   println!(\"Hello\");
+  ...> }
+  ...> ```
+  ...> \"""
+  iex> selector = fn
+  ...>   %MDEx.CodeBlock{info: "rust"} -> true
+  ...>   _ -> false
+  ...> end
+  iex> update_in(doc, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
+  ...>   %{node | literal: "// Modified\\n" <> node.literal}
+  ...> end)
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{
+        nodes: [%MDEx.Text{literal: "Code Examples"}],
+        level: 1,
+        setext: false
+      },
+      %MDEx.CodeBlock{
+        info: "elixir",
+        literal: "def hello do\\n  :world\\nend\\n"
+      },
+      %MDEx.CodeBlock{
+        info: "rust",
+        literal: "// Modified\\nfn main() {\\n  println!(\\\"Hello\\\");\\n}\\n"
+      }
+    ]
+  }
+  ```
+
+  #### Collect headings by level
+
+  ```elixir
+  iex> doc = ~M\"""
+  ...> # Main Title
+  ...>
+  ...> ## Section 1
+  ...>
+  ...> ### Subsection
+  ...>
+  ...> ## Section 2
+  ...> \"""
+  iex> Enum.reduce(doc, %{}, fn
+  ...>   %MDEx.Heading{level: level, nodes: [%MDEx.Text{literal: text}]}, acc ->
+  ...>     Map.update(acc, level, [text], &[text | &1])
+  ...>   _node, acc -> acc
+  ...> end)
+  %{
+    1 => ["Main Title"],
+    2 => ["Section 2", "Section 1"],
+    3 => ["Subsection"]
+  }
+  ```
+
+  #### Extract and transform task list items
+
+  ```elixir
+  iex> doc = ~M\"""
+  ...> # Todo List
+  ...>
+  ...> - [ ] Buy groceries
+  ...> - [x] Call mom
+  ...> - [ ] Read book
+  ...> \"""
+  iex> Enum.map(doc, fn
+  ...>   %MDEx.TaskItem{checked: checked, nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: text}]}]} ->
+  ...>     {checked, text}
+  ...>   _ -> nil
+  ...> end)
+  ...> |> Enum.reject(&is_nil/1)
+  [
+    {false, "Buy groceries"},
+    {true, "Call mom"},
+    {false, "Read book"}
+  ]
+  ```
 
   """
 
