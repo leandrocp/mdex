@@ -24,17 +24,17 @@ defmodule MDEx.StepsTest do
       pipe = Pipe.register_options(pipe, [:test])
 
       assert_raise ArgumentError, "unknown option :testt. Did you mean :test?", fn ->
-        pipe = Steps.put_options(pipe, testt: 1)
+        Steps.put_options(pipe, testt: 1)
       end
     end
 
     test "validate built-in options", %{pipe: pipe} do
       assert_raise NimbleOptions.ValidationError, fn ->
-        pipe = Steps.put_options(pipe, document: 1)
+        Steps.put_options(pipe, document: 1)
       end
 
       assert_raise NimbleOptions.ValidationError, fn ->
-        pipe = Steps.put_options(pipe, render: [foo: 1])
+        Steps.put_options(pipe, render: [foo: 1])
       end
     end
   end
@@ -69,7 +69,7 @@ defmodule MDEx.StepsTest do
 
     test "validate schema", %{pipe: pipe} do
       assert_raise NimbleOptions.ValidationError, fn ->
-        pipe = Steps.put_extension_options(pipe, foo: 1)
+        Steps.put_extension_options(pipe, foo: 1)
       end
     end
 

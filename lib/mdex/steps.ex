@@ -362,7 +362,7 @@ defmodule MDEx.Steps do
   that match the selector function. The selector function should return `true` for nodes that should
   be updated.
   """
-  def update_node(%Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
+  def update_nodes(%Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
     document =
       update_in(pipe.document, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
         fun.(node)

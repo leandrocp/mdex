@@ -39,7 +39,7 @@ defmodule MDExMermaidTest do
       _ -> false
     end
 
-    Steps.update_node(
+    Steps.update_nodes(
       pipe,
       selector,
       &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">#{&1.literal}</pre>", nodes: &1.nodes}
