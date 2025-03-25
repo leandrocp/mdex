@@ -80,8 +80,8 @@ defmodule MDEx.Types.SanitizeCustom do
             allowed_classes: [],
             set_tag_attribute_values: [],
             strip_comments: nil,
-            link_rel: :unset,
-            id_prefix: :unset,
+            link_rel: "noopener noreferrer",
+            id_prefix: nil,
             url_relative: nil
 end
 

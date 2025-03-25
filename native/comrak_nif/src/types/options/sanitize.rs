@@ -239,29 +239,6 @@ impl ExSanitizeCustomSetAddRm<HashMap<String, HashMap<String, Vec<String>>>> {
     }
 }
 
-// For some options, we want to take an optional string, but we want to
-// distinguish a user `nil` from the user not passing any value at all. The
-// unary unit enum below makes the value `:unset` decodable as part of the
-// untagged enum below that.
-
-#[derive(Clone, Debug, NifUnitEnum)]
-pub enum ExSanitizeCustomUnset {
-    Unset,
-}
-
-// `:unset`, `nil` or an Elixir String.
-#[derive(Debug, NifUntaggedEnum)]
-pub enum ExSanitizeCustomMaybeString {
-    Unset(ExSanitizeCustomUnset),
-    Set(Option<String>),
-}
-
-impl Default for ExSanitizeCustomMaybeString {
-    fn default() -> Self {
-        Self::Unset(ExSanitizeCustomUnset::Unset)
-    }
-}
-
 #[derive(Debug, NifTaggedEnum)]
 pub enum ExSanitizeCustomUrlRelative {
     Deny,
@@ -308,8 +285,8 @@ pub struct ExSanitizeCustom {
         HashMap<String, String>,
     >,
     pub strip_comments: Option<bool>,
-    pub link_rel: ExSanitizeCustomMaybeString,
-    pub id_prefix: ExSanitizeCustomMaybeString,
+    pub link_rel: Option<String>,
+    pub id_prefix: Option<String>,
     pub url_relative: Option<ExSanitizeCustomUrlRelative>,
     // attribute_filter is also available in ammonia.
 }
@@ -375,12 +352,8 @@ impl ExSanitizeCustom {
         if let Some(strip_comments) = self.strip_comments {
             builder.strip_comments(strip_comments);
         }
-        if let ExSanitizeCustomMaybeString::Set(link_rel) = &self.link_rel {
-            builder.link_rel(link_rel.as_ref().map(|s| s.borrow()));
-        }
-        if let ExSanitizeCustomMaybeString::Set(id_prefix) = &self.id_prefix {
-            builder.id_prefix(id_prefix.as_ref().map(|s| s.borrow()));
-        }
+        builder.link_rel(self.link_rel.as_ref().map(|s| s.borrow()));
+        builder.id_prefix(self.id_prefix.as_ref().map(|s| s.borrow()));
         if let Some(url_relative) = &self.url_relative {
             builder.url_relative(url_relative.to_ammonia());
         }
