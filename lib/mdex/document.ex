@@ -301,6 +301,31 @@ defmodule MDEx.Document do
   ]
   ```
 
+  #### Bump all heading levels, except level 6
+
+  ```elixir
+  iex> doc = ~M\"""
+  ...> # Main Title
+  ...>
+  ...> ## Subtitle
+  ...>
+  ...> ###### Notes
+  ...> \"""
+  iex> selector = fn
+  ...>   %MDEx.Heading{level: level} when level < 6 -> true
+  ...>   _ -> false
+  ...> end
+  iex> update_in(doc, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
+  ...>   %{node | level: node.level + 1}
+  ...> end)
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Main Title"}], level: 2, setext: false},
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Subtitle"}], level: 3, setext: false},
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Notes"}], level: 6, setext: false}
+    ]
+  }
+  ```
   """
 
   @typedoc """
