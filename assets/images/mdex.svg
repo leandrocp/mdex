@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 208 128" version="1.1">
+  <rect x="0" y="0" width="208" height="128" rx="15" fill="#6E3C88" />
+
+  <path
+     d="M50 98V59l20 25 20-25v39h20V30H90L70 55 50 30H30v68z"
+     fill="white"
+     aria-label="M" />
+
+  <path
+     d="M 125.12516,97.906625 178.42203,72.031682 V 55.839327 L 125.12516,30.019088 v 19.419883 l 32.39062,14.551237 -32.39062,14.60594 z"
+     fill="white"
+     aria-label="&gt;" />
+</svg>
