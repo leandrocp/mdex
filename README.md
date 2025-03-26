@@ -3,7 +3,7 @@
 <!-- MDOC -->
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="512" alt="MDEx logo">
+  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="360" alt="MDEx logo">
 </p>
 
 <p align="center">
