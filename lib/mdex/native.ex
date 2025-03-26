@@ -39,12 +39,13 @@ defmodule MDEx.Native do
       aarch64-unknown-linux-gnu
       aarch64-unknown-linux-musl
       arm-unknown-linux-gnueabihf
+      riscv64gc-unknown-linux-gnu
       x86_64-apple-darwin
-      x86_64-pc-windows-msvc
       x86_64-pc-windows-gnu
+      x86_64-pc-windows-msvc
+      x86_64-unknown-freebsd
       x86_64-unknown-linux-gnu
       x86_64-unknown-linux-musl
-      x86_64-unknown-freebsd
     ),
     variants: %{
       "x86_64-unknown-linux-gnu" => variants_for_linux,
@@ -52,8 +53,7 @@ defmodule MDEx.Native do
       "x86_64-pc-windows-gnu" => other_variants,
       "x86_64-unknown-freebsd" => other_variants
     },
-    # We don't use any features of newer NIF versions, so 2.15 is enough.
-    nif_versions: ["2.15"],
+    nif_versions: ["2.15", "2.16"],
     mode: mode,
     force_build: System.get_env("MDEX_BUILD") in ["1", "true"]
 
