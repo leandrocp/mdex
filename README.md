@@ -387,5 +387,4 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 * [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
 * [Floki](https://hex.pm/packages/floki) for the AST manipulation
-* [Logo](https://www.flaticon.com/free-icons/rpg) created by Freepik - Flaticon
-* [Logo font](https://github.com/quoteunquoteapps/CourierPrime) designed by [Alan Greene](https://github.com/a-dg)
+* Logo based on [markdown-mark](https://github.com/dcurtis/markdown-mark)
