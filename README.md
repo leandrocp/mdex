@@ -7,7 +7,8 @@
 </p>
 
 <p align="center">
-  An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features.
+  A fast and extensible Markdown parser and formatter for Elixir that converts Markdown to HTML, XML, or back to Markdown.
+  Built on top of [comrak](https://crates.io/crates/comrak), a port of GitHub's CommonMark implementation.
 </p>
 
 <p align="center">
@@ -26,14 +27,22 @@
 
 ## Features
 
-Compliant with [CommonMark](https://spec.commonmark.org) and [GitHub Flavored Markdown](https://github.github.com/gfm) specifications with extra [extensions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
-as Wiki Links, Discord Markdown tags, and emoji. Also supports syntax highlighting out-of-the-box using the [Autumn](https://github.com/leandrocp/autumn) library.
+* Converts Markdown to HTML, XML, or back to Markdown
+* Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
+  through Access and Enumerable protocols
+* Supports multiple Markdown flavors:
+  - CommonMark (the standard Markdown specification)
+  - GitHub Flavored Markdown
+  - GitLab Flavored Markdown
+  - Discord Flavored Markdown
+* Includes additional features:
+  - Wiki-style links
+  - Emoji shortcodes
+  - Syntax highlighting for code blocks
+  - HTML sanitization
+* Provides sigils for building Markdown documents
 
-Under the hood it's calling the [comrak](https://crates.io/crates/comrak) APIs to process Markdown,
-a fast Rust crate that ports the cmark fork maintained by GitHub, a widely and well adopted Markdown implementation.
-
-The AST structure is based on [Floki](https://hex.pm/packages/floki) so a similar API to manipulate HTML can be used to manipulate Markdown documents.
-Check out some examples at [mdex/examples/](https://github.com/leandrocp/mdex/tree/main/examples)
+The library is built on top of [comrak](https://crates.io/crates/comrak), a fast Rust implementation of GitHub's CommonMark parser, and uses [Floki](https://hex.pm/packages/floki)-style AST data structure.
 
 ## Installation
 
