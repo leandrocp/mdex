@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
