@@ -18,7 +18,7 @@ defmodule MDEx.MixProject do
       aliases: aliases(),
       name: "MDEx",
       homepage_url: "https://github.com/leandrocp/mdex",
-      description: "Fast and extensible Markdown parser for Elixir",
+      description: "Fast and extensible Markdown parser for Elixir"
     ]
   end
 
