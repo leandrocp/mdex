@@ -8,7 +8,7 @@
 
 <p align="center">
   A fast and extensible Markdown parser and formatter for Elixir that converts Markdown to HTML, XML, or back to Markdown.
-  Built on top of [comrak](https://crates.io/crates/comrak), a port of GitHub's CommonMark implementation.
+  Built on top of comrak, a port of GitHub's CommonMark implementation.
 </p>
 
 <p align="center">
@@ -29,12 +29,11 @@
 
 * Converts Markdown to HTML, XML, or back to Markdown
 * Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
-  through Access and Enumerable protocols
-* Supports multiple Markdown flavors:
+  using the Access and Enumerable protocols
+* Supports the following flavors:
   - CommonMark (the standard Markdown specification)
   - GitHub Flavored Markdown
-  - GitLab Flavored Markdown
-  - Discord Flavored Markdown
+  - And some features of GitLab and Discord flavors
 * Includes additional features:
   - Wiki-style links
   - Emoji shortcodes
