@@ -81,6 +81,9 @@ jobs:
 
       - name: Build the project
         id: build-crate
+        env:
+          RUST_BACKTRACE: 1
+          RUSTFLAGS: "-v"
         uses: philss/rustler-precompiled-action@v1.1.4
         with:
           project-name: comrak_nif
