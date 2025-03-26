@@ -1,11 +1,23 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 (2025-03-25)
+
+### Enhancements
+  * Added target `riscv64gc-unknown-linux-gnu target`
+  * Added binaries for NIF version 2.16
+
+### Fixes
+  * Fixed glibc version mismatch on `x86_64-unknown-linux-gnu` target
+
+### Docs
+  * Added section Pre-compilation listing all targets, how to compile the project,
+    and how to enable targets for legacy CPUs.
+  * Added example in `MDEX.Document` on how to bump Heading levels
 
 ## 0.4.1 (2025-03-24)
 
 ### Enhancements
-  * Add target `arm-unknown-linux-gnueabihf` used by Raspberry Pi
+  * Added target `arm-unknown-linux-gnueabihf` used by Raspberry Pi
 
 ## 0.4.0 (2025-03-10)
 
