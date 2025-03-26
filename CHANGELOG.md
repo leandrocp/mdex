@@ -12,7 +12,7 @@
 ### Docs
   * Added section Pre-compilation listing all targets, how to compile the project,
     and how to enable targets for legacy CPUs.
-  * Added example in `MDEX.Document` on how to bump Heading levels
+  * Added example in `MDEx.Document` on how to bump Heading levels
 
 ## 0.4.1 (2025-03-24)
 
