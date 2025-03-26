@@ -286,6 +286,40 @@ features: [syntax_highlight_theme: "catppuccin_latte"]
 """
 ````
 
+## Pre-compilation
+
+Pre-compiled binaries are available for the following targets, so you don't need to have Rust installed to compile and use this library:
+
+- `aarch64-apple-darwin`
+- `aarch64-unknown-linux-gnu`
+- `aarch64-unknown-linux-musl`
+- `arm-unknown-linux-gnueabihf`
+- `riscv64gc-unknown-linux-gnu`
+- `x86_64-apple-darwin`
+- `x86_64-pc-windows-gnu`
+- `x86_64-pc-windows-msvc`
+- `x86_64-unknown-freebsd`
+- `x86_64-unknown-linux-gnu`
+- `x86_64-unknown-linux-musl`
+
+But in case you need or want to compile it yourself, you can do the following:
+
+```sh
+export MDEX_BUILD=1
+mix deps.get
+mix compile
+```
+
+### Legacy CPUs
+
+Modern CPU features are enabled by default but if your environment has an older CPU,
+you can use legacy artifacts by adding the following configuration to your `config.exs`:
+
+
+```elixir
+config :mdex, use_legacy_artifacts: true
+```
+
 ## Demo and Samples
 
 A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library.
