@@ -596,9 +596,38 @@ defmodule MDEx do
       extension: struct(MDEx.Types.ExtensionOptions, extension),
       parse: struct(MDEx.Types.ParseOptions, parse),
       render: struct(MDEx.Types.RenderOptions, render),
-      features: struct(MDEx.Types.FeaturesOptions, features)
+      features: struct(MDEx.Types.FeaturesOptions, features) |> adapt_sanitize_option()
     }
   end
+
+  defp adapt_sanitize_option(%MDEx.Types.FeaturesOptions{} = features),
+    do: update_in(features.sanitize, &adapt_sanitize_option/1)
+
+  defp adapt_sanitize_option(false), do: nil
+  defp adapt_sanitize_option(true), do: :clean
+  defp adapt_sanitize_option(opt) when opt in [nil, :clean], do: opt
+
+  @set_add_rm_attrs [
+    :tags,
+    :clean_content_tags,
+    :tag_attributes,
+    :tag_attribute_values,
+    :generic_attribute_prefixes,
+    :generic_attributes,
+    :url_schemes,
+    :allowed_classes,
+    :set_tag_attribute_values
+  ]
+  defp adapt_sanitize_option(sanitize) do
+    sanitize =
+      for attr <- @set_add_rm_attrs, reduce: struct(MDEx.Types.SanitizeCustom, sanitize) do
+        sanitize -> update_in(sanitize, [Access.key!(attr)], &adapt_sanitize_set_add_rm/1)
+      end
+
+    {:custom, sanitize}
+  end
+
+  defp adapt_sanitize_set_add_rm(value), do: struct(MDEx.Types.SanitizeCustomSetAddRm, value)
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
@@ -619,13 +648,16 @@ defmodule MDEx do
 
   ## Options
 
-    - `:sanitize` - clean HTML using these rules https://docs.rs/ammonia/latest/ammonia/fn.clean.html. Defaults to `true`.
+    - `:sanitize` - cleans HTML after rendering. Defaults to `:clean`.
+        - `:clean` or `true` - uses these rules: https://docs.rs/ammonia/latest/ammonia/fn.clean.html
+        - `nil` or `false` - do no sanitization.
+        - `[allowed_classes: %{set: %{"span" => "hidden"}}, ...]` - set custom options.
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
         - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
   """
   def safe_html(unsafe_html, opts \\ []) when is_binary(unsafe_html) and is_list(opts) do
-    sanitize = opt(opts, [:sanitize], true)
+    sanitize = opt(opts, [:sanitize], :clean) |> adapt_sanitize_option()
     escape_content = opt(opts, [:escape, :content], true)
     escape_curly_braces_in_code = opt(opts, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)

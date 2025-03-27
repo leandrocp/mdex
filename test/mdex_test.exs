@@ -193,6 +193,74 @@ defmodule MDExTest do
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
     end
 
+    test "range of sanitize specifications" do
+      input = ~s"""
+      <h1 class="abc xyz" e="f" f="g" data-val="1" x-val="2" data-x="3">
+      <strong>te<!-- :) -->st</strong> <a id="elixir" href="https://elixir-lang.org/"></a>
+      </h1>
+      """
+
+      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: true]) <> "\n" == ~s"""
+             <h1>
+             <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
+             </h1>
+             """
+
+      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: :clean]) <> "\n" == ~s"""
+             <h1>
+             <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
+             </h1>
+             """
+
+      assert MDEx.to_html!(input,
+               render: [unsafe_: true],
+               features: [
+                 sanitize: [
+                   base: :empty,
+                   tags: %{set: ["h1"], add: ["a", "strong"], rm: ["strong"]},
+                   clean_content_tags: %{add: ["script"]},
+                   tag_attributes: %{add: %{"h1" => ["data-val"]}},
+                   tag_attribute_values: %{add: %{"h1" => %{"data-x" => ["3"]}}},
+                   generic_attribute_prefixes: %{set: ["x-"]},
+                   generic_attributes: %{set: ["id"]},
+                   allowed_classes: %{set: %{"h1" => ["xyz"]}},
+                   set_tag_attribute_values: %{set: %{"h1" => %{"hello" => "world"}}, add: %{"h1" => %{"ola" => "mundo"}}, rm: %{"h1" => "hello"}},
+                   strip_comments: false,
+                   link_rel: "no",
+                   id_prefix: "user-content-"
+                 ]
+               ]
+             ) <> "\n" == ~s"""
+             <h1 class="xyz" data-val="1" x-val="2" data-x="3" ola="mundo">
+             te<!-- :) -->st <a id="user-content-elixir" href="https://elixir-lang.org/" rel="no"></a>
+             </h1>
+             """
+
+      assert MDEx.to_html!(
+               ~s"""
+               <p>
+               <a href="">empty</a>
+               <a href="/">root</a>
+               <a href="https://host/">elsewhere</a>
+               </p>
+               """,
+               render: [unsafe_: true],
+               features: [
+                 sanitize: [
+                   base: :default,
+                   link_rel: nil,
+                   url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
+                 ]
+               ]
+             ) <> "\n" == ~s"""
+             <p>
+             <a href="https://example/root/index.html">empty</a>
+             <a href="https://example/root/">root</a>
+             <a href="https://host/">elsewhere</a>
+             </p>
+             """
+    end
+
     test "encode curly braces in inline code" do
       assert_output(
         ~S"""
