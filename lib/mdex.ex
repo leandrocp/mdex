@@ -247,11 +247,24 @@ defmodule MDEx do
     ]
   ]
 
+  @sanitize_schema [
+    base: [
+      type: {:in, [:default, :empty]},
+      default: :default,
+      doc: "Build sanitization options, either with [default](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.new) or [https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty](empty) options."
+    ],
+    link_rel: [
+      type: {:or, [:string, nil]},
+      default: "noopener noreferrer",
+      doc: "Configures a `rel` attribute that will be added on links. See [ammonia](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.link_rel) for more info."
+    ],
+  ]
+
   @features_options_schema [
     sanitize: [
-      type: :boolean,
+      type: {:or, [{:keyword_list, @sanitize_schema}, :boolean]},
       default: false,
-      doc: "sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info."
+      doc: "cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering. See the [Safety](#module-safety) section for more info."
     ],
     syntax_highlight_theme: [
       type: {:or, [:string, nil]},
