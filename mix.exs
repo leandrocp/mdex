@@ -67,6 +67,7 @@ defmodule MDEx.MixProject do
       extras: ["CHANGELOG.md"],
       groups_for_modules: [
         "Document Nodes": [
+          MDEx.Alert,
           MDEx.FrontMatter,
           MDEx.BlockQuote,
           MDEx.List,
