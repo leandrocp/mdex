@@ -13,12 +13,326 @@ defmodule MDEx do
 
   import MDEx.Document, only: [is_fragment: 1]
 
-  @doc """
-  Parse a `markdown` string and returns a `MDEx.Document`.
+  @type input :: String.t() | Document.t()
+
+  @extension_options_schema [
+    strikethrough: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [strikethrough extension](https://github.github.com/gfm/#strikethrough-extension-) from the GFM spec."
+    ],
+    tagfilter: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [tagfilter extension](https://github.github.com/gfm/#disallowed-raw-html-extension-) from the GFM spec."
+    ],
+    table: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [table extension](https://github.github.com/gfm/#tables-extension-) from the GFM spec."
+    ],
+    autolink: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [autolink extension](https://github.github.com/gfm/#autolinks-extension-) from the GFM spec."
+    ],
+    tasklist: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [task list extension](https://github.github.com/gfm/#task-list-items-extension-) from the GFM spec."
+    ],
+    superscript: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the superscript Comrak extension."
+    ],
+    header_ids: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Enables the header IDs Comrak extension."
+    ],
+    footnotes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the footnotes extension per cmark-gfm"
+    ],
+    description_lists: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the description lists extension."
+    ],
+    front_matter_delimiter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Enables the front matter extension."
+    ],
+    multiline_block_quotes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the multiline block quotes extension."
+    ],
+    alerts: [
+      type: :boolean,
+      default: false,
+      doc: "Enables GitHub style alerts."
+    ],
+    math_dollars: [
+      type: :boolean,
+      default: false,
+      doc: "Enables math using dollar syntax."
+    ],
+    math_code: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [math code extension](https://github.github.com/gfm/#math-code) from the GFM spec."
+    ],
+    shortcodes: [
+      type: :boolean,
+      default: false,
+      doc: "Phrases wrapped inside of ':' blocks will be replaced with emojis."
+    ],
+    wikilinks_title_after_pipe: [
+      type: :boolean,
+      default: false,
+      doc: "Enables wikilinks using title after pipe syntax."
+    ],
+    wikilinks_title_before_pipe: [
+      type: :boolean,
+      default: false,
+      doc: "Enables wikilinks using title before pipe syntax."
+    ],
+    underline: [
+      type: :boolean,
+      default: false,
+      doc: "Enables underlines using double underscores."
+    ],
+    subscript: [
+      type: :boolean,
+      default: false,
+      doc: "Enables subscript text using single tildes."
+    ],
+    spoiler: [
+      type: :boolean,
+      default: false,
+      doc: "Enables spoilers using double vertical bars."
+    ],
+    greentext: [
+      type: :boolean,
+      default: false,
+      doc: "Requires at least one space after a > character to generate a blockquote, and restarts blockquote nesting across unique lines of input."
+    ]
+  ]
+
+  @parse_options_schema [
+    smart: [
+      type: :boolean,
+      default: false,
+      doc: "Punctuation (quotes, full-stops and hyphens) are converted into 'smart' punctuation."
+    ],
+    default_info_string: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "The default info string for fenced code blocks."
+    ],
+    relaxed_tasklist_matching: [
+      type: :boolean,
+      default: false,
+      doc: "Whether or not a simple `x` or `X` is used for tasklist or any other symbol is allowed."
+    ],
+    relaxed_autolinks: [
+      type: :boolean,
+      default: true,
+      doc:
+        "Relax parsing of autolinks, allow links to be detected inside brackets and allow all url schemes. It is intended to allow a very specific type of autolink detection, such as `[this http://and.com that]` or `{http://foo.com}`, on a best can basis."
+    ]
+  ]
+
+  @render_options_schema [
+    hardbreaks: [
+      type: :boolean,
+      default: false,
+      doc: "[Soft line breaks](http://spec.commonmark.org/0.27/#soft-line-breaks) in the input translate into hard line breaks in the output."
+    ],
+    github_pre_lang: [
+      type: :boolean,
+      default: false,
+      doc: "GitHub-style `<pre lang=\"xyz\">` is used for fenced code blocks with info tags."
+    ],
+    full_info_string: [
+      type: :boolean,
+      default: false,
+      doc: "Enable full info strings for code blocks."
+    ],
+    width: [
+      type: :integer,
+      default: 0,
+      doc: "The wrap column when outputting CommonMark."
+    ],
+    unsafe_: [
+      type: :boolean,
+      default: false,
+      doc: "Allow rendering of raw HTML and potentially dangerous links."
+    ],
+    escape: [
+      type: :boolean,
+      default: false,
+      doc: "Escape raw HTML instead of clobbering it."
+    ],
+    list_style: [
+      type: {:in, [:dash, :plus, :star]},
+      default: :dash,
+      doc: """
+      Set the type of [bullet list marker](https://spec.commonmark.org/0.30/#bullet-list-marker) to use.
+      Either one of `:dash`, `:plus`, or `:star`.
+      """
+    ],
+    sourcepos: [
+      type: :boolean,
+      default: false,
+      doc: "Include source position attributes in HTML and XML output."
+    ],
+    experimental_inline_sourcepos: [
+      type: :boolean,
+      default: false,
+      doc: "Include inline sourcepos in HTML output, which is known to have issues."
+    ],
+    escaped_char_spans: [
+      type: :boolean,
+      default: false,
+      doc: "Wrap escaped characters in a `<span>` to allow any post-processing to recognize them."
+    ],
+    ignore_setext: [
+      type: :boolean,
+      default: false,
+      doc: "Ignore setext headings in input."
+    ],
+    ignore_empty_links: [
+      type: :boolean,
+      default: false,
+      doc: "Ignore empty links in input."
+    ],
+    gfm_quirks: [
+      type: :boolean,
+      default: false,
+      doc: "Enables GFM quirks in HTML output which break CommonMark compatibility."
+    ],
+    prefer_fenced: [
+      type: :boolean,
+      default: false,
+      doc: "Prefer fenced code blocks when outputting CommonMark."
+    ],
+    figure_with_caption: [
+      type: :boolean,
+      default: false,
+      doc: "Render the image as a figure element with the title as its caption."
+    ],
+    tasklist_classes: [
+      type: :boolean,
+      default: false,
+      doc: "Add classes to the output of the tasklist extension. This allows tasklists to be styled."
+    ],
+    ol_width: [
+      type: :integer,
+      default: 1,
+      doc: "Render ordered list with a minimum marker width. Having a width lower than 3 doesn't do anything."
+    ],
+    experimental_minimize_commonmark: [
+      type: :boolean,
+      default: false,
+      doc: """
+      Minimise escapes used in CommonMark output (`-t commonmark`) by removing each individually and seeing if the resulting document roundtrips.
+      Brute-force and expensive, but produces nicer output.
+      Note that the result may not in fact be minimal.
+      """
+    ]
+  ]
+
+  @features_options_schema [
+    sanitize: [
+      type: :boolean,
+      default: false,
+      doc: "sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info."
+    ],
+    syntax_highlight_theme: [
+      type: {:or, [:string, nil]},
+      default: "onedark",
+      doc:
+        "syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes), you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: \"adwaita_dark\"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme."
+    ],
+    syntax_highlight_inline_style: [
+      type: :boolean,
+      default: true,
+      doc:
+        "embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code."
+    ]
+  ]
+
+  @options_schema [
+    extension: [
+      type: :keyword_list,
+      default: [],
+      doc:
+        "Enable extensions. See comrak's [ExtensionOptions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html) for more info and examples.",
+      keys: @extension_options_schema
+    ],
+    parse: [
+      type: :keyword_list,
+      default: [],
+      doc:
+        "Configure parsing behavior. See comrak's [ParseOptions](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html) for more info and examples.",
+      keys: @parse_options_schema
+    ],
+    render: [
+      type: :keyword_list,
+      default: [],
+      doc:
+        "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
+      keys: @render_options_schema
+    ],
+    features: [
+      type: :keyword_list,
+      default: [],
+      doc: "Enable extra features. ",
+      keys: @features_options_schema
+    ]
+  ]
+
+  @typedoc """
+  Options to customize the parsing and rendering of Markdown documents.
+
+  They are separated into 4 main groups:
+
+  - `:extension` - [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
+  - `:parse` - [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)
+  - `:render` - [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)
+  - `:features` - extra features like sanitization and syntax highlighting.
+
+  Check out the links above for examples and more details on each option.
+
+  See the full list with their respective types and default values below:
+
+  ## Examples
+
+  - Enable the `table` extension:
+
+      ```elixir
+      iex> MDEx.to_html!(\"""
+      ...> | lang |
+      ...> |------|
+      ...> | elixir |
+      ...> \""",
+      ...> extension: [table: true])
+      "<table>\\n<thead>\\n<tr>\\n<th>lang</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>elixir</td>\\n</tr>\\n</tbody>\\n</table>"
+      ```
 
   ## Options
 
-  See the [Options](#module-options) section for the available `opts`.
+  #{NimbleOptions.docs(@options_schema)}
+  """
+  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+
+  @doc """
+  Parse a `markdown` string and returns a `MDEx.Document`.
 
   ## Examples
 
@@ -77,17 +391,17 @@ defmodule MDEx do
           ]
         }
   """
-  @spec parse_document(String.t(), keyword()) :: {:ok, Document.t()} | {:error, term()}
-  def parse_document(markdown, opts \\ []) when is_binary(markdown) do
-    Native.parse_document(markdown, comrak_options(opts))
+  @spec parse_document(String.t(), options()) :: {:ok, Document.t()} | {:error, any()}
+  def parse_document(markdown, options \\ []) when is_binary(markdown) do
+    Native.parse_document(markdown, validate_options!(options))
   end
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
   """
-  @spec parse_document!(String.t(), keyword()) :: Document.t()
-  def parse_document!(markdown, opts \\ []) when is_binary(markdown) do
-    case parse_document(markdown, opts) do
+  @spec parse_document!(String.t(), options()) :: Document.t()
+  def parse_document!(markdown, options \\ []) when is_binary(markdown) do
+    case parse_document(markdown, options) do
       {:ok, doc} -> doc
       {:error, error} -> raise error
     end
@@ -116,9 +430,9 @@ defmodule MDEx do
       {:ok, %MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>Elixir</h1>\\n"}}
 
   """
-  @spec parse_fragment(String.t(), keyword()) :: {:ok, Document.md_node()} | nil
-  def parse_fragment(markdown, opts \\ []) when is_binary(markdown) do
-    case parse_document(markdown, opts) do
+  @spec parse_fragment(String.t(), options()) :: {:ok, Document.md_node()} | nil
+  def parse_fragment(markdown, options \\ []) when is_binary(markdown) do
+    case parse_document(markdown, options) do
       {:ok, %Document{nodes: [%MDEx.Paragraph{nodes: [node]}]}} -> {:ok, node}
       {:ok, %Document{nodes: [node]}} -> {:ok, node}
       _ -> nil
@@ -126,15 +440,16 @@ defmodule MDEx do
   end
 
   @doc """
-  Same as `parse_fragment/2` but raises if the parsing fails.
+  Same as `parse_fragment/2` but raises if the parsing fails or returns `nil`.
 
   > #### Experimental {: .warning}
   >
   > Consider this function experimental and subject to change.
 
   """
-  def parse_fragment!(markdown, opts \\ []) when is_binary(markdown) do
-    case parse_fragment(markdown, opts) do
+  @spec parse_fragment!(String.t(), options()) :: Document.md_node()
+  def parse_fragment!(markdown, options \\ []) when is_binary(markdown) do
+    case parse_fragment(markdown, options) do
       {:ok, fragment} -> fragment
       _ -> raise %InvalidInputError{found: markdown}
     end
@@ -162,14 +477,14 @@ defmodule MDEx do
       {:ok, "<p>MDEx</p>"}
 
   """
-  @spec to_html(md_or_doc :: String.t() | Document.t()) ::
+  @spec to_html(input()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(md_or_doc)
+  def to_html(input)
 
-  def to_html(md_or_doc) when is_binary(md_or_doc) do
-    md_or_doc
+  def to_html(input) when is_binary(input) do
+    input
     |> Native.markdown_to_html()
     |> maybe_trim()
   end
@@ -183,20 +498,20 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_html(md_or_doc) do
-    if is_fragment(md_or_doc) do
-      to_html(%Document{nodes: List.wrap(md_or_doc)})
+  def to_html(input) do
+    if is_fragment(input) do
+      to_html(%Document{nodes: List.wrap(input)})
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_html/1` but raises an error if the conversion fails.
   """
-  @spec to_html!(md_or_doc :: String.t() | Document.t()) :: String.t()
-  def to_html!(md_or_doc) do
-    case to_html(md_or_doc) do
+  @spec to_html!(input()) :: String.t()
+  def to_html!(input) do
+    case to_html(input) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -218,42 +533,42 @@ defmodule MDEx do
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
   """
-  @spec to_html(md_or_doc :: String.t() | Document.t(), opts :: keyword()) ::
+  @spec to_html(input(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(md_or_doc, opts)
+  def to_html(input, options)
 
-  def to_html(md_or_doc, opts) when is_binary(md_or_doc) and is_list(opts) do
-    md_or_doc
-    |> Native.markdown_to_html_with_options(comrak_options(opts))
+  def to_html(input, options) when is_binary(input) and is_list(options) do
+    input
+    |> Native.markdown_to_html_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
-  def to_html(%Document{} = doc, opts) when is_list(opts) do
+  def to_html(%Document{} = doc, options) when is_list(options) do
     doc
-    |> Native.document_to_html_with_options(comrak_options(opts))
+    |> Native.document_to_html_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_html(md_or_doc, opts) do
-    if is_fragment(md_or_doc) do
-      to_html(%Document{nodes: List.wrap(md_or_doc)}, opts)
+  def to_html(input, options) do
+    if is_fragment(input) do
+      to_html(%Document{nodes: List.wrap(input)}, options)
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_html/2` but raises error if the conversion fails.
   """
-  @spec to_html!(md_or_doc :: String.t() | Document.t(), opts :: keyword()) :: String.t()
-  def to_html!(md_or_doc, opts) do
-    case to_html(md_or_doc, opts) do
+  @spec to_html!(input(), options()) :: String.t()
+  def to_html!(input, options) do
+    case to_html(input, options) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -329,14 +644,14 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(md_or_doc :: String.t() | Document.t()) ::
+  @spec to_xml(input()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(md_or_doc)
+  def to_xml(input)
 
-  def to_xml(md_or_doc) when is_binary(md_or_doc) do
-    md_or_doc
+  def to_xml(input) when is_binary(input) do
+    input
     |> Native.markdown_to_xml()
 
     # |> maybe_trim()
@@ -352,20 +667,20 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(md_or_doc) do
-    if is_fragment(md_or_doc) do
-      to_xml(%Document{nodes: List.wrap(md_or_doc)})
+  def to_xml(input) do
+    if is_fragment(input) do
+      to_xml(%Document{nodes: List.wrap(input)})
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_xml/1` but raises an error if the conversion fails.
   """
-  @spec to_xml!(md_or_doc :: String.t() | Document.t()) :: String.t()
-  def to_xml!(md_or_doc) do
-    case to_xml(md_or_doc) do
+  @spec to_xml!(input()) :: String.t()
+  def to_xml!(input) do
+    case to_xml(input) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
@@ -414,43 +729,43 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(md_or_doc :: String.t() | Document.t(), opts :: keyword()) ::
+  @spec to_xml(input(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(md_or_doc, opts)
+  def to_xml(input, options)
 
-  def to_xml(md_or_doc, opts) when is_binary(md_or_doc) and is_list(opts) do
-    md_or_doc
-    |> Native.markdown_to_xml_with_options(comrak_options(opts))
+  def to_xml(input, options) when is_binary(input) and is_list(options) do
+    input
+    |> Native.markdown_to_xml_with_options(validate_options!(options))
 
     # |> maybe_wrap_error()
     # |> maybe_trim()
   end
 
-  def to_xml(%Document{} = doc, opts) when is_list(opts) do
+  def to_xml(%Document{} = doc, options) when is_list(options) do
     doc
-    |> Native.document_to_xml_with_options(comrak_options(opts))
+    |> Native.document_to_xml_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(md_or_doc, opts) do
-    if is_fragment(md_or_doc) do
-      to_xml(%Document{nodes: List.wrap(md_or_doc)}, opts)
+  def to_xml(input, options) do
+    if is_fragment(input) do
+      to_xml(%Document{nodes: List.wrap(input)}, options)
     else
-      {:error, %InvalidInputError{found: md_or_doc}}
+      {:error, %InvalidInputError{found: input}}
     end
   end
 
   @doc """
   Same as `to_xml/2` but raises error if the conversion fails.
   """
-  @spec to_xml!(md_or_doc :: String.t() | Document.t(), opts :: keyword()) :: String.t()
-  def to_xml!(md_or_doc, opts) do
-    case to_xml(md_or_doc, opts) do
+  @spec to_xml!(input(), options()) :: String.t()
+  def to_xml!(input, options) do
+    case to_xml(input, options) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
@@ -493,10 +808,10 @@ defmodule MDEx do
 
   See the [Options](#module-options) section for the available options.
   """
-  @spec to_commonmark(Document.t(), keyword()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(%Document{} = doc, opts) when is_list(opts) do
+  @spec to_commonmark(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_commonmark(%Document{} = doc, options) when is_list(options) do
     doc
-    |> Native.document_to_commonmark_with_options(comrak_options(opts))
+    |> Native.document_to_commonmark_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
@@ -504,9 +819,9 @@ defmodule MDEx do
   @doc """
   Same as `to_commonmark/2` but raises `MDEx.DecodeError` if the conversion fails.
   """
-  @spec to_commonmark!(Document.t(), keyword()) :: String.t()
-  def to_commonmark!(%Document{} = doc, opts) when is_list(opts) do
-    case to_commonmark(doc, opts) do
+  @spec to_commonmark!(Document.t(), options()) :: String.t()
+  def to_commonmark!(%Document{} = doc, options) when is_list(options) do
+    case to_commonmark(doc, options) do
       {:ok, md} -> md
       {:error, error} -> raise error
     end
@@ -583,20 +898,26 @@ defmodule MDEx do
   Also works with fragments.
 
   """
-  @spec traverse_and_update(MDEx.Document.t(), term(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
+  @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp comrak_options(opts) do
-    extension = Keyword.get(opts, :extension, %{})
-    parse = Keyword.get(opts, :parse, %{})
-    render = Keyword.get(opts, :render, %{})
-    features = Keyword.get(opts, :features, %{})
+  defp validate_options!(options) do
+    options =
+      NimbleOptions.validate!(
+        [
+          extension: options[:extension] || [],
+          parse: options[:parse] || [],
+          render: options[:render] || [],
+          features: options[:features] || []
+        ],
+        @options_schema
+      )
 
-    %MDEx.Types.Options{
-      extension: struct(MDEx.Types.ExtensionOptions, extension),
-      parse: struct(MDEx.Types.ParseOptions, parse),
-      render: struct(MDEx.Types.RenderOptions, render),
-      features: struct(MDEx.Types.FeaturesOptions, features) |> adapt_sanitize_option()
+    %{
+      extension: Map.new(options[:extension]),
+      parse: Map.new(options[:parse]),
+      render: Map.new(options[:render]),
+      features: Map.new(options[:features])
     }
   end
 
@@ -656,15 +977,16 @@ defmodule MDEx do
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
         - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
   """
-  def safe_html(unsafe_html, opts \\ []) when is_binary(unsafe_html) and is_list(opts) do
-    sanitize = opt(opts, [:sanitize], :clean) |> adapt_sanitize_option()
-    escape_content = opt(opts, [:escape, :content], true)
-    escape_curly_braces_in_code = opt(opts, [:escape, :curly_braces_in_code], true)
+  @spec safe_html(String.t(), options()) :: String.t()
+  def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
+    sanitize = opt(options, [:sanitize], :clean) |> adapt_sanitize_option()
+    escape_content = opt(options, [:escape, :content], true)
+    escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
   end
 
-  defp opt(opts, keys, default) do
-    case get_in(opts, keys) do
+  defp opt(options, keys, default) do
+    case get_in(options, keys) do
       nil -> default
       val -> val
     end
