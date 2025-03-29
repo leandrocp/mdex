@@ -1169,6 +1169,8 @@ defmodule MDEx do
 
   ## Examples
 
+      iex> MDEx.to_json("Hello ~world~", extension: [strikethrough: true])
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
 
   """
   @spec to_json(source(), options()) ::
