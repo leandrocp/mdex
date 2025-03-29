@@ -206,18 +206,10 @@ defmodule MDExTest do
              </h1>
              """
 
-      #
-      # assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: :clean]) <> "\n" == ~s"""
-      #        <h1>
-      #        <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
-      #        </h1>
-      #        """
-
       assert MDEx.to_html!(input,
                render: [unsafe_: true],
                features: [
                  sanitize: [
-                   # base: :empty,
                    tags: ["h1"],
                    add_tags: ["a", "strong"],
                    rm_tags: ["strong"],
@@ -241,29 +233,28 @@ defmodule MDExTest do
              </h1>
              """
 
-      # assert MDEx.to_html!(
-      #          ~s"""
-      #          <p>
-      #          <a href="">empty</a>
-      #          <a href="/">root</a>
-      #          <a href="https://host/">elsewhere</a>
-      #          </p>
-      #          """,
-      #          render: [unsafe_: true],
-      #          features: [
-      #            sanitize: [
-      #              base: :default,
-      #              link_rel: nil,
-      #              url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
-      #            ]
-      #          ]
-      #        ) <> "\n" == ~s"""
-      #        <p>
-      #        <a href="https://example/root/index.html">empty</a>
-      #        <a href="https://example/root/">root</a>
-      #        <a href="https://host/">elsewhere</a>
-      #        </p>
-      #        """
+      assert MDEx.to_html!(
+               ~s"""
+               <p>
+               <a href="">empty</a>
+               <a href="/">root</a>
+               <a href="https://host/">elsewhere</a>
+               </p>
+               """,
+               render: [unsafe_: true],
+               features: [
+                 sanitize: [
+                   link_rel: nil,
+                   url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
+                 ]
+               ]
+             ) <> "\n" == ~s"""
+             <p>
+             <a href="https://example/root/index.html">empty</a>
+             <a href="https://example/root/">root</a>
+             <a href="https://host/">elsewhere</a>
+             </p>
+             """
     end
 
     test "encode curly braces in inline code" do

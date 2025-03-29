@@ -431,7 +431,18 @@ defmodule MDEx do
     sanitize: [
       type: {:or, [{:keyword_list, @sanitize_schema}, nil]},
       default: nil,
-      doc: "cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering. See the [Safety](#module-safety) section for more info."
+      doc: """
+      Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
+
+      Use a [conservative set of options by default](https://docs.rs/ammonia/latest/ammonia/fn.clean.html),
+      but you can overwrite the default options `MDEx.default_sanitize_options/0`. For example to
+      build an [empty](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty) base with no allowed tags:
+
+          empty_base = Keyword.put(MDEx.default_sanitize_options(), :tags, [])
+          features: [sanitize: empty_base]
+
+      See the [Safety](#module-safety) section for more info.
+      """
     ],
     syntax_highlight_theme: [
       type: {:or, [:string, nil]},
@@ -1089,14 +1100,10 @@ defmodule MDEx do
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
   def validate_options!(options) do
-    features = options[:features] || []
-
     sanitize =
       options
       |> get_in([:features, :sanitize])
       |> update_deprecated_sanitize_options()
-
-    dbg(sanitize)
 
     options =
       NimbleOptions.validate!(
@@ -1104,21 +1111,18 @@ defmodule MDEx do
           extension: options[:extension] || [],
           parse: options[:parse] || [],
           render: options[:render] || [],
-          features: Keyword.put(features, :sanitize, sanitize)
+          features: Keyword.put(options[:features] || [], :sanitize, sanitize)
         ],
         @options_schema
       )
       |> update_in([:features, :sanitize], &adapt_sanitize_options/1)
 
-    r = %{
+    %{
       extension: Map.new(options[:extension]),
       parse: Map.new(options[:parse]),
       render: Map.new(options[:render]),
       features: Map.new(options[:features])
     }
-
-    dbg(r.features.sanitize)
-    r
   end
 
   defp update_deprecated_sanitize_options(true = _options) do
