@@ -252,7 +252,8 @@ defmodule MDEx do
   @sanitize_schema [
     tags: [
       type: {:list, :string},
-      default: ~w(a abbr),
+      default:
+        ~w(a abbr acronym area article aside b bdi bdo blockquote br caption center cite code col colgroup data dd del details dfn div dl dt em figcaption figure footer h1 h2 h3 h4 h5 h6 header hgroup hr i img ins kbd li map mark nav ol p pre q rp rt rtc ruby s samp small span strike strong sub summary sup table tbody td th thead time tr tt u ul var wbr),
       doc: "Sets the tags that are allowed."
     ],
     add_tags: [
@@ -282,7 +283,26 @@ defmodule MDEx do
     ],
     tag_attributes: [
       type: {:map, :string, {:list, :string}},
-      default: %{},
+      default: %{
+        "a" => ~w(href hreflang),
+        "bdo" => ~w(dir),
+        "blockquote" => ~w(cite),
+        "col" => ~w(align char charoff span),
+        "colgroup" => ~w(align char charoff span),
+        "del" => ~w(cite datetime),
+        "hr" => ~w(align size width),
+        "img" => ~w(align alt height src width),
+        "ins" => ~w(cite datetime),
+        "ol" => ~w(start),
+        "q" => ~w(cite),
+        "table" => ~w(align char charoff summary),
+        "tbody" => ~w(align char charoff),
+        "td" => ~w(align char charoff colspan headers rowspan),
+        "tfoot" => ~w(align char charoff),
+        "th" => ~w(align char charoff colspan headers rowspan scope),
+        "thead" => ~w(align char charoff),
+        "tr" => ~w(align char charoff)
+      },
       doc: "Sets the HTML attributes that are allowed on specific tags."
     ],
     add_tag_attributes: [
@@ -357,7 +377,7 @@ defmodule MDEx do
     ],
     url_schemes: [
       type: {:list, :string},
-      default: ~w(http https mailto),
+      default: ~w(bitcoin ftp ftps geo http https im irc ircs magnet mailto mms mx news nntp openpgp4fpr sip sms smsto ssh tel url webcal wtai xmpp),
       doc: "Sets the URL schemes permitted on href and src attributes."
     ],
     add_url_schemes: [

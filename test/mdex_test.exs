@@ -205,6 +205,7 @@ defmodule MDExTest do
              <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
              </h1>
              """
+
       #
       # assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: :clean]) <> "\n" == ~s"""
       #        <h1>
