@@ -27,7 +27,7 @@ defmodule MDEx.JsonFormatTest do
     ]
 
     assert {:ok, json} = MDEx.to_json(document, opts)
-    Jason.decode!(json, keys: :atoms)
+    Jason.decode!(json, keys: :atoms!)
   end
 
   test "empty doc" do

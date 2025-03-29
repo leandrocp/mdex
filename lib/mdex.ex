@@ -700,7 +700,7 @@ defmodule MDEx do
   end
 
   def parse_document({:json, json}, _options) when is_binary(json) do
-    case Jason.decode(json, keys: :atoms) do
+    case Jason.decode(json, keys: :atoms!) do
       {:ok, decoded} ->
         {:ok, json_to_node(decoded)}
 
