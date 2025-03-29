@@ -249,7 +249,7 @@ defmodule MDEx do
     ]
   ]
 
-  @sanitize_schema [
+  @sanitize_options_schema [
     tags: [
       type: {:list, :string},
       default:
@@ -429,7 +429,8 @@ defmodule MDEx do
 
   @features_options_schema [
     sanitize: [
-      type: {:or, [{:keyword_list, @sanitize_schema}, nil]},
+      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
+      type_spec: quote(do: sanitize_options() | nil),
       default: nil,
       doc: """
       Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
@@ -461,6 +462,7 @@ defmodule MDEx do
   @options_schema [
     extension: [
       type: :keyword_list,
+      type_spec: quote(do: extension_options()),
       default: [],
       doc:
         "Enable extensions. See comrak's [ExtensionOptions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html) for more info and examples.",
@@ -468,6 +470,7 @@ defmodule MDEx do
     ],
     parse: [
       type: :keyword_list,
+      type_spec: quote(do: parse_options()),
       default: [],
       doc:
         "Configure parsing behavior. See comrak's [ParseOptions](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html) for more info and examples.",
@@ -475,6 +478,7 @@ defmodule MDEx do
     ],
     render: [
       type: :keyword_list,
+      type_spec: quote(do: render_options()),
       default: [],
       doc:
         "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
@@ -482,18 +486,59 @@ defmodule MDEx do
     ],
     features: [
       type: :keyword_list,
+      type_spec: quote(do: features_options()),
       default: [],
-      doc: "Enable extra features. ",
+      doc: "Enable extra features.",
       keys: @features_options_schema
     ]
   ]
 
-  # TODO: docs/spec
+  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+  @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
+  @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
+  @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
+  @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
+  @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
+
+  @doc """
+  Returns the default options for the `:extension` group.
+
+  #{NimbleOptions.docs(@extension_options_schema)}
+  """
+  @spec default_extension_options() :: extension_options()
   def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
+
+  @doc """
+  Returns the default options for the `:parse` group.
+
+  #{NimbleOptions.docs(@parse_options_schema)}
+  """
+  @spec default_parse_options() :: parse_options()
   def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
+
+  @doc """
+  Returns the default options for the `:render` group.
+
+  #{NimbleOptions.docs(@render_options_schema)}
+  """
+  @spec default_render_options() :: render_options()
   def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
+
+  @doc """
+  Returns the default options for the `:features` group.
+
+  #{NimbleOptions.docs(@features_options_schema)}
+  """
+  @spec default_features_options() :: features_options()
   def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
-  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_schema)
+
+  @doc """
+  Returns the default options for the `:sanitize` group.
+
+  #{NimbleOptions.docs(@sanitize_options_schema)}
+  """
+  @spec default_sanitize_options() :: sanitize_options()
+  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
 
   @typedoc """
   Options to customize the parsing and rendering of Markdown documents.
@@ -527,7 +572,6 @@ defmodule MDEx do
 
   #{NimbleOptions.docs(@options_schema)}
   """
-  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
 
   @doc """
   Parse a `markdown` string and returns a `MDEx.Document`.
@@ -1258,18 +1302,27 @@ defmodule MDEx do
 
   ## Options
 
-    - `:sanitize` - cleans HTML after rendering. Defaults to `:clean`.
-        - `:clean` or `true` - uses these rules: https://docs.rs/ammonia/latest/ammonia/fn.clean.html
-        - `nil` or `false` - do no sanitization.
-        - `[allowed_classes: %{set: %{"span" => "hidden"}}, ...]` - set custom options.
+    - `:sanitize` - cleans HTML after rendering. Defaults to `MDEx.default_sanitize_options/0`.
+        - `keyword` - `t:sanitize_options/0`
+        - `nil` - do not sanitize output.
+
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
         - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
   """
-  @spec safe_html(String.t(), options()) :: String.t()
+  @spec safe_html(
+          String.t(),
+          options :: [
+            sanitize: sanitize_options() | nil,
+            escape: [atom()]
+          ]
+        ) :: String.t()
   def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
-    # FIXME: options
-    sanitize = opt(options, [:sanitize], :clean)
+    sanitize =
+      options
+      |> opt([:sanitize], MDEx.default_sanitize_options())
+      |> update_deprecated_sanitize_options()
+
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
