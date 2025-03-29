@@ -1254,35 +1254,6 @@ defmodule MDEx do
      }}
   end
 
-  # defp adapt_sanitize_option(%MDEx.Types.FeaturesOptions{} = features),
-  #   do: update_in(features.sanitize, &adapt_sanitize_option/1)
-  #
-  # defp adapt_sanitize_option(false), do: nil
-  # defp adapt_sanitize_option(true), do: :clean
-  # defp adapt_sanitize_option(opt) when opt in [nil, :clean], do: opt
-  #
-  # @set_add_rm_attrs [
-  #   :tags,
-  #   :clean_content_tags,
-  #   :tag_attributes,
-  #   :tag_attribute_values,
-  #   :generic_attribute_prefixes,
-  #   :generic_attributes,
-  #   :url_schemes,
-  #   :allowed_classes,
-  #   :set_tag_attribute_values
-  # ]
-  # defp adapt_sanitize_option(sanitize) do
-  #   sanitize =
-  #     for attr <- @set_add_rm_attrs, reduce: struct(MDEx.Types.SanitizeCustom, sanitize) do
-  #       sanitize -> update_in(sanitize, [Access.key!(attr)], &adapt_sanitize_set_add_rm/1)
-  #     end
-  #
-  #   {:custom, sanitize}
-  # end
-  #
-  # defp adapt_sanitize_set_add_rm(value), do: struct(MDEx.Types.SanitizeCustomSetAddRm, value)
-
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
 
@@ -1322,6 +1293,15 @@ defmodule MDEx do
       options
       |> opt([:sanitize], MDEx.default_sanitize_options())
       |> update_deprecated_sanitize_options()
+      |> case do
+        nil ->
+          nil
+
+        options ->
+          options
+          |> NimbleOptions.validate!(@sanitize_options_schema)
+          |> adapt_sanitize_options()
+      end
 
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)

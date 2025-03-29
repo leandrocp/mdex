@@ -27,19 +27,19 @@
 
 ## Features
 
-* Converts Markdown to HTML, XML, or back to Markdown
-* Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
+- Converts Markdown to HTML, XML, or back to Markdown
+- Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
   using the Access and Enumerable protocols
-* Supports the following flavors:
+- Supports the following flavors:
   - CommonMark (the standard Markdown specification)
   - GitHub Flavored Markdown
   - And some features of GitLab and Discord flavors
-* Includes additional features:
+- Includes additional features:
   - Wiki-style links
   - Emoji shortcodes
   - Syntax highlighting for code blocks
   - HTML sanitization
-* Provides sigils for building Markdown documents
+- Provides sigils for building Markdown documents
 
 The library is built on top of [comrak](https://crates.io/crates/comrak), a fast Rust implementation of GitHub's CommonMark parser, and uses [Floki](https://hex.pm/packages/floki)-style AST data structure.
 
@@ -147,13 +147,13 @@ iex> MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
 But if the input is provided by external sources, it might be a good idea to sanitize it:
 
 ```elixir
-iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe_: true], features: [sanitize: :clean])
+iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe_: true], features: [sanitize: MDEx.default_sanitize_options()])
 "<p><a href=\"https://elixir-lang.org\" rel=\"noopener noreferrer\">Elixir</a></p>"
 ```
 
 Note that you must pass the `unsafe_: true` option to first generate the raw HTML in order to sanitize it.
 
-The `:clean` option does clean HTML with a [conservative set of defaults](https://docs.rs/ammonia/latest/ammonia/fn.clean.html)
+It does clean HTML with a [conservative set of defaults](https://docs.rs/ammonia/latest/ammonia/fn.clean.html)
 that works for most cases, but you can overwrite those rules for further customization.
 
 For example, let's modify the [link rel](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.link_rel) attribute
@@ -163,6 +163,8 @@ to add `"nofollow"` into the `rel` attribute:
 iex> MDEx.to_html!("<a href=https://someexternallink.com>External</a>", render: [unsafe_: true], features: [sanitize: [link_rel: "nofollow noopener noreferrer"]])
 "<p><a href=\"https://someexternallink.com\" rel=\"nofollow noopener noreferrer\">External</a></p>"
 ```
+
+In this case the default rule set is still applied but the `link_rel` rule is overwritten.
 
 ### Unsafe
 
@@ -318,7 +320,6 @@ mix compile
 Modern CPU features are enabled by default but if your environment has an older CPU,
 you can use legacy artifacts by adding the following configuration to your `config.exs`:
 
-
 ```elixir
 config :mdex, use_legacy_artifacts: true
 ```
@@ -360,10 +361,10 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 
 MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible by consumers of the library.
 
-* [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
-* [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" and CommonMark was a requirement to parse many existing files.
-* [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
-* [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
+- [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
+- [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" and CommonMark was a requirement to parse many existing files.
+- [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
+- [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
 
 _Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
 
@@ -380,6 +381,6 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 ## Acknowledgements
 
-* [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
-* [Floki](https://hex.pm/packages/floki) for the AST manipulation
-* Logo based on [markdown-mark](https://github.com/dcurtis/markdown-mark)
+- [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
+- [Floki](https://hex.pm/packages/floki) for the AST manipulation
+- Logo based on [markdown-mark](https://github.com/dcurtis/markdown-mark)
