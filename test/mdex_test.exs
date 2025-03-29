@@ -3,7 +3,7 @@ defmodule MDExTest do
   alias MDEx.Document
   alias MDEx.Heading
   alias MDEx.Text
-  doctest MDEx, except: [to_json: 1, to_json: 2, to_json!: 1, to_json!: 2]
+  doctest MDEx, except: [to_json: 1, to_json: 2]
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
