@@ -239,9 +239,6 @@ parse: [
 render: [
   github_pre_lang: true,
   unsafe_: true,
-],
-features: [
-  sanitize: true
 ]) |> IO.puts()
 """
 <p>GitHub Flavored Markdown 🚀</p>

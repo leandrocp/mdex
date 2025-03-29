@@ -44,11 +44,6 @@ defmodule MDEx do
         "<p>Hello</p>"
 
 
-  * From Markdown to JSON
-
-        iex> MDEx.to_json!("Hello")
-        "{\"nodes\":[{\"nodes\":[{\"literal\":\"Hello\",\"node_type\":\"MDEx.Text\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
-
   """
   @type source :: markdown :: String.t() | Document.t()
 
@@ -615,60 +610,71 @@ defmodule MDEx do
 
   ## Examples
 
-      iex> MDEx.parse_document!(\"""
-      ...> # Languages
-      ...>
-      ...> - Elixir
-      ...> - Rust
-      ...> \""")
-      %MDEx.Document{
-        nodes: [
-          %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-          %MDEx.List{
-            nodes: [
-              %MDEx.ListItem{
-                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Elixir"}]}],
-                list_type: :bullet,
-                marker_offset: 0,
-                padding: 2,
-                start: 1,
-                delimiter: :period,
-                bullet_char: "-",
-                tight: false
-              },
-              %MDEx.ListItem{
-                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Rust"}]}],
-                list_type: :bullet,
-                marker_offset: 0,
-                padding: 2,
-                start: 1,
-                delimiter: :period,
-                bullet_char: "-",
-                tight: false
-              }
-            ],
-            list_type: :bullet,
-            marker_offset: 0,
-            padding: 2,
-            start: 1,
-            delimiter: :period,
-            bullet_char: "-",
-            tight: true
-          }
-        ]
-      }
+  * Parse Markdown with default options:
 
-      iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
-      %MDEx.Document{
+        iex> MDEx.parse_document!(\"""
+        ...> # Languages
+        ...>
+        ...> - Elixir
+        ...> - Rust
+        ...> \""")
+        %MDEx.Document{
           nodes: [
-            %MDEx.Paragraph{
+            %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+            %MDEx.List{
               nodes: [
-                %MDEx.Text{literal: "Darth Vader is "},
-                %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}
-              ]
+                %MDEx.ListItem{
+                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Elixir"}]}],
+                  list_type: :bullet,
+                  marker_offset: 0,
+                  padding: 2,
+                  start: 1,
+                  delimiter: :period,
+                  bullet_char: "-",
+                  tight: false
+                },
+                %MDEx.ListItem{
+                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Rust"}]}],
+                  list_type: :bullet,
+                  marker_offset: 0,
+                  padding: 2,
+                  start: 1,
+                  delimiter: :period,
+                  bullet_char: "-",
+                  tight: false
+                }
+              ],
+              list_type: :bullet,
+              marker_offset: 0,
+              padding: 2,
+              start: 1,
+              delimiter: :period,
+              bullet_char: "-",
+              tight: true
             }
           ]
         }
+
+  * Parse Markdown with custom options:
+
+        iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
+        %MDEx.Document{
+            nodes: [
+              %MDEx.Paragraph{
+                nodes: [
+                  %MDEx.Text{literal: "Darth Vader is "},
+                  %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}
+                ]
+              }
+            ]
+          }
+
+  * Parse JSON:
+
+        iex> json = ~s|{"nodes":[{"nodes":[{"literal":"Title","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
+        iex> MDEx.parse_document!({:json, json})
+        :todo
+
   """
   @spec parse_document(parse_source(), options()) :: {:ok, Document.t()} | {:error, any()}
   def parse_document(source, options \\ [])
@@ -678,7 +684,8 @@ defmodule MDEx do
   end
 
   def parse_document({:json, json}, options) when is_binary(json) do
-    :TODO
+    dbg(json)
+    Jason.decode(json)
   end
 
   def parse_document({:xml, xml}, options) when is_binary(xml) do
@@ -698,12 +705,11 @@ defmodule MDEx do
     end
   end
 
-  def parse_document!({:json, json}, options) when is_binary(json) do
-    :TODO
-  end
-
-  def parse_document!({:xml, xml}, options) when is_binary(xml) do
-    :TODO
+  def parse_document!({format, source}, options) when format in [:json, :xml] and is_binary(source) do
+    case parse_document({format, source}, options) do
+      {:ok, doc} -> doc
+      {:error, error} -> raise error
+    end
   end
 
   @doc """
@@ -1080,15 +1086,17 @@ defmodule MDEx do
   def to_json(source)
 
   def to_json(source) when is_binary(source) do
-    # TODO: parse_document then convert to JSON
+    with {:ok, doc} <- parse_document(source),
+         {:ok, json} <- to_json(doc) do
+      {:ok, json}
+    end
   end
 
   def to_json(%Document{} = doc) do
-    Jason.encode(doc)
-    # FIXME: include jason error?
-    # rescue
-    #   ErlangError ->
-    #     {:error, %DecodeError{document: doc}}
+    case Jason.encode(doc) do
+      {:ok, json} -> {:ok, json}
+      {:error, error} -> {:error, %DecodeError{document: doc, error: error}}
+    end
   end
 
   def to_json(source) do
@@ -1124,14 +1132,17 @@ defmodule MDEx do
   def to_json(source, options)
 
   def to_json(source, options) when is_binary(source) and is_list(options) do
-    # TODO
+    with {:ok, doc} <- parse_document(source, options),
+         {:ok, json} <- to_json(doc, options) do
+      {:ok, json}
+    end
   end
 
   def to_json(%Document{} = doc, options) when is_list(options) do
-    # TODO
-    # rescue
-    #   ErlangError ->
-    #     {:error, %DecodeError{document: doc}}
+    case Jason.encode(doc) do
+      {:ok, json} -> {:ok, json}
+      {:error, error} -> {:error, %DecodeError{document: doc, error: error}}
+    end
   end
 
   def to_json(source, options) do

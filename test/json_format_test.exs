@@ -27,7 +27,7 @@ defmodule MDEx.JsonFormatTest do
     ]
 
     assert {:ok, json} = MDEx.to_json(document, opts)
-    IO.puts(json)
+    # IO.puts(json)
     assert String.trim(json) == String.trim(expected)
   end
 
