@@ -78,23 +78,6 @@ where
         .collect()
 }
 
-#[derive(Debug, NifUnitEnum, Default)]
-pub enum ExSanitizeCustomBase {
-    #[default]
-    Default,
-
-    Empty,
-}
-
-impl ExSanitizeCustomBase {
-    fn to_ammonia(&self) -> Builder<'_> {
-        match self {
-            ExSanitizeCustomBase::Default => Builder::default(),
-            ExSanitizeCustomBase::Empty => Builder::empty(),
-        }
-    }
-}
-
 // ammonia exposes many options which can be set (discard previous value,
 // assign new one), added to (append/merge with previous value), or removed
 // from (subtract from previous value).  We let the user choose which of these
@@ -269,7 +252,6 @@ impl ExSanitizeCustomUrlRelative {
 
 #[derive(Debug, NifMap, Default)]
 pub struct ExSanitizeCustom {
-    // pub base: ExSanitizeCustomBase,
     pub tags: ExSanitizeCustomSetAddRm<Vec<String>>,
     pub clean_content_tags: ExSanitizeCustomSetAddRm<Vec<String>>,
     pub tag_attributes: ExSanitizeCustomSetAddRm<HashMap<String, Vec<String>>>,

@@ -493,11 +493,42 @@ defmodule MDEx do
     ]
   ]
 
+  @typedoc """
+  Options to customize the parsing and rendering of Markdown documents.
+
+  ## Examples
+
+  - Enable the `table` extension:
+
+      ```elixir
+      iex> MDEx.to_html!(\"""
+      ...> | lang |
+      ...> |------|
+      ...> | elixir |
+      ...> \""",
+      ...> extension: [table: true])
+      "<table>\\n<thead>\\n<tr>\\n<th>lang</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>elixir</td>\\n</tr>\\n</tbody>\\n</table>"
+      ```
+
+  ## Options
+
+  #{NimbleOptions.docs(@options_schema)}
+  """
   @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+
+  @typedoc "List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)."
   @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
+
+  @typedoc "List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)."
   @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
+
+  @typedoc "List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)."
   @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
+
+  @typedoc "List of extra features."
   @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
+
+  @typedoc "List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html)."
   @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
 
   @doc """
@@ -539,39 +570,6 @@ defmodule MDEx do
   """
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
-
-  @typedoc """
-  Options to customize the parsing and rendering of Markdown documents.
-
-  They are separated into 4 main groups:
-
-  - `:extension` - [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
-  - `:parse` - [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)
-  - `:render` - [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)
-  - `:features` - extra features like sanitization and syntax highlighting.
-
-  Check out the links above for examples and more details on each option.
-
-  See the full list with their respective types and default values below:
-
-  ## Examples
-
-  - Enable the `table` extension:
-
-      ```elixir
-      iex> MDEx.to_html!(\"""
-      ...> | lang |
-      ...> |------|
-      ...> | elixir |
-      ...> \""",
-      ...> extension: [table: true])
-      "<table>\\n<thead>\\n<tr>\\n<th>lang</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>elixir</td>\\n</tr>\\n</tbody>\\n</table>"
-      ```
-
-  ## Options
-
-  #{NimbleOptions.docs(@options_schema)}
-  """
 
   @doc """
   Parse a `markdown` string and returns a `MDEx.Document`.
