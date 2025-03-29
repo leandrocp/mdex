@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  A fast and extensible Markdown parser and formatter for Elixir that converts Markdown to HTML, XML, or back to Markdown.
+  A fast and extensible Markdown parser and formatter for Elixir that converts Markdown to HTML, JSON, and XML.
   Built on top of comrak, a port of GitHub's CommonMark implementation.
 </p>
 
@@ -27,7 +27,7 @@
 
 ## Features
 
-- Converts Markdown to HTML, XML, or back to Markdown
+- Converts Markdown to HTML, JSON, XML or back to Markdown
 - Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
   using the Access and Enumerable protocols
 - Supports the following flavors:
