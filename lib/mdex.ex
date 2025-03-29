@@ -730,14 +730,14 @@ defmodule MDEx do
 
   def parse_document!(markdown, options) when is_binary(markdown) do
     case parse_document(markdown, options) do
-      {:ok, doc} -> doc
+      {:ok, document} -> document
       {:error, error} -> raise error
     end
   end
 
   def parse_document!({format, source}, options) when format in [:json, :xml] and is_binary(source) do
     case parse_document({format, source}, options) do
-      {:ok, doc} -> doc
+      {:ok, document} -> document
       {:error, error} -> raise error
     end
   end
@@ -824,13 +824,13 @@ defmodule MDEx do
     |> maybe_trim()
   end
 
-  def to_html(%Document{} = doc) do
-    doc
+  def to_html(%Document{} = document) do
+    document
     |> Native.document_to_html()
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
   def to_html(source) do
@@ -877,13 +877,13 @@ defmodule MDEx do
     |> maybe_trim()
   end
 
-  def to_html(%Document{} = doc, options) when is_list(options) do
-    doc
+  def to_html(%Document{} = document, options) when is_list(options) do
+    document
     |> Native.document_to_html_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
   def to_html(source, options) do
@@ -988,14 +988,14 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
-  def to_xml(%Document{} = doc) do
-    doc
+  def to_xml(%Document{} = document) do
+    document
     |> Native.document_to_xml()
 
     # |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
   def to_xml(source) do
@@ -1070,13 +1070,13 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
-  def to_xml(%Document{} = doc, options) when is_list(options) do
-    doc
+  def to_xml(%Document{} = document, options) when is_list(options) do
+    document
     |> Native.document_to_xml_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
   def to_xml(source, options) do
@@ -1127,16 +1127,16 @@ defmodule MDEx do
   def to_json(source)
 
   def to_json(source) when is_binary(source) do
-    with {:ok, doc} <- parse_document(source),
-         {:ok, json} <- to_json(doc) do
+    with {:ok, document} <- parse_document(source),
+         {:ok, json} <- to_json(document) do
       {:ok, json}
     end
   end
 
-  def to_json(%Document{} = doc) do
-    case Jason.encode(doc) do
+  def to_json(%Document{} = document) do
+    case Jason.encode(document) do
       {:ok, json} -> {:ok, json}
-      {:error, error} -> {:error, %DecodeError{document: doc, error: error}}
+      {:error, error} -> {:error, %DecodeError{document: document, error: error}}
     end
   end
 
@@ -1175,16 +1175,16 @@ defmodule MDEx do
   def to_json(source, options)
 
   def to_json(source, options) when is_binary(source) and is_list(options) do
-    with {:ok, doc} <- parse_document(source, options),
-         {:ok, json} <- to_json(doc, options) do
+    with {:ok, document} <- parse_document(source, options),
+         {:ok, json} <- to_json(document, options) do
       {:ok, json}
     end
   end
 
-  def to_json(%Document{} = doc, options) when is_list(options) do
-    case Jason.encode(doc) do
+  def to_json(%Document{} = document, options) when is_list(options) do
+    case Jason.encode(document) do
       {:ok, json} -> {:ok, json}
-      {:error, error} -> {:error, %DecodeError{document: doc, error: error}}
+      {:error, error} -> {:error, %DecodeError{document: document, error: error}}
     end
   end
 
@@ -1208,56 +1208,68 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert an AST to CommonMark using default options.
+  Convert a `MDEx.Document` to Markdown using default options.
 
-  To customize the output, use `to_commonmark/2`.
+  To customize the output, use `to_markdown/2`.
 
   ## Example
 
-      iex> MDEx.to_commonmark(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
+      iex> MDEx.to_markdown(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
       {:ok, "### Hello"}
 
   """
-  @spec to_commonmark(Document.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(%Document{} = doc) do
-    doc
+  @spec to_markdown(Document.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(%Document{} = document) do
+    document
     |> Native.document_to_commonmark()
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
   @doc """
-  Same as `to_commonmark/1` but raises `MDEx.DecodeError` if the conversion fails.
+  Same as `to_markdown/1` but raises `MDEx.DecodeError` if the conversion fails.
   """
-  @spec to_commonmark!(Document.t()) :: String.t()
-  def to_commonmark!(%Document{} = doc) do
-    case to_commonmark(doc) do
+  @spec to_markdown!(Document.t()) :: String.t()
+  def to_markdown!(%Document{} = document) do
+    case to_markdown(document) do
       {:ok, md} -> md
       {:error, error} -> raise error
     end
   end
 
   @doc """
-  Convert an AST to CommonMark with custom options.
+  Convert a `MDEx.Document` to Markdown with custom options.
   """
-  @spec to_commonmark(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(%Document{} = doc, options) when is_list(options) do
-    doc
+  @spec to_markdown(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(%Document{} = document, options) when is_list(options) do
+    document
     |> Native.document_to_commonmark_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
   @doc """
-  Same as `to_commonmark/2` but raises `MDEx.DecodeError` if the conversion fails.
+  Same as `to_markdown/2` but raises `MDEx.DecodeError` if the conversion fails.
   """
-  @spec to_commonmark!(Document.t(), options()) :: String.t()
-  def to_commonmark!(%Document{} = doc, options) when is_list(options) do
-    case to_commonmark(doc, options) do
+  @spec to_markdown!(Document.t(), options()) :: String.t()
+  def to_markdown!(%Document{} = document, options) when is_list(options) do
+    case to_markdown(document, options) do
       {:ok, md} -> md
       {:error, error} -> raise error
     end
   end
+
+  @deprecated "Use `to_markdown/1` instead"
+  def to_commonmark(document), do: to_markdown(document)
+
+  @deprecated "Use `to_markdown!/1` instead"
+  def to_commonmark!(document), do: to_markdown!(document)
+
+  @deprecated "Use `to_markdown/2` instead"
+  def to_commonmark(document, options), do: to_markdown(document, options)
+
+  @deprecated "Use `to_markdown!/2` instead"
+  def to_commonmark!(document, options), do: to_markdown!(document, options)
 
   @doc """
   Traverse and update the Markdown document preserving the tree structure format.

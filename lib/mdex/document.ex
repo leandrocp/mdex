@@ -1102,7 +1102,7 @@ end
 
 defimpl String.Chars, for: [MDEx.Document] do
   def to_string(%MDEx.Document{} = doc) do
-    MDEx.to_commonmark!(doc)
+    MDEx.to_markdown!(doc)
   end
 end
 
