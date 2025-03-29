@@ -5,10 +5,13 @@
 Sigils now properly enable the `:unsafe_` option, which may cause breaking changes to some users.
 
 ### Enhancements
+  * New logo
+  * Custom sanitization options by @kivikakk
   * Document and validate all options (comrak and ammonia)
 
 ### Fixes
   * Fix `:unsafe_` options in sigils, effectively enabling them
+  * [Docs] Tag `Alert` node as Document Node
 
 ## 0.4.2 (2025-03-25)
 
