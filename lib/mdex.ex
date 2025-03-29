@@ -13,6 +13,8 @@ defmodule MDEx do
 
   import MDEx.Document, only: [is_fragment: 1]
 
+  require Logger
+
   @type input :: String.t() | Document.t()
 
   @extension_options_schema [
@@ -248,22 +250,167 @@ defmodule MDEx do
   ]
 
   @sanitize_schema [
-    base: [
-      type: {:in, [:default, :empty]},
-      default: :default,
-      doc: "Build sanitization options, either with [default](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.new) or [https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty](empty) options."
+    tags: [
+      type: {:list, :string},
+      default: ~w(a abbr),
+      doc: "Sets the tags that are allowed."
+    ],
+    add_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted tags without overwriting old ones."
+    ],
+    rm_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted tags."
+    ],
+    clean_content_tags: [
+      type: {:list, :string},
+      default: ~w(script style),
+      doc: "Sets the tags whose contents will be completely removed from the output."
+    ],
+    add_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional blacklisted clean-content tags without overwriting old ones."
+    ],
+    rm_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-blacklisted clean-content tags."
+    ],
+    tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Sets the HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attributes without overwriting old ones."
+    ],
+    rm_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attributes."
+    ],
+    tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attribute values without overwriting old ones."
+    ],
+    rm_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attribute values."
+    ],
+    set_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are to be set on specific tags."
+    ],
+    set_tag_attribute_value: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Add an attribute value to set on a specific element."
+    ],
+    rm_set_tag_attribute_value: [
+      type: {:map, :string, :string},
+      default: %{},
+      doc: "Remove existing tag-specific attribute values to be set."
+    ],
+    generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Sets the prefix of attributes that are allowed on any tag."
+    ],
+    add_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attribute prefix without overwriting old ones."
+    ],
+    rm_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attribute prefixes."
+    ],
+    generic_attributes: [
+      type: {:list, :string},
+      default: ~w(lang title),
+      doc: "Sets the attributes that are allowed on any tag."
+    ],
+    add_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attributes without overwriting old ones."
+    ],
+    rm_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_schemes: [
+      type: {:list, :string},
+      default: ~w(http https mailto),
+      doc: "Sets the URL schemes permitted on href and src attributes."
+    ],
+    add_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted URL schemes without overwriting old ones."
+    ],
+    rm_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_relative: [
+      type: {:or, [{:in, [:deny, :passthrough]}, {:tuple, [:atom, :string]}, {:tuple, [:atom, {:tuple, [:string, :string]}]}]},
+      default: :passthrough,
+      doc: "Configures the behavior for relative URLs: pass-through, resolve-with-base, or deny."
     ],
     link_rel: [
       type: {:or, [:string, nil]},
       default: "noopener noreferrer",
-      doc: "Configures a `rel` attribute that will be added on links. See [ammonia](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.link_rel) for more info."
+      doc: "Configures a `rel` attribute that will be added on links."
     ],
+    allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Sets the CSS classes that are allowed on specific tags."
+    ],
+    add_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted classes without overwriting old ones."
+    ],
+    rm_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted attributes."
+    ],
+    strip_comments: [
+      type: :boolean,
+      default: true,
+      doc: "Configures the handling of HTML comments."
+    ],
+    id_prefix: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Prefixes all `id` attribute values with a given string. Note that the tag and attribute themselves must still be whitelisted."
+    ]
   ]
 
   @features_options_schema [
     sanitize: [
-      type: {:or, [{:keyword_list, @sanitize_schema}, :boolean]},
-      default: false,
+      type: {:or, [{:keyword_list, @sanitize_schema}, nil]},
+      default: nil,
       doc: "cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering. See the [Safety](#module-safety) section for more info."
     ],
     syntax_highlight_theme: [
@@ -309,6 +456,13 @@ defmodule MDEx do
       keys: @features_options_schema
     ]
   ]
+
+  # TODO: docs/spec
+  def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
+  def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
+  def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
+  def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
+  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_schema)
 
   @typedoc """
   Options to customize the parsing and rendering of Markdown documents.
@@ -914,54 +1068,152 @@ defmodule MDEx do
   @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp validate_options!(options) do
+  def validate_options!(options) do
+    features = options[:features] || []
+
+    sanitize =
+      options
+      |> get_in([:features, :sanitize])
+      |> update_deprecated_sanitize_options()
+
+    dbg(sanitize)
+
     options =
       NimbleOptions.validate!(
         [
           extension: options[:extension] || [],
           parse: options[:parse] || [],
           render: options[:render] || [],
-          features: options[:features] || []
+          features: Keyword.put(features, :sanitize, sanitize)
         ],
         @options_schema
       )
+      |> update_in([:features, :sanitize], &adapt_sanitize_options/1)
 
-    %{
+    r = %{
       extension: Map.new(options[:extension]),
       parse: Map.new(options[:parse]),
       render: Map.new(options[:render]),
       features: Map.new(options[:features])
     }
+
+    dbg(r.features.sanitize)
+    r
   end
 
-  defp adapt_sanitize_option(%MDEx.Types.FeaturesOptions{} = features),
-    do: update_in(features.sanitize, &adapt_sanitize_option/1)
+  defp update_deprecated_sanitize_options(true = _options) do
+    Logger.warning("""
+    sanitize: true is deprecated. Pass :sanitize options instead, for example:
 
-  defp adapt_sanitize_option(false), do: nil
-  defp adapt_sanitize_option(true), do: :clean
-  defp adapt_sanitize_option(opt) when opt in [nil, :clean], do: opt
+      sanitize: MDEx.default_sanitize_options()
 
-  @set_add_rm_attrs [
-    :tags,
-    :clean_content_tags,
-    :tag_attributes,
-    :tag_attribute_values,
-    :generic_attribute_prefixes,
-    :generic_attributes,
-    :url_schemes,
-    :allowed_classes,
-    :set_tag_attribute_values
-  ]
-  defp adapt_sanitize_option(sanitize) do
-    sanitize =
-      for attr <- @set_add_rm_attrs, reduce: struct(MDEx.Types.SanitizeCustom, sanitize) do
-        sanitize -> update_in(sanitize, [Access.key!(attr)], &adapt_sanitize_set_add_rm/1)
-      end
+    MDEx.default_sanitize_options() is the same behavior as the now deprecated sanitize: true
 
-    {:custom, sanitize}
+    """)
+
+    MDEx.default_sanitize_options()
   end
 
-  defp adapt_sanitize_set_add_rm(value), do: struct(MDEx.Types.SanitizeCustomSetAddRm, value)
+  defp update_deprecated_sanitize_options(false = _options) do
+    Logger.warning("""
+    sanitize: false is deprecated. Use nil instead:
+
+      sanitize: nil
+
+    """)
+
+    nil
+  end
+
+  defp update_deprecated_sanitize_options(options), do: options
+
+  defp adapt_sanitize_options(nil = _options), do: nil
+
+  defp adapt_sanitize_options(options) do
+    # dbg(options)
+
+    {:custom,
+     %{
+       link_rel: options[:link_rel],
+       tags: %{
+         set: options[:tags],
+         add: options[:add_tags],
+         rm: options[:rm_tags]
+       },
+       clean_content_tags: %{
+         set: options[:clean_content_tags],
+         add: options[:add_clean_content_tags],
+         rm: options[:rm_clean_content_tags]
+       },
+       tag_attributes: %{
+         set: options[:tag_attributes],
+         add: options[:add_tag_attributes],
+         rm: options[:rm_tag_attributes]
+       },
+       tag_attribute_values: %{
+         set: options[:tag_attribute_values],
+         add: options[:add_tag_attribute_values],
+         rm: options[:rm_tag_attribute_values]
+       },
+       set_tag_attribute_values: %{
+         set: options[:set_tag_attribute_values],
+         add: options[:set_tag_attribute_value],
+         rm: options[:rm_set_tag_attribute_value]
+       },
+       generic_attribute_prefixes: %{
+         set: options[:generic_attribute_prefixes],
+         add: options[:add_generic_attribute_prefixes],
+         rm: options[:rm_generic_attribute_prefixes]
+       },
+       generic_attributes: %{
+         set: options[:generic_attributes],
+         add: options[:add_generic_attributes],
+         rm: options[:rm_generic_attributes]
+       },
+       url_schemes: %{
+         set: options[:url_schemes],
+         add: options[:add_url_schemes],
+         rm: options[:rm_url_schemes]
+       },
+       url_relative: options[:url_relative],
+       allowed_classes: %{
+         set: options[:allowed_classes],
+         add: options[:add_allowed_classes],
+         rm: options[:rm_allowed_classes]
+       },
+       strip_comments: options[:strip_comments],
+       id_prefix: options[:id_prefix]
+     }}
+  end
+
+  # defp adapt_sanitize_option(%MDEx.Types.FeaturesOptions{} = features),
+  #   do: update_in(features.sanitize, &adapt_sanitize_option/1)
+  #
+  # defp adapt_sanitize_option(false), do: nil
+  # defp adapt_sanitize_option(true), do: :clean
+  # defp adapt_sanitize_option(opt) when opt in [nil, :clean], do: opt
+  #
+  # @set_add_rm_attrs [
+  #   :tags,
+  #   :clean_content_tags,
+  #   :tag_attributes,
+  #   :tag_attribute_values,
+  #   :generic_attribute_prefixes,
+  #   :generic_attributes,
+  #   :url_schemes,
+  #   :allowed_classes,
+  #   :set_tag_attribute_values
+  # ]
+  # defp adapt_sanitize_option(sanitize) do
+  #   sanitize =
+  #     for attr <- @set_add_rm_attrs, reduce: struct(MDEx.Types.SanitizeCustom, sanitize) do
+  #       sanitize -> update_in(sanitize, [Access.key!(attr)], &adapt_sanitize_set_add_rm/1)
+  #     end
+  #
+  #   {:custom, sanitize}
+  # end
+  #
+  # defp adapt_sanitize_set_add_rm(value), do: struct(MDEx.Types.SanitizeCustomSetAddRm, value)
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
@@ -992,7 +1244,8 @@ defmodule MDEx do
   """
   @spec safe_html(String.t(), options()) :: String.t()
   def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
-    sanitize = opt(options, [:sanitize], :clean) |> adapt_sanitize_option()
+    # FIXME: options
+    sanitize = opt(options, [:sanitize], :clean)
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)

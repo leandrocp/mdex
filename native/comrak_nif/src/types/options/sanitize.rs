@@ -103,8 +103,7 @@ impl ExSanitizeCustomBase {
 // Most operate with the same shape of value in all three modes, but
 // set_tag_attribute_values is different.
 
-#[derive(Debug, NifStruct, Default)]
-#[module = "MDEx.Types.SanitizeCustomSetAddRm"]
+#[derive(Debug, NifMap, Default)]
 pub struct ExSanitizeCustomSetAddRm<TSet, TAdd = TSet, TRm = TSet> {
     set: Option<TSet>,
     add: Option<TAdd>,
@@ -268,10 +267,9 @@ impl ExSanitizeCustomUrlRelative {
     }
 }
 
-#[derive(Debug, NifStruct, Default)]
-#[module = "MDEx.Types.SanitizeCustom"]
+#[derive(Debug, NifMap, Default)]
 pub struct ExSanitizeCustom {
-    pub base: ExSanitizeCustomBase,
+    // pub base: ExSanitizeCustomBase,
     pub tags: ExSanitizeCustomSetAddRm<Vec<String>>,
     pub clean_content_tags: ExSanitizeCustomSetAddRm<Vec<String>>,
     pub tag_attributes: ExSanitizeCustomSetAddRm<HashMap<String, Vec<String>>>,
@@ -295,7 +293,8 @@ pub struct ExSanitizeCustom {
 
 impl ExSanitizeCustom {
     pub fn to_ammonia(&self) -> Builder<'_> {
-        let mut builder = self.base.to_ammonia();
+        // let mut builder = self.base.to_ammonia();
+        let mut builder = ammonia::Builder::default();
 
         self.tags.apply(
             &mut builder,
