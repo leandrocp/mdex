@@ -28,17 +28,32 @@ defmodule MDEx.DecodeError do
   Usually this means that a `MDEx.Document` is invalid and cannot be decoded.
   """
 
-  defexception [:document]
+  defexception [:document, :error]
 
-  @type t() :: %__MODULE__{document: term()}
+  @type t() :: %__MODULE__{document: term(), error: Exception.t()}
 
-  def message(%__MODULE__{document: document}) do
+  def message(%__MODULE__{document: document, error: error}) when is_nil(error) do
     """
     failed to decode the following Document
 
-    Got:
+    Document:
 
       #{inspect(document)}
+
+    """
+  end
+
+  def message(%__MODULE__{document: document, error: error}) do
+    """
+    failed to decode the following Document
+
+    Document:
+
+      #{inspect(document)}
+
+    Got:
+
+      #{inspect(error)}
 
     """
   end

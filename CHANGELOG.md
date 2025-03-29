@@ -7,6 +7,8 @@ Sigils now properly enable the `:unsafe_` option, which may cause breaking chang
 ### Enhancements
   * New logo
   * Custom sanitization options by @kivikakk
+  * Added `to_json/1` and `to_json/2` to convert Markdown or MDEx.Document to JSON
+  * Added support to parse JSON to MDEx.Document in `parse_document/1` and `parse_document/2`
   * Document and validate all options (comrak and ammonia)
 
 ### Fixes
