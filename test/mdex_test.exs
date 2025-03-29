@@ -191,7 +191,10 @@ defmodule MDExTest do
       assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: sanitize_options]) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: sanitize_options]) ==
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>",
+               render: [unsafe_: true],
+               features: [sanitize: sanitize_options]
+             ) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
     end
 

@@ -59,7 +59,8 @@ defmodule MDEx do
   """
   @type source :: markdown :: String.t() | Document.t()
 
-  @type parse_source :: markdown :: String.t() | {:json, String.t()} | {:xml, String.t()}
+  # TODO: support :xml
+  @type parse_source :: markdown :: String.t() | {:json, String.t()}
 
   @extension_options_schema [
     strikethrough: [
@@ -725,10 +726,6 @@ defmodule MDEx do
   end
 
   defp map_nodes(node), do: node
-
-  def parse_document({:xml, xml}, options) when is_binary(xml) do
-    :TODO
-  end
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
