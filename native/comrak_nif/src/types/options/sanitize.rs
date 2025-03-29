@@ -275,7 +275,6 @@ pub struct ExSanitizeCustom {
 
 impl ExSanitizeCustom {
     pub fn to_ammonia(&self) -> Builder<'_> {
-        // let mut builder = self.base.to_ammonia();
         let mut builder = ammonia::Builder::default();
 
         self.tags.apply(
