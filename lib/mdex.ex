@@ -15,7 +15,44 @@ defmodule MDEx do
 
   require Logger
 
-  @type input :: String.t() | Document.t()
+  @typedoc """
+  Input source to convert to another format.
+
+  ## Examples
+
+  * From Markdown to HTML
+
+        iex> MDEx.to_html!("# Hello")
+        "<h1>Hello</h1>"
+
+  * From Markdown to `MDEx.Document`
+
+        iex> MDEx.parse_document!("Hello")
+        %MDEx.Document{
+          nodes: [
+            %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
+          ]
+        }
+
+  * From `MDEx.Document` to HTML
+
+        iex> MDEx.to_html!(%MDEx.Document{
+        ...>   nodes: [
+        ...>     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
+        ...>   ]
+        ...> })
+        "<p>Hello</p>"
+
+
+  * From Markdown to JSON
+
+        iex> MDEx.to_json!("Hello")
+        "{\"nodes\":[{\"nodes\":[{\"literal\":\"Hello\",\"node_type\":\"MDEx.Text\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+
+  """
+  @type source :: markdown :: String.t() | Document.t()
+
+  @type parse_source :: markdown :: String.t() | {:json, String.t()} | {:xml, String.t()}
 
   @extension_options_schema [
     strikethrough: [
@@ -572,7 +609,9 @@ defmodule MDEx do
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
 
   @doc """
-  Parse a `markdown` string and returns a `MDEx.Document`.
+  Parse `source` and returns `MDEx.Document`.
+
+  Source can be either a Markdown string or a tagged JSON or XML string.
 
   ## Examples
 
@@ -631,20 +670,40 @@ defmodule MDEx do
           ]
         }
   """
-  @spec parse_document(String.t(), options()) :: {:ok, Document.t()} | {:error, any()}
-  def parse_document(markdown, options \\ []) when is_binary(markdown) do
+  @spec parse_document(parse_source(), options()) :: {:ok, Document.t()} | {:error, any()}
+  def parse_document(source, options \\ [])
+
+  def parse_document(markdown, options) when is_binary(markdown) do
     Native.parse_document(markdown, validate_options!(options))
+  end
+
+  def parse_document({:json, json}, options) when is_binary(json) do
+    :TODO
+  end
+
+  def parse_document({:xml, xml}, options) when is_binary(xml) do
+    :TODO
   end
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
   """
-  @spec parse_document!(String.t(), options()) :: Document.t()
-  def parse_document!(markdown, options \\ []) when is_binary(markdown) do
+  @spec parse_document!(parse_source(), options()) :: Document.t()
+  def parse_document!(source, options \\ [])
+
+  def parse_document!(markdown, options) when is_binary(markdown) do
     case parse_document(markdown, options) do
       {:ok, doc} -> doc
       {:error, error} -> raise error
     end
+  end
+
+  def parse_document!({:json, json}, options) when is_binary(json) do
+    :TODO
+  end
+
+  def parse_document!({:xml, xml}, options) when is_binary(xml) do
+    :TODO
   end
 
   @doc """
@@ -717,14 +776,14 @@ defmodule MDEx do
       {:ok, "<p>MDEx</p>"}
 
   """
-  @spec to_html(input()) ::
+  @spec to_html(source()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(input)
+  def to_html(source)
 
-  def to_html(input) when is_binary(input) do
-    input
+  def to_html(source) when is_binary(source) do
+    source
     |> Native.markdown_to_html()
     |> maybe_trim()
   end
@@ -738,20 +797,20 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_html(input) do
-    if is_fragment(input) do
-      to_html(%Document{nodes: List.wrap(input)})
+  def to_html(source) do
+    if is_fragment(source) do
+      to_html(%Document{nodes: List.wrap(source)})
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_html/1` but raises an error if the conversion fails.
   """
-  @spec to_html!(input()) :: String.t()
-  def to_html!(input) do
-    case to_html(input) do
+  @spec to_html!(source()) :: String.t()
+  def to_html!(source) do
+    case to_html(source) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -759,10 +818,6 @@ defmodule MDEx do
 
   @doc """
   Convert Markdown or `MDEx.Document` to HTML using custom options.
-
-  ## Options
-
-  See the [Options](#module-options) section for the available options.
 
   ## Examples
 
@@ -773,14 +828,14 @@ defmodule MDEx do
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
   """
-  @spec to_html(input(), options()) ::
+  @spec to_html(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(input, options)
+  def to_html(source, options)
 
-  def to_html(input, options) when is_binary(input) and is_list(options) do
-    input
+  def to_html(source, options) when is_binary(source) and is_list(options) do
+    source
     |> Native.markdown_to_html_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
@@ -795,20 +850,20 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_html(input, options) do
-    if is_fragment(input) do
-      to_html(%Document{nodes: List.wrap(input)}, options)
+  def to_html(source, options) do
+    if is_fragment(source) do
+      to_html(%Document{nodes: List.wrap(source)}, options)
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_html/2` but raises error if the conversion fails.
   """
-  @spec to_html!(input(), options()) :: String.t()
-  def to_html!(input, options) do
-    case to_html(input, options) do
+  @spec to_html!(source(), options()) :: String.t()
+  def to_html!(source, options) do
+    case to_html(source, options) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -884,14 +939,14 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(input()) ::
+  @spec to_xml(source()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(input)
+  def to_xml(source)
 
-  def to_xml(input) when is_binary(input) do
-    input
+  def to_xml(source) when is_binary(source) do
+    source
     |> Native.markdown_to_xml()
 
     # |> maybe_trim()
@@ -907,20 +962,20 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(input) do
-    if is_fragment(input) do
-      to_xml(%Document{nodes: List.wrap(input)})
+  def to_xml(source) do
+    if is_fragment(source) do
+      to_xml(%Document{nodes: List.wrap(source)})
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_xml/1` but raises an error if the conversion fails.
   """
-  @spec to_xml!(input()) :: String.t()
-  def to_xml!(input) do
-    case to_xml(input) do
+  @spec to_xml!(source()) :: String.t()
+  def to_xml!(source) do
+    case to_xml(source) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
@@ -928,10 +983,6 @@ defmodule MDEx do
 
   @doc """
   Convert Markdown or `MDEx.Document` to XML using custom options.
-
-  ## Options
-
-  See the [Options](#module-options) section for the available options.
 
   ## Examples
 
@@ -969,14 +1020,14 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(input(), options()) ::
+  @spec to_xml(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(input, options)
+  def to_xml(source, options)
 
-  def to_xml(input, options) when is_binary(input) and is_list(options) do
-    input
+  def to_xml(source, options) when is_binary(source) and is_list(options) do
+    source
     |> Native.markdown_to_xml_with_options(validate_options!(options))
 
     # |> maybe_wrap_error()
@@ -992,21 +1043,112 @@ defmodule MDEx do
       {:error, %DecodeError{document: doc}}
   end
 
-  def to_xml(input, options) do
-    if is_fragment(input) do
-      to_xml(%Document{nodes: List.wrap(input)}, options)
+  def to_xml(source, options) do
+    if is_fragment(source) do
+      to_xml(%Document{nodes: List.wrap(source)}, options)
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_xml/2` but raises error if the conversion fails.
   """
-  @spec to_xml!(input(), options()) :: String.t()
-  def to_xml!(input, options) do
-    case to_xml(input, options) do
+  @spec to_xml!(source(), options()) :: String.t()
+  def to_xml!(source, options) do
+    case to_xml(source, options) do
       {:ok, xml} -> xml
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert Markdown or `MDEx.Document` to JSON using default options.
+
+  Use `to_json/2` to pass options and customize the generated JSON.
+
+  ## Examples
+
+  Fragments of a document are also supported:
+
+
+  """
+  @spec to_json(source()) ::
+          {:ok, String.t()}
+          | {:error, MDEx.DecodeError.t()}
+          | {:error, MDEx.InvalidInputError.t()}
+  def to_json(source)
+
+  def to_json(source) when is_binary(source) do
+    # TODO: parse_document then convert to JSON
+  end
+
+  def to_json(%Document{} = doc) do
+    Jason.encode(doc)
+    # FIXME: include jason error?
+    # rescue
+    #   ErlangError ->
+    #     {:error, %DecodeError{document: doc}}
+  end
+
+  def to_json(source) do
+    if is_fragment(source) do
+      to_json(%Document{nodes: List.wrap(source)})
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_json/1` but raises an error if the conversion fails.
+  """
+  @spec to_json!(source()) :: String.t()
+  def to_json!(source) do
+    case to_json(source) do
+      {:ok, json} -> json
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert Markdown or `MDEx.Document` to JSON using custom options.
+
+  ## Examples
+
+
+  """
+  @spec to_json(source(), options()) ::
+          {:ok, String.t()}
+          | {:error, MDEx.DecodeError.t()}
+          | {:error, MDEx.InvalidInputError.t()}
+  def to_json(source, options)
+
+  def to_json(source, options) when is_binary(source) and is_list(options) do
+    # TODO
+  end
+
+  def to_json(%Document{} = doc, options) when is_list(options) do
+    # TODO
+    # rescue
+    #   ErlangError ->
+    #     {:error, %DecodeError{document: doc}}
+  end
+
+  def to_json(source, options) do
+    if is_fragment(source) do
+      to_json(%Document{nodes: List.wrap(source)}, options)
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_json/2` but raises error if the conversion fails.
+  """
+  @spec to_json!(source(), options()) :: String.t()
+  def to_json!(source, options) do
+    case to_json(source, options) do
+      {:ok, json} -> json
       {:error, error} -> raise error
     end
   end
@@ -1043,10 +1185,6 @@ defmodule MDEx do
 
   @doc """
   Convert an AST to CommonMark with custom options.
-
-  ## Options
-
-  See the [Options](#module-options) section for the available options.
   """
   @spec to_commonmark(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_commonmark(%Document{} = doc, options) when is_list(options) do

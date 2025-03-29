@@ -1154,3 +1154,58 @@ defimpl String.Chars,
     Kernel.to_string(%MDEx.Document{nodes: [node]})
   end
 end
+
+defimpl Jason.Encoder,
+  for: [
+    MDEx.Document,
+    MDEx.FrontMatter,
+    MDEx.BlockQuote,
+    MDEx.List,
+    MDEx.ListItem,
+    MDEx.DescriptionList,
+    MDEx.DescriptionItem,
+    MDEx.DescriptionTerm,
+    MDEx.DescriptionDetails,
+    MDEx.CodeBlock,
+    MDEx.HtmlBlock,
+    MDEx.Paragraph,
+    MDEx.Heading,
+    MDEx.ThematicBreak,
+    MDEx.FootnoteDefinition,
+    MDEx.FootnoteReference,
+    MDEx.Table,
+    MDEx.TableRow,
+    MDEx.TableCell,
+    MDEx.Text,
+    MDEx.TaskItem,
+    MDEx.SoftBreak,
+    MDEx.LineBreak,
+    MDEx.Code,
+    MDEx.HtmlInline,
+    MDEx.Raw,
+    MDEx.Emph,
+    MDEx.Strong,
+    MDEx.Strikethrough,
+    MDEx.Superscript,
+    MDEx.Link,
+    MDEx.Image,
+    MDEx.ShortCode,
+    MDEx.Math,
+    MDEx.MultilineBlockQuote,
+    MDEx.Escaped,
+    MDEx.WikiLink,
+    MDEx.Underline,
+    MDEx.Subscript,
+    MDEx.SpoileredText,
+    MDEx.EscapedTag,
+    MDEx.Alert
+  ] do
+  def encode(%type{} = node, opts) do
+    map =
+      node
+      |> Map.from_struct()
+      |> Map.put("node_type", inspect(type))
+
+    Jason.Encode.map(map, opts)
+  end
+end
