@@ -326,9 +326,9 @@ defmodule MDExTest do
     end
   end
 
-  describe "to_commonmark" do
-    test "document to commonmark with default options" do
-      assert MDEx.to_commonmark!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
+  describe "to_markdown" do
+    test "document to markdown with default options" do
+      assert MDEx.to_markdown!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
     end
   end
 end

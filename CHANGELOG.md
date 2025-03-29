@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-Sigils now properly enable the `:unsafe_` option, which may cause breaking changes to some users.
-
 ### Enhancements
   * New logo
   * Custom sanitization options by @kivikakk
@@ -15,8 +13,13 @@ Sigils now properly enable the `:unsafe_` option, which may cause breaking chang
   * Fix `:unsafe_` options in sigils, effectively enabling them
   * [Docs] Tag `Alert` node as Document Node
 
-### Fixes
+### Breaking changes
   * Bump minimum required Elixir version to 1.14
+  * Sigils now properly enable the `:unsafe_` option, which may cause breaking changes to some users
+
+### Deprecations
+  * Renamed `to_commonmark/1` and `to_commonmark/2` to `to_markdown/1` and `to_markdown/2`
+  * Renamed `to_commonmark!/1` and `to_commonmark!/2` to `to_markdown!/1` and `to_markdown!/2`
 
 ## 0.4.2 (2025-03-25)
 
