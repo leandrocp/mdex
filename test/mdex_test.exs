@@ -3,7 +3,7 @@ defmodule MDExTest do
   alias MDEx.Document
   alias MDEx.Heading
   alias MDEx.Text
-  doctest MDEx
+  doctest MDEx, except: [to_json: 1, to_json: 2]
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
@@ -184,12 +184,17 @@ defmodule MDExTest do
     end
 
     test "sanitize unsafe raw html" do
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: true]) == "<h1>test</h1>"
+      sanitize_options = MDEx.default_sanitize_options()
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true]) ==
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: sanitize_options]) == "<h1>test</h1>"
+
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: sanitize_options]) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: true]) ==
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>",
+               render: [unsafe_: true],
+               features: [sanitize: sanitize_options]
+             ) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
     end
 
@@ -200,7 +205,7 @@ defmodule MDExTest do
       </h1>
       """
 
-      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: true]) <> "\n" == ~s"""
+      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: MDEx.default_sanitize_options()]) <> "\n" == ~s"""
              <h1>
              <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
              </h1>
@@ -294,21 +299,21 @@ defmodule MDExTest do
   describe "safe html" do
     test "sanitize" do
       assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>",
-               sanitize: true,
+               sanitize: MDEx.default_sanitize_options(),
                escape: [content: false, curly_braces_in_code: false]
              ) == "<span>tag</span>"
     end
 
     test "escape tags" do
       assert MDEx.safe_html("<span>content</span>",
-               sanitize: false,
+               sanitize: nil,
                escape: [content: true, curly_braces_in_code: false]
              ) == "&lt;span&gt;content&lt;&#x2f;span&gt;"
     end
 
     test "escape curly braces in code tags" do
       assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>",
-               sanitize: false,
+               sanitize: nil,
                escape: [content: false, curly_braces_in_code: true]
              ) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
     end
