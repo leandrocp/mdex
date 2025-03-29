@@ -13,6 +13,9 @@ Sigils now properly enable the `:unsafe_` option, which may cause breaking chang
   * Fix `:unsafe_` options in sigils, effectively enabling them
   * [Docs] Tag `Alert` node as Document Node
 
+### Fixes
+  * Bump minimum required Elixir version to 1.14
+
 ## 0.4.2 (2025-03-25)
 
 ### Enhancements
