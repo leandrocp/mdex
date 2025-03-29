@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+Sigils now properly enable the `:unsafe_` option, which may cause breaking changes to some users.
+
+### Enhancements
+  * Document and validate all options (comrak and ammonia)
+
+### Fixes
+  * Fix `:unsafe_` options in sigils, effectively enabling them
+
 ## 0.4.2 (2025-03-25)
 
 ### Enhancements

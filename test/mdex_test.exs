@@ -206,25 +206,22 @@ defmodule MDExTest do
              </h1>
              """
 
-      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: :clean]) <> "\n" == ~s"""
-             <h1>
-             <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
-             </h1>
-             """
-
       assert MDEx.to_html!(input,
                render: [unsafe_: true],
                features: [
                  sanitize: [
-                   base: :empty,
-                   tags: %{set: ["h1"], add: ["a", "strong"], rm: ["strong"]},
-                   clean_content_tags: %{add: ["script"]},
-                   tag_attributes: %{add: %{"h1" => ["data-val"]}},
-                   tag_attribute_values: %{add: %{"h1" => %{"data-x" => ["3"]}}},
-                   generic_attribute_prefixes: %{set: ["x-"]},
-                   generic_attributes: %{set: ["id"]},
-                   allowed_classes: %{set: %{"h1" => ["xyz"]}},
-                   set_tag_attribute_values: %{set: %{"h1" => %{"hello" => "world"}}, add: %{"h1" => %{"ola" => "mundo"}}, rm: %{"h1" => "hello"}},
+                   tags: ["h1"],
+                   add_tags: ["a", "strong"],
+                   rm_tags: ["strong"],
+                   add_clean_content_tags: ["script"],
+                   add_tag_attributes: %{"h1" => ["data-val"]},
+                   add_tag_attribute_values: %{"h1" => %{"data-x" => ["3"]}},
+                   generic_attribute_prefixes: ["x-"],
+                   generic_attributes: ["id"],
+                   allowed_classes: %{"h1" => ["xyz"]},
+                   set_tag_attribute_values: %{"h1" => %{"hello" => "world"}},
+                   set_tag_attribute_value: %{"h1" => %{"ola" => "mundo"}},
+                   rm_set_tag_attribute_value: %{"h1" => "hello"},
                    strip_comments: false,
                    link_rel: "no",
                    id_prefix: "user-content-"
@@ -247,7 +244,6 @@ defmodule MDExTest do
                render: [unsafe_: true],
                features: [
                  sanitize: [
-                   base: :default,
                    link_rel: nil,
                    url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
                  ]
