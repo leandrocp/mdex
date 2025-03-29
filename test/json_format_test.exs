@@ -20,26 +20,24 @@ defmodule MDEx.JsonFormatTest do
     greentext: true
   ]
 
-  def assert_format(document, expected, extension \\ []) do
+  def to_json(document, extension \\ []) do
     opts = [
       extension: Keyword.merge(@extension, extension),
       render: [unsafe_: true]
     ]
 
     assert {:ok, json} = MDEx.to_json(document, opts)
-    # IO.puts(json)
-    assert String.trim(json) == String.trim(expected)
+    Jason.decode!(json, keys: :atoms)
   end
 
   test "empty doc" do
-    assert_format("", """
-    {"nodes":[],"node_type":"MDEx.Document"}
-    """)
+    assert %{node_type: "MDEx.Document", nodes: []} = to_json("")
   end
 
   test "heading" do
-    assert_format("# Title", """
-    {"nodes":[{"nodes":[{"literal":"Title","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}
-    """)
+    assert %{
+             node_type: "MDEx.Document",
+             nodes: [%{node_type: "MDEx.Heading", nodes: [%{node_type: "MDEx.Text", literal: "Title"}], level: 1, setext: false}]
+           } = to_json("# Title")
   end
 end
