@@ -659,21 +659,29 @@ defmodule MDEx do
 
         iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
         %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{
-                nodes: [
-                  %MDEx.Text{literal: "Darth Vader is "},
-                  %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}
-                ]
-              }
-            ]
-          }
+          nodes: [
+            %MDEx.Paragraph{
+              nodes: [
+                %MDEx.Text{literal: "Darth Vader is "},
+                %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}
+              ]
+            }
+          ]
+        }
 
   * Parse JSON:
 
         iex> json = ~s|{"nodes":[{"nodes":[{"literal":"Title","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
         iex> MDEx.parse_document!({:json, json})
-        :todo
+        %MDEx.Document{
+          nodes: [
+            %MDEx.Heading{
+              nodes: [%MDEx.Text{literal: "Title"} ],
+              level: 1,
+              setext: false
+            }
+          ]
+        }
 
   """
   @spec parse_document(parse_source(), options()) :: {:ok, Document.t()} | {:error, any()}
@@ -683,10 +691,28 @@ defmodule MDEx do
     Native.parse_document(markdown, validate_options!(options))
   end
 
-  def parse_document({:json, json}, options) when is_binary(json) do
-    dbg(json)
-    Jason.decode(json)
+  def parse_document({:json, json}, _options) when is_binary(json) do
+    case Jason.decode(json, keys: :atoms) do
+      {:ok, decoded} ->
+        {:ok, json_to_node(decoded)}
+
+      {:error, error} ->
+        {:error, %DecodeError{error: error}}
+    end
   end
+
+  defp json_to_node(json) do
+    {node_type, node} = Map.pop!(json, :node_type)
+    node_type = Module.concat([node_type])
+    node = map_nodes(node)
+    struct(node_type, node)
+  end
+
+  defp map_nodes(%{nodes: nodes} = node) do
+    %{node | nodes: Enum.map(nodes, &json_to_node/1)}
+  end
+
+  defp map_nodes(node), do: node
 
   def parse_document({:xml, xml}, options) when is_binary(xml) do
     :TODO
