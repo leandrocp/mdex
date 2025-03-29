@@ -50,7 +50,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.2"}
+    {:mdex, "~> 0.4"}
   ]
 end
 ```
@@ -58,7 +58,7 @@ end
 ## Usage
 
 ```elixir
-Mix.install([{:mdex, "~> 0.2"}])
+Mix.install([{:mdex, "~> 0.4"}])
 ```
 
 ```elixir

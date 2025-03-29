@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3 (2025-03-29)
 
 ### Enhancements
   * New logo
