@@ -43,6 +43,18 @@ defmodule MDEx do
         ...> })
         "<p>Hello</p>"
 
+  * From Markdown to JSON
+
+        iex> MDEx.to_json!("# Hello")
+        ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
+
+  You can also leverage `MDEx.Document` as an intermediate data type to convert between formats:
+
+  * From JSON to HTML:
+
+        iex> json = ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
+        iex> {:json, json} |> MDEx.parse_document!() |> MDEx.to_html!()
+        "<h1>Hello</h1>"
 
   """
   @type source :: markdown :: String.t() | Document.t()
