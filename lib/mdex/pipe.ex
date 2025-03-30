@@ -2,7 +2,7 @@ defmodule MDEx.Pipe do
   @moduledoc """
   MDEx.Pipe is a Req-like API to transform Markdown documents.
 
-  In short, plugins:
+  It enables plugins, for example:
 
       document = \"\"\"
       # Project Diagram
@@ -23,9 +23,10 @@ defmodule MDEx.Pipe do
       |> MDExMermaid.attach(version: "11")
       |> MDEx.to_html(document: document)
 
-  As an example, let's write that Mermaid plugin to see how it works:
 
   ## Writing Plugins
+
+  To understand how it works, let's write that Mermaid plugin showed above.
 
   In order to render Mermaid diagrams, we need to inject this `<script>` into the document,
   as outlined in their [docs](https://mermaid.js.org/intro/#installation):
@@ -35,8 +36,8 @@ defmodule MDEx.Pipe do
         mermaid.initialize({ startOnLoad: true });
       </script>
 
-  And we'll also make the `:version` option available to let users load a specific version,
-  but defaults to latest:
+  The `:version` option will be options to let users load a specific version,
+  but it will default to the latest version:
 
       MDEx.new() |> MDExMermaid.attach()
 
@@ -47,67 +48,11 @@ defmodule MDEx.Pipe do
   Let's get into the actual code, with comments to explain each part:
 
   ```elixir
-  defmodule MDExMermaid do
-    alias MDEx.Pipe
-
-    @latest_version "11"
-
-    def attach(pipe, options \\ []) do
-      pipe
-      # register with prefix `:mermaid_` to avoid conflicts with other plugins
-      |> Pipe.register_options([:mermaid_version])
-      # and merge it so we can access it later with `get_option/2`
-      |> Pipe.merge_options(options)
-      |> Pipe.prepend_steps(transform: &transform/1)
-    end
-
-    # where the actual transformation happens when the pipeline is executed:
-    #   - injects the script node into the document
-    #   - transforms code blocks starting with `mermaid` into `<pre class="mermaid">` to the mermaid script can find and render the diagrams
-    defp transform(pipe) do
-      script_node = script_node(pipe)
-
-      document =
-        MDEx.traverse_and_update(pipe.document, fn
-          # inject the mermaid script into the document
-          %MDEx.Document{nodes: nodes} = document ->
-            nodes = [script_node | nodes]
-            %{document | nodes: nodes}
-
-          # pattern match code blocks tagged as "mermaid"
-          # and inject the mermaid <pre> block without escaping the content
-          %MDEx.CodeBlock{info: "mermaid", literal: code, nodes: nodes} ->
-            %MDEx.HtmlBlock{
-              literal: "<pre class=\\"mermaid\\">\#\{code\}</pre>",
-              nodes: nodes
-            }
-
-          # ignore other nodes
-          node ->
-            node
-        end)
-
-      %{pipe | document: document}
-    end
-
-    defp script_node(pipe) do
-      # get the version, either passed in `attach/2` or the default one
-      version = Pipe.get_option(pipe, :mermaid_version, @latest_version)
-
-      # will inject a raw html block into the document
-      %MDEx.HtmlBlock{
-        literal: \"\"\"
-        <script type="module">
-          import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@\#\{version\}/dist/mermaid.esm.min.mjs';
-          mermaid.initialize({ startOnLoad: true });
-        </script>
-        \"\"\"}
-    end
-  end
+  TODO: copy from test
   ```
 
-  Now whenever that plugin is attached to the pipeline, it will inject run the `transform/1` function before other steps.
-
+  Now whenever that plugin is attached to a pipeline,
+  MDEx will run all functions defined in the `attach/1` function.
   """
 
   defstruct document: nil,

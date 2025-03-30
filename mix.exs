@@ -66,7 +66,7 @@ defmodule MDEx.MixProject do
       source_url: @source_url,
       extras: ["CHANGELOG.md"],
       groups_for_modules: [
-        Extensions: [
+        Extension: [
           MDEx.Pipe,
           MDEx.Steps
         ],

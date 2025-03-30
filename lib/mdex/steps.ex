@@ -1,4 +1,8 @@
 defmodule MDEx.Steps do
+  @moduledoc """
+  High-level API for manipulating `MDEx.Pipe`.
+  """
+
   import MDEx.Document, only: [is_fragment: 1]
   alias MDEx.Pipe
 
