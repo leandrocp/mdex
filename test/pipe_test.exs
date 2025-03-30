@@ -1,4 +1,4 @@
-defmodule MDExMermaidTest do
+defmodule MDExMermaidSample do
   alias MDEx.Pipe
 
   @latest_version "11"
@@ -6,7 +6,7 @@ defmodule MDExMermaidTest do
   def attach(pipe, options \\ []) do
     pipe
     |> Pipe.register_options([:mermaid_version])
-    |> Pipe.merge_options(mermaid_version: options[:version])
+    |> Pipe.put_options(mermaid_version: options[:version])
     |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
     |> Pipe.append_steps(inject_script: &inject_script/1)
     |> Pipe.append_steps(update_code_blocks: &update_code_blocks/1)
@@ -48,6 +48,7 @@ end
 
 defmodule MDEx.PipeTest do
   use ExUnit.Case, async: true
+  doctest MDEx.Pipe
 
   alias MDEx.Pipe
 
@@ -78,7 +79,7 @@ defmodule MDEx.PipeTest do
     test ":document in new/1", %{document: document} do
       assert {:ok, html} =
                MDEx.new(document: document)
-               |> MDExMermaidTest.attach(version: "10")
+               |> MDExMermaidSample.attach(version: "10")
                |> MDEx.to_html()
 
       assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
@@ -88,7 +89,7 @@ defmodule MDEx.PipeTest do
     test ":document in to_html/2", %{document: document} do
       assert {:ok, html} =
                MDEx.new()
-               |> MDExMermaidTest.attach(version: "10")
+               |> MDExMermaidSample.attach(version: "10")
                |> MDEx.to_html(document: document)
 
       assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
@@ -98,15 +99,14 @@ defmodule MDEx.PipeTest do
 
   describe "put_options" do
     setup do
-      [pipe: %Pipe{options: [render: [escape: true]]}]
+      [pipe: MDEx.new()]
     end
 
     test "update existing nested values", %{pipe: pipe} do
       pipe = Pipe.register_options(pipe, [:test])
-      pipe = Pipe.put_options(pipe, test: 1, document: "new", render: [escape: false, unsafe_: true], extension: [table: true])
+      pipe = Pipe.put_options(pipe, test: 1, render: [escape: false, unsafe_: true], extension: [table: true])
 
       assert get_in(pipe.options, [:test]) == 1
-      assert get_in(pipe.options, [:document]) == "new"
       refute get_in(pipe.options, [:render, :escape])
       assert get_in(pipe.options, [:render, :unsafe_])
       assert get_in(pipe.options, [:extension, :table])
@@ -121,8 +121,8 @@ defmodule MDEx.PipeTest do
     end
 
     test "validate built-in options", %{pipe: pipe} do
-      assert_raise NimbleOptions.ValidationError, fn ->
-        Pipe.put_options(pipe, document: 1)
+      assert_raise ArgumentError, fn ->
+        Pipe.put_options(pipe, invalid: 1)
       end
 
       assert_raise NimbleOptions.ValidationError, fn ->
@@ -256,7 +256,7 @@ defmodule MDEx.PipeTest do
       pipe =
         pipe
         |> Pipe.register_options([:foo])
-        |> Pipe.merge_options(foo: 1)
+        |> Pipe.put_options(foo: 1)
 
       assert Pipe.get_option(pipe, :foo) == 1
     end

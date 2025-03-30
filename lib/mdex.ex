@@ -1606,28 +1606,28 @@ defmodule MDEx do
 
   * Build a pipe with `:document`:
 
-      iex> mdex = MDEx.new(document: "# Hello")
-      iex> MDEx.to_html(mdex)
-      {:ok, "<h1>Hello</h1>"}
+        iex> mdex = MDEx.new(document: "# Hello")
+        iex> MDEx.to_html(mdex)
+        {:ok, "<h1>Hello</h1>"}
 
-      iex> mdex = MDEx.new(document: "Hello ~world~", extension: [strikethrough: true])
-      iex> MDEx.to_json(mdex)
-      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
+        iex> mdex = MDEx.new(document: "Hello ~world~", extension: [strikethrough: true])
+        iex> MDEx.to_json(mdex)
+        {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
 
   * Pass a `:document` when formatting:
 
-      iex> mdex = MDEx.new(extension: [strikethrough: true])
-      iex> MDEx.to_xml(mdex, document: "Hello ~world~")
-      {:ok, ~s|<?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE document SYSTEM "CommonMark.dtd">
-      <document xmlns="http://commonmark.org/xml/1.0">
-        <paragraph>
-          <text xml:space="preserve">Hello </text>
-          <strikethrough>
-            <text xml:space="preserve">world</text>
-          </strikethrough>
-        </paragraph>
-      </document>|}
+        iex> mdex = MDEx.new(extension: [strikethrough: true])
+        iex> MDEx.to_xml(mdex, document: "Hello ~world~")
+        {:ok, ~s|<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE document SYSTEM "CommonMark.dtd">
+        <document xmlns="http://commonmark.org/xml/1.0">
+          <paragraph>
+            <text xml:space="preserve">Hello </text>
+            <strikethrough>
+              <text xml:space="preserve">world</text>
+            </strikethrough>
+          </paragraph>
+        </document>|}
 
   ## Notes
 

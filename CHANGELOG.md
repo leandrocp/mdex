@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Enhancements
+  * Introduce `MDEx.Pipe` - a Req-like pipeline to manipulate Markdown documents and write plugins
+  * Added `MDEx.Document.wrap/1`
+
 ## 0.4.3 (2025-03-29)
 
 ### Enhancements

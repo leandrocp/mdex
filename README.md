@@ -7,8 +7,7 @@
 </p>
 
 <p align="center">
-  A fast and extensible Markdown parser and formatter for Elixir that converts Markdown to HTML, JSON, and XML.
-  Built on top of comrak, a port of GitHub's CommonMark implementation.
+  Fast and extensible Markdown for Elixir.
 </p>
 
 <p align="center">
@@ -27,21 +26,29 @@
 
 ## Features
 
-- Converts Markdown to HTML, JSON, XML or back to Markdown
-- Exposes an AST (Abstract Syntax Tree) to [manipulate](https://hexdocs.pm/mdex/MDEx.Document.html) documents
-  using the Access and Enumerable protocols
-- Supports the following flavors:
-  - CommonMark (the standard Markdown specification)
+- Support formats:
+  - Markdown (CommonMark)
+  - HTML
+  - JSON
+  - XML
+- Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
+- Req-like [Pipeline API](https://hexdocs.pm/mdex/MDEx.Pipe.html)
+- Compliant with the [CommonMark spec](https://commonmark.org)
+- Additional features:
   - GitHub Flavored Markdown
-  - And some features of GitLab and Discord flavors
-- Includes additional features:
+  - Discord and GitLab features
   - Wiki-style links
   - Emoji shortcodes
-  - Syntax highlighting for code blocks
+  - [Syntax highlighting](https://autumnus.dev) for code blocks
   - HTML sanitization
-- Provides sigils for building Markdown documents
+  - Sigils for Markdown, HTML, JSON, and XML
 
-The library is built on top of [comrak](https://crates.io/crates/comrak), a fast Rust implementation of GitHub's CommonMark parser, and uses [Floki](https://hex.pm/packages/floki)-style AST data structure.
+### Foundation
+
+The library is built on top of:
+- [comrak](https://crates.io/crates/comrak) - a fast Rust port of [GitHub's CommonMark parser](https://github.com/github/cmark-gfm)
+- [ammonia](https://crates.io/crates/ammonia) for HTML sanitization
+- [autumnus](https://crates.io/crates/autumnus) for syntax highlighting
 
 ## Installation
 
@@ -71,9 +78,36 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>"
 ```
 
+## Req-like Pipeline
+
+[MDEx.Pipe](https://hexdocs.pm/mdex/MDEx.Pipe.html) provides a high-level API to manipulate a Markdown document and build plugins that can be attached to a pipeline:
+
+```elixir
+document = """
+# Project Diagram
+
+````mermaid
+graph TD
+  A[Enter Chart Definition] --> B(Preview)
+  B --> C{decide}
+  C --> D[Keep]
+  C --> E[Edit Definition]
+  E --> B
+  D --> F[Save Image and Code]
+  F --> B
+````
+"""
+
+MDEx.new()
+|> MDExMermaid.attach(version: "11")
+|> MDEx.to_html(document: document)
+```
+
+See the moduledoc for more info.
+
 ## Sigils
 
-Convert and generate AST, Markdown (CommonMark), HTML, and XML formats.
+Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.
 
 First, import the sigils:
 
@@ -201,7 +235,7 @@ Formatting is the process of converting from one format to another, for example 
 Formatting to XML and to Markdown is also supported.
 
 You can use [MDEx.parse_document/2](https://hexdocs.pm/mdex/MDEx.html#parse_document/2) to generate an AST or any of the `to_*` functions
-to convert to Markdown (CommonMark), HTML, or XML.
+to convert to Markdown (CommonMark), HTML, JSON, or XML.
 
 ## Examples
 

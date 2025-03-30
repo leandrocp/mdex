@@ -19,7 +19,7 @@ defmodule MDEx.Pipe do
       \`\`\`
       \"\"\"
 
-      MDEx.new(parse: [smart: true])
+      MDEx.new()
       |> MDExMermaid.attach(version: "11")
       |> MDEx.to_html(document: document)
 
@@ -56,7 +56,7 @@ defmodule MDEx.Pipe do
           # register option with prefix `:mermaid_` to avoid conflicts with other plugins
           |> Pipe.register_options([:mermaid_version])
           #  merge all options given by users
-          |> Pipe.merge_options(mermaid_version: options[:version])
+          |> Pipe.put_options(mermaid_version: options[:version])
           # actual steps to manipulate the document
           # see respective Pipe functions for more info
           |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
@@ -137,25 +137,33 @@ defmodule MDEx.Pipe do
           private: map()
         }
 
-  @doc """
-  Registers a list of valid options that can be used in the pipeline.
+  @typedoc """
+  Step in a pipeline.
 
-  This function is used by plugins to declare which options they accept. When options are merged
-  later using `merge_options/2`, only registered options are allowed. If an unregistered option
-  is provided, an `ArgumentError` will be raised with a helpful "did you mean?" suggestion.
+  It's a function that receives a `t:MDEx.Pipe.t/0` struct and must return either one of the following:
+
+    - a `t:MDEx.Pipe.t/0` struct
+    - a tuple with a `t:MDEx.Pipe.t/0` struct and an `t:Exception.t/0` as `{pipe, exception}`
+    - a tuple with a module, function and arguments which will be invoked with `apply/3`
+  """
+  @type step() ::
+          (t() -> t())
+          | (t() -> {t(), Exception.t()})
+          | (t() -> {module(), atom(), [term()]})
+
+  @doc """
+  Registers a list of valid options that can be used by steps in the pipeline.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
+      iex> pipe = MDEx.new()
       iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
-      iex> pipe.options
-      [mermaid_version: "11"]
+      iex> pipe = MDEx.Pipe.put_options(pipe, mermaid_version: "11")
+      iex> pipe.options[:mermaid_version]
+      "11"
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> pipe = MDEx.Pipe.merge_options(pipe, invalid_option: "value")
-      ** (ArgumentError) unknown option :invalid_option
+      iex> MDEx.new(rendr: [unsafe_: true])
+      ** (ArgumentError) unknown option :rendr. Did you mean :render?
 
   """
   @spec register_options(t(), [atom()]) :: t()
@@ -163,34 +171,32 @@ defmodule MDEx.Pipe do
     update_in(pipe.registered_options, &MapSet.union(&1, MapSet.new(options)))
   end
 
-  # TODO: merge put_options/merge_options
-
   @doc """
-  Updates the pipeline's options with new values.
+  Merges options into the pipeline's existing options.
 
   This function handles both built-in options (like `:document`, `:extension`, `:parse`, `:render`, `:features`)
-  and user-defined options that have been registered with `Pipe.register_options/2`.
-
-  For built-in options, it validates them against their respective schemas and merges them appropriately.
-  For user options, it validates that they have been registered and merges them into the options list.
+  and user-defined options that have been registered with `register_options/2`.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:custom_option])
-      iex> pipe = MDEx.Steps.put_options(pipe, [
+      iex> pipe = MDEx.Pipe.register_options(MDEx.new(), [:custom_option])
+      iex> pipe = MDEx.Pipe.put_options(pipe, [
       ...>   document: "# Hello",
       ...>   extension: [table: true],
       ...>   custom_option: "value"
       ...> ])
-      iex> pipe.options[:document]
+      iex> MDEx.Pipe.get_option(pipe, :document)
       "# Hello"
-      iex> pipe.options[:extension][:table]
+      iex> MDEx.Pipe.get_option(pipe, :extension)[:table]
       true
-      iex> pipe.options[:custom_option]
+      iex> MDEx.Pipe.get_option(pipe, :custom_option)
       "value"
+
   """
+  @spec put_options(t(), keyword()) :: t()
   def put_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
+    validate_options(pipe, options)
+
     Enum.reduce(options, pipe, fn
       {name, options}, acc when name in @built_in_options ->
         put_built_in_options(acc, [{name, options}])
@@ -230,36 +236,6 @@ defmodule MDEx.Pipe do
     %{pipe | options: Keyword.merge(pipe.options, options)}
   end
 
-  @doc """
-  Merges new options into the pipeline's existing options.
-
-  This function validates that all options being merged have been previously registered using
-  `register_options/2`. If any unregistered options are provided, an `ArgumentError` will be raised.
-
-  The options are merged using `Keyword.merge/2`, which means that if the same option is provided
-  multiple times, the last value will be used.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
-      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "12")
-      iex> pipe.options
-      [mermaid_version: "12"]
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> pipe = MDEx.Pipe.merge_options(pipe, [mermaid_version: "11", invalid_option: "value"])
-      ** (ArgumentError) unknown option :invalid_option
-
-  """
-  @spec merge_options(t(), keyword()) :: t()
-  def merge_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
-    validate_options(pipe, options)
-    update_in(pipe.options, &Keyword.merge(&1, options))
-  end
-
   @doc false
   @spec validate_options(t(), keyword()) :: boolean()
   def validate_options(%MDEx.Pipe{} = pipe, options) do
@@ -296,28 +272,22 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Appends steps to the end of the pipeline's step list.
-
-  This function is used to add transformation steps that will be executed after any existing steps.
-  Each step can be either a function that takes a pipe as its argument, or a tuple of `{module, function, args}`.
+  Appends steps to the end of the existing pipeline's step list.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.append_steps(pipe, transform: fn pipe -> %{pipe | document: "transformed"} end)
-      iex> pipe.current_steps
-      [:transform]
+  * Update an `:extension` option:
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.append_steps(pipe, [
-      ...>   step1: fn pipe -> %{pipe | document: "step1"} end,
-      ...>   step2: fn pipe -> %{pipe | document: "step2"} end
-      ...> ])
-      iex> pipe.current_steps
-      [:step1, :step2]
+        iex> pipe = MDEx.new()
+        iex> pipe = MDEx.Pipe.append_steps(
+        ...>   pipe,
+        ...>   enable_tables: fn pipe -> MDEx.Pipe.put_extension_options(pipe, table: true) end
+        ...> )
+        iex> pipe |> MDEx.Pipe.run() |> MDEx.Pipe.get_option(:extension)
+        [table: true]
 
   """
-  @spec append_steps(t(), keyword((t() -> t()) | {module(), atom(), list()})) :: t()
+  @spec append_steps(t(), keyword(step())) :: t()
   def append_steps(pipe, steps) do
     %{
       pipe
@@ -327,31 +297,9 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Prepends steps to the beginning of the pipeline's step list.
-
-  This function is used to add transformation steps that will be executed before any existing steps.
-  Each step can be either a function that takes a pipe as its argument, or a tuple of `{module, function, args}`.
-
-  This is particularly useful for plugins that need to run their transformations before other steps,
-  such as when they need to modify the document structure before other plugins process it.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.prepend_steps(pipe, transform: fn pipe -> %{pipe | document: "transformed"} end)
-      iex> pipe.current_steps
-      [:transform]
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.prepend_steps(pipe, [
-      ...>   step1: fn pipe -> %{pipe | document: "step1"} end,
-      ...>   step2: fn pipe -> %{pipe | document: "step2"} end
-      ...> ])
-      iex> pipe.current_steps
-      [:step1, :step2]
-
+  Prepends steps to the beginning of the existing pipeline's step list.
   """
-  @spec prepend_steps(t(), keyword((t() -> t()) | {module(), atom(), list()})) :: t()
+  @spec prepend_steps(t(), keyword(step())) :: t()
   def prepend_steps(pipe, steps) do
     %{
       pipe
@@ -361,44 +309,16 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates the pipeline's extension options with new values.
-
-  This function validates and merges extension options into the pipeline's existing options.
-  Extension options control various Markdown parsing features like tables, strikethrough, tasklists, etc.
+  Updates the pipeline's `:extension` options.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_extension_options(pipe, [table: true, strikethrough: true])
-      iex> pipe.options[:extension][:table]
+      iex> pipe = MDEx.Pipe.put_extension_options(MDEx.new(), table: true)
+      iex> MDEx.Pipe.get_option(pipe, :extension)[:table]
       true
-      iex> pipe.options[:extension][:strikethrough]
-      true
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_extension_options(pipe, [table: true])
-      iex> pipe = MDEx.Steps.put_extension_options(pipe, [strikethrough: true])
-      iex> pipe.options[:extension]
-      [table: true, strikethrough: true]
-
-  ## Options
-
-  The function accepts a keyword list of extension options. See `MDEx.extension_options_schema/0` for the full list of available options.
-
-  Some common options include:
-  - `:table` - Enables table parsing
-  - `:strikethrough` - Enables strikethrough text using `~~text~~`
-  - `:tasklist` - Enables task list items
-  - `:autolink` - Enables automatic link detection
-  - `:footnotes` - Enables footnotes support
-  - `:math_dollars` - Enables math using dollar syntax
-  - `:math_code` - Enables math code blocks
-
-  ## Raises
-
-  - `NimbleOptions.ValidationError` if an invalid extension option is provided
 
   """
+  @spec put_extension_options(t(), MDEx.extension_options()) :: t()
   def put_extension_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     NimbleOptions.validate!(options, MDEx.extension_options_schema())
 
@@ -412,44 +332,16 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates the pipeline's render options with new values.
-
-  This function validates and merges render options into the pipeline's existing options.
-  Render options control how the Markdown is converted to HTML, XML, or CommonMark output.
+  Updates the pipeline's `:render` options.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_render_options(pipe, [hardbreaks: true, unsafe_: true])
-      iex> pipe.options[:render][:hardbreaks]
+      iex> pipe = MDEx.Pipe.put_render_options(MDEx.new(), escape: true)
+      iex> MDEx.Pipe.get_option(pipe, :render)[:escape]
       true
-      iex> pipe.options[:render][:unsafe_]
-      true
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_render_options(pipe, [hardbreaks: true])
-      iex> pipe = MDEx.Steps.put_render_options(pipe, [unsafe_: true])
-      iex> pipe.options[:render]
-      [hardbreaks: true, unsafe_: true]
-
-  ## Options
-
-  The function accepts a keyword list of render options. See `MDEx.render_options_schema/0` for the full list of available options.
-
-  Some common options include:
-  - `:hardbreaks` - Converts soft line breaks to hard line breaks
-  - `:unsafe_` - Allows rendering of raw HTML and potentially dangerous links
-  - `:escape` - Escapes raw HTML instead of clobbering it
-  - `:width` - Sets the wrap column when outputting CommonMark
-  - `:list_style` - Sets the bullet list marker type (`:dash`, `:plus`, or `:star`)
-  - `:sourcepos` - Includes source position attributes in HTML/XML output
-  - `:prefer_fenced` - Prefers fenced code blocks when outputting CommonMark
-
-  ## Raises
-
-  - `NimbleOptions.ValidationError` if an invalid render option is provided
 
   """
+  @spec put_render_options(t(), MDEx.render_options()) :: t()
   def put_render_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     NimbleOptions.validate!(options, MDEx.render_options_schema())
 
@@ -463,42 +355,16 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates the pipeline's parse options with new values.
-
-  This function validates and merges parse options into the pipeline's existing options.
-  Parse options control how the Markdown input is parsed into an AST, including features like smart punctuation
-  and task list matching.
+  Updates the pipeline's `:parse` options.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_parse_options(pipe, [smart: true, relaxed_tasklist_matching: true])
-      iex> pipe.options[:parse][:smart]
+      iex> pipe = MDEx.Pipe.put_parse_options(MDEx.new(), smart: true)
+      iex> MDEx.Pipe.get_option(pipe, :parse)[:smart]
       true
-      iex> pipe.options[:parse][:relaxed_tasklist_matching]
-      true
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_parse_options(pipe, [smart: true])
-      iex> pipe = MDEx.Steps.put_parse_options(pipe, [relaxed_tasklist_matching: true])
-      iex> pipe.options[:parse]
-      [smart: true, relaxed_tasklist_matching: true]
-
-  ## Options
-
-  The function accepts a keyword list of parse options. See `MDEx.parse_options_schema/0` for the full list of available options.
-
-  Some common options include:
-  - `:smart` - Converts punctuation (quotes, full-stops, hyphens) into "smart" punctuation
-  - `:default_info_string` - Sets the default info string for fenced code blocks
-  - `:relaxed_tasklist_matching` - Allows any symbol for tasklist items, not just `x` or `X`
-  - `:relaxed_autolinks` - Relaxes parsing of autolinks, allowing links inside brackets and all URL schemes
-
-  ## Raises
-
-  - `NimbleOptions.ValidationError` if an invalid parse option is provided
 
   """
+  @spec put_parse_options(t(), MDEx.parse_options()) :: t()
   def put_parse_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     NimbleOptions.validate!(options, MDEx.parse_options_schema())
 
@@ -512,43 +378,16 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates the pipeline's features options with new values.
-
-  This function validates and merges features options into the pipeline's existing options.
-  Features options control extra functionality like HTML sanitization and syntax highlighting.
+  Updates the pipeline's `:features` options.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_features_options(pipe, [
-      ...>   sanitize: true,
-      ...>   syntax_highlight_theme: "adwaita_dark"
-      ...> ])
-      iex> pipe.options[:features][:sanitize]
-      true
-      iex> pipe.options[:features][:syntax_highlight_theme]
-      "adwaita_dark"
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Steps.put_features_options(pipe, [sanitize: true])
-      iex> pipe = MDEx.Steps.put_features_options(pipe, [syntax_highlight_theme: "adwaita_dark"])
-      iex> pipe.options[:features]
-      [sanitize: true, syntax_highlight_theme: "adwaita_dark"]
-
-  ## Options
-
-  The function accepts a keyword list of features options. See `MDEx.features_options_schema/0` for the full list of available options.
-
-  Some common options include:
-  - `:sanitize` - Sanitizes output using [ammonia](https://crates.io/crates/ammonia) for security
-  - `:syntax_highlight_theme` - Sets the theme for syntax highlighting code blocks (default: "onedark")
-  - `:syntax_highlight_inline_style` - Embeds styles in the output for each generated token (default: true)
-
-  ## Raises
-
-  - `NimbleOptions.ValidationError` if an invalid features option is provided
+      iex> pipe = MDEx.Pipe.put_features_options(MDEx.new(), sanitize: [add_tags: ["MyComponent"]])
+      iex> MDEx.Pipe.get_option(pipe, :features)[:sanitize][:add_tags]
+      ["MyComponent"]
 
   """
+  @spec put_features_options(t(), MDEx.features_options()) :: t()
   def put_features_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
     NimbleOptions.validate!(options, MDEx.features_options_schema())
 
@@ -562,36 +401,25 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Inserts a node into the root of the document at the specified position.
+  Inserts `node` into the document root at the specified `position`.
 
-  This function adds a node to either the beginning (`:top`) or end (`:bottom`) of the document's node list.
-  The node must be a valid fragment node (like a heading, paragraph, etc.).
+    - By default, the node is inserted at the top of the document.
+    - Node must be a valid fragment node like a `MDEx.Heading`, `MDEx.HtmlBlock`, etc.
 
   ## Examples
 
-      iex> pipe = MDEx.new(document: "# Test") |> MDEx.Pipe.resolve_document()
-      iex> node = %MDEx.HtmlBlock{literal: "<p>Hello</p>"}
-      iex> pipe = MDEx.Steps.put_node_in_document_root(pipe, node, :top)
-      iex> pipe.document.nodes
-      [%MDEx.HtmlBlock{literal: "<p>Hello</p>"}, %MDEx.Heading{level: 1}]
-
-      iex> pipe = MDEx.new(document: "# Test") |> MDEx.Pipe.resolve_document()
-      iex> node = %MDEx.HtmlBlock{literal: "<p>Hello</p>"}
-      iex> pipe = MDEx.Steps.put_node_in_document_root(pipe, node, :bottom)
-      iex> pipe.document.nodes
-      [%MDEx.Heading{level: 1}, %MDEx.HtmlBlock{literal: "<p>Hello</p>"}]
-
-  ## Arguments
-
-  - `pipe` - The pipeline containing the document to modify
-  - `node` - The node to insert (must be a valid fragment node)
-  - `position` - Where to insert the node (`:top` or `:bottom`, defaults to `:top`)
-
-  ## Raises
-
-  - `RuntimeError` if trying to insert a non-fragment node at the bottom of the document
+      iex> pipe = MDEx.new()
+      iex> pipe = MDEx.Pipe.append_steps(
+      ...>   pipe,
+      ...>   append_node: fn pipe ->
+      ...>     html_block = %MDEx.HtmlBlock{literal: "<p>Hello</p>"}
+      ...>     MDEx.Pipe.put_node_in_document_root(pipe, html_block, :bottom)
+      ...>   end)
+      iex> MDEx.to_html(pipe, document: "# Doc", render: [unsafe_: true])
+      {:ok, "<h1>Doc</h1>\\n<p>Hello</p>"}
 
   """
+  @spec put_node_in_document_root(t(), MDEx.Document.md_node(), position :: :top | :bottom) :: t()
   def put_node_in_document_root(pipe, node, position \\ :top)
 
   def put_node_in_document_root(%MDEx.Pipe{document: %MDEx.Document{} = document} = pipe, node, :top = _position) do
@@ -629,11 +457,7 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates nodes in the document that match a selector function.
-
-  This function traverses all nodes in the document and applies a transformation function to nodes
-  that match the selector function. The selector function should return `true` for nodes that should
-  be updated.
+  Updates nodes in the document that match `selector`.
   """
   def update_nodes(%MDEx.Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
     document =
@@ -653,142 +477,52 @@ defmodule MDEx.Pipe do
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.halt(pipe)
+      iex> pipe = MDEx.Pipe.halt(MDEx.new())
       iex> pipe.halted
       true
 
   """
-  @spec halt(Pipe.t()) :: Pipe.t()
+  @spec halt(t()) :: t()
   def halt(%MDEx.Pipe{} = pipe) do
     put_in(pipe.halted, true)
   end
 
   @doc """
   Halts the pipeline execution with an exception.
-
-  This function is used to stop the pipeline and return both the halted pipeline and the
-  exception that caused the halt. This is particularly useful for error handling in plugins,
-  allowing them to propagate errors up the pipeline while maintaining the pipeline's state.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> exception = %RuntimeError{message: "Something went wrong"}
-      iex> {pipe, error} = MDEx.Pipe.halt(pipe, exception)
-      iex> pipe.halted
-      true
-      iex> error
-      %RuntimeError{message: "Something went wrong"}
-
   """
-  @spec halt(Pipe.t(), Exception.t()) :: {Pipe.t(), Exception.t()}
+  @spec halt(t(), Exception.t()) :: {t(), Exception.t()}
   def halt(%MDEx.Pipe{} = pipe, %_{__exception__: true} = exception) do
     {put_in(pipe.halted, true), exception}
   end
 
   @doc """
   Retrieves an option value from the pipeline.
-
-  Returns the value of the option if it exists, otherwise returns the default value.
-  This is typically used by plugins to access their configuration options.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> pipe = MDEx.Pipe.merge_options(pipe, mermaid_version: "11")
-      iex> MDEx.Pipe.get_option(pipe, :mermaid_version)
-      "11"
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.register_options(pipe, [:mermaid_version])
-      iex> MDEx.Pipe.get_option(pipe, :mermaid_version, "latest")
-      "latest"
-
   """
-  @spec get_option(Pipe.t(), atom(), term()) :: term()
+  @spec get_option(t(), atom(), term()) :: term()
   def get_option(%MDEx.Pipe{} = pipe, key, default \\ nil) when is_atom(key) do
     Keyword.get(pipe.options, key, default)
   end
 
   @doc """
-  Retrieves a value from the pipeline's private storage.
-
-  The private storage is a map that can be used by plugins to store internal state or temporary
-  data that shouldn't be exposed as options. Returns the value if it exists, otherwise returns
-  the default value.
-
-  This is typically used by plugins to maintain state between steps or store data that shouldn't
-  be part of the public API.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.put_private(pipe, :cache_key, "abc123")
-      iex> MDEx.Pipe.get_private(pipe, :cache_key)
-      "abc123"
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> MDEx.Pipe.get_private(pipe, :non_existent_key, :not_found)
-      :not_found
-
+  Retrieves a private value from the pipeline.
   """
-  @spec get_private(Pipe.t(), atom(), default) :: term() | default when default: var
+  @spec get_private(t(), atom(), default) :: term() | default when default: var
   def get_private(%MDEx.Pipe{} = pipe, key, default \\ nil) when is_atom(key) do
     Map.get(pipe.private, key, default)
   end
 
   @doc """
   Updates a value in the pipeline's private storage using a function.
-
-  If the key exists, the function is called with the current value and the result is stored.
-  If the key doesn't exist, the default value is stored.
-
-  This is typically used by plugins to maintain state that needs to be updated based on its
-  current value, such as counters or accumulators.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.put_private(pipe, :counter, 1)
-      iex> pipe = MDEx.Pipe.update_private(pipe, :counter, 0, &(&1 + 1))
-      iex> MDEx.Pipe.get_private(pipe, :counter)
-      2
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.update_private(pipe, :new_key, 0, &(&1 + 1))
-      iex> MDEx.Pipe.get_private(pipe, :new_key)
-      0
-
   """
-  @spec update_private(Pipe.t(), key :: atom(), default :: term(), (term() -> term())) :: Pipe.t()
+  @spec update_private(t(), key :: atom(), default :: term(), (term() -> term())) :: t()
   def update_private(%MDEx.Pipe{} = pipe, key, default, fun) when is_atom(key) and is_function(fun, 1) do
     update_in(pipe.private, &Map.update(&1, key, default, fun))
   end
 
   @doc """
   Stores a value in the pipeline's private storage.
-
-  This function is used to store values that shouldn't be exposed as options but need to be
-  maintained between pipeline steps. The private storage is a map where plugins can store
-  internal state or temporary data.
-
-  ## Examples
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.put_private(pipe, :cache_key, "abc123")
-      iex> MDEx.Pipe.get_private(pipe, :cache_key)
-      "abc123"
-
-      iex> pipe = MDEx.Pipe.new()
-      iex> pipe = MDEx.Pipe.put_private(pipe, :temp_data, %{count: 1})
-      iex> pipe = MDEx.Pipe.put_private(pipe, :temp_data, %{count: 2})
-      iex> MDEx.Pipe.get_private(pipe, :temp_data)
-      %{count: 2}
-
   """
-  @spec put_private(Pipe.t(), atom(), term()) :: Pipe.t()
+  @spec put_private(t(), atom(), term()) :: t()
   def put_private(%MDEx.Pipe{} = pipe, key, value) when is_atom(key) do
     put_in(pipe.private[key], value)
   end
@@ -818,7 +552,13 @@ defmodule MDEx.Pipe do
     end
   end
 
-  @doc false
+  @doc """
+  Executes the pipeline steps in order.
+
+  This function is usually not called directly,
+  instead call one of the `to_*` functions in `MDEx` module.
+  """
+  @spec run(t()) :: t()
   def run(%MDEx.Pipe{} = pipe) do
     pipe
     |> resolve_document()
