@@ -2,10 +2,45 @@
 
 ## Unreleased
 
+## 0.4.3 (2025-03-29)
+
+### Enhancements
+  * New logo
+  * Custom sanitization options by @kivikakk
+  * Added `to_json/1` and `to_json/2` to convert Markdown or MDEx.Document to JSON
+  * Added support to parse JSON to MDEx.Document in `parse_document/1` and `parse_document/2`
+  * Document and validate all options (comrak and ammonia)
+
+### Fixes
+  * Fix `:unsafe_` options in sigils, effectively enabling them
+  * [Docs] Tag `Alert` node as Document Node
+
+### Breaking changes
+  * Bump minimum required Elixir version to 1.14
+  * Sigils now properly enable the `:unsafe_` option, which may cause breaking changes to some users
+
+### Deprecations
+  * Renamed `to_commonmark/1` and `to_commonmark/2` to `to_markdown/1` and `to_markdown/2`
+  * Renamed `to_commonmark!/1` and `to_commonmark!/2` to `to_markdown!/1` and `to_markdown!/2`
+
+## 0.4.2 (2025-03-25)
+
+### Enhancements
+  * Added target `riscv64gc-unknown-linux-gnu target`
+  * Added binaries for NIF version 2.16
+
+### Fixes
+  * Fixed glibc version mismatch on `x86_64-unknown-linux-gnu` target
+
+### Docs
+  * Added section Pre-compilation listing all targets, how to compile the project,
+    and how to enable targets for legacy CPUs.
+  * Added example in `MDEx.Document` on how to bump Heading levels
+
 ## 0.4.1 (2025-03-24)
 
 ### Enhancements
-  * Add target `arm-unknown-linux-gnueabihf` used by Raspberry Pi
+  * Added target `arm-unknown-linux-gnueabihf` used by Raspberry Pi
 
 ## 0.4.0 (2025-03-10)
 

@@ -10,11 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = { version = "0.36", features = [
-    "derive",
-    "nif_version_2_15",
-    "serde",
-] }
+rustler = "0.36"
 serde = "1.0"
 comrak = { version = "0.36", features = ["shortcodes"] }
 ammonia = "4.0"
@@ -86,5 +82,5 @@ inkjet = { version = "0.10.5", default-features = false, features = [
 
 [features]
 default = ["nif_version_2_15"]
-# Feature necessary for Rustler Precompiled.
 nif_version_2_15 = ["rustler/nif_version_2_15"]
+nif_version_2_16 = ["rustler/nif_version_2_16"]

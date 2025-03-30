@@ -3,7 +3,7 @@ defmodule MDExTest do
   alias MDEx.Document
   alias MDEx.Heading
   alias MDEx.Text
-  doctest MDEx
+  doctest MDEx, except: [to_json: 1, to_json: 2]
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
@@ -212,13 +212,82 @@ defmodule MDExTest do
     end
 
     test "sanitize unsafe raw html" do
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: true]) == "<h1>test</h1>"
+      sanitize_options = MDEx.default_sanitize_options()
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: true]) ==
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: sanitize_options]) == "<h1>test</h1>"
+
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: sanitize_options]) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>", render: [unsafe_: true], features: [sanitize: true]) ==
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>",
+               render: [unsafe_: true],
+               features: [sanitize: sanitize_options]
+             ) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
+    end
+
+    test "range of sanitize specifications" do
+      input = ~s"""
+      <h1 class="abc xyz" e="f" f="g" data-val="1" x-val="2" data-x="3">
+      <strong>te<!-- :) -->st</strong> <a id="elixir" href="https://elixir-lang.org/"></a>
+      </h1>
+      """
+
+      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: MDEx.default_sanitize_options()]) <> "\n" == ~s"""
+             <h1>
+             <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
+             </h1>
+             """
+
+      assert MDEx.to_html!(input,
+               render: [unsafe_: true],
+               features: [
+                 sanitize: [
+                   tags: ["h1"],
+                   add_tags: ["a", "strong"],
+                   rm_tags: ["strong"],
+                   add_clean_content_tags: ["script"],
+                   add_tag_attributes: %{"h1" => ["data-val"]},
+                   add_tag_attribute_values: %{"h1" => %{"data-x" => ["3"]}},
+                   generic_attribute_prefixes: ["x-"],
+                   generic_attributes: ["id"],
+                   allowed_classes: %{"h1" => ["xyz"]},
+                   set_tag_attribute_values: %{"h1" => %{"hello" => "world"}},
+                   set_tag_attribute_value: %{"h1" => %{"ola" => "mundo"}},
+                   rm_set_tag_attribute_value: %{"h1" => "hello"},
+                   strip_comments: false,
+                   link_rel: "no",
+                   id_prefix: "user-content-"
+                 ]
+               ]
+             ) <> "\n" == ~s"""
+             <h1 class="xyz" data-val="1" x-val="2" data-x="3" ola="mundo">
+             te<!-- :) -->st <a id="user-content-elixir" href="https://elixir-lang.org/" rel="no"></a>
+             </h1>
+             """
+
+      assert MDEx.to_html!(
+               ~s"""
+               <p>
+               <a href="">empty</a>
+               <a href="/">root</a>
+               <a href="https://host/">elsewhere</a>
+               </p>
+               """,
+               render: [unsafe_: true],
+               features: [
+                 sanitize: [
+                   link_rel: nil,
+                   url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
+                 ]
+               ]
+             ) <> "\n" == ~s"""
+             <p>
+             <a href="https://example/root/index.html">empty</a>
+             <a href="https://example/root/">root</a>
+             <a href="https://host/">elsewhere</a>
+             </p>
+             """
     end
 
     test "encode curly braces in inline code" do
@@ -258,21 +327,21 @@ defmodule MDExTest do
   describe "safe html" do
     test "sanitize" do
       assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>",
-               sanitize: true,
+               sanitize: MDEx.default_sanitize_options(),
                escape: [content: false, curly_braces_in_code: false]
              ) == "<span>tag</span>"
     end
 
     test "escape tags" do
       assert MDEx.safe_html("<span>content</span>",
-               sanitize: false,
+               sanitize: nil,
                escape: [content: true, curly_braces_in_code: false]
              ) == "&lt;span&gt;content&lt;&#x2f;span&gt;"
     end
 
     test "escape curly braces in code tags" do
       assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>",
-               sanitize: false,
+               sanitize: nil,
                escape: [content: false, curly_braces_in_code: true]
              ) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
     end
@@ -285,9 +354,9 @@ defmodule MDExTest do
     end
   end
 
-  describe "to_commonmark" do
-    test "document to commonmark with default options" do
-      assert MDEx.to_commonmark!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
+  describe "to_markdown" do
+    test "document to markdown with default options" do
+      assert MDEx.to_markdown!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
     end
   end
 end

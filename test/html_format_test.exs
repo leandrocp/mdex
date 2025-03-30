@@ -28,7 +28,7 @@ defmodule MDEx.HTMLFormatTest do
     ]
 
     assert {:ok, ast} = MDEx.parse_document(document, opts)
-    assert {:ok, markdown} = MDEx.to_commonmark(ast, opts)
+    assert {:ok, markdown} = MDEx.to_markdown(ast, opts)
 
     assert markdown == String.trim(document)
   end

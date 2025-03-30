@@ -7,7 +7,7 @@ extern crate rustler;
 mod inkjet_adapter;
 mod types;
 
-use comrak::{Arena, ComrakPlugins, ExtensionOptions, Options, ParseOptions, RenderOptions};
+use comrak::{Arena, ComrakPlugins, Options};
 use inkjet_adapter::InkjetAdapter;
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
@@ -19,9 +19,9 @@ rustler::init!("Elixir.MDEx.Native");
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
@@ -37,7 +37,7 @@ fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
     let unsafe_html = comrak::markdown_to_html_with_plugins(md, &Options::default(), &plugins);
     let html = do_safe_html(
         unsafe_html,
-        ExFeaturesOptions::default().sanitize,
+        &ExFeaturesOptions::default().sanitize,
         false,
         true,
     );
@@ -51,9 +51,9 @@ fn markdown_to_html_with_options<'a>(
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
@@ -67,12 +67,12 @@ fn markdown_to_html_with_options<'a>(
             let mut plugins = ComrakPlugins::default();
             plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
             let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
-            let html = do_safe_html(unsafe_html, options.features.sanitize, false, true);
+            let html = do_safe_html(unsafe_html, &options.features.sanitize, false, true);
             Ok((ok(), html).encode(env))
         }
         None => {
             let unsafe_html = comrak::markdown_to_html(md, &comrak_options);
-            let html = do_safe_html(unsafe_html, options.features.sanitize, false, true);
+            let html = do_safe_html(unsafe_html, &options.features.sanitize, false, true);
             Ok((ok(), html).encode(env))
         }
     }
@@ -98,9 +98,9 @@ fn markdown_to_xml_with_options<'a>(
     options: ExOptions,
 ) -> NifResult<Term<'a>> {
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
 
     let arena = Arena::new();
@@ -165,9 +165,9 @@ fn document_to_commonmark_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
 
     match &options.features.syntax_highlight_theme {
@@ -218,7 +218,7 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let unsafe_html = String::from_utf8(buffer).unwrap();
     let html = do_safe_html(
         unsafe_html,
-        ExFeaturesOptions::default().sanitize,
+        &ExFeaturesOptions::default().sanitize,
         false,
         true,
     );
@@ -236,9 +236,9 @@ fn document_to_html_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
 
     match &options.features.syntax_highlight_theme {
@@ -257,14 +257,14 @@ fn document_to_html_with_options(
             comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
                 .unwrap();
             let unsafe_html = String::from_utf8(buffer).unwrap();
-            let html = do_safe_html(unsafe_html, options.features.sanitize, false, true);
+            let html = do_safe_html(unsafe_html, &options.features.sanitize, false, true);
             Ok((ok(), html).encode(env))
         }
         None => {
             let mut buffer = vec![];
             comrak::format_commonmark(comrak_ast, &comrak_options, &mut buffer).unwrap();
             let unsafe_html = String::from_utf8(buffer).unwrap();
-            let html = do_safe_html(unsafe_html, options.features.sanitize, false, true);
+            let html = do_safe_html(unsafe_html, &options.features.sanitize, false, true);
             Ok((ok(), html).encode(env))
         }
     }
@@ -298,9 +298,9 @@ fn document_to_xml_with_options(
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
     let comrak_options = comrak::Options {
-        extension: ExtensionOptions::from(options.extension),
-        parse: ParseOptions::from(options.parse),
-        render: RenderOptions::from(options.render),
+        extension: options.extension.into(),
+        parse: options.parse.into(),
+        render: options.render.into(),
     };
 
     match &options.features.syntax_highlight_theme {
@@ -340,13 +340,13 @@ fn document_to_xml_with_options(
 pub fn safe_html(
     env: Env<'_>,
     unsafe_html: String,
-    sanitize: bool,
+    sanitize: Option<ExSanitizeOption>,
     escape_content: bool,
     escape_curly_braces_in_code: bool,
 ) -> NifResult<Term<'_>> {
     Ok(do_safe_html(
         unsafe_html,
-        sanitize,
+        &sanitize,
         escape_content,
         escape_curly_braces_in_code,
     )
@@ -356,13 +356,13 @@ pub fn safe_html(
 // https://github.com/p-jackson/entities/blob/1d166204433c2ee7931251a5494f94c7e35be9d6/src/entities.rs
 fn do_safe_html(
     unsafe_html: String,
-    sanitize: bool,
+    sanitize: &Option<ExSanitizeOption>,
     escape_content: bool,
     escape_curly_braces_in_code: bool,
 ) -> String {
     let html = match sanitize {
-        true => ammonia::clean(&unsafe_html),
-        false => unsafe_html,
+        None => unsafe_html,
+        Some(sanitize_option) => sanitize_option.clean(&unsafe_html),
     };
 
     let html = match escape_curly_braces_in_code {

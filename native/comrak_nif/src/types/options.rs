@@ -1,6 +1,9 @@
-use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
+mod sanitize;
 
-#[derive(Debug, NifMap)]
+use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
+pub use sanitize::*;
+
+#[derive(Default, Debug, NifMap)]
 pub struct ExExtensionOptions {
     pub strikethrough: bool,
     pub tagfilter: bool,
@@ -55,7 +58,7 @@ impl From<ExExtensionOptions> for ExtensionOptions<'_> {
     }
 }
 
-#[derive(Debug, NifMap)]
+#[derive(Default, Debug, NifMap)]
 pub struct ExParseOptions {
     pub smart: bool,
     pub default_info_string: Option<String>,
@@ -75,8 +78,9 @@ impl From<ExParseOptions> for ParseOptions<'_> {
     }
 }
 
-#[derive(Clone, Debug, NifUnitEnum)]
+#[derive(Clone, Default, Debug, NifUnitEnum)]
 pub enum ExListStyleType {
+    #[default]
     Dash,
     Plus,
     Star,
@@ -92,7 +96,7 @@ impl From<ExListStyleType> for ListStyleType {
     }
 }
 
-#[derive(Debug, NifMap)]
+#[derive(Default, Debug, NifMap)]
 pub struct ExRenderOptions {
     pub hardbreaks: bool,
     pub github_pre_lang: bool,
@@ -139,14 +143,30 @@ impl From<ExRenderOptions> for RenderOptions {
     }
 }
 
+#[derive(Debug, NifTaggedEnum, Default)]
+pub enum ExSanitizeOption {
+    #[default]
+    Clean,
+    Custom(Box<ExSanitizeCustom>),
+}
+
+impl ExSanitizeOption {
+    pub(crate) fn clean(&self, html: &str) -> String {
+        match self {
+            ExSanitizeOption::Clean => ammonia::clean(html),
+            ExSanitizeOption::Custom(custom) => custom.to_ammonia().clean(html).to_string(),
+        }
+    }
+}
+
 #[derive(Debug, NifMap, Default)]
 pub struct ExFeaturesOptions {
-    pub sanitize: bool,
+    pub sanitize: Option<ExSanitizeOption>,
     pub syntax_highlight_theme: Option<String>,
     pub syntax_highlight_inline_style: Option<bool>,
 }
 
-#[derive(Debug, NifMap)]
+#[derive(Default, Debug, NifMap)]
 pub struct ExOptions {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,

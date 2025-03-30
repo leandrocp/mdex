@@ -34,7 +34,7 @@ defmodule MDEx.Sigil do
 
     * `HTML` - converts Markdown or `MDEx.Document` to HTML, equivalent to calling `MDEx.to_html!/2`
     * `XML` - converts Markdown or `MDEx.Document` to XML, equivalent to calling `MDEx.to_xml!/2`
-    * `MD` - converts `MDEx.Document` to Markdown, equivalent to calling `MDEx.to_commonmark!/2`
+    * `MD` - converts `MDEx.Document` to Markdown, equivalent to calling `MDEx.to_markdown!/2`
 
   Without a modifier it converts Markdown to `MDEx.Document` (the default output of `~m` and `~M`), equivalent to calling `MDEx.parse_document!/2`.
 
@@ -111,7 +111,7 @@ defmodule MDEx.Sigil do
           MDEx.to_xml!(doc, @opts)
 
         modifiers == ~c"MD" ->
-          MDEx.to_commonmark!(doc, @opts)
+          MDEx.to_markdown!(doc, @opts)
 
         :default ->
           MDEx.parse_document!(doc, @opts)
@@ -163,7 +163,7 @@ defmodule MDEx.Sigil do
           MDEx.to_xml!(doc, @opts)
 
         modifiers == ~c"MD" ->
-          MDEx.to_commonmark!(doc, @opts)
+          MDEx.to_markdown!(doc, @opts)
 
         :default ->
           MDEx.parse_document!(doc, @opts)
@@ -200,7 +200,7 @@ defmodule MDEx.Sigil do
 
       modifiers == ~c"MD" ->
         quote do
-          MDEx.to_commonmark!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_markdown!(to_doc(unquote(binary), __ENV__), unquote(@opts))
         end
 
       :default ->

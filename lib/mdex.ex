@@ -11,10 +11,51 @@ defmodule MDEx do
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
 
+  import MDEx.Document, only: [is_fragment: 1]
+
+  require Logger
+
   @typedoc """
-  Data that can be processed as Markdown, ie: the initial input.
+  Input source to convert to another format.
+
+  ## Examples
+
+  * From Markdown to HTML
+
+        iex> MDEx.to_html!("# Hello")
+        "<h1>Hello</h1>"
+
+  * From Markdown to `MDEx.Document`
+
+        iex> MDEx.parse_document!("Hello")
+        %MDEx.Document{
+          nodes: [
+            %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
+          ]
+        }
+
+  * From `MDEx.Document` to HTML
+
+        iex> MDEx.to_html!(%MDEx.Document{
+        ...>   nodes: [
+        ...>     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
+        ...>   ]
+        ...> })
+        "<p>Hello</p>"
+
+  You can also leverage `MDEx.Document` as an intermediate data type to convert between formats:
+
+  * From JSON to HTML:
+
+        iex> json = ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
+        iex> {:json, json} |> MDEx.parse_document!() |> MDEx.to_html!()
+        "<h1>Hello</h1>"
+
   """
-  @type input :: String.t() | MDEx.Document.t() | MDEx.Pipe.t()
+  @type source :: markdown :: String.t() | Document.t()
+
+  # TODO: support :xml
+  @type parse_source :: markdown :: String.t() | {:json, String.t()}
 
   @extension_options_schema [
     strikethrough: [
@@ -248,11 +289,201 @@ defmodule MDEx do
     ]
   ]
 
+  @sanitize_options_schema [
+    tags: [
+      type: {:list, :string},
+      default:
+        ~w(a abbr acronym area article aside b bdi bdo blockquote br caption center cite code col colgroup data dd del details dfn div dl dt em figcaption figure footer h1 h2 h3 h4 h5 h6 header hgroup hr i img ins kbd li map mark nav ol p pre q rp rt rtc ruby s samp small span strike strong sub summary sup table tbody td th thead time tr tt u ul var wbr),
+      doc: "Sets the tags that are allowed."
+    ],
+    add_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted tags without overwriting old ones."
+    ],
+    rm_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted tags."
+    ],
+    clean_content_tags: [
+      type: {:list, :string},
+      default: ~w(script style),
+      doc: "Sets the tags whose contents will be completely removed from the output."
+    ],
+    add_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional blacklisted clean-content tags without overwriting old ones."
+    ],
+    rm_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-blacklisted clean-content tags."
+    ],
+    tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{
+        "a" => ~w(href hreflang),
+        "bdo" => ~w(dir),
+        "blockquote" => ~w(cite),
+        "col" => ~w(align char charoff span),
+        "colgroup" => ~w(align char charoff span),
+        "del" => ~w(cite datetime),
+        "hr" => ~w(align size width),
+        "img" => ~w(align alt height src width),
+        "ins" => ~w(cite datetime),
+        "ol" => ~w(start),
+        "q" => ~w(cite),
+        "table" => ~w(align char charoff summary),
+        "tbody" => ~w(align char charoff),
+        "td" => ~w(align char charoff colspan headers rowspan),
+        "tfoot" => ~w(align char charoff),
+        "th" => ~w(align char charoff colspan headers rowspan scope),
+        "thead" => ~w(align char charoff),
+        "tr" => ~w(align char charoff)
+      },
+      doc: "Sets the HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attributes without overwriting old ones."
+    ],
+    rm_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attributes."
+    ],
+    tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attribute values without overwriting old ones."
+    ],
+    rm_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attribute values."
+    ],
+    set_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are to be set on specific tags."
+    ],
+    set_tag_attribute_value: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Add an attribute value to set on a specific element."
+    ],
+    rm_set_tag_attribute_value: [
+      type: {:map, :string, :string},
+      default: %{},
+      doc: "Remove existing tag-specific attribute values to be set."
+    ],
+    generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Sets the prefix of attributes that are allowed on any tag."
+    ],
+    add_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attribute prefix without overwriting old ones."
+    ],
+    rm_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attribute prefixes."
+    ],
+    generic_attributes: [
+      type: {:list, :string},
+      default: ~w(lang title),
+      doc: "Sets the attributes that are allowed on any tag."
+    ],
+    add_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attributes without overwriting old ones."
+    ],
+    rm_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_schemes: [
+      type: {:list, :string},
+      default: ~w(bitcoin ftp ftps geo http https im irc ircs magnet mailto mms mx news nntp openpgp4fpr sip sms smsto ssh tel url webcal wtai xmpp),
+      doc: "Sets the URL schemes permitted on href and src attributes."
+    ],
+    add_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted URL schemes without overwriting old ones."
+    ],
+    rm_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_relative: [
+      type: {:or, [{:in, [:deny, :passthrough]}, {:tuple, [:atom, :string]}, {:tuple, [:atom, {:tuple, [:string, :string]}]}]},
+      default: :passthrough,
+      doc: "Configures the behavior for relative URLs: pass-through, resolve-with-base, or deny."
+    ],
+    link_rel: [
+      type: {:or, [:string, nil]},
+      default: "noopener noreferrer",
+      doc: "Configures a `rel` attribute that will be added on links."
+    ],
+    allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Sets the CSS classes that are allowed on specific tags."
+    ],
+    add_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted classes without overwriting old ones."
+    ],
+    rm_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted attributes."
+    ],
+    strip_comments: [
+      type: :boolean,
+      default: true,
+      doc: "Configures the handling of HTML comments."
+    ],
+    id_prefix: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Prefixes all `id` attribute values with a given string. Note that the tag and attribute themselves must still be whitelisted."
+    ]
+  ]
+
   @features_options_schema [
     sanitize: [
-      type: :boolean,
-      default: false,
-      doc: "sanitize output using [ammonia](https://crates.io/crates/ammonia). See the [Safety](#module-safety) section for more info."
+      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
+      type_spec: quote(do: sanitize_options() | nil),
+      default: nil,
+      doc: """
+      Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
+
+      Use a [conservative set of options by default](https://docs.rs/ammonia/latest/ammonia/fn.clean.html),
+      but you can overwrite the default options `MDEx.default_sanitize_options/0`. For example to
+      build an [empty](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty) base with no allowed tags:
+
+          empty_base = Keyword.put(MDEx.default_sanitize_options(), :tags, [])
+          features: [sanitize: empty_base]
+
+      See the [Safety](#module-safety) section for more info.
+      """
     ],
     syntax_highlight_theme: [
       type: {:or, [:string, nil]},
@@ -269,13 +500,9 @@ defmodule MDEx do
   ]
 
   @options_schema [
-    document: [
-      type: {:or, [:string, {:struct, MDEx.Document}, nil]},
-      default: "",
-      doc: "Markdown document, either a string or a `MDEx.Document` struct."
-    ],
     extension: [
       type: :keyword_list,
+      type_spec: quote(do: extension_options()),
       default: [],
       doc:
         "Enable extensions. See comrak's [ExtensionOptions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html) for more info and examples.",
@@ -283,6 +510,7 @@ defmodule MDEx do
     ],
     parse: [
       type: :keyword_list,
+      type_spec: quote(do: parse_options()),
       default: [],
       doc:
         "Configure parsing behavior. See comrak's [ParseOptions](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html) for more info and examples.",
@@ -290,6 +518,7 @@ defmodule MDEx do
     ],
     render: [
       type: :keyword_list,
+      type_spec: quote(do: render_options()),
       default: [],
       doc:
         "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
@@ -297,103 +526,147 @@ defmodule MDEx do
     ],
     features: [
       type: :keyword_list,
+      type_spec: quote(do: features_options()),
       default: [],
-      doc: "Enable extra features. ",
+      doc: "Enable extra features.",
       keys: @features_options_schema
     ]
   ]
 
-  @doc false
-  def extension_options_schema, do: @extension_options_schema
-
-  @doc false
-  def render_options_schema, do: @render_options_schema
-
-  @doc false
-  def parse_options_schema, do: @parse_options_schema
-
-  @doc false
-  def features_options_schema, do: @features_options_schema
-
-  @doc false
-  def options_schema, do: @options_schema
-
-  @doc """
-  Returns `true` if node is a fragment of a document.
-
-  ## Examples
-
-      iex> MDEx.is_fragment(%MDEx.Heading{})
-      true
-
-      iex> MDEx.is_fragment(%MDEx.Document{})
-      false
-
-  """
-  @spec is_fragment(Document.md_node()) :: boolean()
-  def is_fragment(node), do: Document.is_fragment(node)
-
   @typedoc """
   Options to customize the parsing and rendering of Markdown documents.
 
-  See `new/1` for a full list.
-  """
-  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+  ## Examples
 
-  @doc """
-  Parse a `markdown` string and returns a `MDEx.Document`.
+  - Enable the `table` extension:
+
+      ```elixir
+      iex> MDEx.to_html!(\"""
+      ...> | lang |
+      ...> |------|
+      ...> | elixir |
+      ...> \""",
+      ...> extension: [table: true])
+      "<table>\\n<thead>\\n<tr>\\n<th>lang</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>elixir</td>\\n</tr>\\n</tbody>\\n</table>"
+      ```
 
   ## Options
 
-  See `new/1` for the available options.
+  #{NimbleOptions.docs(@options_schema)}
+  """
+  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+
+  @typedoc "List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)."
+  @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
+
+  @typedoc "List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)."
+  @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
+
+  @typedoc "List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)."
+  @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
+
+  @typedoc "List of extra features."
+  @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
+
+  @typedoc "List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html)."
+  @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
+
+  @doc """
+  Returns the default options for the `:extension` group.
+
+  #{NimbleOptions.docs(@extension_options_schema)}
+  """
+  @spec default_extension_options() :: extension_options()
+  def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
+
+  @doc """
+  Returns the default options for the `:parse` group.
+
+  #{NimbleOptions.docs(@parse_options_schema)}
+  """
+  @spec default_parse_options() :: parse_options()
+  def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
+
+  @doc """
+  Returns the default options for the `:render` group.
+
+  #{NimbleOptions.docs(@render_options_schema)}
+  """
+  @spec default_render_options() :: render_options()
+  def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
+
+  @doc """
+  Returns the default options for the `:features` group.
+
+  #{NimbleOptions.docs(@features_options_schema)}
+  """
+  @spec default_features_options() :: features_options()
+  def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
+
+  @doc """
+  Returns the default options for the `:sanitize` group.
+
+  #{NimbleOptions.docs(@sanitize_options_schema)}
+  """
+  @spec default_sanitize_options() :: sanitize_options()
+  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+
+  @doc """
+  Parse `source` and returns `MDEx.Document`.
+
+  Source can be either a Markdown string or a tagged JSON string.
 
   ## Examples
 
-      iex> MDEx.parse_document!(\"""
-      ...> # Languages
-      ...>
-      ...> - Elixir
-      ...> - Rust
-      ...> \""")
-      %MDEx.Document{
-        nodes: [
-          %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-          %MDEx.List{
-            nodes: [
-              %MDEx.ListItem{
-                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Elixir"}]}],
-                list_type: :bullet,
-                marker_offset: 0,
-                padding: 2,
-                start: 1,
-                delimiter: :period,
-                bullet_char: "-",
-                tight: false
-              },
-              %MDEx.ListItem{
-                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Rust"}]}],
-                list_type: :bullet,
-                marker_offset: 0,
-                padding: 2,
-                start: 1,
-                delimiter: :period,
-                bullet_char: "-",
-                tight: false
-              }
-            ],
-            list_type: :bullet,
-            marker_offset: 0,
-            padding: 2,
-            start: 1,
-            delimiter: :period,
-            bullet_char: "-",
-            tight: true
-          }
-        ]
-      }
+  * Parse Markdown with default options:
 
-      iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
-      %MDEx.Document{
+        iex> MDEx.parse_document!(\"""
+        ...> # Languages
+        ...>
+        ...> - Elixir
+        ...> - Rust
+        ...> \""")
+        %MDEx.Document{
+          nodes: [
+            %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+            %MDEx.List{
+              nodes: [
+                %MDEx.ListItem{
+                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Elixir"}]}],
+                  list_type: :bullet,
+                  marker_offset: 0,
+                  padding: 2,
+                  start: 1,
+                  delimiter: :period,
+                  bullet_char: "-",
+                  tight: false
+                },
+                %MDEx.ListItem{
+                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Rust"}]}],
+                  list_type: :bullet,
+                  marker_offset: 0,
+                  padding: 2,
+                  start: 1,
+                  delimiter: :period,
+                  bullet_char: "-",
+                  tight: false
+                }
+              ],
+              list_type: :bullet,
+              marker_offset: 0,
+              padding: 2,
+              start: 1,
+              delimiter: :period,
+              bullet_char: "-",
+              tight: true
+            }
+          ]
+        }
+
+  * Parse Markdown with custom options:
+
+        iex> MDEx.parse_document!("Darth Vader is ||Luke's father||", extension: [spoiler: true])
+        %MDEx.Document{
           nodes: [
             %MDEx.Paragraph{
               nodes: [
@@ -403,31 +676,68 @@ defmodule MDEx do
             }
           ]
         }
+
+  * Parse JSON:
+
+        iex> json = ~s|{"nodes":[{"nodes":[{"literal":"Title","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|
+        iex> MDEx.parse_document!({:json, json})
+        %MDEx.Document{
+          nodes: [
+            %MDEx.Heading{
+              nodes: [%MDEx.Text{literal: "Title"} ],
+              level: 1,
+              setext: false
+            }
+          ]
+        }
+
   """
-  @spec parse_document(String.t(), options()) :: {:ok, Document.t()} | {:error, term()}
-  def parse_document(markdown, options \\ [])
+  @spec parse_document(parse_source(), options()) :: {:ok, Document.t()} | {:error, any()}
+  def parse_document(source, options \\ [])
 
   def parse_document(markdown, options) when is_binary(markdown) do
-    Native.parse_document(markdown, comrak_options(options))
+    Native.parse_document(markdown, validate_options!(options))
   end
 
-  def parse_document(%MDEx.Document{} = document, _options), do: {:ok, document}
+  def parse_document({:json, json}, _options) when is_binary(json) do
+    case Jason.decode(json, keys: :atoms!) do
+      {:ok, decoded} ->
+        {:ok, json_to_node(decoded)}
 
-  def parse_document(document, options) when is_struct(document) do
-    document
-    |> MDEx.Document.wrap()
-    |> parse_document(options)
+      {:error, error} ->
+        {:error, %DecodeError{error: error}}
+    end
   end
 
-  def parse_document(_pipe, _options), do: {:error, :invalid}
+  defp json_to_node(json) do
+    {node_type, node} = Map.pop!(json, :node_type)
+    node_type = Module.concat([node_type])
+    node = map_nodes(node)
+    struct(node_type, node)
+  end
+
+  defp map_nodes(%{nodes: nodes} = node) do
+    %{node | nodes: Enum.map(nodes, &json_to_node/1)}
+  end
+
+  defp map_nodes(node), do: node
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
   """
-  @spec parse_document!(String.t(), options()) :: Document.t()
-  def parse_document!(markdown, options \\ []) when is_binary(markdown) do
+  @spec parse_document!(parse_source(), options()) :: Document.t()
+  def parse_document!(source, options \\ [])
+
+  def parse_document!(markdown, options) when is_binary(markdown) do
     case parse_document(markdown, options) do
-      {:ok, doc} -> doc
+      {:ok, document} -> document
+      {:error, error} -> raise error
+    end
+  end
+
+  def parse_document!({format, source}, options) when format in [:json, :xml] and is_binary(source) do
+    case parse_document({format, source}, options) do
+      {:ok, document} -> document
       {:error, error} -> raise error
     end
   end
@@ -465,7 +775,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Same as `parse_fragment/2` but raises if the parsing fails.
+  Same as `parse_fragment/2` but raises if the parsing fails or returns `nil`.
 
   > #### Experimental {: .warning}
   >
@@ -502,49 +812,41 @@ defmodule MDEx do
       {:ok, "<p>MDEx</p>"}
 
   """
-  @spec to_html(input()) ::
+  @spec to_html(source()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(input)
+  def to_html(source)
 
-  def to_html(%MDEx.Pipe{} = pipe) do
-    pipe
-    |> MDEx.Pipe.run()
-    |> then(&to_html(&1.document, &1.options))
-  end
-
-  def to_html(input) when is_binary(input) do
-    input
+  def to_html(source) when is_binary(source) do
+    source
     |> Native.markdown_to_html()
     |> maybe_trim()
   end
 
-  def to_html(%Document{} = doc) do
-    doc
+  def to_html(%Document{} = document) do
+    document
     |> Native.document_to_html()
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
-  def to_html(input) do
-    if is_fragment(input) do
-      input
-      |> Document.wrap()
-      |> to_html()
+  def to_html(source) do
+    if is_fragment(source) do
+      to_html(%Document{nodes: List.wrap(source)})
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_html/1` but raises an error if the conversion fails.
   """
-  @spec to_html!(input()) :: String.t()
-  def to_html!(input) do
-    case to_html(input) do
+  @spec to_html!(source()) :: String.t()
+  def to_html!(source) do
+    case to_html(source) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -552,10 +854,6 @@ defmodule MDEx do
 
   @doc """
   Convert Markdown or `MDEx.Document` to HTML using custom options.
-
-  ## Options
-
-  See `new/1` for the available options.
 
   ## Examples
 
@@ -566,51 +864,42 @@ defmodule MDEx do
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
   """
-  @spec to_html(input(), options()) ::
+  @spec to_html(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(input, options)
+  def to_html(source, options)
 
-  def to_html(%MDEx.Pipe{} = pipe, options) when is_list(options) do
-    pipe
-    |> MDEx.Steps.put_options(options)
-    |> MDEx.Pipe.run()
-    |> then(&to_html(&1.document, &1.options))
-  end
-
-  def to_html(input, options) when is_binary(input) and is_list(options) do
-    input
-    |> Native.markdown_to_html_with_options(comrak_options(options))
+  def to_html(source, options) when is_binary(source) and is_list(options) do
+    source
+    |> Native.markdown_to_html_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
-  def to_html(%Document{} = doc, options) when is_list(options) do
-    doc
-    |> Native.document_to_html_with_options(comrak_options(options))
+  def to_html(%Document{} = document, options) when is_list(options) do
+    document
+    |> Native.document_to_html_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
-  def to_html(input, options) do
-    if is_fragment(input) do
-      input
-      |> Document.wrap()
-      |> to_html(options)
+  def to_html(source, options) do
+    if is_fragment(source) do
+      to_html(%Document{nodes: List.wrap(source)}, options)
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_html/2` but raises error if the conversion fails.
   """
-  @spec to_html!(input(), options()) :: String.t()
-  def to_html!(input, options) do
-    case to_html(input, options) do
+  @spec to_html!(source(), options()) :: String.t()
+  def to_html!(source, options) do
+    case to_html(source, options) do
       {:ok, html} -> html
       {:error, error} -> raise error
     end
@@ -686,45 +975,43 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(input()) ::
+  @spec to_xml(source()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(input)
+  def to_xml(source)
 
-  def to_xml(input) when is_binary(input) do
-    input
+  def to_xml(source) when is_binary(source) do
+    source
     |> Native.markdown_to_xml()
 
     # |> maybe_trim()
   end
 
-  def to_xml(%Document{} = doc) do
-    doc
+  def to_xml(%Document{} = document) do
+    document
     |> Native.document_to_xml()
 
     # |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
-  def to_xml(input) do
-    if is_fragment(input) do
-      input
-      |> Document.wrap()
-      |> to_xml()
+  def to_xml(source) do
+    if is_fragment(source) do
+      to_xml(%Document{nodes: List.wrap(source)})
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_xml/1` but raises an error if the conversion fails.
   """
-  @spec to_xml!(input()) :: String.t()
-  def to_xml!(input) do
-    case to_xml(input) do
+  @spec to_xml!(source()) :: String.t()
+  def to_xml!(source) do
+    case to_xml(source) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
@@ -732,10 +1019,6 @@ defmodule MDEx do
 
   @doc """
   Convert Markdown or `MDEx.Document` to XML using custom options.
-
-  ## Options
-
-  See `new/1` for the available options.
 
   ## Examples
 
@@ -773,105 +1056,220 @@ defmodule MDEx do
       \"""
 
   """
-  @spec to_xml(input(), options()) ::
+  @spec to_xml(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(input, options)
+  def to_xml(source, options)
 
-  def to_xml(input, options) when is_binary(input) and is_list(options) do
-    input
-    |> Native.markdown_to_xml_with_options(comrak_options(options))
+  def to_xml(source, options) when is_binary(source) and is_list(options) do
+    source
+    |> Native.markdown_to_xml_with_options(validate_options!(options))
 
     # |> maybe_wrap_error()
     # |> maybe_trim()
   end
 
-  def to_xml(%Document{} = doc, options) when is_list(options) do
-    doc
-    |> Native.document_to_xml_with_options(comrak_options(options))
+  def to_xml(%Document{} = document, options) when is_list(options) do
+    document
+    |> Native.document_to_xml_with_options(validate_options!(options))
     |> maybe_trim()
   rescue
     ErlangError ->
-      {:error, %DecodeError{document: doc}}
+      {:error, %DecodeError{document: document}}
   end
 
-  def to_xml(input, options) do
-    if is_fragment(input) do
-      input
-      |> Document.wrap()
-      |> to_xml(options)
+  def to_xml(source, options) do
+    if is_fragment(source) do
+      to_xml(%Document{nodes: List.wrap(source)}, options)
     else
-      {:error, %InvalidInputError{found: input}}
+      {:error, %InvalidInputError{found: source}}
     end
   end
 
   @doc """
   Same as `to_xml/2` but raises error if the conversion fails.
   """
-  @spec to_xml!(input(), options()) :: String.t()
-  def to_xml!(input, options) do
-    case to_xml(input, options) do
+  @spec to_xml!(source(), options()) :: String.t()
+  def to_xml!(source, options) do
+    case to_xml(source, options) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
     end
   end
 
   @doc """
-  Convert an AST to CommonMark using default options.
+  Convert Markdown or `MDEx.Document` to JSON using default options.
 
-  To customize the output, use `to_commonmark/2`.
+  Use `to_json/2` to pass options and customize the generated JSON.
+
+  ## Examples
+
+      iex> MDEx.to_json("# Hello")
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"level":1,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|}
+
+      iex> MDEx.to_json("1. First\\n2. Second")
+      {:ok, ~s|{"nodes":[{"start":1,"nodes":[{"start":1,"nodes":[{"nodes":[{"literal":"First","node_type":"MDEx.Text"}],"node_type":"MDEx.Paragraph"}],"delimiter":"period","padding":3,"list_type":"ordered","marker_offset":0,"bullet_char":"","tight":false,"is_task_list":false,"node_type":"MDEx.ListItem"},{"start":2,"nodes":[{"nodes":[{"literal":"Second","node_type":"MDEx.Text"}],"node_type":"MDEx.Paragraph"}],"delimiter":"period","padding":3,"list_type":"ordered","marker_offset":0,"bullet_char":"","tight":false,"is_task_list":false,"node_type":"MDEx.ListItem"}],"delimiter":"period","padding":3,"list_type":"ordered","marker_offset":0,"bullet_char":"","tight":true,"is_task_list":false,"node_type":"MDEx.List"}],"node_type":"MDEx.Document"}|}
+
+      iex> MDEx.to_json(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"level":3,"setext":false,"node_type":"MDEx.Heading"}],"node_type":"MDEx.Document"}|}
+
+  Fragments of a document are also supported:
+
+      iex> MDEx.to_json(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]})
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello","node_type":"MDEx.Text"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
+
+  """
+  @spec to_json(source()) ::
+          {:ok, String.t()}
+          | {:error, MDEx.DecodeError.t()}
+          | {:error, MDEx.InvalidInputError.t()}
+  def to_json(source)
+
+  def to_json(source) when is_binary(source) do
+    with {:ok, document} <- parse_document(source),
+         {:ok, json} <- to_json(document) do
+      {:ok, json}
+    end
+  end
+
+  def to_json(%Document{} = document) do
+    case Jason.encode(document) do
+      {:ok, json} -> {:ok, json}
+      {:error, error} -> {:error, %DecodeError{document: document, error: error}}
+    end
+  end
+
+  def to_json(source) do
+    if is_fragment(source) do
+      to_json(%Document{nodes: List.wrap(source)})
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_json/1` but raises an error if the conversion fails.
+  """
+  @spec to_json!(source()) :: String.t()
+  def to_json!(source) do
+    case to_json(source) do
+      {:ok, json} -> json
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert Markdown or `MDEx.Document` to JSON using custom options.
+
+  ## Examples
+
+      iex> MDEx.to_json("Hello ~world~", extension: [strikethrough: true])
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
+
+  """
+  @spec to_json(source(), options()) ::
+          {:ok, String.t()}
+          | {:error, MDEx.DecodeError.t()}
+          | {:error, MDEx.InvalidInputError.t()}
+  def to_json(source, options)
+
+  def to_json(source, options) when is_binary(source) and is_list(options) do
+    with {:ok, document} <- parse_document(source, options),
+         {:ok, json} <- to_json(document, options) do
+      {:ok, json}
+    end
+  end
+
+  def to_json(%Document{} = document, options) when is_list(options) do
+    case Jason.encode(document) do
+      {:ok, json} -> {:ok, json}
+      {:error, error} -> {:error, %DecodeError{document: document, error: error}}
+    end
+  end
+
+  def to_json(source, options) do
+    if is_fragment(source) do
+      to_json(%Document{nodes: List.wrap(source)}, options)
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_json/2` but raises error if the conversion fails.
+  """
+  @spec to_json!(source(), options()) :: String.t()
+  def to_json!(source, options) do
+    case to_json(source, options) do
+      {:ok, json} -> json
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert a `MDEx.Document` to Markdown using default options.
+
+  To customize the output, use `to_markdown/2`.
 
   ## Example
 
-      iex> MDEx.to_commonmark(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
+      iex> MDEx.to_markdown(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
       {:ok, "### Hello"}
 
   """
-  @spec to_commonmark(Document.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(%Document{} = doc) do
-    doc
+  @spec to_markdown(Document.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(%Document{} = document) do
+    document
     |> Native.document_to_commonmark()
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
   @doc """
-  Same as `to_commonmark/1` but raises `MDEx.DecodeError` if the conversion fails.
+  Same as `to_markdown/1` but raises `MDEx.DecodeError` if the conversion fails.
   """
-  @spec to_commonmark!(Document.t()) :: String.t()
-  def to_commonmark!(%Document{} = doc) do
-    case to_commonmark(doc) do
+  @spec to_markdown!(Document.t()) :: String.t()
+  def to_markdown!(%Document{} = document) do
+    case to_markdown(document) do
       {:ok, md} -> md
       {:error, error} -> raise error
     end
   end
 
   @doc """
-  Convert an AST to CommonMark with custom options.
-
-  ## Options
-
-  See `new/1` for the available options.
+  Convert a `MDEx.Document` to Markdown with custom options.
   """
-  @spec to_commonmark(Document.t(), keyword()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
-  def to_commonmark(%Document{} = doc, options) when is_list(options) do
-    doc
-    |> Native.document_to_commonmark_with_options(comrak_options(options))
+  @spec to_markdown(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(%Document{} = document, options) when is_list(options) do
+    document
+    |> Native.document_to_commonmark_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
   @doc """
-  Same as `to_commonmark/2` but raises `MDEx.DecodeError` if the conversion fails.
+  Same as `to_markdown/2` but raises `MDEx.DecodeError` if the conversion fails.
   """
-  @spec to_commonmark!(Document.t(), options()) :: String.t()
-  def to_commonmark!(%Document{} = doc, options) when is_list(options) do
-    case to_commonmark(doc, options) do
+  @spec to_markdown!(Document.t(), options()) :: String.t()
+  def to_markdown!(%Document{} = document, options) when is_list(options) do
+    case to_markdown(document, options) do
       {:ok, md} -> md
       {:error, error} -> raise error
     end
   end
+
+  @deprecated "Use `to_markdown/1` instead"
+  def to_commonmark(document), do: to_markdown(document)
+
+  @deprecated "Use `to_markdown!/1` instead"
+  def to_commonmark!(document), do: to_markdown!(document)
+
+  @deprecated "Use `to_markdown/2` instead"
+  def to_commonmark(document, options), do: to_markdown(document, options)
+
+  @deprecated "Use `to_markdown!/2` instead"
+  def to_commonmark!(document, options), do: to_markdown!(document, options)
 
   @doc """
   Traverse and update the Markdown document preserving the tree structure format.
@@ -944,27 +1342,118 @@ defmodule MDEx do
   Also works with fragments.
 
   """
-  @spec traverse_and_update(MDEx.Document.t(), term(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
+  @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp comrak_options(options) do
-    comrak_options =
+  defp validate_options!(options) do
+    sanitize =
+      options
+      |> get_in([:features, :sanitize])
+      |> update_deprecated_sanitize_options()
+
+    options =
       NimbleOptions.validate!(
         [
           extension: options[:extension] || [],
           parse: options[:parse] || [],
           render: options[:render] || [],
-          features: options[:features] || []
+          features: Keyword.put(options[:features] || [], :sanitize, sanitize)
         ],
         @options_schema
       )
+      |> update_in([:features, :sanitize], &adapt_sanitize_options/1)
 
     %{
-      extension: Map.new(comrak_options[:extension]),
-      parse: Map.new(comrak_options[:parse]),
-      render: Map.new(comrak_options[:render]),
-      features: Map.new(comrak_options[:features])
+      extension: Map.new(options[:extension]),
+      parse: Map.new(options[:parse]),
+      render: Map.new(options[:render]),
+      features: Map.new(options[:features])
     }
+  end
+
+  defp update_deprecated_sanitize_options(true = _options) do
+    Logger.warning("""
+    sanitize: true is deprecated. Pass :sanitize options instead, for example:
+
+      sanitize: MDEx.default_sanitize_options()
+
+    MDEx.default_sanitize_options() is the same behavior as the now deprecated sanitize: true
+
+    """)
+
+    MDEx.default_sanitize_options()
+  end
+
+  defp update_deprecated_sanitize_options(false = _options) do
+    Logger.warning("""
+    sanitize: false is deprecated. Use nil instead:
+
+      sanitize: nil
+
+    """)
+
+    nil
+  end
+
+  defp update_deprecated_sanitize_options(options), do: options
+
+  defp adapt_sanitize_options(nil = _options), do: nil
+
+  defp adapt_sanitize_options(options) do
+    # dbg(options)
+
+    {:custom,
+     %{
+       link_rel: options[:link_rel],
+       tags: %{
+         set: options[:tags],
+         add: options[:add_tags],
+         rm: options[:rm_tags]
+       },
+       clean_content_tags: %{
+         set: options[:clean_content_tags],
+         add: options[:add_clean_content_tags],
+         rm: options[:rm_clean_content_tags]
+       },
+       tag_attributes: %{
+         set: options[:tag_attributes],
+         add: options[:add_tag_attributes],
+         rm: options[:rm_tag_attributes]
+       },
+       tag_attribute_values: %{
+         set: options[:tag_attribute_values],
+         add: options[:add_tag_attribute_values],
+         rm: options[:rm_tag_attribute_values]
+       },
+       set_tag_attribute_values: %{
+         set: options[:set_tag_attribute_values],
+         add: options[:set_tag_attribute_value],
+         rm: options[:rm_set_tag_attribute_value]
+       },
+       generic_attribute_prefixes: %{
+         set: options[:generic_attribute_prefixes],
+         add: options[:add_generic_attribute_prefixes],
+         rm: options[:rm_generic_attribute_prefixes]
+       },
+       generic_attributes: %{
+         set: options[:generic_attributes],
+         add: options[:add_generic_attributes],
+         rm: options[:rm_generic_attributes]
+       },
+       url_schemes: %{
+         set: options[:url_schemes],
+         add: options[:add_url_schemes],
+         rm: options[:rm_url_schemes]
+       },
+       url_relative: options[:url_relative],
+       allowed_classes: %{
+         set: options[:allowed_classes],
+         add: options[:add_allowed_classes],
+         rm: options[:rm_allowed_classes]
+       },
+       strip_comments: options[:strip_comments],
+       id_prefix: options[:id_prefix]
+     }}
   end
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
@@ -986,13 +1475,36 @@ defmodule MDEx do
 
   ## Options
 
-    - `:sanitize` - clean HTML using these rules https://docs.rs/ammonia/latest/ammonia/fn.clean.html. Defaults to `true`.
+    - `:sanitize` - cleans HTML after rendering. Defaults to `MDEx.default_sanitize_options/0`.
+        - `keyword` - `t:sanitize_options/0`
+        - `nil` - do not sanitize output.
+
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
         - `:curly_braces_in_code` - escape `{` and `}` only inside `<code>` tags, particularly useful for compiling HTML in LiveView;
   """
+  @spec safe_html(
+          String.t(),
+          options :: [
+            sanitize: sanitize_options() | nil,
+            escape: [atom()]
+          ]
+        ) :: String.t()
   def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
-    sanitize = opt(options, [:sanitize], true)
+    sanitize =
+      options
+      |> opt([:sanitize], MDEx.default_sanitize_options())
+      |> update_deprecated_sanitize_options()
+      |> case do
+        nil ->
+          nil
+
+        options ->
+          options
+          |> NimbleOptions.validate!(@sanitize_options_schema)
+          |> adapt_sanitize_options()
+      end
+
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
@@ -1005,28 +1517,15 @@ defmodule MDEx do
     end
   end
 
-  @doc """
+@doc """
   Returns a new `MDEx.Pipe` instance.
 
   Once the pipe has all transformations you want, call either one of the following functions to format it:
 
   - `MDEx.to_html/1`
+  - `MDEx.to_json/1`
   - `MDEx.to_xml/1`
-  - `MDEx.to_commonmark/1`
-
-  ## Options
-
-  Options are separated into 4 main groups:
-
-  - `:document` - the Markdown document to be parsed and transformed in the pipeline.
-  - `:extension` - [comrak extensions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)
-  - `:parse` - [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)
-  - `:render` - [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)
-  - `:features` - extra features like sanitization and syntax highlighting.
-
-  See the full list below:
-
-  #{NimbleOptions.docs(@options_schema)}
+  - `MDEx.to_markdown/1`
 
   ## Examples
 
@@ -1049,17 +1548,15 @@ defmodule MDEx do
   MDEx.new(document: "# Hello") |> MDEx.to_html()
   ```
 
-  Or pass it only when formatting the document:
+  Or pass it only when formatting the document,
+  useful to reuse the same pipe with different documents and formats.
 
   ```elixir
   mdex = MDEx.new()
 
-  MDEx.to_html(mdex, document: "# Hello to HTML")
-  MDEx.to_xml(mdex, document: "# Hello to XML")
+  MDEx.to_html(mdex, document: "# Hello HTML")
+  MDEx.to_json(mdex, document: "# Hello JSON")
   ```
-
-  Useful to reuse the same pipe with different documents and formats.
-
   """
   @spec new(options()) :: MDEx.Pipe.t()
   def new(options \\ []) do

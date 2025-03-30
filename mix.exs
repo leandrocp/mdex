@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.4.2-dev"
+  @version "0.4.4-dev"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -10,7 +10,7 @@ defmodule MDEx.MixProject do
     [
       app: :mdex,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       package: package(),
       docs: docs(),
@@ -18,7 +18,7 @@ defmodule MDEx.MixProject do
       aliases: aliases(),
       name: "MDEx",
       homepage_url: "https://github.com/leandrocp/mdex",
-      description: "A CommonMark-compliant fast and extensible Markdown parser and formatter."
+      description: "Fast and extensible Markdown for Elixir"
     ]
   end
 
@@ -35,6 +35,7 @@ defmodule MDEx.MixProject do
       links: %{
         Changelog: "https://hexdocs.pm/mdex/changelog.html",
         GitHub: @source_url,
+        Site: "https://mdelixir.dev",
         comrak: "https://crates.io/crates/comrak",
         DockYard: "https://dockyard.com"
       },
@@ -65,12 +66,11 @@ defmodule MDEx.MixProject do
       source_url: @source_url,
       extras: ["CHANGELOG.md"],
       groups_for_modules: [
-        Plugins: [
+        Extensions: [
           MDEx.Pipe,
           MDEx.Steps
         ],
-        "Document Structure": [
-          MDEx.Document,
+        "Document Nodes": [
           MDEx.Alert,
           MDEx.FrontMatter,
           MDEx.BlockQuote,
@@ -138,6 +138,7 @@ defmodule MDEx.MixProject do
       {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
       {:nimble_options, "~> 1.0"},
+      {:jason, "~> 1.0"},
       {:ex_doc, "~> 0.34", only: :dev}
     ]
   end

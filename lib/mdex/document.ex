@@ -301,6 +301,31 @@ defmodule MDEx.Document do
   ]
   ```
 
+  #### Bump all heading levels, except level 6
+
+  ```elixir
+  iex> doc = ~M\"""
+  ...> # Main Title
+  ...>
+  ...> ## Subtitle
+  ...>
+  ...> ###### Notes
+  ...> \"""
+  iex> selector = fn
+  ...>   %MDEx.Heading{level: level} when level < 6 -> true
+  ...>   _ -> false
+  ...> end
+  iex> update_in(doc, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
+  ...>   %{node | level: node.level + 1}
+  ...> end)
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Main Title"}], level: 2, setext: false},
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Subtitle"}], level: 3, setext: false},
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Notes"}], level: 6, setext: false}
+    ]
+  }
+  ```
   """
 
   @typedoc """
@@ -1084,7 +1109,7 @@ end
 
 defimpl String.Chars, for: [MDEx.Document] do
   def to_string(%MDEx.Document{} = doc) do
-    MDEx.to_commonmark!(doc)
+    MDEx.to_markdown!(doc)
   end
 end
 
@@ -1134,5 +1159,60 @@ defimpl String.Chars,
   ] do
   def to_string(node) do
     Kernel.to_string(%MDEx.Document{nodes: [node]})
+  end
+end
+
+defimpl Jason.Encoder,
+  for: [
+    MDEx.Document,
+    MDEx.FrontMatter,
+    MDEx.BlockQuote,
+    MDEx.List,
+    MDEx.ListItem,
+    MDEx.DescriptionList,
+    MDEx.DescriptionItem,
+    MDEx.DescriptionTerm,
+    MDEx.DescriptionDetails,
+    MDEx.CodeBlock,
+    MDEx.HtmlBlock,
+    MDEx.Paragraph,
+    MDEx.Heading,
+    MDEx.ThematicBreak,
+    MDEx.FootnoteDefinition,
+    MDEx.FootnoteReference,
+    MDEx.Table,
+    MDEx.TableRow,
+    MDEx.TableCell,
+    MDEx.Text,
+    MDEx.TaskItem,
+    MDEx.SoftBreak,
+    MDEx.LineBreak,
+    MDEx.Code,
+    MDEx.HtmlInline,
+    MDEx.Raw,
+    MDEx.Emph,
+    MDEx.Strong,
+    MDEx.Strikethrough,
+    MDEx.Superscript,
+    MDEx.Link,
+    MDEx.Image,
+    MDEx.ShortCode,
+    MDEx.Math,
+    MDEx.MultilineBlockQuote,
+    MDEx.Escaped,
+    MDEx.WikiLink,
+    MDEx.Underline,
+    MDEx.Subscript,
+    MDEx.SpoileredText,
+    MDEx.EscapedTag,
+    MDEx.Alert
+  ] do
+  def encode(%type{} = node, opts) do
+    map =
+      node
+      |> Map.from_struct()
+      |> Map.put("node_type", inspect(type))
+
+    Jason.Encode.map(map, opts)
   end
 end

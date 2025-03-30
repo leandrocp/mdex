@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDEx - Fast and extensible Markdown for Elixir</title>
+    
+    <meta name="title" content="MDEx - Fast and extensible Markdown for Elixir">
+    <meta name="description" content="An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features. Built on top of the fast Rust-based comrak parser.">
+    <meta name="keywords" content="elixir, markdown, parser, commonmark, github flavored markdown, hex package">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mdelixir.com/">
+    <meta property="og:title" content="MDEx - Fast and extensible Markdown for Elixir">
+    <meta property="og:description" content="An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_card.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mdelixir.com/">
+    <meta property="twitter:title" content="MDEx - Fast and extensible Markdown for Elixir">
+    <meta property="twitter:description" content="An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features.">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_card.png">
+
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_icon.png">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/elixir.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        'primary-dark': '#2563EB',
+                        'text-light': '#64748B',
+                        'code-bg': '#1E293B',
+                        'code-text': '#E2E8F0',
+                        'gradient-start': '#3B82F6',
+                        'gradient-end': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .gradient-text {
+            background: linear-gradient(to right, #3B82F6, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(to right, #3B82F6, #8B5CF6);
+            padding: 1px;
+            border-radius: 0.75rem;
+        }
+        .gradient-border > div {
+            background: #1E293B;
+            border-radius: 0.75rem;
+        }
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+        .hljs {
+            background: transparent !important;
+            padding: 0 !important;
+        }
+    </style>
+</head>
+<body class="font-sans text-slate-900 bg-white leading-relaxed">
+    <header class="relative py-20 text-center overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-50 via-white to-white"></div>
+        <div class="relative max-w-5xl mx-auto px-6">
+            <h1 class="mb-12">
+                <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" alt="MDEx - Markdown for Elixir" class="h-64 mx-auto">
+            </h1>
+            <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">An extensible Markdown parser and formatter for Elixir. Compliant with CommonMark and supports GitHub, GitLab, and Discord features.</p>
+            <nav class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://hex.pm/packages/mdex" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark shadow-sm" aria-label="View MDEx on Hex">
+                    View on Hex
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </a>
+                <a href="https://hexdocs.pm/mdex" class="inline-flex items-center px-6 py-3 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50" aria-label="View MDEx documentation">
+                    Documentation
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="py-20 bg-white" aria-labelledby="features-heading">
+            <div class="max-w-5xl mx-auto px-6">
+                <h2 id="features-heading" class="text-3xl font-bold mb-12 text-center text-slate-900">Features</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="p-6 rounded-xl bg-white shadow-sm border border-slate-100" role="article">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-slate-900">CommonMark Compliant</h3>
+                        <p class="text-slate-600 text-sm">Fully compliant with CommonMark and GitHub Flavored Markdown specifications.</p>
+                    </div>
+                    <div class="p-6 rounded-xl bg-white shadow-sm border border-slate-100">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-slate-900">Fast & Efficient</h3>
+                        <p class="text-slate-600 text-sm">Built on top of the fast Rust-based <a href="https://crates.io/crates/comrak" class="text-primary hover:text-primary-dark">comrak</a> parser for optimal performance.</p>
+                    </div>
+                    <div class="p-6 rounded-xl bg-white shadow-sm border border-slate-100">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-slate-900">Syntax Highlighting</h3>
+                        <p class="text-slate-600 text-sm">Built-in syntax highlighting using the <a href="https://autumnus.dev" class="text-primary hover:text-primary-dark">Autumn</a> library with multiple themes.</p>
+                    </div>
+                    <div class="p-6 rounded-xl bg-white shadow-sm border border-slate-100">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-slate-900">Extensible</h3>
+                        <p class="text-slate-600 text-sm">Easy to extend with custom features and components.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-slate-50" aria-labelledby="examples-heading">
+            <div class="max-w-5xl mx-auto px-6">
+                <h2 id="examples-heading" class="text-3xl font-bold mb-12 text-center text-slate-900">Code Examples</h2>
+                
+                <div class="space-y-12">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-slate-900">Basic Usage</h3>
+                        <div class="gradient-border">
+                            <div class="p-6">
+                                <pre class="m-0 code-block overflow-x-auto"><code class="language-elixir">iex> MDEx.to_html!("# Hello")
+"&lt;h1&gt;Hello&lt;/h1&gt;"
+
+iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
+"&lt;h1&gt;Hello 😄&lt;/h1&gt;"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-slate-900">Sigils</h3>
+                        <div class="gradient-border">
+                            <div class="p-6">
+                                <pre class="m-0 code-block overflow-x-auto"><code class="language-elixir">iex> import MDEx.Sigil
+iex> ~M|# Hello from `~M` sigil|
+%MDEx.Document{
+  nodes: [
+    %MDEx.Heading{
+      nodes: [
+        %MDEx.Text{literal: "Hello from "},
+        %MDEx.Code{num_backticks: 1, literal: "~M"},
+        %MDEx.Text{literal: " sigil"}
+      ],
+      level: 1,
+      setext: false
+    }
+  ]
+}
+
+iex> ~M|`~M` also converts to HTML format|HTML
+"&lt;p&gt;&lt;code&gt;~M&lt;/code&gt; also converts to HTML format&lt;/p&gt;"
+
+iex> ~M|and to XML as well|XML
+"&lt;?xml version=\"1.0\" encoding=\"UTF-8\"?&gt;
+&lt;!DOCTYPE document SYSTEM \"CommonMark.dtd\"&gt;
+&lt;document xmlns=\"http://commonmark.org/xml/1.0\"&gt;
+  &lt;paragraph&gt;
+    &lt;text xml:space=\"preserve\"&gt;and to XML as well&lt;/text&gt;
+  &lt;/paragraph&gt;
+&lt;/document&gt;"
+
+iex> lang = :elixir
+iex> ~m|`lang = #{inspect(lang)}`|
+%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-slate-900">Safety Features</h3>
+                        <div class="gradient-border">
+                            <div class="p-6">
+                                <pre class="m-0 code-block overflow-x-auto"><code class="language-elixir">iex> MDEx.to_html!("&lt;h1&gt;Hello&lt;/h1&gt;")
+"&lt;!-- raw HTML omitted --&gt;"
+
+iex> MDEx.to_html!("&lt;h1&gt;Hello&lt;/h1&gt;", render: [escape: true])
+"&amp;lt;h1&amp;gt;Hello&amp;lt;/h1&amp;gt;"
+
+iex> MDEx.to_html!("&lt;a href=https://elixir-lang.org/&gt;Elixir&lt;/a&gt;", render: [unsafe_: true], features: [sanitize: true])
+"&lt;p&gt;&lt;a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"&gt;Elixir&lt;/a&gt;&lt;/p&gt;"
+
+iex> MDEx.to_html!("&lt;script&gt;alert('hello')&lt;/script&gt;", render: [unsafe_: true])
+"&lt;script&gt;alert('hello')&lt;/script&gt;"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-slate-900">GitHub Flavored Markdown</h3>
+                        <div class="gradient-border">
+                            <div class="p-6">
+                                <pre class="m-0 code-block overflow-x-auto"><code class="language-elixir">MDEx.to_html!(~S"""
+# GitHub Flavored Markdown :rocket:
+
+- [x] Task A
+- [x] Task B
+- [ ] Task C
+
+| Feature | Status |
+| ------- | ------ |
+| Fast | :white_check_mark: |
+| GFM  | :white_check_mark: |
+
+Check out the spec at https://github.github.com/gfm/
+""",
+extension: [
+  strikethrough: true,
+  tagfilter: true,
+  table: true,
+  autolink: true,
+  tasklist: true,
+  footnotes: true,
+  shortcodes: true,
+],
+parse: [
+  smart: true,
+  relaxed_tasklist_matching: true,
+  relaxed_autolinks: true
+],
+render: [
+  github_pre_lang: true,
+  unsafe_: true,
+],
+features: [
+  sanitize: true
+])</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-slate-900">Syntax Highlighting</h3>
+                        <div class="gradient-border">
+                            <div class="p-6">
+                                <pre class="m-0 code-block overflow-x-auto"><code class="language-elixir">MDEx.to_html!(~S"""
+```elixir
+String.upcase("elixir")
+```
+""",
+features: [syntax_highlight_theme: "catppuccin_latte"]
+)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-white" aria-labelledby="installation-heading">
+            <div class="max-w-5xl mx-auto px-6">
+                <h2 id="installation-heading" class="text-3xl font-bold mb-12 text-center text-slate-900">Installation</h2>
+                <p class="text-slate-600 text-center mb-8">Add MDEx to your dependencies:</p>
+                <div class="gradient-border max-w-2xl mx-auto">
+                    <div class="p-6">
+                        <pre class="m-0 code-block"><code class="language-elixir">def deps do
+  [
+    {:mdex, "~> 0.2"}
+  ]
+end</code></pre>
+                    </div>
+                </div>
+                <p class="text-slate-600 text-center mt-8 mb-4">Or using igniter:</p>
+                <div class="gradient-border max-w-2xl mx-auto">
+                    <div class="p-6">
+                        <pre class="m-0 code-block"><code class="language-elixir">mix igniter.install mdex</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-12 bg-white border-t border-slate-100">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-slate-500 text-sm text-center">
+                <nav class="flex justify-center gap-4 mt-2">
+                    <a href="https://github.com/leandrocp/mdex" class="text-slate-500 hover:text-slate-700 inline-flex items-center" aria-label="View MDEx on GitHub">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://hex.pm/packages/mdex" class="text-slate-500 hover:text-slate-700 inline-flex items-center" aria-label="View MDEx on Hex">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 0L2.4 6v12L12 24l9.6-6V6L12 0zm0 2.4L19.2 8 12 13.6 4.8 8 12 2.4z"/>
+                        </svg>
+                        Hex
+                    </a>
+                </nav>
+                <p class="mt-2">Licensed under MIT</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        hljs.highlightAll();
+    </script>
+</body>
+</html> 
