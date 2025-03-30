@@ -1,8 +1,8 @@
 defmodule MDEx.Pipe do
   @moduledoc """
-  MDEx.Pipe is a Req-like API to transform Markdown documents.
+  MDEx.Pipe is a Req-like API to transform Markdown documents through a series of steps in a pipeline.
 
-  It enables plugins, for example:
+  Its main use case it to enable plugins, for example:
 
       document = \"\"\"
       # Project Diagram
@@ -22,7 +22,6 @@ defmodule MDEx.Pipe do
       MDEx.new(parse: [smart: true])
       |> MDExMermaid.attach(version: "11")
       |> MDEx.to_html(document: document)
-
 
   ## Writing Plugins
 
@@ -47,9 +46,57 @@ defmodule MDEx.Pipe do
 
   Let's get into the actual code, with comments to explain each part:
 
-  ```elixir
-  TODO: copy from test
-  ```
+      defmodule MDExMermaid do
+        alias MDEx.Pipe
+
+        @latest_version "11"
+
+        def attach(pipe, options \\ []) do
+          pipe
+          # register option with prefix `:mermaid_` to avoid conflicts with other plugins
+          |> Pipe.register_options([:mermaid_version])
+          #  merge all options given by users
+          |> Pipe.merge_options(mermaid_version: options[:version])
+          # actual steps to manipulate the document
+          # see respective Pipe functions for more info
+          |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
+          |> Pipe.append_steps(inject_script: &inject_script/1)
+          |> Pipe.append_steps(update_code_blocks: &update_code_blocks/1)
+        end
+
+        defp enable_unsafe(pipe) do
+          Pipe.put_render_options(pipe, unsafe_: true)
+        end
+
+        defp inject_script(pipe) do
+          version = Pipe.get_option(pipe, :mermaid_version, @latest_version)
+
+          script_node =
+            %MDEx.HtmlBlock{
+              literal: \"\"\"
+              <script type="module">
+                import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@\#\{version\}/dist/mermaid.esm.min.mjs';
+                mermaid.initialize({ startOnLoad: true });
+              </script>
+              \"\"\"
+            }
+
+          Pipe.put_node_in_document_root(pipe, script_node)
+        end
+
+        defp update_code_blocks(pipe) do
+          selector = fn
+            %MDEx.CodeBlock{info: "mermaid"} -> true
+            _ -> false
+          end
+
+          Pipe.update_nodes(
+            pipe,
+            selector,
+            &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">\#\{&1.literal}</pre>", nodes: &1.nodes}
+          )
+        end
+      end
 
   Now whenever that plugin is attached to a pipeline,
   MDEx will run all functions defined in the `attach/1` function.
