@@ -8,6 +8,7 @@ defmodule MDEx do
 
   alias MDEx.Native
   alias MDEx.Document
+  alias MDEx.Pipe
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
 
@@ -52,7 +53,7 @@ defmodule MDEx do
         "<h1>Hello</h1>"
 
   """
-  @type source :: markdown :: String.t() | Document.t()
+  @type source :: markdown :: String.t() | Document.t() | Pipe.t()
 
   # TODO: support :xml
   @type parse_source :: markdown :: String.t() | {:json, String.t()}
@@ -500,6 +501,11 @@ defmodule MDEx do
   ]
 
   @options_schema [
+    document: [
+      type: {:or, [:string, {:struct, MDEx.Document}, nil]},
+      default: "",
+      doc: "Markdown document, either a string or a `MDEx.Document` struct."
+    ],
     extension: [
       type: :keyword_list,
       type_spec: quote(do: extension_options()),
@@ -610,6 +616,21 @@ defmodule MDEx do
   """
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+
+  @doc false
+  def extension_options_schema, do: @extension_options_schema
+
+  @doc false
+  def render_options_schema, do: @render_options_schema
+
+  @doc false
+  def parse_options_schema, do: @parse_options_schema
+
+  @doc false
+  def features_options_schema, do: @features_options_schema
+
+  @doc false
+  def options_schema, do: @options_schema
 
   @doc """
   Parse `source` and returns `MDEx.Document`.
@@ -824,6 +845,12 @@ defmodule MDEx do
     |> maybe_trim()
   end
 
+  def to_html(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_html(&1.document, &1.options))
+  end
+
   def to_html(%Document{} = document) do
     document
     |> Native.document_to_html()
@@ -875,6 +902,13 @@ defmodule MDEx do
     |> Native.markdown_to_html_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
+  end
+
+  def to_html(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> MDEx.Steps.put_options(options)
+    |> MDEx.Pipe.run()
+    |> then(&to_html(&1.document, &1.options))
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
@@ -988,6 +1022,12 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
+  def to_xml(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_xml(&1.document, &1.options))
+  end
+
   def to_xml(%Document{} = document) do
     document
     |> Native.document_to_xml()
@@ -1070,6 +1110,13 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
+  def to_xml(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> MDEx.Steps.put_options(options)
+    |> MDEx.Pipe.run()
+    |> then(&to_xml(&1.document, &1.options))
+  end
+
   def to_xml(%Document{} = document, options) when is_list(options) do
     document
     |> Native.document_to_xml_with_options(validate_options!(options))
@@ -1133,6 +1180,12 @@ defmodule MDEx do
     end
   end
 
+  def to_json(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_json(&1.document, &1.options))
+  end
+
   def to_json(%Document{} = document) do
     case Jason.encode(document) do
       {:ok, json} -> {:ok, json}
@@ -1179,6 +1232,13 @@ defmodule MDEx do
          {:ok, json} <- to_json(document, options) do
       {:ok, json}
     end
+  end
+
+  def to_json(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> MDEx.Steps.put_options(options)
+    |> MDEx.Pipe.run()
+    |> then(&to_json(&1.document, &1.options))
   end
 
   def to_json(%Document{} = document, options) when is_list(options) do
@@ -1400,8 +1460,6 @@ defmodule MDEx do
   defp adapt_sanitize_options(nil = _options), do: nil
 
   defp adapt_sanitize_options(options) do
-    # dbg(options)
-
     {:custom,
      %{
        link_rel: options[:link_rel],
@@ -1517,10 +1575,10 @@ defmodule MDEx do
     end
   end
 
-@doc """
+  @doc """
   Returns a new `MDEx.Pipe` instance.
 
-  Once the pipe has all transformations you want, call either one of the following functions to format it:
+  Once the pipe is complete, call either one of the following functions to format the document:
 
   - `MDEx.to_html/1`
   - `MDEx.to_json/1`
@@ -1529,17 +1587,34 @@ defmodule MDEx do
 
   ## Examples
 
+  * Build a pipe with `:document`:
+
       iex> mdex = MDEx.new(document: "# Hello")
-      iex> mdex |> MDEx.to_html()
+      iex> MDEx.to_html(mdex)
       {:ok, "<h1>Hello</h1>"}
 
       iex> mdex = MDEx.new(document: "Hello ~world~", extension: [strikethrough: true])
-      iex> mdex |> MDEx.to_html()
-      {:ok, "<p>Hello <del>world</del></p>"}
+      iex> MDEx.to_json(mdex)
+      {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
+
+  * Pass a `:document` when formatting:
+
+      iex> mdex = MDEx.new(extension: [strikethrough: true])
+      iex> MDEx.to_xml(mdex, document: "Hello ~world~")
+      {:ok, ~s|<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE document SYSTEM "CommonMark.dtd">
+      <document xmlns="http://commonmark.org/xml/1.0">
+        <paragraph>
+          <text xml:space="preserve">Hello </text>
+          <strikethrough>
+            <text xml:space="preserve">world</text>
+          </strikethrough>
+        </paragraph>
+      </document>|}
 
   ## Notes
 
-  1. String documents are automatically [parsed](https://hexdocs.pm/mdex/MDEx.html#parse_document!/2)
+  1. Source `:document` is automatically [parsed](https://hexdocs.pm/mdex/MDEx.html#parse_document!/2)
   into `MDEx.Document` before the pipeline runs so every step receives the same data type.
 
   2. You can pass the document when creating the pipe:
@@ -1553,6 +1628,7 @@ defmodule MDEx do
 
   ```elixir
   mdex = MDEx.new()
+  # ... attach plugins and steps
 
   MDEx.to_html(mdex, document: "# Hello HTML")
   MDEx.to_json(mdex, document: "# Hello JSON")
