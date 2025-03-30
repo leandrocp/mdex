@@ -906,8 +906,8 @@ defmodule MDEx do
 
   def to_html(%Pipe{} = pipe, options) when is_list(options) do
     pipe
-    |> MDEx.Steps.put_options(options)
-    |> MDEx.Pipe.run()
+    |> Pipe.put_options(options)
+    |> Pipe.run()
     |> then(&to_html(&1.document, &1.options))
   end
 
@@ -1112,8 +1112,8 @@ defmodule MDEx do
 
   def to_xml(%Pipe{} = pipe, options) when is_list(options) do
     pipe
-    |> MDEx.Steps.put_options(options)
-    |> MDEx.Pipe.run()
+    |> Pipe.put_options(options)
+    |> Pipe.run()
     |> then(&to_xml(&1.document, &1.options))
   end
 
@@ -1236,8 +1236,8 @@ defmodule MDEx do
 
   def to_json(%Pipe{} = pipe, options) when is_list(options) do
     pipe
-    |> MDEx.Steps.put_options(options)
-    |> MDEx.Pipe.run()
+    |> Pipe.put_options(options)
+    |> Pipe.run()
     |> then(&to_json(&1.document, &1.options))
   end
 
@@ -1636,8 +1636,16 @@ defmodule MDEx do
   """
   @spec new(options()) :: MDEx.Pipe.t()
   def new(options \\ []) do
-    %MDEx.Pipe{}
-    |> MDEx.Steps.put_options(options)
-    |> MDEx.Steps.attach()
+    %Pipe{}
+    |> Pipe.register_options([
+      :document,
+      :extension,
+      :parse,
+      :render,
+      :features
+    ])
+    |> Pipe.put_options(options)
+
+    # |> MDEx.Steps.attach()
   end
 end
