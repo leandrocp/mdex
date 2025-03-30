@@ -46,6 +46,7 @@
 ### Foundation
 
 The library is built on top of:
+
 - [comrak](https://crates.io/crates/comrak) - a fast Rust port of [GitHub's CommonMark parser](https://github.com/github/cmark-gfm)
 - [ammonia](https://crates.io/crates/ammonia) for HTML sanitization
 - [autumnus](https://crates.io/crates/autumnus) for syntax highlighting
@@ -83,10 +84,10 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 [MDEx.Pipe](https://hexdocs.pm/mdex/MDEx.Pipe.html) provides a high-level API to manipulate a Markdown document and build plugins that can be attached to a pipeline:
 
 ```elixir
-document = """
-# Project Diagram
+document = ~s|
+# Super Diagram
 
-````mermaid
+\`\`\`mermaid
 graph TD
   A[Enter Chart Definition] --> B(Preview)
   B --> C{decide}
@@ -95,15 +96,15 @@ graph TD
   E --> B
   D --> F[Save Image and Code]
   F --> B
-````
-"""
+\`\`\`
+|
 
 MDEx.new()
 |> MDExMermaid.attach(version: "11")
 |> MDEx.to_html(document: document)
 ```
 
-See the moduledoc for more info.
+See the module doc for more info.
 
 ## Sigils
 
@@ -113,7 +114,7 @@ First, import the sigils:
 
 ```elixir
 iex> import MDEx.Sigil
-```
+````
 
 ```elixir
 iex> import MDEx.Sigil
@@ -414,5 +415,5 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 - [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
 - [Floki](https://hex.pm/packages/floki) for the AST manipulation
-* [Req](https://hex.pm/packages/req) for the design of the API
+- [Req](https://hex.pm/packages/req) for the design of the API
 - Logo based on [markdown-mark](https://github.com/dcurtis/markdown-mark)
