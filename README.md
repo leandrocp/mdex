@@ -114,7 +114,7 @@ First, import the sigils:
 
 ```elixir
 iex> import MDEx.Sigil
-````
+```
 
 ```elixir
 iex> import MDEx.Sigil
@@ -414,6 +414,6 @@ Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 ## Acknowledgements
 
 - [comrak](https://crates.io/crates/comrak) crate for all the heavy work on parsing Markdown and rendering HTML
-- [Floki](https://hex.pm/packages/floki) for the AST manipulation
-- [Req](https://hex.pm/packages/req) for the design of the API
+- [Floki](https://hex.pm/packages/floki) for the AST
+- [Req](https://hex.pm/packages/req) for the pipeline API
 - Logo based on [markdown-mark](https://github.com/dcurtis/markdown-mark)
