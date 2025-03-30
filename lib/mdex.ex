@@ -8,6 +8,7 @@ defmodule MDEx do
 
   alias MDEx.Native
   alias MDEx.Document
+  alias MDEx.Pipe
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
 
@@ -52,7 +53,7 @@ defmodule MDEx do
         "<h1>Hello</h1>"
 
   """
-  @type source :: markdown :: String.t() | Document.t()
+  @type source :: markdown :: String.t() | Document.t() | Pipe.t()
 
   # TODO: support :xml
   @type parse_source :: markdown :: String.t() | {:json, String.t()}
@@ -500,6 +501,11 @@ defmodule MDEx do
   ]
 
   @options_schema [
+    document: [
+      type: {:or, [:string, {:struct, MDEx.Document}, nil]},
+      default: "",
+      doc: "Markdown document, either a string or a `MDEx.Document` struct."
+    ],
     extension: [
       type: :keyword_list,
       type_spec: quote(do: extension_options()),
@@ -610,6 +616,21 @@ defmodule MDEx do
   """
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+
+  @doc false
+  def extension_options_schema, do: @extension_options_schema
+
+  @doc false
+  def render_options_schema, do: @render_options_schema
+
+  @doc false
+  def parse_options_schema, do: @parse_options_schema
+
+  @doc false
+  def features_options_schema, do: @features_options_schema
+
+  @doc false
+  def options_schema, do: @options_schema
 
   @doc """
   Parse `source` and returns `MDEx.Document`.
@@ -791,9 +812,9 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to HTML using default options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML using default options.
 
-  Use `to_html/2` to pass options and customize the generated HTML.
+  Use `to_html/2` to pass custom options.
 
   ## Examples
 
@@ -822,6 +843,12 @@ defmodule MDEx do
     source
     |> Native.markdown_to_html()
     |> maybe_trim()
+  end
+
+  def to_html(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_html(&1.document, &1.options))
   end
 
   def to_html(%Document{} = document) do
@@ -853,7 +880,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to HTML using custom options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML using custom options.
 
   ## Examples
 
@@ -875,6 +902,13 @@ defmodule MDEx do
     |> Native.markdown_to_html_with_options(validate_options!(options))
     # |> maybe_wrap_error()
     |> maybe_trim()
+  end
+
+  def to_html(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> Pipe.put_options(options)
+    |> Pipe.run()
+    |> then(&to_html(&1.document, &1.options))
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
@@ -906,9 +940,9 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to XML using default options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to XML using default options.
 
-  Use `to_xml/2` to pass options and customize the generated XML.
+  Use `to_xml/2` to pass custom options.
 
   ## Examples
 
@@ -988,6 +1022,12 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
+  def to_xml(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_xml(&1.document, &1.options))
+  end
+
   def to_xml(%Document{} = document) do
     document
     |> Native.document_to_xml()
@@ -1018,7 +1058,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to XML using custom options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to XML using custom options.
 
   ## Examples
 
@@ -1070,6 +1110,13 @@ defmodule MDEx do
     # |> maybe_trim()
   end
 
+  def to_xml(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> Pipe.put_options(options)
+    |> Pipe.run()
+    |> then(&to_xml(&1.document, &1.options))
+  end
+
   def to_xml(%Document{} = document, options) when is_list(options) do
     document
     |> Native.document_to_xml_with_options(validate_options!(options))
@@ -1099,9 +1146,9 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to JSON using default options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to JSON using default options.
 
-  Use `to_json/2` to pass options and customize the generated JSON.
+  Use `to_json/2` to pass custom options.
 
   ## Examples
 
@@ -1133,6 +1180,12 @@ defmodule MDEx do
     end
   end
 
+  def to_json(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_json(&1.document, &1.options))
+  end
+
   def to_json(%Document{} = document) do
     case Jason.encode(document) do
       {:ok, json} -> {:ok, json}
@@ -1160,7 +1213,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown or `MDEx.Document` to JSON using custom options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to JSON using custom options.
 
   ## Examples
 
@@ -1179,6 +1232,13 @@ defmodule MDEx do
          {:ok, json} <- to_json(document, options) do
       {:ok, json}
     end
+  end
+
+  def to_json(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> Pipe.put_options(options)
+    |> Pipe.run()
+    |> then(&to_json(&1.document, &1.options))
   end
 
   def to_json(%Document{} = document, options) when is_list(options) do
@@ -1208,9 +1268,9 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert a `MDEx.Document` to Markdown using default options.
+  Convert `MDEx.Document` or `MDEx.Pipe` to Markdown using default options.
 
-  To customize the output, use `to_markdown/2`.
+  Use `to_markdown/2` to pass custom options.
 
   ## Example
 
@@ -1218,7 +1278,15 @@ defmodule MDEx do
       {:ok, "### Hello"}
 
   """
-  @spec to_markdown(Document.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  @spec to_markdown(Document.t() | Pipe.t()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(source)
+
+  def to_markdown(%Pipe{} = pipe) do
+    pipe
+    |> Pipe.run()
+    |> then(&to_markdown(&1.document, &1.options))
+  end
+
   def to_markdown(%Document{} = document) do
     document
     |> Native.document_to_commonmark()
@@ -1238,9 +1306,18 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert a `MDEx.Document` to Markdown with custom options.
+  Convert `MDEx.Document` or `MDEx.Pipe` to Markdown using custom options.
   """
-  @spec to_markdown(Document.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  @spec to_markdown(Document.t() | Pipe.t(), options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
+  def to_markdown(source, options)
+
+  def to_markdown(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> Pipe.put_options(options)
+    |> Pipe.run()
+    |> then(&to_markdown(&1.document, &1.options))
+  end
+
   def to_markdown(%Document{} = document, options) when is_list(options) do
     document
     |> Native.document_to_commonmark_with_options(validate_options!(options))
@@ -1400,8 +1477,6 @@ defmodule MDEx do
   defp adapt_sanitize_options(nil = _options), do: nil
 
   defp adapt_sanitize_options(options) do
-    # dbg(options)
-
     {:custom,
      %{
        link_rel: options[:link_rel],
@@ -1515,5 +1590,79 @@ defmodule MDEx do
       nil -> default
       val -> val
     end
+  end
+
+  @doc """
+  Builds a new `MDEx.Pipe` instance.
+
+  Once the pipe is complete, call either one of the following functions to format the document:
+
+  - `MDEx.to_html/1`
+  - `MDEx.to_json/1`
+  - `MDEx.to_xml/1`
+  - `MDEx.to_markdown/1`
+
+  ## Examples
+
+  * Build a pipe with `:document`:
+
+        iex> mdex = MDEx.new(document: "# Hello")
+        iex> MDEx.to_html(mdex)
+        {:ok, "<h1>Hello</h1>"}
+
+        iex> mdex = MDEx.new(document: "Hello ~world~", extension: [strikethrough: true])
+        iex> MDEx.to_json(mdex)
+        {:ok, ~s|{"nodes":[{"nodes":[{"literal":"Hello ","node_type":"MDEx.Text"},{"nodes":[{"literal":"world","node_type":"MDEx.Text"}],"node_type":"MDEx.Strikethrough"}],"node_type":"MDEx.Paragraph"}],"node_type":"MDEx.Document"}|}
+
+  * Pass a `:document` when formatting:
+
+        iex> mdex = MDEx.new(extension: [strikethrough: true])
+        iex> MDEx.to_xml(mdex, document: "Hello ~world~")
+        {:ok, ~s|<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE document SYSTEM "CommonMark.dtd">
+        <document xmlns="http://commonmark.org/xml/1.0">
+          <paragraph>
+            <text xml:space="preserve">Hello </text>
+            <strikethrough>
+              <text xml:space="preserve">world</text>
+            </strikethrough>
+          </paragraph>
+        </document>|}
+
+  ## Notes
+
+  1. Source `:document` is automatically [parsed](https://hexdocs.pm/mdex/MDEx.html#parse_document!/2)
+  into `MDEx.Document` before the pipeline runs so every step receives the same data type.
+
+  2. You can pass the document when creating the pipe:
+
+  ```elixir
+  MDEx.new(document: "# Hello") |> MDEx.to_html()
+  ```
+
+  Or pass it only when formatting the document,
+  useful to reuse the same pipe with different documents and formats.
+
+  ```elixir
+  mdex = MDEx.new()
+  # ... attach plugins and steps
+
+  MDEx.to_html(mdex, document: "# Hello HTML")
+  MDEx.to_json(mdex, document: "# Hello JSON")
+  ```
+  """
+  @spec new(options()) :: MDEx.Pipe.t()
+  def new(options \\ []) do
+    %Pipe{}
+    |> Pipe.register_options([
+      :document,
+      :extension,
+      :parse,
+      :render,
+      :features
+    ])
+    |> Pipe.put_options(options)
+
+    # |> MDEx.Steps.attach()
   end
 end
