@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2025-03-31)
 
 ### Enhancements
   * Introduce `MDEx.Pipe` - a Req-like pipeline to manipulate Markdown documents and write plugins
