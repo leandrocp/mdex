@@ -33,6 +33,7 @@ defmodule MDEx.Sigil do
   ## Modifiers
 
     * `HTML` - converts Markdown or `MDEx.Document` to HTML, equivalent to calling `MDEx.to_html!/2`
+    * `JSON` - converts Markdown or `MDEx.Document` to JSON, equivalent to calling `MDEx.to_json!/2`
     * `XML` - converts Markdown or `MDEx.Document` to XML, equivalent to calling `MDEx.to_xml!/2`
     * `MD` - converts `MDEx.Document` to Markdown, equivalent to calling `MDEx.to_markdown!/2`
 
@@ -53,7 +54,7 @@ defmodule MDEx.Sigil do
   """
 
   @doc """
-  The `~M` sigil converts to `MDEx.Document`, CommonMark, HTML, or XML without interpolation.
+  The `~M` sigil converts to `MDEx.Document`, CommonMark, HTML, JSON or XML without interpolation.
 
   ## Examples
 
@@ -69,6 +70,13 @@ defmodule MDEx.Sigil do
   ```elixir
   iex> ~M[`lang = :elixir`]HTML
   "<p><code>lang = :elixir</code></p>\\n"
+  ```
+
+  ### Markdown to JSON
+
+  ```elixir
+  iex> ~M[`lang = :elixir`]JSON
+  "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
   ```
 
   ### Markdown to XML
@@ -107,6 +115,9 @@ defmodule MDEx.Sigil do
         modifiers == ~c"HTML" ->
           MDEx.to_html!(doc, @opts)
 
+        modifiers == ~c"JSON" ->
+          MDEx.to_json!(doc, @opts)
+
         modifiers == ~c"XML" ->
           MDEx.to_xml!(doc, @opts)
 
@@ -121,7 +132,7 @@ defmodule MDEx.Sigil do
   end
 
   @doc """
-  The `~m` sigil converts to `MDEx.Document`, CommonMark, HTML, or XML with interpolation.
+  The `~m` sigil converts to `MDEx.Document`, CommonMark, HTML, JSON or XML with interpolation.
 
   ## Examples
 
@@ -159,6 +170,9 @@ defmodule MDEx.Sigil do
         modifiers == ~c"HTML" ->
           MDEx.to_html!(doc, @opts)
 
+        modifiers == ~c"JSON" ->
+          MDEx.to_json!(doc, @opts)
+
         modifiers == ~c"XML" ->
           MDEx.to_xml!(doc, @opts)
 
@@ -191,6 +205,11 @@ defmodule MDEx.Sigil do
       modifiers == ~c"HTML" ->
         quote do
           MDEx.to_html!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+        end
+
+      modifiers == ~c"JSON" ->
+        quote do
+          MDEx.to_json!(to_doc(unquote(binary), __ENV__), unquote(@opts))
         end
 
       modifiers == ~c"XML" ->

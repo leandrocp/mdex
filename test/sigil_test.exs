@@ -16,6 +16,11 @@ defmodule MDEx.SigilTest do
                "<p><code>lang = :elixir</code></p>"
     end
 
+    test "markdown to json" do
+      assert ~M|`lang = :elixir`|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+    end
+
     test "markdown to xml" do
       assert ~M|`lang = :elixir`|XML ==
                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = :elixir</code>\n  </paragraph>\n</document>\n"
@@ -29,6 +34,11 @@ defmodule MDEx.SigilTest do
     test "document to html" do
       assert ~M|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|HTML ==
                "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "document to json" do
+      assert ~M|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
     end
 
     test "document to xml" do
@@ -48,6 +58,11 @@ defmodule MDEx.SigilTest do
                "<p><code>lang = :elixir</code></p>"
     end
 
+    test "markdown to json" do
+      assert ~m|`lang = :elixir`|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+    end
+
     test "markdown to xml" do
       assert ~m|`lang = :elixir`|XML ==
                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = :elixir</code>\n  </paragraph>\n</document>\n"
@@ -61,6 +76,11 @@ defmodule MDEx.SigilTest do
     test "document to html" do
       assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|HTML ==
                "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "document to json" do
+      assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
     end
 
     test "document to xml" do
@@ -82,6 +102,11 @@ defmodule MDEx.SigilTest do
                "<p><code>lang = :elixir</code></p>"
     end
 
+    test "markdown to json" do
+      assert ~m|`lang = #{inspect(@lang)}`|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+    end
+
     test "markdown to xml" do
       assert ~m|`lang = #{inspect(@lang)}`|XML ==
                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = :elixir</code>\n  </paragraph>\n</document>\n"
@@ -95,6 +120,11 @@ defmodule MDEx.SigilTest do
     test "document to html" do
       assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = #{inspect(@lang)}"}]}]}|HTML ==
                "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "document to json" do
+      assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = #{inspect(@lang)}"}]}]}|JSON ==
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
     end
 
     test "document to xml" do
