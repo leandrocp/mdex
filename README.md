@@ -339,7 +339,17 @@ Pre-compiled binaries are available for the following targets, so you don't need
 - `x86_64-unknown-linux-gnu`
 - `x86_64-unknown-linux-musl`
 
+### Compile manually
+
 But in case you need or want to compile it yourself, you can do the following:
+
+1. [Install Rust](https://www.rust-lang.org/tools/install)
+
+2. Install a C compiler or build packages
+
+It depends on your OS, for example in Ubuntu you can install the `build-essential` package.
+
+3. Run:
 
 ```sh
 export MDEX_BUILD=1
