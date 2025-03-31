@@ -76,7 +76,7 @@ defmodule MDEx.Sigil do
 
   ```elixir
   iex> ~M[`lang = :elixir`]JSON
-  1
+  "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
   ```
 
   ### Markdown to XML
