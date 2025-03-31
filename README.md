@@ -104,8 +104,6 @@ MDEx.new()
 |> MDEx.to_html(document: document)
 ```
 
-See the module doc for more info.
-
 ## Sigils
 
 Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.

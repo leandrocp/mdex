@@ -459,7 +459,8 @@ defmodule MDEx.Pipe do
   @doc """
   Updates nodes in the document that match `selector`.
   """
-  def update_nodes(%MDEx.Pipe{} = pipe, selector, fun) when is_function(selector, 1) and is_function(fun, 1) do
+  @spec update_nodes(t(), MDEx.Document.selector(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: t()
+  def update_nodes(%MDEx.Pipe{} = pipe, selector, fun) when is_function(fun, 1) do
     document =
       update_in(pipe.document, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
         fun.(node)
@@ -556,7 +557,7 @@ defmodule MDEx.Pipe do
   Executes the pipeline steps in order.
 
   This function is usually not called directly,
-  instead call one of the `to_*` functions in `MDEx` module.
+  prefer calling one of the `to_*` functions in `MDEx` module.
   """
   @spec run(t()) :: t()
   def run(%MDEx.Pipe{} = pipe) do

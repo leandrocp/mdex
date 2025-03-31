@@ -17,7 +17,7 @@ defmodule MDEx do
   require Logger
 
   @typedoc """
-  Input source to convert to another format.
+  Input source document.
 
   ## Examples
 
@@ -56,6 +56,9 @@ defmodule MDEx do
   @type source :: markdown :: String.t() | Document.t() | Pipe.t()
 
   # TODO: support :xml
+  @typedoc """
+  Source accepted by `parse_document/2`.
+  """
   @type parse_source :: markdown :: String.t() | {:json, String.t()}
 
   @extension_options_schema [
@@ -579,40 +582,30 @@ defmodule MDEx do
 
   @doc """
   Returns the default options for the `:extension` group.
-
-  #{NimbleOptions.docs(@extension_options_schema)}
   """
   @spec default_extension_options() :: extension_options()
   def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
 
   @doc """
   Returns the default options for the `:parse` group.
-
-  #{NimbleOptions.docs(@parse_options_schema)}
   """
   @spec default_parse_options() :: parse_options()
   def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
 
   @doc """
   Returns the default options for the `:render` group.
-
-  #{NimbleOptions.docs(@render_options_schema)}
   """
   @spec default_render_options() :: render_options()
   def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
 
   @doc """
   Returns the default options for the `:features` group.
-
-  #{NimbleOptions.docs(@features_options_schema)}
   """
   @spec default_features_options() :: features_options()
   def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
 
   @doc """
   Returns the default options for the `:sanitize` group.
-
-  #{NimbleOptions.docs(@sanitize_options_schema)}
   """
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
@@ -1349,7 +1342,10 @@ defmodule MDEx do
   def to_commonmark!(document, options), do: to_markdown!(document, options)
 
   @doc """
-  Traverse and update the Markdown document preserving the tree structure format.
+  Low-level function to traverse and update the Markdown document preserving the tree structure format.
+
+  See `MDEx.Document` for more information about the tree structure and for higher-level functions
+  using the Access and Enumerable protocols.
 
   ## Examples
 
@@ -1391,7 +1387,10 @@ defmodule MDEx do
   def traverse_and_update(ast, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, fun)
 
   @doc """
-  Traverse and update the Markdown document preserving the tree structure format and keeping an accumulator.
+  Low-level function to traverse and update the Markdown document preserving the tree structure format and keeping an accumulator.
+
+  See `MDEx.Document` for more information about the tree structure and for higher-level functions
+  using the Access and Enumerable protocols.
 
   ## Example
 
