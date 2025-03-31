@@ -79,6 +79,10 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>"
 ```
 
+## Plugins
+
+- [mdex_mermaid](https://hex.pm/packages/mdex_mermaid) - Render [Mermaid](https://mermaid.js.org) diagrams in code blocks
+
 ## Req-like Pipeline
 
 [MDEx.Pipe](https://hexdocs.pm/mdex/MDEx.Pipe.html) provides a high-level API to manipulate a Markdown document and build plugins that can be attached to a pipeline:
