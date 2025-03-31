@@ -53,7 +53,7 @@ defmodule MDEx.Native do
       "x86_64-pc-windows-gnu" => other_variants,
       "x86_64-unknown-freebsd" => other_variants
     },
-    nif_versions: ["2.15", "2.16"],
+    nif_versions: ["2.15"],
     mode: mode,
     force_build: System.get_env("MDEX_BUILD") in ["1", "true"]
 
