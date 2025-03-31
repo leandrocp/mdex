@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 rustler = "0.36"
 serde = "1.0"
-comrak = { version = "0.36", features = ["shortcodes"] }
+comrak = { version = "0.37", features = ["shortcodes"] }
 ammonia = "4.0"
 phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
