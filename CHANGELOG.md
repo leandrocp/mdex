@@ -10,6 +10,9 @@
 ### Fixes
   * Revert to NIF 2.15 only
 
+### Changes
+  * Updated `comrak` to v0.37.0
+
 ## 0.4.3 (2025-03-29)
 
 ### Enhancements
