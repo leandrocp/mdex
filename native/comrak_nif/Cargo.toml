@@ -83,4 +83,3 @@ inkjet = { version = "0.10.5", default-features = false, features = [
 [features]
 default = ["nif_version_2_15"]
 nif_version_2_15 = ["rustler/nif_version_2_15"]
-nif_version_2_16 = ["rustler/nif_version_2_16"]

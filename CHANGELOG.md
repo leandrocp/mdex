@@ -7,6 +7,9 @@
   * Added `JSON` modifier to `~m` and `~M` sigils
   * Added `MDEx.Document.wrap/1`
 
+### Fixes
+  * Revert to NIF 2.15 only
+
 ## 0.4.3 (2025-03-29)
 
 ### Enhancements
