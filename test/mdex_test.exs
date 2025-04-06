@@ -80,7 +80,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>
+        </span></code></pre>
         """,
         features: [syntax_highlight_theme: "nord"]
       )
@@ -110,7 +110,7 @@ defmodule MDExTest do
         """,
         ~s"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-</span></code></pre>
+        </span></code></pre>
         """
       )
     end
@@ -124,7 +124,7 @@ defmodule MDExTest do
         """,
         ~s"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-</span></code></pre>
+        </span></code></pre>
         """
       )
     end
@@ -138,7 +138,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
-</span></code></pre>
+        </span></code></pre>
         """,
         features: [syntax_highlight_inline_style: false]
       )
@@ -318,7 +318,7 @@ defmodule MDExTest do
         <li>Elixir {:ex}</li>
         </ul>
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:ok</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #848b98;">&rbrace;</span>
-</span></code></pre>
+        </span></code></pre>
         """
       )
     end
