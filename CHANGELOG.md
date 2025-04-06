@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Enhancements
+  * Replace Inkjet adapter with Autumnus adapter for syntax highlighting
+  * Update syntax highlighting CSS classes for improved compatibility
+  * Add `tabindex="0"` attribute to code blocks for better accessibility
+
+### Changes
+  * Rename CSS class from `autumn-hl` to `athl` for a more compact syntax
+  * Modify HTML output structure in code blocks to include line annotations
+
 ## 0.5.0 (2025-03-31)
 
 ### Enhancements

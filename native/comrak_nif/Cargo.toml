@@ -19,7 +19,7 @@ tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
 v_htmlescape = "0.15"
 # autumnus = "0.1"
-autumnus = { path = "../../../autumnus" }
+autumnus = { git = "https://github.com/leandrocp/autumnus", branch = "lp-comrak-adapter" }
 log = "0.4"
 lazy_static = "1.5"
 typed-arena = "2.0.2"
