@@ -65,8 +65,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol" style="color: #98C379;">:mdex</span><span class="ahl-punctuation ahl-delimiter" style="color: #ABB2BF;">,</span> <span class="ahl-string" style="color: #98C379;">&quot;~&gt; 0.1&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&rbrace;</span>
-        </code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #848b98;">&rbrace;</span>
+        </span></code></pre>
         """
       )
     end
