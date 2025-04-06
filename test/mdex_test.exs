@@ -7,7 +7,7 @@ defmodule MDExTest do
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
-    # IO.puts(html)
+    IO.puts(html)
     assert html == String.trim(expected)
   end
 

@@ -1,22 +1,29 @@
-use autumnus::formatter::{HtmlFormatter, HtmlInline, HtmlLinked};
+use autumnus::formatter::{Formatter, HtmlFormatter, HtmlInline, HtmlLinked};
 use autumnus::languages::Language;
+use autumnus::themes;
 use autumnus::themes::Theme;
-use autumnus::{themes, FormatterOption};
 use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::sync::RwLock;
+
+#[derive(Debug)]
+pub enum FormatterType<'a> {
+    Inline(HtmlInline<'a>),
+    Linked(HtmlLinked<'a>),
+}
 
 #[derive(Debug)]
 pub struct AutumnusAdapter<'a> {
     theme: &'a Theme,
-    formatter_option: FormatterOption<'a>,
+    formatter: RwLock<FormatterType<'a>>,
 }
 
 impl Default for AutumnusAdapter<'_> {
     fn default() -> Self {
         AutumnusAdapter {
             theme: themes::get("onedark").unwrap(),
-            formatter_option: FormatterOption::default(),
+            formatter: RwLock::new(FormatterType::Inline(HtmlInline::default())),
         }
     }
 }
@@ -28,35 +35,20 @@ impl<'a> AutumnusAdapter<'a> {
             Err(_) => themes::get("onedark").unwrap(),
         };
 
-        let formatter_option = if inline_style {
-            FormatterOption::HtmlInline {
-                pre_class: None,
-                italic: false,
-                include_highlights: false,
-            }
+        let formatter = if inline_style {
+            FormatterType::Inline(HtmlInline::default().with_theme(Some(theme)))
         } else {
-            FormatterOption::HtmlLinked { pre_class: None }
+            FormatterType::Linked(HtmlLinked::default())
         };
 
         Self {
             theme,
-            formatter_option,
+            formatter: RwLock::new(formatter),
         }
     }
 }
 
 impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
-    fn write_highlighted(
-        &self,
-        output: &mut dyn Write,
-        lang: Option<&str>,
-        source: &str,
-    ) -> io::Result<()> {
-        let lang: Language = Language::guess(lang.unwrap_or(""), source);
-        println!("source: {:?}", source);
-        Ok(())
-    }
-
     fn write_pre_tag(
         &self,
         output: &mut dyn Write,
@@ -64,20 +56,16 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
     ) -> io::Result<()> {
         println!("pre_attributes: {:?}", attributes);
 
-        match self.formatter_option {
-            FormatterOption::HtmlInline { pre_class, .. } => {
-                let formatter = HtmlInline::default()
-                    .with_theme(Some(self.theme))
-                    .with_pre_class(pre_class);
+        let mut formatter = self.formatter.write().unwrap();
 
+        match &mut *formatter {
+            FormatterType::Inline(formatter) => {
+                let formatter = formatter.clone();
                 write!(output, "{}", formatter.pre_tag())
             }
-            FormatterOption::HtmlLinked { pre_class } => {
-                let formatter = HtmlLinked::default().with_pre_class(pre_class);
+            FormatterType::Linked(formatter) => {
+                let formatter = formatter.clone();
                 write!(output, "{}", formatter.pre_tag())
-            }
-            _ => {
-                panic!("Formatter not supported");
             }
         }
     }
@@ -95,20 +83,38 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         let language = split.get(1).unwrap_or(&"plaintext");
         let lang: Language = Language::guess(language, "");
 
-        match self.formatter_option {
-            FormatterOption::HtmlInline { pre_class, .. } => {
-                let formatter = HtmlInline::default()
-                    .with_theme(Some(self.theme))
-                    .with_lang(lang);
+        let mut formatter = self.formatter.write().unwrap();
+        match &mut *formatter {
+            FormatterType::Inline(formatter) => {
+                let mut formatter = formatter.clone();
+                formatter = formatter.with_lang(lang);
+                write!(output, "{}", formatter.code_tag())
+            }
+            FormatterType::Linked(formatter) => {
+                let mut formatter = formatter.clone();
+                formatter = formatter.with_lang(lang);
+                write!(output, "{}", formatter.code_tag())
+            }
+        }
+    }
 
-                write!(output, "{}", formatter.code_tag())
+    fn write_highlighted(
+        &self,
+        output: &mut dyn Write,
+        _lang: Option<&str>,
+        source: &str,
+    ) -> io::Result<()> {
+        let mut formatter = self.formatter.write().unwrap();
+        match &mut *formatter {
+            FormatterType::Inline(formatter) => {
+                let mut formatter = formatter.clone();
+                formatter = formatter.with_source(source);
+                write!(output, "{}", formatter.highlights())
             }
-            FormatterOption::HtmlLinked { pre_class } => {
-                let formatter = HtmlLinked::default().with_lang(lang);
-                write!(output, "{}", formatter.code_tag())
-            }
-            _ => {
-                panic!("Formatter not supported");
+            FormatterType::Linked(formatter) => {
+                let mut formatter = formatter.clone();
+                formatter = formatter.with_source(source);
+                write!(output, "{}", formatter.highlights())
             }
         }
     }

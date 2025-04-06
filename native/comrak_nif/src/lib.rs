@@ -7,8 +7,8 @@ extern crate rustler;
 mod autumnus_adapter;
 mod types;
 
-use comrak::{Arena, ComrakPlugins, Options};
 use autumnus_adapter::AutumnusAdapter;
+use comrak::{Arena, ComrakPlugins, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
