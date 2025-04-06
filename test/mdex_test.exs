@@ -79,8 +79,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="autumn-hl" style="background-color: #2e3440; color: #D8DEE9;"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket" style="color: #ECEFF4;">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol" style="color: #EBCB8B;">:mdex</span><span class="ahl-punctuation ahl-delimiter" style="color: #ECEFF4;">,</span> <span class="ahl-string" style="color: #A3BE8C;">&quot;~&gt; 0.1&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ECEFF4;">&rbrace;</span>
-        </code></pre>
+        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+</span></code></pre>
         """,
         features: [syntax_highlight_theme: "nord"]
       )
@@ -109,8 +109,8 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-plaintext" translate="no">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-        </code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+</span></code></pre>
         """
       )
     end
@@ -123,8 +123,8 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-plaintext" translate="no">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-        </code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+</span></code></pre>
         """
       )
     end
@@ -137,8 +137,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="autumn-hl"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol">:mdex</span><span class="ahl-punctuation ahl-delimiter">,</span> <span class="ahl-string">&quot;~&gt; 0.1&quot;</span><span class="ahl-punctuation ahl-bracket">&rbrace;</span>
-        </code></pre>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
+</span></code></pre>
         """,
         features: [syntax_highlight_inline_style: false]
       )
@@ -317,8 +317,8 @@ defmodule MDExTest do
         <ul>
         <li>Elixir {:ex}</li>
         </ul>
-        <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-elixir" translate="no"><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&lbrace;</span><span class="ahl-string ahl-special ahl-symbol" style="color: #98C379;">:ok</span><span class="ahl-punctuation ahl-delimiter" style="color: #ABB2BF;">,</span> <span class="ahl-string" style="color: #98C379;">&quot;code&quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">&rbrace;</span>
-        </code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:ok</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #848b98;">&rbrace;</span>
+</span></code></pre>
         """
       )
     end
