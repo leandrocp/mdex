@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+### Breaking Changes
+  * Renamed `<pre>` tag class from "autumn-hl" to "athl"
+  * Changed `<span>` tag class from "ahl-{token}" to "{token}",
+    for eg: "ahl-punctuation" changed to "punctuation"
+
 ### Enhancements
   * Replace Inkjet adapter with Autumnus adapter for syntax highlighting
-  * Update syntax highlighting CSS classes for improved compatibility
-  * Add `tabindex="0"` attribute to code blocks for better accessibility
+  * Lines are now wrapped in `<span>` tags as `<span class="line" data-line="{line_number}">`, for eg: `<span class="line" data-line="12">`
+  * Added `tabindex="0"` attribute into `<code>` tag for better accessibility
 
 ### Changes
   * Rename CSS class from `autumn-hl` to `athl` for a more compact syntax
