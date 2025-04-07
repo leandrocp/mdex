@@ -166,8 +166,8 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="autumn-hl" style="background-color: #282C34; color: #ABB2BF;"><code class="language-elixir" translate="no"><span class="ahl-namespace" style="color: #61AFEF;">String</span><span class="ahl-operator" style="color: #C678DD;">.</span><span class="ahl-function" style="color: #61AFEF;">trim</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">(</span><span class="ahl-string" style="color: #98C379;">&quot; MDEx &quot;</span><span class="ahl-punctuation ahl-bracket" style="color: #ABB2BF;">)</span>
-      </code></pre>
+      <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #abb2bf;">.</span><span style="color: #61afef;">trim</span><span style="color: #848b98;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #848b98;">)</span>
+      </span></code></pre>
       """
     )
   end

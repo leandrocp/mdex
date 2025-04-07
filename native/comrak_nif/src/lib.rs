@@ -4,11 +4,11 @@
 #[macro_use]
 extern crate rustler;
 
-mod inkjet_adapter;
+mod autumnus_adapter;
 mod types;
 
+use autumnus_adapter::AutumnusAdapter;
 use comrak::{Arena, ComrakPlugins, Options};
-use inkjet_adapter::InkjetAdapter;
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
@@ -31,9 +31,9 @@ fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<T
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
-    let inkjet_adapter = InkjetAdapter::default();
+    let autumnus_adapter = AutumnusAdapter::default();
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     let unsafe_html = comrak::markdown_to_html_with_plugins(md, &Options::default(), &plugins);
     let html = do_safe_html(
         unsafe_html,
@@ -57,7 +57,7 @@ fn markdown_to_html_with_options<'a>(
     };
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(
+            let autumnus_adapter = AutumnusAdapter::new(
                 theme,
                 options
                     .features
@@ -65,7 +65,7 @@ fn markdown_to_html_with_options<'a>(
                     .unwrap_or(true),
             );
             let mut plugins = ComrakPlugins::default();
-            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
             let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
             let html = do_safe_html(unsafe_html, &options.features.sanitize, false, true);
             Ok((ok(), html).encode(env))
@@ -80,9 +80,9 @@ fn markdown_to_html_with_options<'a>(
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn markdown_to_xml<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
-    let inkjet_adapter = InkjetAdapter::default();
+    let autumnus_adapter = AutumnusAdapter::default();
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &Options::default());
     let mut buffer = vec![];
@@ -109,7 +109,7 @@ fn markdown_to_xml_with_options<'a>(
 
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(
+            let autumnus_adapter = AutumnusAdapter::new(
                 theme,
                 options
                     .features
@@ -117,7 +117,7 @@ fn markdown_to_xml_with_options<'a>(
                     .unwrap_or(true),
             );
             let mut plugins = ComrakPlugins::default();
-            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
             comrak::format_xml_with_plugins(root, &comrak_options, &mut buffer, &plugins).unwrap();
             let xml = String::from_utf8(buffer).unwrap();
             Ok((ok(), xml).encode(env))
@@ -142,9 +142,9 @@ fn document_to_commonmark(env: Env<'_>, ex_document: ExDocument) -> NifResult<Te
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
-    let inkjet_adapter = InkjetAdapter::default();
+    let autumnus_adapter = AutumnusAdapter::default();
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
     let mut buffer = vec![];
     comrak::format_commonmark_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
@@ -172,7 +172,7 @@ fn document_to_commonmark_with_options(
 
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(
+            let autumnus_adapter = AutumnusAdapter::new(
                 theme,
                 options
                     .features
@@ -180,7 +180,7 @@ fn document_to_commonmark_with_options(
                     .unwrap_or(true),
             );
             let mut plugins = ComrakPlugins::default();
-            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
             let mut buffer = vec![];
             comrak::format_commonmark_with_plugins(
@@ -208,9 +208,9 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
-    let inkjet_adapter = InkjetAdapter::default();
+    let autumnus_adapter = AutumnusAdapter::default();
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
     let mut buffer = vec![];
     let options = Options::default();
@@ -243,7 +243,7 @@ fn document_to_html_with_options(
 
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(
+            let autumnus_adapter = AutumnusAdapter::new(
                 theme,
                 options
                     .features
@@ -251,7 +251,7 @@ fn document_to_html_with_options(
                     .unwrap_or(true),
             );
             let mut plugins = ComrakPlugins::default();
-            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
             let mut buffer = vec![];
             comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
@@ -276,9 +276,9 @@ fn document_to_xml(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>>
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
 
-    let inkjet_adapter = InkjetAdapter::default();
+    let autumnus_adapter = AutumnusAdapter::default();
     let mut plugins = ComrakPlugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
     let mut buffer = vec![];
     comrak::format_xml_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
@@ -305,7 +305,7 @@ fn document_to_xml_with_options(
 
     match &options.features.syntax_highlight_theme {
         Some(theme) => {
-            let inkjet_adapter = InkjetAdapter::new(
+            let autumnus_adapter = AutumnusAdapter::new(
                 theme,
                 options
                     .features
@@ -313,7 +313,7 @@ fn document_to_xml_with_options(
                     .unwrap_or(true),
             );
             let mut plugins = ComrakPlugins::default();
-            plugins.render.codefence_syntax_highlighter = Some(&inkjet_adapter);
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
 
             let mut buffer = vec![];
             comrak::format_xml_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
