@@ -18,8 +18,8 @@ phf = { version = "0.11", features = ["macros"] }
 tree-sitter = "0.20"
 tree-sitter-highlight = "0.20"
 v_htmlescape = "0.15"
-# autumnus = "0.1"
-autumnus = { git = "https://github.com/leandrocp/autumnus", branch = "lp-comrak-adapter" }
+autumnus = "0.1"
+# autumnus = { path = "../../../autumnus" }
 log = "0.4"
 lazy_static = "1.5"
 typed-arena = "2.0.2"
