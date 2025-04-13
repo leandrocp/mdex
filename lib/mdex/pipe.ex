@@ -109,6 +109,7 @@ defmodule MDEx.Pipe do
     :extension,
     :parse,
     :render,
+    :syntax_highlight,
     :features
   ]
 
@@ -118,6 +119,7 @@ defmodule MDEx.Pipe do
               extension: [],
               parse: [],
               render: [],
+              syntax_highlight: [],
               features: []
             ],
             registered_options: MapSet.new(),
@@ -192,6 +194,15 @@ defmodule MDEx.Pipe do
       iex> MDEx.Pipe.get_option(pipe, :custom_option)
       "value"
 
+  Built-in options are validated against their respective schemas:
+
+      iex> try do
+      ...>   MDEx.Pipe.put_options(MDEx.new(), [extension: [invalid: true]])
+      ...> rescue
+      ...>   NimbleOptions.ValidationError -> :error
+      ...> end
+      :error
+
   """
   @spec put_options(t(), keyword()) :: t()
   def put_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
@@ -224,6 +235,9 @@ defmodule MDEx.Pipe do
       {:parse, options}, acc ->
         put_parse_options(acc, options)
 
+      {:syntax_highlight, options}, acc ->
+        put_syntax_highlight_options(acc, options)
+
       {:features, options}, acc ->
         put_features_options(acc, options)
     end)
@@ -231,7 +245,7 @@ defmodule MDEx.Pipe do
 
   @doc false
   def put_user_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
-    options = Keyword.take(options, Keyword.keys(options) -- @built_in_options)
+    options = Keyword.take(options, Keyword.keys(options) -- MDEx.built_in_options())
     validate_options(pipe, options)
     %{pipe | options: Keyword.merge(pipe.options, options)}
   end
@@ -373,6 +387,29 @@ defmodule MDEx.Pipe do
       | options:
           update_in(pipe.options, [:parse], fn parse ->
             Keyword.merge(parse || [], options)
+          end)
+    }
+  end
+
+  @doc """
+  Updates the pipeline's `:syntax_highlight` options.
+
+  ## Examples
+
+      iex> pipe = MDEx.Pipe.put_syntax_highlight_options(MDEx.new(), formatter: :html_linked)
+      iex> MDEx.Pipe.get_option(pipe, :syntax_highlight)[:formatter]
+      :html_linked
+
+  """
+  @spec put_syntax_highlight_options(t(), MDEx.syntax_highlight_options()) :: t()
+  def put_syntax_highlight_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
+    NimbleOptions.validate!(options, MDEx.syntax_highlight_options_schema())
+
+    %{
+      pipe
+      | options:
+          update_in(pipe.options, [:syntax_highlight], fn syntax_highlight ->
+            Keyword.merge(syntax_highlight || [], options)
           end)
     }
   end

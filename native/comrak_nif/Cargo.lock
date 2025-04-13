@@ -100,9 +100,7 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "autumnus"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e65aa46eaed7fc850257a0a083d12ecc796850f36110cb6cb4b05c6fb967acb"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -114,6 +112,7 @@ dependencies = [
  "quote",
  "rayon",
  "regex",
+ "rustler",
  "serde",
  "serde_json",
  "strum",
@@ -142,6 +141,7 @@ dependencies = [
  "tree-sitter-language",
  "tree-sitter-lua",
  "tree-sitter-md",
+ "tree-sitter-nix",
  "tree-sitter-objc",
  "tree-sitter-ocaml",
  "tree-sitter-php",
@@ -1946,9 +1946,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-erlang"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb9265a444b04975b2ecc2e1a64114a03e009737e7fae19ce9078b962b8be1af"
+checksum = "93be1a3081a815ff6840d6b6741fc920817eb8843c3b97a026ef47a89f108cad"
 dependencies = [
  "cc",
  "tree-sitter-language",
@@ -2088,6 +2088,16 @@ name = "tree-sitter-md"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17f968c22a01010b83fc960455ae729db08dbeb6388617d9113897cb9204b030"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-nix"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a8d4f8705d377d63242a075331d2d8c1dcc9828fd74aa13d7145185b3d9c004"
 dependencies = [
  "cc",
  "tree-sitter-language",

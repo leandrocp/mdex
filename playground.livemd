@@ -13,7 +13,7 @@ defmodule Playground do
   def run do
     MDEx.to_html(@markdown,
       render: [unsafe_: true],
-      features: [sanitize: true, syntax_highlight_theme: "github_light"]
+      syntax_highlight: [formatter: {:inline, theme: "github_light"}]
     )
   end
 end

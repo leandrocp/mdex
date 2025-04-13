@@ -314,7 +314,9 @@ MDEx.to_html!(~S"""
 String.upcase("elixir")
 ```
 """,
-features: [syntax_highlight_theme: "catppuccin_latte"]
+syntax_highlight: [
+  formatter: {:inline, theme: "catppuccin_latte"}
+]
 ) |> IO.puts()
 """
 <pre class=\"autumn highlight\" style=\"background-color: #282C34; color: #ABB2BF;\">

@@ -1,9 +1,10 @@
 mod sanitize;
 
+use autumnus::elixir::ExFormatterOption;
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 pub use sanitize::*;
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, NifMap)]
 pub struct ExExtensionOptions {
     pub strikethrough: bool,
     pub tagfilter: bool,
@@ -58,7 +59,7 @@ impl From<ExExtensionOptions> for ExtensionOptions<'_> {
     }
 }
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, NifMap)]
 pub struct ExParseOptions {
     pub smart: bool,
     pub default_info_string: Option<String>,
@@ -78,9 +79,8 @@ impl From<ExParseOptions> for ParseOptions<'_> {
     }
 }
 
-#[derive(Clone, Default, Debug, NifUnitEnum)]
+#[derive(Clone, Debug, NifUnitEnum)]
 pub enum ExListStyleType {
-    #[default]
     Dash,
     Plus,
     Star,
@@ -96,7 +96,7 @@ impl From<ExListStyleType> for ListStyleType {
     }
 }
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, NifMap)]
 pub struct ExRenderOptions {
     pub hardbreaks: bool,
     pub github_pre_lang: bool,
@@ -143,9 +143,8 @@ impl From<ExRenderOptions> for RenderOptions {
     }
 }
 
-#[derive(Debug, NifTaggedEnum, Default)]
+#[derive(Debug, NifTaggedEnum)]
 pub enum ExSanitizeOption {
-    #[default]
     Clean,
     Custom(Box<ExSanitizeCustom>),
 }
@@ -159,17 +158,21 @@ impl ExSanitizeOption {
     }
 }
 
-#[derive(Debug, NifMap, Default)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExFeaturesOptions {
     pub sanitize: Option<ExSanitizeOption>,
-    pub syntax_highlight_theme: Option<String>,
-    pub syntax_highlight_inline_style: Option<bool>,
 }
 
-#[derive(Default, Debug, NifMap)]
-pub struct ExOptions {
+#[derive(Debug, NifMap)]
+pub struct ExSyntaxHighlightOptions<'a> {
+    pub formatter: ExFormatterOption<'a>,
+}
+
+#[derive(Debug, NifMap)]
+pub struct ExOptions<'a> {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,
     pub render: ExRenderOptions,
+    pub syntax_highlight: ExSyntaxHighlightOptions<'a>,
     pub features: ExFeaturesOptions,
 }
