@@ -55,11 +55,17 @@ defmodule MDEx do
   """
   @type source :: markdown :: String.t() | Document.t() | Pipe.t()
 
-  # TODO: support :xml
-  @typedoc """
-  Source accepted by `parse_document/2`.
-  """
-  @type parse_source :: markdown :: String.t() | {:json, String.t()}
+  @built_in_options [
+    :document,
+    :extension,
+    :parse,
+    :render,
+    :syntax_highlight,
+    :features
+  ]
+
+  @doc false
+  def built_in_options, do: @built_in_options
 
   @extension_options_schema [
     strikethrough: [
@@ -293,6 +299,16 @@ defmodule MDEx do
     ]
   ]
 
+  @syntax_highlight_options_schema [
+    formatter: [
+      type: {:custom, Autumn, :formatter_type, []},
+      type_spec: quote(do: Autumn.formatter()),
+      type_doc: "`t:Autumn.formatter/0`",
+      default: {:html_inline, theme: "onedark"},
+      doc: "Syntax highlight code blocks using this formatter. See the type doc for more info."
+    ]
+  ]
+
   @sanitize_options_schema [
     tags: [
       type: {:list, :string},
@@ -491,21 +507,18 @@ defmodule MDEx do
     ],
     syntax_highlight_theme: [
       type: {:or, [:string, nil]},
-      default: "onedark",
-      doc:
-        "syntax highlight code fences using [autumn themes](https://github.com/leandrocp/autumn/tree/main/priv/themes), you should pass the filename without special chars and without extension, for example you should pass `syntax_highlight_theme: \"adwaita_dark\"` to use the [Adwaita Dark](https://github.com/leandrocp/autumn/blob/main/priv/themes/adwaita-dark.toml) theme."
+      deprecated: "Use :syntax_highlight instead."
     ],
     syntax_highlight_inline_style: [
       type: :boolean,
-      default: true,
-      doc:
-        "embed styles in the output for each generated token. You'll need to [serve CSS themes](https://github.com/leandrocp/autumn?tab=readme-ov-file#linked) if inline styles are disabled to properly highlight code."
+      deprecated: "Use :syntax_highlight instead."
     ]
   ]
 
   @options_schema [
     document: [
       type: {:or, [:string, {:struct, MDEx.Document}, nil]},
+      type_spec: quote(do: markdown :: String.t() | Document.t()),
       default: "",
       doc: "Markdown document, either a string or a `MDEx.Document` struct."
     ],
@@ -533,11 +546,17 @@ defmodule MDEx do
         "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
       keys: @render_options_schema
     ],
+    syntax_highlight: [
+      type: :keyword_list,
+      type_spec: quote(do: syntax_highlight_options()),
+      default: [],
+      doc: "Apply syntax highlighting to code blocks. See [Autumn](https://hexdocs.pm/autumn) for more info and examples.",
+      keys: @syntax_highlight_options_schema
+    ],
     features: [
       type: :keyword_list,
-      type_spec: quote(do: features_options()),
-      default: [],
-      doc: "Enable extra features.",
+      # TODO: deprecated after deprecating features[:sanitize]
+      # deprecated: "Use :syntax_highlight or :sanitize instead.",
       keys: @features_options_schema
     ]
   ]
@@ -549,15 +568,30 @@ defmodule MDEx do
 
   - Enable the `table` extension:
 
+      ````elixir
+      MDEx.to_html!(\"""
+      | lang |
+      |------|
+      | elixir |
+      \""",
+      extension: [table: true]
+      )
+      ````
+
+  - Syntax highlight using inline style and the `github_light` theme:
+
+      ````elixir
+      MDEx.to_html!(\"""
+      ## Code Example
+
       ```elixir
-      iex> MDEx.to_html!(\"""
-      ...> | lang |
-      ...> |------|
-      ...> | elixir |
-      ...> \""",
-      ...> extension: [table: true])
-      "<table>\\n<thead>\\n<tr>\\n<th>lang</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>elixir</td>\\n</tr>\\n</tbody>\\n</table>"
+      Atom.to_string(:elixir)
       ```
+      \""",
+      syntax_highlight: [
+        formatter: {:html_inline, theme: "github_light"}
+      ])
+      ````
 
   ## Options
 
@@ -574,11 +608,14 @@ defmodule MDEx do
   @typedoc "List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)."
   @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
 
-  @typedoc "List of extra features."
-  @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
+  @typedoc "Syntax Highlight code blocks using [autumn](https://hexdocs.pm/autumn)."
+  @type syntax_highlight_options() :: [unquote(NimbleOptions.option_typespec(@syntax_highlight_options_schema))]
 
   @typedoc "List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html)."
   @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
+
+  @typedoc "Deprecated. Use `:syntax_highlight` or `:sanitize` instead."
+  @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
 
   @doc """
   Returns the default options for the `:extension` group.
@@ -599,16 +636,22 @@ defmodule MDEx do
   def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
 
   @doc """
-  Returns the default options for the `:features` group.
+  Returns the default options for the `:syntax_highlight` group.
   """
-  @spec default_features_options() :: features_options()
-  def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
+  @spec default_syntax_highlight_options() :: syntax_highlight_options()
+  def default_syntax_highlight_options, do: NimbleOptions.validate!([], @syntax_highlight_options_schema)
 
   @doc """
   Returns the default options for the `:sanitize` group.
   """
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+
+  @doc """
+  Returns the default options for the `:features` group.
+  """
+  @spec default_features_options() :: features_options()
+  def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
 
   @doc false
   def extension_options_schema, do: @extension_options_schema
@@ -618,6 +661,9 @@ defmodule MDEx do
 
   @doc false
   def parse_options_schema, do: @parse_options_schema
+
+  @doc false
+  def syntax_highlight_options_schema, do: @syntax_highlight_options_schema
 
   @doc false
   def features_options_schema, do: @features_options_schema
@@ -706,7 +752,8 @@ defmodule MDEx do
         }
 
   """
-  @spec parse_document(parse_source(), options()) :: {:ok, Document.t()} | {:error, any()}
+  @spec parse_document(markdown :: String.t() | {:json, String.t()}, options()) :: {:ok, Document.t()} | {:error, any()}
+  # TODO: support :xml
   def parse_document(source, options \\ [])
 
   def parse_document(markdown, options) when is_binary(markdown) do
@@ -739,7 +786,7 @@ defmodule MDEx do
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
   """
-  @spec parse_document!(parse_source(), options()) :: Document.t()
+  @spec parse_document!(markdown :: String.t() | {:json, String.t()}, options()) :: Document.t()
   def parse_document!(source, options \\ [])
 
   def parse_document!(markdown, options) when is_binary(markdown) do
@@ -1421,28 +1468,42 @@ defmodule MDEx do
   @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp validate_options!(options) do
+  @doc false
+  def validate_options!(options) do
+    options = Keyword.take(options, @built_in_options)
+
     sanitize =
       options
       |> get_in([:features, :sanitize])
       |> update_deprecated_sanitize_options()
 
+    features = Keyword.put(options[:features] || [], :sanitize, sanitize)
+    options = Keyword.put(options, :features, features)
+
     options =
-      NimbleOptions.validate!(
-        [
-          extension: options[:extension] || [],
-          parse: options[:parse] || [],
-          render: options[:render] || [],
-          features: Keyword.put(options[:features] || [], :sanitize, sanitize)
-        ],
-        @options_schema
-      )
+      NimbleOptions.validate!(options, @options_schema)
       |> update_in([:features, :sanitize], &adapt_sanitize_options/1)
+
+    {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
+    theme = Autumn.build_theme(options[:features][:syntax_highlight_theme] || formatter_opts[:theme])
+
+    formatter =
+      case options[:features][:syntax_highlight_inline_style] do
+        true -> :html_inline
+        false -> :html_linked
+        nil -> formatter
+      end
+
+    syntax_highlight =
+      options[:syntax_highlight]
+      |> Map.new()
+      |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
 
     %{
       extension: Map.new(options[:extension]),
       parse: Map.new(options[:parse]),
       render: Map.new(options[:render]),
+      syntax_highlight: syntax_highlight,
       features: Map.new(options[:features])
     }
   end
