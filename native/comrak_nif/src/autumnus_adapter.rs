@@ -5,16 +5,9 @@ use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
 use std::io::{self, Write};
 
+#[derive(Default)]
 pub struct AutumnusAdapter<'a> {
     formatter: FormatterOption<'a>,
-}
-
-impl Default for AutumnusAdapter<'_> {
-    fn default() -> Self {
-        Self {
-            formatter: FormatterOption::default(),
-        }
-    }
 }
 
 impl<'a> AutumnusAdapter<'a> {
