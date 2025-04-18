@@ -37,7 +37,7 @@ defmodule MDEx.Posts.Parser do
 
   defp markdown_to_html!(markdown_body) do
     MDEx.to_html!(markdown_body,
-      syntax_highlight: [formatter: {:inline, theme: "github_dark"}],
+      syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}],
       extension: [
         strikethrough: true,
         underline: true,
