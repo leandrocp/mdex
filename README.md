@@ -104,7 +104,7 @@ graph TD
 |
 
 MDEx.new()
-|> MDExMermaid.attach(version: "11")
+|> MDExMermaid.attach(mermaid_version: "11")
 |> MDEx.to_html(document: document)
 ```
 
