@@ -43,7 +43,6 @@ defmodule MDEx.MixProject do
         lib/mdex.ex
         lib/mdex
         native/comrak_nif/src
-        native/comrak_nif/vendor
         native/comrak_nif/.cargo
         native/comrak_nif/Cargo.*
         native/comrak_nif/Cross.toml
