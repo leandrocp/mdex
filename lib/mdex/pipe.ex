@@ -110,7 +110,7 @@ defmodule MDEx.Pipe do
     :parse,
     :render,
     :syntax_highlight,
-    :features
+    :sanitize
   ]
 
   defstruct document: nil,
@@ -120,7 +120,7 @@ defmodule MDEx.Pipe do
               parse: [],
               render: [],
               syntax_highlight: [],
-              features: []
+              sanitize: nil
             ],
             registered_options: MapSet.new(),
             halted: false,
@@ -176,7 +176,7 @@ defmodule MDEx.Pipe do
   @doc """
   Merges options into the pipeline's existing options.
 
-  This function handles both built-in options (like `:document`, `:extension`, `:parse`, `:render`, `:features`)
+  This function handles both built-in options (`:document`, `:extension`, `:parse`, `:render`, `:syntax_highlight`, and `:sanitize`)
   and user-defined options that have been registered with `register_options/2`.
 
   ## Examples
@@ -238,8 +238,8 @@ defmodule MDEx.Pipe do
       {:syntax_highlight, options}, acc ->
         put_syntax_highlight_options(acc, options)
 
-      {:features, options}, acc ->
-        put_features_options(acc, options)
+      {:sanitize, options}, acc ->
+        put_sanitize_options(acc, options)
     end)
   end
 
@@ -415,24 +415,24 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates the pipeline's `:features` options.
+  Updates the pipeline's `:sanitize` options.
 
   ## Examples
 
-      iex> pipe = MDEx.Pipe.put_features_options(MDEx.new(), sanitize: [add_tags: ["MyComponent"]])
-      iex> MDEx.Pipe.get_option(pipe, :features)[:sanitize][:add_tags]
+      iex> pipe = MDEx.Pipe.put_sanitize_options(MDEx.new(), add_tags: ["MyComponent"])
+      iex> MDEx.Pipe.get_option(pipe, :sanitize)[:add_tags]
       ["MyComponent"]
 
   """
-  @spec put_features_options(t(), MDEx.features_options()) :: t()
-  def put_features_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
-    NimbleOptions.validate!(options, MDEx.features_options_schema())
+  @spec put_sanitize_options(t(), MDEx.sanitize_options()) :: t()
+  def put_sanitize_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
+    NimbleOptions.validate!(options, MDEx.sanitize_options_schema())
 
     %{
       pipe
       | options:
-          update_in(pipe.options, [:features], fn features ->
-            Keyword.merge(features || [], options)
+          update_in(pipe.options, [:sanitize], fn sanitize ->
+            Keyword.merge(sanitize || [], options)
           end)
     }
   end

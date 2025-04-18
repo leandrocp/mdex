@@ -6,7 +6,7 @@ defmodule MDExMermaidSample do
   def attach(pipe, options \\ []) do
     pipe
     |> Pipe.register_options([:mermaid_version])
-    |> Pipe.put_options(mermaid_version: options[:version])
+    |> Pipe.put_options(options)
     |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
     |> Pipe.append_steps(inject_script: &inject_script/1)
     |> Pipe.append_steps(update_code_blocks: &update_code_blocks/1)
@@ -79,7 +79,7 @@ defmodule MDEx.PipeTest do
     test ":document in new/1", %{document: document} do
       assert {:ok, html} =
                MDEx.new(document: document)
-               |> MDExMermaidSample.attach(version: "10")
+               |> MDExMermaidSample.attach(mermaid_version: "10")
                |> MDEx.to_html()
 
       assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"
@@ -89,7 +89,7 @@ defmodule MDEx.PipeTest do
     test ":document in to_html/2", %{document: document} do
       assert {:ok, html} =
                MDEx.new()
-               |> MDExMermaidSample.attach(version: "10")
+               |> MDExMermaidSample.attach(mermaid_version: "10")
                |> MDEx.to_html(document: document)
 
       assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'"

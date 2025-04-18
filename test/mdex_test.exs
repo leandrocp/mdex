@@ -56,6 +56,23 @@ defmodule MDExTest do
         features: [syntax_highlight_theme: "Dracula"]
       )
     end
+
+    test "sanitize nil (disabled)" do
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: nil]) == "<script>hello</script>"
+    end
+
+    test "sanitize false (disabled)" do
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: false]) == "<script>hello</script>"
+    end
+
+    test "sanitize true (enabled)" do
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: true]) == ""
+    end
+
+    test "sanitize with default options" do
+      default_options = MDEx.default_sanitize_options()
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: default_options]) == "<h1>test</h1>"
+    end
   end
 
   test "wrap fragment in root document" do
@@ -85,7 +102,7 @@ defmodule MDExTest do
                  parse: [],
                  render: [],
                  syntax_highlight: [],
-                 features: []
+                 sanitize: nil
                ],
                halted: false
              } = MDEx.new()
@@ -99,7 +116,7 @@ defmodule MDExTest do
                  parse: [],
                  render: [escape: true],
                  syntax_highlight: [],
-                 features: []
+                 sanitize: nil
                ]
              } = MDEx.new(document: "new", render: [escape: true])
     end
@@ -265,14 +282,14 @@ defmodule MDExTest do
     test "sanitize unsafe raw html" do
       sanitize_options = MDEx.default_sanitize_options()
 
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: sanitize_options]) == "<h1>test</h1>"
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], sanitize: sanitize_options) == "<h1>test</h1>"
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], features: [sanitize: sanitize_options]) ==
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], sanitize: sanitize_options) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 
       assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>",
                render: [unsafe_: true],
-               features: [sanitize: sanitize_options]
+               sanitize: sanitize_options
              ) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
     end
@@ -284,7 +301,7 @@ defmodule MDExTest do
       </h1>
       """
 
-      assert MDEx.to_html!(input, render: [unsafe_: true], features: [sanitize: MDEx.default_sanitize_options()]) <> "\n" == ~s"""
+      assert MDEx.to_html!(input, render: [unsafe_: true], sanitize: MDEx.default_sanitize_options()) <> "\n" == ~s"""
              <h1>
              <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
              </h1>
@@ -292,24 +309,22 @@ defmodule MDExTest do
 
       assert MDEx.to_html!(input,
                render: [unsafe_: true],
-               features: [
-                 sanitize: [
-                   tags: ["h1"],
-                   add_tags: ["a", "strong"],
-                   rm_tags: ["strong"],
-                   add_clean_content_tags: ["script"],
-                   add_tag_attributes: %{"h1" => ["data-val"]},
-                   add_tag_attribute_values: %{"h1" => %{"data-x" => ["3"]}},
-                   generic_attribute_prefixes: ["x-"],
-                   generic_attributes: ["id"],
-                   allowed_classes: %{"h1" => ["xyz"]},
-                   set_tag_attribute_values: %{"h1" => %{"hello" => "world"}},
-                   set_tag_attribute_value: %{"h1" => %{"ola" => "mundo"}},
-                   rm_set_tag_attribute_value: %{"h1" => "hello"},
-                   strip_comments: false,
-                   link_rel: "no",
-                   id_prefix: "user-content-"
-                 ]
+               sanitize: [
+                 tags: ["h1"],
+                 add_tags: ["a", "strong"],
+                 rm_tags: ["strong"],
+                 add_clean_content_tags: ["script"],
+                 add_tag_attributes: %{"h1" => ["data-val"]},
+                 add_tag_attribute_values: %{"h1" => %{"data-x" => ["3"]}},
+                 generic_attribute_prefixes: ["x-"],
+                 generic_attributes: ["id"],
+                 allowed_classes: %{"h1" => ["xyz"]},
+                 set_tag_attribute_values: %{"h1" => %{"hello" => "world"}},
+                 set_tag_attribute_value: %{"h1" => %{"ola" => "mundo"}},
+                 rm_set_tag_attribute_value: %{"h1" => "hello"},
+                 strip_comments: false,
+                 link_rel: "no",
+                 id_prefix: "user-content-"
                ]
              ) <> "\n" == ~s"""
              <h1 class="xyz" data-val="1" x-val="2" data-x="3" ola="mundo">
@@ -326,11 +341,9 @@ defmodule MDExTest do
                </p>
                """,
                render: [unsafe_: true],
-               features: [
-                 sanitize: [
-                   link_rel: nil,
-                   url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
-                 ]
+               sanitize: [
+                 link_rel: nil,
+                 url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
                ]
              ) <> "\n" == ~s"""
              <p>
