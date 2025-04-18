@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Fast and extensible Markdown for Elixir.
+  Fast and Extensible Markdown for Elixir.
 </p>
 
 <p align="center">
