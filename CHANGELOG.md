@@ -6,13 +6,21 @@
   * Renamed `<pre>` tag class from "autumn-hl" to "athl"
   * Changed `<span>` tag class from "ahl-{token}" to "{token}",
     for eg: "ahl-punctuation" changed to "punctuation"
+  * Removed type `t:MDEx.features_option/0`
+  * Removed function `MDEx.default_features_options/0`
+  * Removed function `MDEx.Pipe.put_features_options/2`
+
+### Deprecations
+  * Option `:features` is deprecated in favor of `:syntax_highlight` and `:sanitize`
 
 ### Enhancements
-  * Replace Inkjet adapter with Autumnus adapter for syntax highlighting
-  * Lines are now wrapped in `<span>` tags as `<span class="line" data-line="{line_number}">`, for eg: `<span class="line" data-line="12">`
+  * Lines are now wrapped in `<span>` tags as `<span class="line" data-line="{line_number}">`, for eg: `<span class="line" data-line="12">...`
   * Added `tabindex="0"` attribute into `<code>` tag for better accessibility
+  * Added function `MDEx.Pipe.put_syntax_highlight_options/2`
+  * Added function `MDEx.Pipe.put_sanitize_options/2`
 
 ### Changes
+  * Replaced Inkjet with [Autumnus](https://crates.io/crates/autumnus) in the Syntax Highlighter adapter
   * Rename CSS class from `autumn-hl` to `athl` for a more compact syntax
   * Modify HTML output structure in code blocks to include line annotations
 
