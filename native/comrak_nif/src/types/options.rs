@@ -1,6 +1,6 @@
 mod sanitize;
 
-use autumnus::elixir::ExFormatterOption;
+use autumnus::elixir::{ExFormatterOption, ThemeOrString};
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 pub use sanitize::*;
 
@@ -160,9 +160,22 @@ impl ExSanitizeOption {
     }
 }
 
-#[derive(Debug, Default, NifMap)]
+#[derive(Debug, NifMap)]
 pub struct ExSyntaxHighlightOptions<'a> {
     pub formatter: ExFormatterOption<'a>,
+}
+
+impl Default for ExSyntaxHighlightOptions<'_> {
+    fn default() -> Self {
+        Self {
+            formatter: ExFormatterOption::HtmlInline {
+                theme: Some(ThemeOrString::String("onedark")),
+                pre_class: None,
+                italic: false,
+                include_highlights: false,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Default, NifMap)]

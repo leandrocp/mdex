@@ -536,7 +536,7 @@ defmodule MDEx do
     syntax_highlight: [
       type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil]},
       type_spec: quote(do: syntax_highlight_options()),
-      default: [],
+      default: [formatter: {:html_inline, theme: "onedark"}],
       doc: """
         Apply syntax highlighting to code blocks.
 

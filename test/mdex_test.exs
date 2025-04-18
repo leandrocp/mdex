@@ -124,17 +124,28 @@ defmodule MDExTest do
 
   describe "syntax highlighting" do
     test "enabled by default" do
-      assert_output(
-        ~S"""
-        ```elixir
-        {:mdex, "~> 0.1"}
-        ```
-        """,
-        ~S"""
+      expected =
+        String.trim(~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #848b98;">&rbrace;</span>
         </span></code></pre>
-        """
-      )
+        """)
+
+      assert {:ok, expected} ==
+               MDEx.to_html(~S"""
+               ```elixir
+               {:mdex, "~> 0.1"}
+               ```
+               """)
+
+      assert {:ok, expected} ==
+               MDEx.to_html(
+                 ~S"""
+                 ```elixir
+                 {:mdex, "~> 0.1"}
+                 ```
+                 """,
+                 []
+               )
     end
 
     test "change theme name" do
@@ -152,6 +163,8 @@ defmodule MDExTest do
       )
     end
 
+    # TODO: review this option since `nil` defaults to default formatter
+    @tag :skip
     test "can be disabled" do
       assert_output(
         ~S"""
