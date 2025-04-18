@@ -1,11 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2025-04-18)
+
+This version introduces some minor breaking changes and some deprecations, see the change log below.
+
+The biggest change is the migration from [Inkjet](https://crates.io/crates/inkjet) to [Autumnus](https://autumnus.dev) for the syntax highlighter,
+which can cause breaking changes in the syntax highlighter output, for example a missing theme or different class names or styles.
+Please open an issue if you find any problems.
 
 ### Breaking Changes
-  * Renamed `<pre>` tag class from "autumn-hl" to "athl"
-  * Changed `<span>` tag class from "ahl-{token}" to "{token}",
-    for eg: "ahl-punctuation" changed to "punctuation"
+  * [Syntax Highlighter] Renamed `<pre>` tag class from "autumn-hl" to "athl"
+  * [Syntax Highlighter] Changed `<span>` tag class from "ahl-{token}" to "{token}", for eg: "ahl-punctuation" changed to "punctuation"
   * Removed type `t:MDEx.features_option/0`
   * Removed function `MDEx.default_features_options/0`
   * Removed function `MDEx.Pipe.put_features_options/2`
@@ -20,9 +25,7 @@
   * Added function `MDEx.Pipe.put_sanitize_options/2`
 
 ### Changes
-  * Replaced Inkjet with [Autumnus](https://crates.io/crates/autumnus) in the Syntax Highlighter adapter
-  * Rename CSS class from `autumn-hl` to `athl` for a more compact syntax
-  * Modify HTML output structure in code blocks to include line annotations
+  * Replaced Inkjet with Autumnus in the Syntax Highlighter adapter
 
 ## 0.5.0 (2025-03-31)
 
