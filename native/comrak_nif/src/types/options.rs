@@ -170,6 +170,6 @@ pub struct ExOptions<'a> {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,
     pub render: ExRenderOptions,
-    pub syntax_highlight: ExSyntaxHighlightOptions<'a>,
+    pub syntax_highlight: Option<ExSyntaxHighlightOptions<'a>>,
     pub sanitize: Option<ExSanitizeOption>,
 }

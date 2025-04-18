@@ -152,8 +152,6 @@ defmodule MDExTest do
       )
     end
 
-    # TODO: disable syntax highlighting
-    @tag :skip
     test "can be disabled" do
       assert_output(
         ~S"""

@@ -534,11 +534,10 @@ defmodule MDEx do
       keys: @render_options_schema
     ],
     syntax_highlight: [
-      type: :keyword_list,
+      type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil]},
       type_spec: quote(do: syntax_highlight_options()),
       default: [],
-      doc: "Apply syntax highlighting to code blocks. See [Autumn](https://hexdocs.pm/autumn) for more info and examples.",
-      keys: @syntax_highlight_options_schema
+      doc: "Apply syntax highlighting to code blocks. See [Autumn](https://hexdocs.pm/autumn) for more info and examples."
     ],
     sanitize: [
       type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
@@ -1489,20 +1488,26 @@ defmodule MDEx do
       |> NimbleOptions.validate!(@options_schema)
       |> update_in([:sanitize], &adapt_sanitize_options/1)
 
-    {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
-    theme = Autumn.build_theme(deprecated_theme_opt || formatter_opts[:theme])
-
-    formatter =
-      case deprecated_inline_style_opt do
-        true -> :html_inline
-        false -> :html_linked
-        nil -> formatter
-      end
-
     syntax_highlight =
-      options[:syntax_highlight]
-      |> Map.new()
-      |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
+      case options[:syntax_highlight] do
+        nil ->
+          nil
+
+        opts ->
+          {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
+          theme = Autumn.build_theme(deprecated_theme_opt || formatter_opts[:theme])
+
+          formatter =
+            case deprecated_inline_style_opt do
+              true -> :html_inline
+              false -> :html_linked
+              nil -> formatter
+            end
+
+          opts
+          |> Map.new()
+          |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
+      end
 
     %{
       extension: Map.new(options[:extension]),

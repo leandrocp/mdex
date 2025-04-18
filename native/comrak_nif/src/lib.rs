@@ -48,11 +48,25 @@ fn markdown_to_html_with_options<'a>(
         parse: options.parse.into(),
         render: options.render.into(),
     };
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter = AutumnusAdapter::new(options.syntax_highlight.formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-    let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
-    let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
+
+    let html = match options.syntax_highlight {
+        Some(syntax_highlight) => {
+            let mut plugins = ComrakPlugins::default();
+            let autumnus_adapter = AutumnusAdapter::new(syntax_highlight.formatter.into());
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+            let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
+            do_safe_html(unsafe_html, &options.sanitize, false, true)
+        }
+        None => {
+            let unsafe_html = comrak::markdown_to_html_with_plugins(
+                md,
+                &comrak_options,
+                &ComrakPlugins::default(),
+            );
+            do_safe_html(unsafe_html, &options.sanitize, false, true)
+        }
+    };
+
     Ok((ok(), html).encode(env))
 }
 
@@ -88,11 +102,22 @@ fn markdown_to_xml_with_options<'a>(
     let root = comrak::parse_document(&arena, md, &comrak_options);
     let mut buffer = vec![];
 
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter = AutumnusAdapter::new(options.syntax_highlight.formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+    match options.syntax_highlight {
+        Some(syntax_highlight) => {
+            let mut plugins = ComrakPlugins::default();
+            let autumnus_adapter = AutumnusAdapter::new(syntax_highlight.formatter.into());
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+            comrak::format_xml_with_plugins(root, &comrak_options, &mut buffer, &plugins).unwrap()
+        }
+        None => comrak::format_xml_with_plugins(
+            root,
+            &comrak_options,
+            &mut buffer,
+            &ComrakPlugins::default(),
+        )
+        .unwrap(),
+    }
 
-    comrak::format_xml_with_plugins(root, &comrak_options, &mut buffer, &plugins).unwrap();
     let xml = String::from_utf8(buffer).unwrap();
     Ok((ok(), xml).encode(env))
 }
@@ -130,13 +155,32 @@ fn document_to_commonmark_with_options<'a>(
         render: options.render.into(),
     };
 
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter = AutumnusAdapter::new(options.syntax_highlight.formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-
     let mut buffer = vec![];
-    comrak::format_commonmark_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
-        .unwrap();
+
+    match options.syntax_highlight {
+        Some(syntax_highlight) => {
+            let mut plugins = ComrakPlugins::default();
+            let autumnus_adapter = AutumnusAdapter::new(syntax_highlight.formatter.into());
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+            comrak::format_commonmark_with_plugins(
+                comrak_ast,
+                &comrak_options,
+                &mut buffer,
+                &plugins,
+            )
+            .unwrap();
+        }
+        None => {
+            comrak::format_commonmark_with_plugins(
+                comrak_ast,
+                &comrak_options,
+                &mut buffer,
+                &ComrakPlugins::default(),
+            )
+            .unwrap();
+        }
+    }
+
     let document = String::from_utf8(buffer).unwrap();
     Ok((ok(), document).encode(env))
 }
@@ -171,12 +215,27 @@ fn document_to_html_with_options<'a>(
         render: options.render.into(),
     };
 
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter = AutumnusAdapter::new(options.syntax_highlight.formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-
     let mut buffer = vec![];
-    comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins).unwrap();
+
+    match options.syntax_highlight {
+        Some(syntax_highlight) => {
+            let mut plugins = ComrakPlugins::default();
+            let autumnus_adapter = AutumnusAdapter::new(syntax_highlight.formatter.into());
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+            comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
+                .unwrap();
+        }
+        None => {
+            comrak::format_html_with_plugins(
+                comrak_ast,
+                &comrak_options,
+                &mut buffer,
+                &ComrakPlugins::default(),
+            )
+            .unwrap();
+        }
+    }
+
     let unsafe_html = String::from_utf8(buffer).unwrap();
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
@@ -215,12 +274,27 @@ fn document_to_xml_with_options<'a>(
         render: options.render.into(),
     };
 
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter = AutumnusAdapter::new(options.syntax_highlight.formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-
     let mut buffer = vec![];
-    comrak::format_xml_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins).unwrap();
+
+    match options.syntax_highlight {
+        Some(syntax_highlight) => {
+            let mut plugins = ComrakPlugins::default();
+            let autumnus_adapter = AutumnusAdapter::new(syntax_highlight.formatter.into());
+            plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+            comrak::format_xml_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
+                .unwrap();
+        }
+        None => {
+            comrak::format_xml_with_plugins(
+                comrak_ast,
+                &comrak_options,
+                &mut buffer,
+                &ComrakPlugins::default(),
+            )
+            .unwrap();
+        }
+    }
+
     let xml = String::from_utf8(buffer).unwrap();
     Ok((ok(), xml).encode(env))
 }
