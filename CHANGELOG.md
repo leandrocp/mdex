@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (2025-04-18)
+
+### Changes
+  * [Syntax Highlighter] Defaults to `[formatter: [{:html_inline, theme: "onedark"}]]`
+
 ## 0.6.0 (2025-04-18)
 
 This version introduces some minor breaking changes and some deprecations, see the change log below.
