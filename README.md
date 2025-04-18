@@ -315,7 +315,7 @@ String.upcase("elixir")
 ```
 """,
 syntax_highlight: [
-  formatter: {:inline, theme: "catppuccin_latte"}
+  formatter: {:html_inline, theme: "catppuccin_latte"}
 ]
 ) |> IO.puts()
 """

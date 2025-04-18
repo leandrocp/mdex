@@ -534,11 +534,20 @@ defmodule MDEx do
       keys: @render_options_schema
     ],
     syntax_highlight: [
-      type: :keyword_list,
+      type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil]},
       type_spec: quote(do: syntax_highlight_options()),
       default: [],
-      doc: "Apply syntax highlighting to code blocks. See [Autumn](https://hexdocs.pm/autumn) for more info and examples.",
-      keys: @syntax_highlight_options_schema
+      doc: """
+        Apply syntax highlighting to code blocks.
+
+        Examples:
+        
+            syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
+
+            syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
+
+        See [Autumn](https://hexdocs.pm/autumn) for more info and examples.
+      """
     ],
     sanitize: [
       type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
@@ -547,12 +556,18 @@ defmodule MDEx do
       doc: """
       Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
 
-      Use a [conservative set of options by default](https://docs.rs/ammonia/latest/ammonia/fn.clean.html),
-      but you can overwrite the default options `MDEx.default_sanitize_options/0`. For example to
-      build an [empty](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty) base with no allowed tags:
+      It's disabled by default but you can enable its [conservative set of default options](https://docs.rs/ammonia/latest/ammonia/fn.clean.html) as:
 
-          empty_base = Keyword.put(MDEx.default_sanitize_options(), :tags, [])
-          [sanitize: empty_base]
+          [sanitize: MDEx.default_sanitize_options()]
+
+      Or customize one of the options. For example, to disallow `<a>` tags:
+
+          [sanitize: [rm_tags: ["a"]]]
+
+      In the example above it will append `rm_tags: ["a"]` into the default set of options, essentially the same as:
+
+          sanitize = Keyword.put(MDEx.default_sanitize_options(), :rm_tags, ["a"])
+          [sanitize: sanitize]
 
       See the [Safety](#module-safety) section for more info.
       """
@@ -1489,20 +1504,26 @@ defmodule MDEx do
       |> NimbleOptions.validate!(@options_schema)
       |> update_in([:sanitize], &adapt_sanitize_options/1)
 
-    {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
-    theme = Autumn.build_theme(deprecated_theme_opt || formatter_opts[:theme])
-
-    formatter =
-      case deprecated_inline_style_opt do
-        true -> :html_inline
-        false -> :html_linked
-        nil -> formatter
-      end
-
     syntax_highlight =
-      options[:syntax_highlight]
-      |> Map.new()
-      |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
+      case options[:syntax_highlight] do
+        nil ->
+          nil
+
+        opts ->
+          {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
+          theme = Autumn.build_theme(deprecated_theme_opt || formatter_opts[:theme])
+
+          formatter =
+            case deprecated_inline_style_opt do
+              true -> :html_inline
+              false -> :html_linked
+              nil -> formatter
+            end
+
+          opts
+          |> Map.new()
+          |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
+      end
 
     %{
       extension: Map.new(options[:extension]),
