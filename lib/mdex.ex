@@ -61,7 +61,7 @@ defmodule MDEx do
     :parse,
     :render,
     :syntax_highlight,
-    :features
+    :sanitize
   ]
 
   @doc false
@@ -489,29 +489,16 @@ defmodule MDEx do
 
   @features_options_schema [
     sanitize: [
-      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
-      type_spec: quote(do: sanitize_options() | nil),
-      default: nil,
-      doc: """
-      Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
-
-      Use a [conservative set of options by default](https://docs.rs/ammonia/latest/ammonia/fn.clean.html),
-      but you can overwrite the default options `MDEx.default_sanitize_options/0`. For example to
-      build an [empty](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty) base with no allowed tags:
-
-          empty_base = Keyword.put(MDEx.default_sanitize_options(), :tags, [])
-          features: [sanitize: empty_base]
-
-      See the [Safety](#module-safety) section for more info.
-      """
+      type: {:or, [:keyword_list, nil]},
+      deprecated: "Use :sanitize (in :options) instead."
     ],
     syntax_highlight_theme: [
       type: {:or, [:string, nil]},
-      deprecated: "Use :syntax_highlight instead."
+      deprecated: "Use :syntax_highlight (in :options) instead."
     ],
     syntax_highlight_inline_style: [
       type: :boolean,
-      deprecated: "Use :syntax_highlight instead."
+      deprecated: "Use :syntax_highlight (in :options) instead."
     ]
   ]
 
@@ -553,10 +540,26 @@ defmodule MDEx do
       doc: "Apply syntax highlighting to code blocks. See [Autumn](https://hexdocs.pm/autumn) for more info and examples.",
       keys: @syntax_highlight_options_schema
     ],
+    sanitize: [
+      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
+      type_spec: quote(do: sanitize_options() | nil),
+      default: nil,
+      doc: """
+      Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
+
+      Use a [conservative set of options by default](https://docs.rs/ammonia/latest/ammonia/fn.clean.html),
+      but you can overwrite the default options `MDEx.default_sanitize_options/0`. For example to
+      build an [empty](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.empty) base with no allowed tags:
+
+          empty_base = Keyword.put(MDEx.default_sanitize_options(), :tags, [])
+          [sanitize: empty_base]
+
+      See the [Safety](#module-safety) section for more info.
+      """
+    ],
     features: [
       type: :keyword_list,
-      # TODO: deprecated after deprecating features[:sanitize]
-      # deprecated: "Use :syntax_highlight or :sanitize instead.",
+      deprecated: "Use :syntax_highlight or :sanitize instead.",
       keys: @features_options_schema
     ]
   ]
@@ -593,6 +596,20 @@ defmodule MDEx do
       ])
       ````
 
+  - Sanitize HTML output, in this example disallow `<a>` tags:
+
+      ````elixir
+      MDEx.to_html!(\"""
+      ## Links won't be displayed
+
+      <a href="https://example.com">Example</a>
+      ```
+      \""",
+      sanitize: [
+        rm_tags: ["a"],
+      ])
+      ````
+
   ## Options
 
   #{NimbleOptions.docs(@options_schema)}
@@ -613,9 +630,6 @@ defmodule MDEx do
 
   @typedoc "List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html)."
   @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
-
-  @typedoc "Deprecated. Use `:syntax_highlight` or `:sanitize` instead."
-  @type features_options() :: [unquote(NimbleOptions.option_typespec(@features_options_schema))]
 
   @doc """
   Returns the default options for the `:extension` group.
@@ -647,12 +661,6 @@ defmodule MDEx do
   @spec default_sanitize_options() :: sanitize_options()
   def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
 
-  @doc """
-  Returns the default options for the `:features` group.
-  """
-  @spec default_features_options() :: features_options()
-  def default_features_options, do: NimbleOptions.validate!([], @features_options_schema)
-
   @doc false
   def extension_options_schema, do: @extension_options_schema
 
@@ -666,7 +674,7 @@ defmodule MDEx do
   def syntax_highlight_options_schema, do: @syntax_highlight_options_schema
 
   @doc false
-  def features_options_schema, do: @features_options_schema
+  def sanitize_options_schema, do: @sanitize_options_schema
 
   @doc false
   def options_schema, do: @options_schema
@@ -1470,25 +1478,22 @@ defmodule MDEx do
 
   @doc false
   def validate_options!(options) do
-    options = Keyword.take(options, @built_in_options)
-
-    sanitize =
-      options
-      |> get_in([:features, :sanitize])
-      |> update_deprecated_sanitize_options()
-
-    features = Keyword.put(options[:features] || [], :sanitize, sanitize)
-    options = Keyword.put(options, :features, features)
+    sanitize_opts = update_deprecated_sanitize_options(get_in(options, [:features, :sanitize]) || get_in(options, [:sanitize]))
+    deprecated_theme_opt = options[:features][:syntax_highlight_theme]
+    deprecated_inline_style_opt = options[:features][:syntax_highlight_inline_style]
 
     options =
-      NimbleOptions.validate!(options, @options_schema)
-      |> update_in([:features, :sanitize], &adapt_sanitize_options/1)
+      options
+      |> Keyword.put(:sanitize, sanitize_opts)
+      |> Keyword.take(@built_in_options)
+      |> NimbleOptions.validate!(@options_schema)
+      |> update_in([:sanitize], &adapt_sanitize_options/1)
 
     {formatter, formatter_opts} = options[:syntax_highlight][:formatter]
-    theme = Autumn.build_theme(options[:features][:syntax_highlight_theme] || formatter_opts[:theme])
+    theme = Autumn.build_theme(deprecated_theme_opt || formatter_opts[:theme])
 
     formatter =
-      case options[:features][:syntax_highlight_inline_style] do
+      case deprecated_inline_style_opt do
         true -> :html_inline
         false -> :html_linked
         nil -> formatter
@@ -1504,7 +1509,7 @@ defmodule MDEx do
       parse: Map.new(options[:parse]),
       render: Map.new(options[:render]),
       syntax_highlight: syntax_highlight,
-      features: Map.new(options[:features])
+      sanitize: options[:sanitize]
     }
   end
 
@@ -1514,7 +1519,7 @@ defmodule MDEx do
 
       sanitize: MDEx.default_sanitize_options()
 
-    MDEx.default_sanitize_options() is the same behavior as the now deprecated sanitize: true
+    MDEx.default_sanitize_options() is the same behavior as the deprecated sanitize: true
 
     """)
 
@@ -1719,7 +1724,8 @@ defmodule MDEx do
       :extension,
       :parse,
       :render,
-      :features
+      :syntax_highlight,
+      :sanitize
     ])
     |> Pipe.put_options(options)
 
