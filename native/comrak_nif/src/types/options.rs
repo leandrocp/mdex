@@ -178,11 +178,23 @@ impl Default for ExSyntaxHighlightOptions<'_> {
     }
 }
 
-#[derive(Debug, Default, NifMap)]
+#[derive(Debug, NifMap)]
 pub struct ExOptions<'a> {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,
     pub render: ExRenderOptions,
     pub syntax_highlight: Option<ExSyntaxHighlightOptions<'a>>,
     pub sanitize: Option<ExSanitizeOption>,
+}
+
+impl Default for ExOptions<'_> {
+    fn default() -> Self {
+        Self {
+            extension: ExExtensionOptions::default(),
+            parse: ExParseOptions::default(),
+            render: ExRenderOptions::default(),
+            syntax_highlight: Some(ExSyntaxHighlightOptions::default()),
+            sanitize: None,
+        }
+    }
 }
