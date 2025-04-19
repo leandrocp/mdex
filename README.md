@@ -370,11 +370,6 @@ you can use legacy artifacts by adding the following configuration to your `conf
 config :mdex, use_legacy_artifacts: true
 ```
 
-## Demo and Samples
-
-
-A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library.
-
 ## Used By
 
 - [BeaconCMS](https://github.com/BeaconCMS/beacon)
