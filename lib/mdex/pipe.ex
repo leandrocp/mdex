@@ -20,14 +20,16 @@ defmodule MDEx.Pipe do
       \"\"\"
 
       MDEx.new()
-      |> MDExMermaid.attach(version: "11")
+      |> MDExMermaid.attach(mermaid_version: "11")
       |> MDEx.to_html(document: document)
+
+  To understand how it works, let's write that Mermaid plugin.
 
   ## Writing Plugins
 
-  To understand how it works, let's write that Mermaid plugin showed above.
+  Let's start with a simple plugin as example to render Mermaid diagrams.
 
-  In order to render Mermaid diagrams, we need to inject this `<script>` into the document,
+  In order to render Mermaid diagrams, we need to inject a `<script>` into the document,
   as outlined in their [docs](https://mermaid.js.org/intro/#installation):
 
       <script type="module">
@@ -35,14 +37,16 @@ defmodule MDEx.Pipe do
         mermaid.initialize({ startOnLoad: true });
       </script>
 
-  The `:version` option will be options to let users load a specific version,
-  but it will default to the latest version:
+  Note that the package version is specified in the URL, so we'll add an option
+  `:mermaid_version` to the plugin to let users specify the version they want to use.
+
+  By default, we'll use the latest version:
 
       MDEx.new() |> MDExMermaid.attach()
 
-  Or to customize the version:
+  But users can override it:
 
-      MDEx.new() |> MDExMermaid.attach(version: "11")
+      MDEx.new() |> MDExMermaid.attach(mermaid_version: "11")
 
   Let's get into the actual code, with comments to explain each part:
 
@@ -56,7 +60,7 @@ defmodule MDEx.Pipe do
           # register option with prefix `:mermaid_` to avoid conflicts with other plugins
           |> Pipe.register_options([:mermaid_version])
           #  merge all options given by users
-          |> Pipe.put_options(mermaid_version: options[:version])
+          |> Pipe.put_options(options)
           # actual steps to manipulate the document
           # see respective Pipe functions for more info
           |> Pipe.append_steps(enable_unsafe: &enable_unsafe/1)
@@ -64,6 +68,7 @@ defmodule MDEx.Pipe do
           |> Pipe.append_steps(update_code_blocks: &update_code_blocks/1)
         end
 
+        # to render raw html and <script> tags
         defp enable_unsafe(pipe) do
           Pipe.put_render_options(pipe, unsafe_: true)
         end
@@ -98,8 +103,7 @@ defmodule MDEx.Pipe do
         end
       end
 
-  Now whenever that plugin is attached to a pipeline,
-  MDEx will run all functions defined in the `attach/1` function.
+  Now we can `attach/1` that plugin into any MDEx pipeline to render Mermaid diagrams.
   """
 
   import MDEx.Document, only: [is_fragment: 1]
