@@ -64,9 +64,7 @@ defmodule MDEx.Native do
   #   - to html
   #   - to xml
   def parse_document(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
-  def markdown_to_html(_md), do: :erlang.nif_error(:nif_not_loaded)
   def markdown_to_html_with_options(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
-  def markdown_to_xml(_md), do: :erlang.nif_error(:nif_not_loaded)
   def markdown_to_xml_with_options(_md, _opts), do: :erlang.nif_error(:nif_not_loaded)
 
   # document

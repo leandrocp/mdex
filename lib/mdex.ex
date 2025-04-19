@@ -878,9 +878,7 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML using default options.
-
-  Use `to_html/2` to pass custom options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML.
 
   ## Examples
 
@@ -893,75 +891,23 @@ defmodule MDEx do
       iex> MDEx.to_html(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "MDEx"}], level: 3, setext: false}]})
       {:ok, "<h3>MDEx</h3>"}
 
-  Fragments of a document are also supported:
-
-      iex> MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]})
-      {:ok, "<p>MDEx</p>"}
-
-  """
-  @spec to_html(source()) ::
-          {:ok, String.t()}
-          | {:error, MDEx.DecodeError.t()}
-          | {:error, MDEx.InvalidInputError.t()}
-  def to_html(source)
-
-  def to_html(source) when is_binary(source) do
-    source
-    |> Native.markdown_to_html()
-    |> maybe_trim()
-  end
-
-  def to_html(%Pipe{} = pipe) do
-    pipe
-    |> Pipe.run()
-    |> then(&to_html(&1.document, &1.options))
-  end
-
-  def to_html(%Document{} = document) do
-    document
-    |> Native.document_to_html()
-    |> maybe_trim()
-  rescue
-    ErlangError ->
-      {:error, %DecodeError{document: document}}
-  end
-
-  def to_html(source) do
-    if is_fragment(source) do
-      to_html(%Document{nodes: List.wrap(source)})
-    else
-      {:error, %InvalidInputError{found: source}}
-    end
-  end
-
-  @doc """
-  Same as `to_html/1` but raises an error if the conversion fails.
-  """
-  @spec to_html!(source()) :: String.t()
-  def to_html!(source) do
-    case to_html(source) do
-      {:ok, html} -> html
-      {:error, error} -> raise error
-    end
-  end
-
-  @doc """
-  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML using custom options.
-
-  ## Examples
-
       iex> MDEx.to_html("Hello ~world~ there", extension: [strikethrough: true])
       {:ok, "<p>Hello <del>world</del> there</p>"}
 
       iex> MDEx.to_html("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
+   Fragments of a document are also supported:
+
+      iex> MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]})
+      {:ok, "<p>MDEx</p>"}
+
   """
   @spec to_html(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_html(source, options)
+  def to_html(source, options \\ [])
 
   def to_html(source, options) when is_binary(source) and is_list(options) do
     source
@@ -997,7 +943,7 @@ defmodule MDEx do
   Same as `to_html/2` but raises error if the conversion fails.
   """
   @spec to_html!(source(), options()) :: String.t()
-  def to_html!(source, options) do
+  def to_html!(source, options \\ []) do
     case to_html(source, options) do
       {:ok, html} -> html
       {:error, error} -> raise error
@@ -1005,132 +951,13 @@ defmodule MDEx do
   end
 
   @doc """
-  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to XML using default options.
-
-  Use `to_xml/2` to pass custom options.
-
-  ## Examples
-
-      iex> {:ok, xml} =  MDEx.to_xml("# MDEx")
-      iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE document SYSTEM "CommonMark.dtd">
-      <document xmlns="http://commonmark.org/xml/1.0">
-        <heading level="1">
-          <text xml:space="preserve">MDEx</text>
-        </heading>
-      </document>
-      \"""
-
-      iex> {:ok, xml} = MDEx.to_xml("Implemented with:\\n1. Elixir\\n2. Rust")
-      iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE document SYSTEM "CommonMark.dtd">
-      <document xmlns="http://commonmark.org/xml/1.0">
-        <paragraph>
-          <text xml:space="preserve">Implemented with:</text>
-        </paragraph>
-        <list type="ordered" start="1" delim="period" tight="true">
-          <item>
-            <paragraph>
-              <text xml:space="preserve">Elixir</text>
-            </paragraph>
-          </item>
-          <item>
-            <paragraph>
-              <text xml:space="preserve">Rust</text>
-            </paragraph>
-          </item>
-        </list>
-      </document>
-      \"""
-
-      iex> {:ok, xml} = MDEx.to_xml(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "MDEx"}], level: 3, setext: false}]})
-      iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE document SYSTEM "CommonMark.dtd">
-      <document xmlns="http://commonmark.org/xml/1.0">
-        <heading level="3">
-          <text xml:space="preserve">MDEx</text>
-        </heading>
-      </document>
-      \"""
-
-  Fragments of a document are also supported:
-
-      iex> {:ok, xml} = MDEx.to_xml(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]})
-      iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE document SYSTEM "CommonMark.dtd">
-      <document xmlns="http://commonmark.org/xml/1.0">
-        <paragraph>
-          <text xml:space="preserve">MDEx</text>
-        </paragraph>
-      </document>
-      \"""
-
-  """
-  @spec to_xml(source()) ::
-          {:ok, String.t()}
-          | {:error, MDEx.DecodeError.t()}
-          | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(source)
-
-  def to_xml(source) when is_binary(source) do
-    source
-    |> Native.markdown_to_xml()
-
-    # |> maybe_trim()
-  end
-
-  def to_xml(%Pipe{} = pipe) do
-    pipe
-    |> Pipe.run()
-    |> then(&to_xml(&1.document, &1.options))
-  end
-
-  def to_xml(%Document{} = document) do
-    document
-    |> Native.document_to_xml()
-
-    # |> maybe_trim()
-  rescue
-    ErlangError ->
-      {:error, %DecodeError{document: document}}
-  end
-
-  def to_xml(source) do
-    if is_fragment(source) do
-      to_xml(%Document{nodes: List.wrap(source)})
-    else
-      {:error, %InvalidInputError{found: source}}
-    end
-  end
-
-  @doc """
-  Same as `to_xml/1` but raises an error if the conversion fails.
-  """
-  @spec to_xml!(source()) :: String.t()
-  def to_xml!(source) do
-    case to_xml(source) do
-      {:ok, xml} -> xml
-      {:error, error} -> raise error
-    end
-  end
-
-  @doc """
-  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to XML using custom options.
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to XML.
 
   ## Examples
 
       iex> {:ok, xml} = MDEx.to_xml("Hello ~world~ there", extension: [strikethrough: true])
       iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
+      ~s|<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE document SYSTEM "CommonMark.dtd">
       <document xmlns="http://commonmark.org/xml/1.0">
         <paragraph>
@@ -1140,13 +967,11 @@ defmodule MDEx do
           </strikethrough>
           <text xml:space="preserve"> there</text>
         </paragraph>
-      </document>
-      \"""
+      </document>|
 
       iex> {:ok, xml} = MDEx.to_xml("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
       iex> xml
-      \"""
-      <?xml version="1.0" encoding="UTF-8"?>
+      ~s|<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE document SYSTEM "CommonMark.dtd">
       <document xmlns="http://commonmark.org/xml/1.0">
         <paragraph>
@@ -1157,22 +982,31 @@ defmodule MDEx do
           </link>
           <html_inline xml:space="preserve">&lt;/marquee&gt;</html_inline>
         </paragraph>
-      </document>
-      \"""
+      </document>|
+
+  Fragments of a document are also supported:
+
+      iex> {:ok, xml} = MDEx.to_xml(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]})
+      iex> xml
+      ~s|<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE document SYSTEM "CommonMark.dtd">
+      <document xmlns="http://commonmark.org/xml/1.0">
+        <paragraph>
+          <text xml:space="preserve">MDEx</text>
+        </paragraph>
+      </document>|
 
   """
   @spec to_xml(source(), options()) ::
           {:ok, String.t()}
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
-  def to_xml(source, options)
+  def to_xml(source, options \\ [])
 
   def to_xml(source, options) when is_binary(source) and is_list(options) do
     source
     |> Native.markdown_to_xml_with_options(validate_options!(options))
-
-    # |> maybe_wrap_error()
-    # |> maybe_trim()
+    |> maybe_trim()
   end
 
   def to_xml(%Pipe{} = pipe, options) when is_list(options) do
@@ -1203,7 +1037,7 @@ defmodule MDEx do
   Same as `to_xml/2` but raises error if the conversion fails.
   """
   @spec to_xml!(source(), options()) :: String.t()
-  def to_xml!(source, options) do
+  def to_xml!(source, options \\ []) do
     case to_xml(source, options) do
       {:ok, xml} -> xml
       {:error, error} -> raise error
@@ -1685,9 +1519,9 @@ defmodule MDEx do
 
   Once the pipe is complete, call either one of the following functions to format the document:
 
-  - `MDEx.to_html/1`
+  - `MDEx.to_html/2`
   - `MDEx.to_json/1`
-  - `MDEx.to_xml/1`
+  - `MDEx.to_xml/2`
   - `MDEx.to_markdown/1`
 
   ## Examples
