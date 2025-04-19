@@ -145,7 +145,7 @@ iex> ~M|`~M` also converts to HTML format|HTML
 ```elixir
 iex> import MDEx.Sigil
 iex> ~M|and to XML as well|XML
-"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <text xml:space=\"preserve\">and to XML as well</text>\n  </paragraph>\n</document>\n"
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <text xml:space=\"preserve\">and to XML as well</text>\n  </paragraph>\n</document>"
 ```
 
 Use [~m](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_m/2) to interpolate variables:

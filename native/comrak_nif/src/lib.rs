@@ -30,17 +30,6 @@ fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<T
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn markdown_to_html<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter =
-        AutumnusAdapter::new(ExSyntaxHighlightOptions::default().formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-    let unsafe_html = comrak::markdown_to_html_with_plugins(md, &Options::default(), &plugins);
-    let html = do_safe_html(unsafe_html, &None, false, true);
-    Ok((ok(), html).encode(env))
-}
-
-#[rustler::nif(schedule = "DirtyCpu")]
 fn markdown_to_html_with_options<'a>(
     env: Env<'a>,
     md: &str,
@@ -63,20 +52,6 @@ fn markdown_to_html_with_options<'a>(
     let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
-}
-
-#[rustler::nif(schedule = "DirtyCpu")]
-fn markdown_to_xml<'a>(env: Env<'a>, md: &str) -> NifResult<Term<'a>> {
-    let arena = Arena::new();
-    let root = comrak::parse_document(&arena, md, &Options::default());
-    let mut buffer = vec![];
-    let mut plugins = ComrakPlugins::default();
-    let autumnus_adapter =
-        AutumnusAdapter::new(ExSyntaxHighlightOptions::default().formatter.into());
-    plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-    comrak::format_xml_with_plugins(root, &Options::default(), &mut buffer, &plugins).unwrap();
-    let xml = String::from_utf8(buffer).unwrap();
-    Ok((ok(), xml).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]

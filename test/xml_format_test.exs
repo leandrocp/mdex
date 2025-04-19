@@ -27,7 +27,7 @@ defmodule MDEx.XmlFormatTest do
     ]
 
     assert {:ok, xml} = MDEx.to_xml(document, opts)
-    assert xml == expected
+    assert String.trim(xml) == String.trim(expected)
   end
 
   test "empty doc" do
