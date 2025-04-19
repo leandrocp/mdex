@@ -381,24 +381,6 @@ config :mdex, use_legacy_artifacts: true
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
 
-## Benchmark
-
-A [simple script](benchmark.exs) is available to compare existing libs:
-
-```
-Name              ips        average  deviation         median         99th %
-cmark         22.82 K      0.0438 ms    ±16.24%      0.0429 ms      0.0598 ms
-mdex           3.57 K        0.28 ms     ±9.79%        0.28 ms        0.33 ms
-md             0.34 K        2.95 ms    ±10.56%        2.90 ms        3.62 ms
-earmark        0.25 K        4.04 ms     ±4.50%        4.00 ms        4.44 ms
-
-Comparison:
-cmark         22.82 K
-mdex           3.57 K - 6.39x slower +0.24 ms
-md             0.34 K - 67.25x slower +2.90 ms
-earmark        0.25 K - 92.19x slower +4.00 ms
-```
-
 ## Motivation
 
 MDEx was born out of the necessity of parsing CommonMark files, to parse hundreds of files quickly, and to be easily extensible by consumers of the library.
@@ -435,6 +417,24 @@ _Note that MDEx is the only one that syntax highlights out-of-the-box which cont
 3. GitHub Flavored Markdown
 4. GitLab Flavored Markdown
 5. Discord Flavored Markdown
+
+## Benchmark
+
+A [simple script](benchmark.exs) is available to compare existing libs:
+
+```
+Name              ips        average  deviation         median         99th %
+cmark         22.82 K      0.0438 ms    ±16.24%      0.0429 ms      0.0598 ms
+mdex           3.57 K        0.28 ms     ±9.79%        0.28 ms        0.33 ms
+md             0.34 K        2.95 ms    ±10.56%        2.90 ms        3.62 ms
+earmark        0.25 K        4.04 ms     ±4.50%        4.00 ms        4.44 ms
+
+Comparison:
+cmark         22.82 K
+mdex           3.57 K - 6.39x slower +0.24 ms
+md             0.34 K - 67.25x slower +2.90 ms
+earmark        0.25 K - 92.19x slower +4.00 ms
+```
 
 To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suit your needs.
 
