@@ -1,0 +1,68 @@
+# Comparison
+
+```elixir
+Mix.install([
+  :mdex,
+  :earmark,
+  :md,
+  :cmark
+])
+```
+
+## Sample
+
+````elixir
+md = ~s|
+# Sample
+  
+## Emoji
+  
+:rocket:
+
+## Links
+
+auto link: https://elixir-lang.org
+
+raw link: <a href="https://elixir-lang.org">Elixir</a>
+
+## Code
+
+`self()`
+
+```elixir
+current = self()
+```
+|
+````
+
+## MDEx
+
+```elixir
+md
+|> MDEx.to_html!(render: [unsafe_: true], extension: [shortcodes: true])
+|> IO.puts()
+```
+
+## Earmark
+
+```elixir
+md
+|> Earmark.as_html!(gfm: true)
+|> IO.puts()
+```
+
+## md
+
+```elixir
+md
+|> Md.generate()
+|> IO.puts()
+```
+
+## cmark
+
+```elixir
+md
+|> Cmark.to_html([:unsafe])
+|> IO.puts()
+```

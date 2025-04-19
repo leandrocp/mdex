@@ -63,7 +63,7 @@ defmodule MDEx.MixProject do
       logo: "assets/images/mdex_icon.png",
       source_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["CHANGELOG.md"],
+      extras: ["CHANGELOG.md", "playground.livemd", "comparison.livemd"],
       groups_for_modules: [
         "Document Nodes": [
           MDEx.Alert,

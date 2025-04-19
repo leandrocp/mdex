@@ -372,6 +372,7 @@ config :mdex, use_legacy_artifacts: true
 
 ## Demo and Samples
 
+
 A [livebook](https://github.com/leandrocp/mdex/blob/main/playground.livemd) and a [script](https://github.com/leandrocp/mdex/blob/main/playground.exs) are available to play with and experiment with this library.
 
 ## Used By
@@ -413,6 +414,32 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 - [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
 
 _Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
+
+## Comparison
+
+|Feature|MDEX|Earmark|md|cmark|
+| --- | --- | --- | --- | --- |
+|Active|✅|✅|✅|❌|
+|Pure Elixir|❌|✅|✅|❌|
+|Extensible|✅|✅|✅|❌|
+|Syntax Highlighting|✅|❌|❌|❌|
+|AST|✅|✅|✅|❌|
+|AST to Markdown|✅|⚠️²|❌|❌|
+|To HTML|✅|✅|✅|✅|
+|To JSON|✅|❌|❌|❌|
+|To XML|✅|❌|❌|✅|
+|To Manpage|❌|❌|❌|✅|
+|To LaTeX|❌|❌|❌|✅|
+|Emoji|✅|❌|❌|❌|
+|GFM³|✅|✅|❌|❌|
+|GitLab⁴|⚠️¹|❌|❌|❌|
+|Discord⁵|⚠️¹|❌|❌|❌|
+
+1. Partial support
+2. Possible with [earmark_reversal](https://hex.pm/packages/earmark_reversal)
+3. GitHub Flavored Markdown
+4. GitLab Flavored Markdown
+5. Discord Flavored Markdown
 
 To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suit your needs.
 

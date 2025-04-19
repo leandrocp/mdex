@@ -1,4 +1,4 @@
-# MDEx Playground
+# Playground
 
 ```elixir
 Mix.install([:req, :mdex])
@@ -18,5 +18,6 @@ defmodule Playground do
   end
 end
 
-IO.puts(Playground.run())
+Playground.run()
+|> IO.puts()
 ```
