@@ -371,12 +371,12 @@ defmodule MDExTest do
         <pre><code>example</code></pre>
 
         ```elixir
-        self()
+        {:mdex, "~> 0.1"}
         ```
         """,
         ~S"""
         <pre>example</pre>
-        <pre><span><span>self</span><span>(</span><span>)</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><span class="line" data-line="1"><span style="color: #848b98;">{</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #848b98;">}</span>
         </span></pre>
         """,
         render: [unsafe_: true],
@@ -395,6 +395,24 @@ defmodule MDExTest do
         ~S"""
         <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
         """
+      )
+    end
+
+    test "encode curly braces in inline code with sanitize enabled" do
+      assert_output(
+        ~S"""
+        `{:mdex, "~> 0.1"}`
+
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #848b98;">&rbrace;</span>
+        </span></code></pre>
+        """,
+        sanitize: MDEx.default_sanitize_options()
       )
     end
 
@@ -447,7 +465,7 @@ defmodule MDExTest do
       assert MDEx.safe_html(
                "<span>{:example} <code class=\"lang-ex\" data-foo=\"{:val}\">{:ok, 'foo'}</code></span><script>console.log('hello')</script>"
              ) ==
-               "&lt;span&gt;{:example} &lt;code&gt;&lbrace;:ok, &#x27;foo&#x27;&rbrace;&lt;&#x2f;code&gt;&lt;&#x2f;span&gt;"
+               "&lt;span&gt;{:example} &lt;code class=&quot;lang-ex&quot;&gt;&lbrace;:ok, &#x27;foo&#x27;&rbrace;&lt;&#x2f;code&gt;&lt;&#x2f;span&gt;"
     end
   end
 

@@ -347,6 +347,7 @@ defmodule MDEx do
         "a" => ~w(href hreflang),
         "bdo" => ~w(dir),
         "blockquote" => ~w(cite),
+        "code" => ~w(class translate tabindex),
         "col" => ~w(align char charoff span),
         "colgroup" => ~w(align char charoff span),
         "del" => ~w(cite datetime),
@@ -354,7 +355,9 @@ defmodule MDEx do
         "img" => ~w(align alt height src width),
         "ins" => ~w(cite datetime),
         "ol" => ~w(start),
+        "pre" => ~w(class style),
         "q" => ~w(cite),
+        "span" => ~w(class style data-line),
         "table" => ~w(align char charoff summary),
         "tbody" => ~w(align char charoff),
         "td" => ~w(align char charoff colspan headers rowspan),
@@ -963,7 +966,6 @@ defmodule MDEx do
   def to_html(source, options) when is_binary(source) and is_list(options) do
     source
     |> Native.markdown_to_html_with_options(validate_options!(options))
-    # |> maybe_wrap_error()
     |> maybe_trim()
   end
 
@@ -1749,7 +1751,5 @@ defmodule MDEx do
       :sanitize
     ])
     |> Pipe.put_options(options)
-
-    # |> MDEx.Steps.attach()
   end
 end

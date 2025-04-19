@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Enhancements
+  * [Sanitize] Added the following tag attribute rules by default:
+    - code: class translate tabindex
+    - pre: class style
+    - span: class style data-line
+  * [Pipe] Added `MDEx.Pipe.is_sanitize_enabled/1`
+  * [Pipe] Added `MDEx.Pipe.get_sanitize_option/3`
+
+### Fixes
+  * [Syntax Highlight] Class and style are applied when sanitize is enabled
+
 ## 0.6.1 (2025-04-18)
 
 ### Changes

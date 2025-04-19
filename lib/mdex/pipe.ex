@@ -546,6 +546,16 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
+  Retrieves one of the `t:MDEx.sanitize_options/0` options from the pipeline. 
+  """
+  @spec get_sanitize_option(t(), atom(), term()) :: term()
+  def get_sanitize_option(%MDEx.Pipe{} = pipe, key, default \\ nil) when is_atom(key) do
+    pipe
+    |> get_option(:sanitize, [])
+    |> Keyword.get(key, default)
+  end
+
+  @doc """
   Retrieves a private value from the pipeline.
   """
   @spec get_private(t(), atom(), default) :: term() | default when default: var
@@ -567,6 +577,17 @@ defmodule MDEx.Pipe do
   @spec put_private(t(), atom(), term()) :: t()
   def put_private(%MDEx.Pipe{} = pipe, key, value) when is_atom(key) do
     put_in(pipe.private[key], value)
+  end
+
+  @doc """
+  Returns `true` if the pipeline has the `:sanitize` option set, otherwise `false`.
+  """
+  @spec is_sanitize_enabled(t()) :: boolean()
+  def is_sanitize_enabled(%MDEx.Pipe{} = pipe) do
+    case get_option(pipe, :sanitize) do
+      nil -> false
+      _ -> true
+    end
   end
 
   @doc false
