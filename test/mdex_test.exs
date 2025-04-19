@@ -365,6 +365,28 @@ defmodule MDExTest do
              """
     end
 
+    test "conflicting sanitization rules" do
+      assert_output(
+        ~S"""
+        <pre><code>example</code></pre>
+
+        ```elixir
+        self()
+        ```
+        """,
+        ~S"""
+        <pre>example</pre>
+        <pre><span><span>self</span><span>(</span><span>)</span>
+        </span></pre>
+        """,
+        render: [unsafe_: true],
+        sanitize: [
+          add_tags: ["code"],
+          rm_tags: ["code"]
+        ]
+      )
+    end
+
     test "encode curly braces in inline code" do
       assert_output(
         ~S"""
