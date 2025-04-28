@@ -377,6 +377,8 @@ config :mdex, use_legacy_artifacts: true
 - [Bonfire](https://github.com/bonfire-networks/bonfire-app)
 - [00](https://github.com/technomancy-dev/00)
 - [Plural Console](https://github.com/pluralsh/console)
+- [Exmeralda](https://github.com/bitcrowd/exmeralda)
+- [Algora](https://github.com/algora-io/algora)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
@@ -437,15 +439,6 @@ earmark        0.25 K - 92.19x slower +4.00 ms
 ```
 
 To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suit your needs.
-
-## Looking for help with your Elixir project?
-
-<img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/dockyard_logo.png" width="256" alt="DockYard logo">
-
-At DockYard we are [ready to help you build your next Elixir project](https://dockyard.com/phoenix-consulting).
-We have a unique expertise in Elixir and Phoenix development that is unmatched and we love to [write about Elixir](https://dockyard.com/blog/categories/elixir).
-
-Have a project in mind? [Get in touch](https://dockyard.com/contact/hire-us)!
 
 ## Acknowledgements
 
