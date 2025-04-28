@@ -24,7 +24,7 @@ autumnus = { git = "https://github.com/leandrocp/autumnus", features = ["nif_ver
 log = "0.4"
 lazy_static = "1.5"
 typed-arena = "2.0.2"
-lol_html = "2.2"
+lol_html = "2.3"
 
 [features]
 default = ["nif_version_2_15"]

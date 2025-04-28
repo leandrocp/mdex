@@ -908,9 +908,9 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "lol_html"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b1058123f6262982b891dccc395cff0144d9439de366460b47fab719258b96e"
+checksum = "1e24940eb633a7240c1155e61595e18ec6c72b8571837531933f19de3a8c3786"
 dependencies = [
  "bitflags 2.9.0",
  "cfg-if",
