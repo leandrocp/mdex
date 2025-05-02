@@ -4,7 +4,7 @@ use autumnus::elixir::ExFormatterOption;
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 pub use sanitize::*;
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExExtensionOptions {
     pub strikethrough: bool,
     pub tagfilter: bool,
@@ -59,7 +59,7 @@ impl From<ExExtensionOptions> for ExtensionOptions<'_> {
     }
 }
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExParseOptions {
     pub smart: bool,
     pub default_info_string: Option<String>,
@@ -79,7 +79,7 @@ impl From<ExParseOptions> for ParseOptions<'_> {
     }
 }
 
-#[derive(Clone, Default, Debug, NifUnitEnum)]
+#[derive(Clone, Debug, Default, NifUnitEnum)]
 pub enum ExListStyleType {
     #[default]
     Dash,
@@ -97,7 +97,7 @@ impl From<ExListStyleType> for ListStyleType {
     }
 }
 
-#[derive(Default, Debug, NifMap)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExRenderOptions {
     pub hardbreaks: bool,
     pub github_pre_lang: bool,
@@ -144,7 +144,7 @@ impl From<ExRenderOptions> for RenderOptions {
     }
 }
 
-#[derive(Debug, NifTaggedEnum, Default)]
+#[derive(Debug, Default, NifTaggedEnum)]
 pub enum ExSanitizeOption {
     #[default]
     Clean,
