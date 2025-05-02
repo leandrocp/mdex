@@ -28,16 +28,26 @@ defmodule MDEx.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        docs: :docs,
+        "hex.publish": :docs
+      ]
+    ]
+  end
+
   defp package do
     [
       maintainers: ["Leandro Pereira"],
       licenses: ["MIT"],
       links: %{
-        Changelog: "https://hexdocs.pm/mdex/changelog.html",
         GitHub: @source_url,
+        Changelog: "https://hexdocs.pm/mdex/changelog.html",
         Site: "https://mdelixir.dev",
         comrak: "https://crates.io/crates/comrak",
-        DockYard: "https://dockyard.com"
+        ammonia: "https://crates.io/crates/ammonia",
+        autumnus: "https://autumnus.dev"
       },
       files: ~w[
         lib/mdex.ex
@@ -109,22 +119,7 @@ defmodule MDEx.MixProject do
           MDEx.EscapedTag
         ]
       ],
-      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
-      before_closing_head_tag: fn type ->
-        if type == :html do
-          """
-          <script>
-            if (location.hostname === "hexdocs.pm") {
-              var script = document.createElement("script");
-              script.src = "https://plausible.io/js/script.js";
-              script.setAttribute("defer", "defer")
-              script.setAttribute("data-domain", "mdexhexdocs")
-              document.head.appendChild(script);
-            }
-          </script>
-          """
-        end
-      end
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
   end
 
@@ -135,7 +130,7 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:autumn, ">= 0.3.1"},
       {:jason, "~> 1.0"},
-      {:ex_doc, "~> 0.34", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :docs}
     ]
   end
 
