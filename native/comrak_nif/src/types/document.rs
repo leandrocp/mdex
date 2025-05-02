@@ -17,7 +17,7 @@ mod atoms {
 }
 
 // https://docs.rs/comrak/latest/comrak/nodes/enum.NodeValue.html
-#[derive(Debug, Clone, PartialEq, NifUntaggedEnum)]
+#[derive(Clone, Debug, NifUntaggedEnum, PartialEq)]
 pub enum NewNode {
     Document(ExDocument),
     FrontMatter(ExFrontMatter),
@@ -112,7 +112,7 @@ impl From<NewNode> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Document"]
 pub struct ExDocument {
     pub nodes: Vec<NewNode>,
@@ -124,7 +124,7 @@ impl From<ExDocument> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.FrontMatter"]
 pub struct ExFrontMatter {
     pub literal: String,
@@ -136,7 +136,7 @@ impl From<ExFrontMatter> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.BlockQuote"]
 pub struct ExBlockQuote {
     pub nodes: Vec<NewNode>,
@@ -148,19 +148,19 @@ impl From<ExBlockQuote> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifUnitEnum)]
+#[derive(Clone, Debug, NifUnitEnum, PartialEq)]
 pub enum ExListType {
     Bullet,
     Ordered,
 }
 
-#[derive(Debug, Clone, PartialEq, NifUnitEnum)]
+#[derive(Clone, Debug, NifUnitEnum, PartialEq)]
 pub enum ExListDelimType {
     Period,
     Paren,
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.List"]
 pub struct ExList {
     pub nodes: Vec<NewNode>,
@@ -195,7 +195,7 @@ impl From<ExList> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.ListItem"]
 pub struct ExListItem {
     pub nodes: Vec<NewNode>,
@@ -229,7 +229,7 @@ impl From<ExListItem> for NodeValue {
         })
     }
 }
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.DescriptionList"]
 pub struct ExDescriptionList {
     pub nodes: Vec<NewNode>,
@@ -241,7 +241,7 @@ impl From<ExDescriptionList> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.DescriptionItem"]
 pub struct ExDescriptionItem {
     pub nodes: Vec<NewNode>,
@@ -260,7 +260,7 @@ impl From<ExDescriptionItem> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.DescriptionTerm"]
 pub struct ExDescriptionTerm {
     pub nodes: Vec<NewNode>,
@@ -272,7 +272,7 @@ impl From<ExDescriptionTerm> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.DescriptionDetails"]
 pub struct ExDescriptionDetails {
     pub nodes: Vec<NewNode>,
@@ -284,7 +284,7 @@ impl From<ExDescriptionDetails> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.CodeBlock"]
 pub struct ExCodeBlock {
     pub nodes: Vec<NewNode>,
@@ -309,7 +309,7 @@ impl From<ExCodeBlock> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.HtmlBlock"]
 pub struct ExHtmlBlock {
     pub nodes: Vec<NewNode>,
@@ -326,7 +326,7 @@ impl From<ExHtmlBlock> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Paragraph"]
 pub struct ExParagraph {
     pub nodes: Vec<NewNode>,
@@ -338,7 +338,7 @@ impl From<ExParagraph> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Heading"]
 pub struct ExHeading {
     pub nodes: Vec<NewNode>,
@@ -355,7 +355,7 @@ impl From<ExHeading> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.ThematicBreak"]
 pub struct ExThematicBreak {}
 
@@ -365,7 +365,7 @@ impl From<ExThematicBreak> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.FootnoteDefinition"]
 pub struct ExFootnoteDefinition {
     pub nodes: Vec<NewNode>,
@@ -382,7 +382,7 @@ impl From<ExFootnoteDefinition> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.FootnoteReference"]
 pub struct ExFootnoteReference {
     pub name: String,
@@ -400,7 +400,7 @@ impl From<ExFootnoteReference> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifUnitEnum)]
+#[derive(Clone, Debug, NifUnitEnum, PartialEq)]
 pub enum ExTableAlignment {
     None,
     Left,
@@ -408,7 +408,7 @@ pub enum ExTableAlignment {
     Right,
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Table"]
 pub struct ExTable {
     pub nodes: Vec<NewNode>,
@@ -438,7 +438,7 @@ impl From<ExTable> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.TableRow"]
 pub struct ExTableRow {
     pub nodes: Vec<NewNode>,
@@ -451,7 +451,7 @@ impl From<ExTableRow> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.TableCell"]
 pub struct ExTableCell {
     pub nodes: Vec<NewNode>,
@@ -463,7 +463,7 @@ impl From<ExTableCell> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Text"]
 pub struct ExText {
     pub literal: String,
@@ -475,7 +475,7 @@ impl From<ExText> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.TaskItem"]
 pub struct ExTaskItem {
     pub nodes: Vec<NewNode>,
@@ -489,7 +489,7 @@ impl From<ExTaskItem> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.SoftBreak"]
 pub struct ExSoftBreak {}
 
@@ -499,7 +499,7 @@ impl From<ExSoftBreak> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.LineBreak"]
 pub struct ExLineBreak {}
 
@@ -509,7 +509,7 @@ impl From<ExLineBreak> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Code"]
 pub struct ExCode {
     pub num_backticks: usize,
@@ -525,7 +525,7 @@ impl From<ExCode> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.HtmlInline"]
 pub struct ExHtmlInline {
     pub literal: String,
@@ -537,7 +537,7 @@ impl From<ExHtmlInline> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Raw"]
 pub struct ExRaw {
     pub literal: String,
@@ -549,7 +549,7 @@ impl From<ExRaw> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Emph"]
 pub struct ExEmph {
     pub nodes: Vec<NewNode>,
@@ -561,7 +561,7 @@ impl From<ExEmph> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Strong"]
 pub struct ExStrong {
     pub nodes: Vec<NewNode>,
@@ -573,7 +573,7 @@ impl From<ExStrong> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Strikethrough"]
 pub struct ExStrikethrough {
     pub nodes: Vec<NewNode>,
@@ -585,7 +585,7 @@ impl From<ExStrikethrough> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Superscript"]
 pub struct ExSuperscript {
     pub nodes: Vec<NewNode>,
@@ -597,7 +597,7 @@ impl From<ExSuperscript> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Link"]
 pub struct ExLink {
     pub nodes: Vec<NewNode>,
@@ -614,7 +614,7 @@ impl From<ExLink> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Image"]
 pub struct ExImage {
     pub nodes: Vec<NewNode>,
@@ -630,7 +630,7 @@ impl From<ExImage> for NodeValue {
         })
     }
 }
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.ShortCode"]
 pub struct ExShortCode {
     pub code: String,
@@ -646,7 +646,7 @@ impl From<ExShortCode> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Math"]
 pub struct ExMath {
     pub dollar_math: bool,
@@ -664,7 +664,7 @@ impl From<ExMath> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.MultilineBlockQuote"]
 pub struct ExMultilineBlockQuote {
     pub nodes: Vec<NewNode>,
@@ -681,7 +681,7 @@ impl From<ExMultilineBlockQuote> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Escaped"]
 pub struct ExEscaped {}
 
@@ -691,7 +691,7 @@ impl From<ExEscaped> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.WikiLink"]
 pub struct ExWikiLink {
     pub nodes: Vec<NewNode>,
@@ -706,7 +706,7 @@ impl From<ExWikiLink> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Underline"]
 pub struct ExUnderline {
     pub nodes: Vec<NewNode>,
@@ -718,7 +718,7 @@ impl From<ExUnderline> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Subscript"]
 pub struct ExSubscript {
     pub nodes: Vec<NewNode>,
@@ -730,7 +730,7 @@ impl From<ExSubscript> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.SpoileredText"]
 pub struct ExSpoileredText {
     pub nodes: Vec<NewNode>,
@@ -742,7 +742,7 @@ impl From<ExSpoileredText> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.EscapedTag"]
 pub struct ExEscapedTag {
     pub nodes: Vec<NewNode>,
@@ -755,7 +755,7 @@ impl From<ExEscapedTag> for NodeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, NifUnitEnum, Default)]
+#[derive(Clone, Debug, Default, NifUnitEnum, PartialEq)]
 pub enum ExAlertType {
     #[default]
     Note,
@@ -765,7 +765,7 @@ pub enum ExAlertType {
     Caution,
 }
 
-#[derive(Debug, Clone, PartialEq, NifStruct)]
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Alert"]
 pub struct ExAlert {
     pub nodes: Vec<NewNode>,

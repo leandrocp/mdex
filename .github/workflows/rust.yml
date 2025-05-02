@@ -9,7 +9,6 @@ on:
   pull_request:
     paths:
       - "native/**"
-  workflow_dispatch:
 
 jobs:
   lint-rust:

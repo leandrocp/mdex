@@ -86,7 +86,7 @@ where
 // Most operate with the same shape of value in all three modes, but
 // set_tag_attribute_values is different.
 
-#[derive(Debug, NifMap, Default)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExSanitizeCustomSetAddRm<TSet, TAdd = TSet, TRm = TSet> {
     set: Option<TSet>,
     add: Option<TAdd>,
@@ -250,7 +250,7 @@ impl ExSanitizeCustomUrlRelative {
     }
 }
 
-#[derive(Debug, NifMap, Default)]
+#[derive(Debug, Default, NifMap)]
 pub struct ExSanitizeCustom {
     pub tags: ExSanitizeCustomSetAddRm<Vec<String>>,
     pub clean_content_tags: ExSanitizeCustomSetAddRm<Vec<String>>,

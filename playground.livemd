@@ -4,15 +4,32 @@
 Mix.install([:req, :mdex])
 ```
 
-## Section
+## HTML
 
 ```elixir
 defmodule Playground do
-  @markdown Req.get!("https://raw.githubusercontent.com/elixir-lang/elixir/main/README.md").body
+  @markdown Req.get!("https://raw.githubusercontent.com/leandrocp/mdex/refs/heads/main/README.md").body
 
   def run do
-    MDEx.to_html(@markdown,
-      render: [unsafe_: true],
+    MDEx.to_html!(
+      @markdown,
+      extension: [
+        strikethrough: true,
+        tagfilter: true,
+        table: true,
+        autolink: true,
+        tasklist: true,
+        footnotes: true,
+        shortcodes: true,
+      ],
+      parse: [
+        smart: true,
+        relaxed_tasklist_matching: true,
+        relaxed_autolinks: true
+      ],
+      render: [
+        unsafe_: true,
+      ],
       syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
     )
   end
