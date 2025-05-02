@@ -10,6 +10,9 @@
   * [Pipe] Added `MDEx.Pipe.is_sanitize_enabled/1`
   * [Pipe] Added `MDEx.Pipe.get_sanitize_option/3`
 
+### Breaking Changes
+  * Removed option `:experimental_inline_sourcepos`. It's included by default now.
+
 ### Fixes
   * [Syntax Highlight] Class and style are applied when sanitize is enabled
 

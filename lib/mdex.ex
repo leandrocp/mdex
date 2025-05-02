@@ -243,11 +243,6 @@ defmodule MDEx do
       default: false,
       doc: "Include source position attributes in HTML and XML output."
     ],
-    experimental_inline_sourcepos: [
-      type: :boolean,
-      default: false,
-      doc: "Include inline sourcepos in HTML output, which is known to have issues."
-    ],
     escaped_char_spans: [
       type: :boolean,
       default: false,
