@@ -9,12 +9,16 @@
     - span: class style data-line
   * [Pipe] Added `MDEx.Pipe.is_sanitize_enabled/1`
   * [Pipe] Added `MDEx.Pipe.get_sanitize_option/3`
+  * Move doc dependencies to `:doc` group to avoid unnecessary downloads
 
 ### Breaking Changes
   * Removed option `:experimental_inline_sourcepos`. It's included by default now.
 
 ### Fixes
   * [Syntax Highlight] Class and style are applied when sanitize is enabled
+
+### Docs
+  * Add comparison table with other libraries
 
 ## 0.6.1 (2025-04-18)
 
