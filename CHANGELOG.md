@@ -1,18 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.6.2 (2025-05-13)
 
 ### Enhancements
+  * [Deps] Update comrak to v0.39
+  * [Deps] Move doc dependencies to `:doc` group to avoid unnecessary downloads
   * [Sanitize] Added the following tag attribute rules by default:
     - code: class translate tabindex
     - pre: class style
     - span: class style data-line
   * [Pipe] Added `MDEx.Pipe.is_sanitize_enabled/1`
   * [Pipe] Added `MDEx.Pipe.get_sanitize_option/3`
-  * Move doc dependencies to `:doc` group to avoid unnecessary downloads
 
 ### Breaking Changes
-  * Removed option `:experimental_inline_sourcepos`. It's included by default now.
+  * [comrak] Removed option `:experimental_inline_sourcepos`. It's included by default now.
 
 ### Fixes
   * [Syntax Highlight] Class and style are applied when sanitize is enabled
