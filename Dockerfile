@@ -1,17 +1,14 @@
-FROM hexpm/elixir:1.18.2-erlang-27.2.4-ubuntu-noble-20250127
+# https://github.com/phoenixframework/phoenix/blob/v1.7/priv/templates/phx.gen.release/Dockerfile.eex
+ARG ELIXIR_VERSION=1.18.3
+ARG OTP_VERSION=27.3.4
+ARG DEBIAN_VERSION=bullseye-20250428-slim
+ARG IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
+
+FROM ${IMAGE}
 
 WORKDIR /app
 
 RUN mix local.hex --force && \
-    mix local.rebar --force && \
-    mix archive.install hex igniter_new --force && \
-    mix igniter.new my_app --install mdex --yes
+    mix local.rebar --force
 
-WORKDIR /app/my_app
-
-RUN echo '#!/bin/bash\n\
-elixir --version\n\
-mix deps | grep "mdex"\n\
-exec "$@"' > /app/my_app/entrypoint.sh && chmod +x /app/my_app/entrypoint.sh
-
-ENTRYPOINT ["/app/my_app/entrypoint.sh"]
+ENTRYPOINT ["elixir", "-e", "Mix.install([:mdex]); IO.puts(MDEx.to_html!(\"# It Works!\"))"]
