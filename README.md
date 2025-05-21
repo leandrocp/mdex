@@ -390,13 +390,13 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 - [earmark](https://hex.pm/packages/earmark) is extensible but [can't parse](https://github.com/RobertDober/earmark_parser/issues/126) all kinds of documents and is slow to convert hundreds of markdowns.
 - [md](https://hex.pm/packages/md) is very extensible but the doc says "If one needs to perfectly parse the common markdown, Md is probably not the correct choice" and CommonMark was a requirement to parse many existing files.
 - [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
-- [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024
+- [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024.
 
 _Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
 
 ## Comparison
 
-|Feature|MDEX|Earmark|md|cmark|
+|Feature|MDEx|Earmark|md|cmark|
 | --- | --- | --- | --- | --- |
 |Active|✅|✅|✅|❌|
 |Pure Elixir|❌|✅|✅|❌|
