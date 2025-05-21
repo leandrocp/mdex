@@ -112,12 +112,6 @@ MDEx.new()
 
 Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.
 
-First, import the sigil:
-
-```elixir
-iex> import MDEx.Sigil
-```
-
 ```elixir
 iex> import MDEx.Sigil
 iex> ~MD|# Hello from `~MD` sigil|
