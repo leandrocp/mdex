@@ -16,12 +16,15 @@ assigns = %{lang: ":elixir"}
 ~MD|`lang = <%= @lang %>`|
 ```
 
-### Enhancements
-  * Introduce the `~MD` sigil
+### Breaking Changes
+  * Minimum required Elixir version is now v1.15
 
 ### Deprecations
   * Deprecate `~M` sigil in favor of `~MD`
   * Deprecate `~m` sigil in favor of `~MD`
+
+### Enhancements
+  * Introduce the `~MD` sigil
 
 ## 0.6.2 (2025-05-13)
 
