@@ -1252,9 +1252,8 @@ defmodule MDEx do
 
   Traverse an entire Markdown document:
 
-
       iex> import MDEx.Sigil
-      iex> doc = ~M\"""
+      iex> doc = ~MD\"""
       ...> # Languages
       ...>
       ...> `elixir`

@@ -26,16 +26,14 @@ defmodule MDEx.Document do
 
   Let's go through these operations in the examples below.
 
-  In these examples we will be using the [~M](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_M/2)
-  and [~m](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_m/2) to format the content,
-  see their documentation for more info.
+  In these examples we will be using the [~MD](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_M/2) sigil.
 
   ## String.Chars
 
   Calling `Kernel.to_string/1` or interpolating the document AST will format it as CommonMark text.
 
   ```elixir
-  iex> to_string(~M[# Hello])
+  iex> to_string(~MD[# Hello])
   "# Hello"
   ```
 
@@ -46,14 +44,6 @@ defmodule MDEx.Document do
   "# Hello"
   ```
 
-  And finally interpolation as well:
-
-  ```elixir
-  iex> lang = "elixir"
-  iex> to_string(~m[`\#\{lang\}`])
-  "`elixir`"
-  ```
-
   ## Access
 
   The `Access` behaviour gives you the ability to fetch and update nodes using different types of keys.
@@ -62,7 +52,7 @@ defmodule MDEx.Document do
   let's fetch only the text node by matching the `MDEx.Text` node:
 
   ```elixir
-  iex> ~M[# Hello][%MDEx.Text{literal: "Hello"}]
+  iex> ~MD[# Hello][%MDEx.Text{literal: "Hello"}]
   [%MDEx.Text{literal: "Hello"}]
   ```
 
@@ -82,7 +72,7 @@ defmodule MDEx.Document do
   - Fetches all Code nodes, either by `MDEx.Code` module or the `:code` atom representing the Code node
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -98,7 +88,7 @@ defmodule MDEx.Document do
   - Dynamically fetch Code nodes where the `:literal` (node content) starts with `"eli"` using a function to filter the result
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -115,7 +105,7 @@ defmodule MDEx.Document do
   In the example below we'll capitalize the content of all `MDEx.Code` nodes:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -144,7 +134,7 @@ defmodule MDEx.Document do
   * Count the nodes in a document:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -158,7 +148,7 @@ defmodule MDEx.Document do
   * Count how many nodes have the `:literal` attribute:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -176,7 +166,7 @@ defmodule MDEx.Document do
   * Returns true if node is member of the document:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -190,7 +180,7 @@ defmodule MDEx.Document do
   * Map each node:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Languages
   ...>
   ...> `elixir`
@@ -213,7 +203,7 @@ defmodule MDEx.Document do
   _Add line "// Modified" in Rust block codes_:
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Code Examples
   ...>
   ...> ```elixir
@@ -257,7 +247,7 @@ defmodule MDEx.Document do
   #### Collect headings by level
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Main Title
   ...>
   ...> ## Section 1
@@ -281,7 +271,7 @@ defmodule MDEx.Document do
   #### Extract and transform task list items
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Todo List
   ...>
   ...> - [ ] Buy groceries
@@ -304,7 +294,7 @@ defmodule MDEx.Document do
   #### Bump all heading levels, except level 6
 
   ```elixir
-  iex> doc = ~M\"""
+  iex> doc = ~MD\"""
   ...> # Main Title
   ...>
   ...> ## Subtitle

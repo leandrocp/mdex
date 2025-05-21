@@ -3,7 +3,7 @@ defmodule MDEx.DocumentTest do
   import MDEx.Sigil
   doctest MDEx.Document, import: true
 
-  @document ~M"""
+  @document ~MD"""
   # Languages
 
   ## Elixir
@@ -272,7 +272,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "append child" do
-      assert MDEx.traverse_and_update(~M[# Test], fn
+      assert MDEx.traverse_and_update(~MD[# Test], fn
                %MDEx.Document{nodes: nodes} = node ->
                  new = MDEx.parse_fragment!("`foo = 1`")
                  %{node | nodes: nodes ++ [new]}
@@ -307,7 +307,7 @@ defmodule MDEx.DocumentTest do
 
   describe "traverse and update with accumulator" do
     test "modify existing nodes" do
-      document = ~M"""
+      document = ~MD"""
       # Lang: `elixir`
 
       # Lang: `rust`
@@ -337,7 +337,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "control processing continuation" do
-      document = ~M"""
+      document = ~MD"""
       # Lang: `elixir`
 
       # Lang: `rust`
@@ -372,7 +372,7 @@ defmodule MDEx.DocumentTest do
 
   describe "String.Chars protocol" do
     test "to_string formats sigil to commonmark" do
-      assert to_string(~M[# Hello]) == "# Hello"
+      assert to_string(~MD[# Hello]) == "# Hello"
     end
 
     test "to_string resolves interpolation" do

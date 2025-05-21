@@ -10,7 +10,7 @@ defmodule MermaidExample do
       render: [unsafe_: true]
     ]
 
-    markdown = ~M"""
+    markdown = ~MD"""
     # Mermaid Example
 
     In this example we'll inject the script code to initialize and render mermaid blocks.

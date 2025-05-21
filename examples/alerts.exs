@@ -9,7 +9,7 @@ defmodule AlertsExample do
       render: [unsafe_: true]
     ]
 
-    markdown = ~M"""
+    markdown = ~MD"""
     # Alerts Example
 
     In this example we'll render blockquotes as alerts.
