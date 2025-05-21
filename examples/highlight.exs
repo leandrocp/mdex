@@ -10,7 +10,7 @@ defmodule HighlightExample do
       render: [unsafe_: true]
     ]
 
-    markdown = ~M"""
+    markdown = ~MD"""
     # Highlight Example
 
     Transform double equal signals into `<mark>` tags as described at https://www.markdownguide.org/extended-syntax/#highlight

@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+This versions introduces a new sigil `~MD` that supersedes the `~M` and `~m` sigil.
+No change is needed when renaming `~M` to `~MD`,
+but if you're using interpolation of values in `~m` then you should use `assigns` to pass values to `~MD`, for example:
+
+```elixir
+# before
+lang = ":elixir"
+~m|`lang = #{lang}`|
+
+# after
+assigns = %{lang: ":elixir"}
+~MD|`lang = <%= @lang %>`|
+```
+
+### Breaking Changes
+  * Minimum required Elixir version is now v1.15
+
+### Deprecations
+  * Deprecate `~M` sigil in favor of `~MD`
+  * Deprecate `~m` sigil in favor of `~MD`
+
+### Enhancements
+  * Introduce the `~MD` sigil
+
 ## 0.6.2 (2025-05-13)
 
 ### Enhancements

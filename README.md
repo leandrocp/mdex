@@ -41,7 +41,7 @@
   - Emoji shortcodes
   - [Syntax highlighting](https://autumnus.dev) for code blocks
   - HTML sanitization
-  - Sigils for Markdown, HTML, JSON, and XML
+  - ~MD sigil for Markdown, HTML, JSON, and XML
 
 ### Foundation
 
@@ -108,25 +108,19 @@ MDEx.new()
 |> MDEx.to_html(document: document)
 ```
 
-## Sigils
+## ~MD Sigil
 
 Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.
 
-First, import the sigils:
-
 ```elixir
 iex> import MDEx.Sigil
-```
-
-```elixir
-iex> import MDEx.Sigil
-iex> ~M|# Hello from `~M` sigil|
+iex> ~MD|# Hello from `~MD` sigil|
 %MDEx.Document{
   nodes: [
     %MDEx.Heading{
       nodes: [
         %MDEx.Text{literal: "Hello from "},
-        %MDEx.Code{num_backticks: 1, literal: "~M"},
+        %MDEx.Code{num_backticks: 1, literal: "~MD"},
         %MDEx.Text{literal: " sigil"}
       ],
       level: 1,
@@ -138,22 +132,22 @@ iex> ~M|# Hello from `~M` sigil|
 
 ```elixir
 iex> import MDEx.Sigil
-iex> ~M|`~M` also converts to HTML format|HTML
-"<p><code>~M</code> also converts to HTML format</p>"
+iex> ~MD|`~MD` also converts to HTML format|HTML
+"<p><code>~MD</code> also converts to HTML format</p>"
 ```
 
 ```elixir
 iex> import MDEx.Sigil
-iex> ~M|and to XML as well|XML
+iex> ~MD|and to XML as well|XML
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <text xml:space=\"preserve\">and to XML as well</text>\n  </paragraph>\n</document>"
 ```
 
-Use [~m](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_m/2) to interpolate variables:
+Define an `assigns` variable to pass values:
 
 ```elixir
 iex> import MDEx.Sigil
-iex> lang = :elixir
-iex> ~m|`lang = #{inspect(lang)}`|
+iex> assigns = %{lang: ":elixir"}
+iex> ~MD|`lang = <%= @lang %>`|
 %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
 ```
 
