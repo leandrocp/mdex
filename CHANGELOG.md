@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 (2025-05-21)
 
 This versions introduces a new sigil `~MD` that supersedes the `~M` and `~m` sigils.
 
