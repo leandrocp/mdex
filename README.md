@@ -142,7 +142,7 @@ iex> ~MD|and to XML as well|XML
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <text xml:space=\"preserve\">and to XML as well</text>\n  </paragraph>\n</document>"
 ```
 
-Define an `assigns` variable to pass values:
+`~MD` also accepts an `assigns` map to pass variables to the document:
 
 ```elixir
 iex> import MDEx.Sigil

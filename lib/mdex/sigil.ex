@@ -103,6 +103,13 @@ defmodule MDEx.Sigil do
   "`lang = :elixir`"
   ```
 
+  ### Elixir Expressions
+
+  ```elixir
+  iex> ~MD[## Section <%= 1 + 1 %>]
+  %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Section 2"}], level: 2, setext: false}]}
+  ```
+
   """
   defmacro sigil_MD({:<<>>, _meta, [expr]}, modifiers) do
     expr = expr(expr, __CALLER__)
