@@ -1295,7 +1295,7 @@ defmodule MDEx do
   ## Example
 
       iex> import MDEx.Sigil
-      iex> doc = ~M\"""
+      iex> doc = ~MD\"""
       ...> # Languages
       ...>
       ...> `elixir`
