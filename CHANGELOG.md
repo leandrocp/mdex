@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-This versions introduces a new sigil `~MD` that supersedes the `~M` and `~m` sigil.
-No change is needed when renaming `~M` to `~MD`,
-but if you're using interpolation of values in `~m` then you should use `assigns` to pass values to `~MD`, for example:
+This versions introduces a new sigil `~MD` that supersedes the `~M` and `~m` sigils.
+
+To migrate from `~M` to `~MD`, you can simply replace `~M` with `~MD` in your code.
+
+To migrate from `~m` to `~MD`, you should define an `assigns` map with the values you want to expose:
 
 ```elixir
 # before
