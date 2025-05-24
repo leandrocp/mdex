@@ -25,7 +25,7 @@ jobs:
             otp: "24"
 
           - elixir: "1.18"
-            otp: "27"
+            otp: "28"
 
     runs-on: ubuntu-22.04
 
@@ -71,7 +71,7 @@ jobs:
       matrix:
         include:
           - elixir: "1.18"
-            otp: "27"
+            otp: "28"
 
     runs-on: ubuntu-22.04
 
