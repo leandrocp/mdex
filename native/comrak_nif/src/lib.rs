@@ -8,13 +8,27 @@ mod autumnus_adapter;
 mod types;
 
 use autumnus_adapter::AutumnusAdapter;
+use comrak::html::ChildRendering;
+use comrak::{create_formatter, nodes::NodeValue};
 use comrak::{Arena, ComrakPlugins, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
+use std::io::Write;
 use types::{atoms::ok, document::*, options::*};
 
 rustler::init!("Elixir.MDEx.Native");
+
+create_formatter!(HTMLFormatter, {
+    NodeValue::Text(ref literal) => |context, node, entering| {
+        if entering && context.options.render.escape {
+             context.escape(literal.as_bytes())?;
+        } else if entering {
+            context.write_all(literal.as_bytes())?;
+        }
+        return Ok(ChildRendering::HTML);
+    },
+});
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
@@ -40,6 +54,8 @@ fn markdown_to_html_with_options<'a>(
         parse: options.parse.into(),
         render: options.render.into(),
     };
+    let arena = Arena::new();
+    let root = comrak::parse_document(&arena, md, &comrak_options);
     let mut plugins = ComrakPlugins::default();
     let autumnus_adapter = AutumnusAdapter::new(
         options
@@ -49,7 +65,10 @@ fn markdown_to_html_with_options<'a>(
             .into(),
     );
     plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
-    let unsafe_html = comrak::markdown_to_html_with_plugins(md, &comrak_options, &plugins);
+    let mut buffer = vec![];
+    HTMLFormatter::format_document_with_plugins(root, &comrak_options, &mut buffer, &plugins)
+        .unwrap();
+    let unsafe_html = String::from_utf8(buffer).unwrap();
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
 }

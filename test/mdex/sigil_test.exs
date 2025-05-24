@@ -3,6 +3,14 @@ defmodule MDEx.SigilTest do
   import MDEx.Sigil
   alias MDEx.Code
 
+  test "respect render.escape option on text nodes " do
+    assert ~MD"""
+           # Test
+
+           <.link navigate={~p"/"} class="underline">home</.link>
+           """HTML == "<h1>Test</h1>\n<p><.link navigate={~p\"/\"} class=\"underline\">home</.link></p>"
+  end
+
   describe "sigil_MD with assigns" do
     test "markdown to document" do
       assigns = %{lang: ":elixir"}
