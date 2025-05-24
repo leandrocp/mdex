@@ -18,7 +18,6 @@ defmodule MDEx.Sigil do
       spoiler: true
     ],
     parse: [
-      smart: true,
       relaxed_tasklist_matching: true,
       relaxed_autolinks: true
     ],

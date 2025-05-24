@@ -122,7 +122,7 @@ defmodule MDEx.Document do
       %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
       %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
       %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "RUST"}]},
-      %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Continue…"}]}
+      %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Continue..."}]}
     ]
   }
   ```

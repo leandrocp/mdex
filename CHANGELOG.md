@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+  * [Sigils] Remove `smart: true` option to avoid conversion of punctuation.
+
 ## 0.7.0 (2025-05-21)
 
 This versions introduces a new sigil `~MD` that supersedes the `~M` and `~m` sigils.
