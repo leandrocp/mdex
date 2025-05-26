@@ -8,27 +8,33 @@ mod autumnus_adapter;
 mod types;
 
 use autumnus_adapter::AutumnusAdapter;
-use comrak::html::ChildRendering;
+use comrak::html::{ChildRendering, Context};
 use comrak::{create_formatter, nodes::NodeValue};
 use comrak::{Arena, ComrakPlugins, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
-use std::io::Write;
+use std::io::{self, Write};
 use types::{atoms::ok, document::*, options::*};
 
 rustler::init!("Elixir.MDEx.Native");
 
 create_formatter!(HTMLFormatter, {
     NodeValue::Text(ref literal) => |context, node, entering| {
-        if entering && context.options.render.escape {
-             context.escape(literal.as_bytes())?;
-        } else if entering {
-            context.write_all(literal.as_bytes())?;
+        if entering {
+            write_context(context, literal.as_bytes())?;
         }
         return Ok(ChildRendering::HTML);
     },
 });
+
+pub fn write_context<'a, T>(context: &mut Context<T>, buffer: &[u8]) -> io::Result<()> {
+    if context.options.render.escape {
+        context.escape(buffer)
+    } else {
+        context.write_all(buffer)
+    }
+}
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
@@ -66,6 +72,7 @@ fn markdown_to_html_with_options<'a>(
     );
     plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     let mut buffer = vec![];
+
     HTMLFormatter::format_document_with_plugins(root, &comrak_options, &mut buffer, &plugins)
         .unwrap();
     let unsafe_html = String::from_utf8(buffer).unwrap();

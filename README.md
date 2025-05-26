@@ -29,6 +29,7 @@
 - Support formats:
   - Markdown (CommonMark)
   - HTML
+  - HEEx (Phoenix LiveView)
   - JSON
   - XML
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
@@ -58,7 +59,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.6"}
+    {:mdex, "~> 0.7"}
   ]
 end
 ```
@@ -66,7 +67,7 @@ end
 ## Usage
 
 ```elixir
-Mix.install([{:mdex, "~> 0.6"}])
+Mix.install([{:mdex, "~> 0.7"}])
 ```
 
 ```elixir
@@ -110,7 +111,7 @@ MDEx.new()
 
 ## ~MD Sigil
 
-Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.
+Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, HEEx, JSON, and XML formats.
 
 ```elixir
 iex> import MDEx.Sigil
@@ -146,9 +147,9 @@ iex> ~MD|and to XML as well|XML
 
 ```elixir
 iex> import MDEx.Sigil
-iex> assigns = %{lang: ":elixir"}
-iex> ~MD|`lang = <%= @lang %>`|
-%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+iex> assigns = %{lang: "Elixir"}
+iex> ~MD|Running <%= @lang %>|HTML
+"<p>Running Elixir</p>"
 ```
 
 See more info at https://hexdocs.pm/mdex/MDEx.Sigil.html

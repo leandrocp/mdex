@@ -1458,6 +1458,12 @@ defmodule MDEx do
       iex> MDEx.safe_html("<script>console.log('attack')</script>")
       ""
 
+      iex> MDEx.safe_html("<custom_tag>Hello</custom_tag>")
+      "Hello"
+
+      iex> MDEx.safe_html("<custom_tag>Hello</custom_tag>", sanitize: [add_tags: ["custom_tag"]], escape: [content: false])
+      "<custom_tag>Hello</custom_tag>"
+
       iex> MDEx.safe_html("<h1>{'Example:'}</h1><code>{:ok, 'MDEx'}</code>")
       "&lt;h1&gt;{&#x27;Example:&#x27;}&lt;&#x2f;h1&gt;&lt;code&gt;&lbrace;:ok, &#x27;MDEx&#x27;&rbrace;&lt;&#x2f;code&gt;"
 
@@ -1499,6 +1505,28 @@ defmodule MDEx do
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
+  end
+
+  if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
+    @doc """
+    Utility function to convert a `Phoenix.LiveView.Rendered` struct to HTML (string).
+
+    ## Example
+
+        iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
+        iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX |> MDEx.rendered_to_html()
+        "<a href=\\"https://elixir-lang.org\\">Elixir</a>"
+    """
+    @spec rendered_to_html(Phoenix.LiveView.Rendered.t()) :: String.t()
+    def rendered_to_html(%Phoenix.LiveView.Rendered{} = rendered) do
+      rendered
+      |> Phoenix.HTML.html_escape()
+      |> Phoenix.HTML.safe_to_string()
+    end
+  else
+    def rendered_to_html(_rendered) do
+      raise "MDEx.rendered_to_html/1 requires Phoenix.LiveView to be available"
+    end
   end
 
   defp opt(options, keys, default) do
