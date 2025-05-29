@@ -28,7 +28,7 @@ create_formatter!(HTMLFormatter, {
     },
 });
 
-pub fn write_context<'a, T>(context: &mut Context<T>, buffer: &[u8]) -> io::Result<()> {
+pub fn write_context<T>(context: &mut Context<T>, buffer: &[u8]) -> io::Result<()> {
     if context.options.render.escape {
         context.escape(buffer)
     } else {
