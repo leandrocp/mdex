@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Breaking Changes
+  * [Sigil] Disable `autolink` to avoid conflicts on HEEx templates
+
+### Enhancements
+  * [Sigil] Introduced the `HEEX` modifier to compile Phoenix LiveView HEEx templates, supporting assigns, `{ }` expressions, and components.
+  * Added utility function `MDEx.rendered_to_html/1` to convert a `%Phoenix.LiveView.Rendered{}` to static HTML string.
+
 ### Fixes
   * [Sigils] Remove `smart: true` option to avoid conversion of punctuation.
 

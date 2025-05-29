@@ -3,37 +3,30 @@ defmodule MDEx.SigilTest do
   import MDEx.Sigil
   alias MDEx.Code
 
-  test "respect render.escape option on text nodes " do
-    assert ~MD"""
-           # Test
-
-           <.link navigate={~p"/"} class="underline">home</.link>
-           """HTML == "<h1>Test</h1>\n<p><.link navigate={~p\"/\"} class=\"underline\">home</.link></p>"
-  end
-
   describe "sigil_MD with assigns" do
     test "markdown to document" do
-      assigns = %{lang: ":elixir"}
-      assert ~MD|`lang = <%= @lang %>`| == %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      assert ~MD|`lang = <%= @lang %>`| ==
+               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = <%= @lang %>"}]}]}
     end
 
     test "markdown to html" do
       assigns = %{lang: ":elixir"}
-      assert ~MD|`lang = <%= @lang %>`|HTML == "<p><code>lang = :elixir</code></p>"
+      assert ~MD|lang = <%= @lang %>|HTML == "<p>lang = :elixir</p>"
+    end
+
+    test "markdown to heex" do
+      assigns = %{lang: ":elixir"}
+      assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX
     end
 
     test "markdown to json" do
-      assigns = %{lang: ":elixir"}
-
       assert ~MD|`lang = <%= @lang %>`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = <%= @lang %>\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
     end
 
     test "markdown to xml" do
-      assigns = %{lang: ":elixir"}
-
       assert ~MD|`lang = <%= @lang %>`|XML ==
-               "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = :elixir</code>\n  </paragraph>\n</document>"
+               "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = &lt;%= @lang %&gt;</code>\n  </paragraph>\n</document>"
     end
   end
 
@@ -202,6 +195,44 @@ defmodule MDEx.SigilTest do
     test "document to xml" do
       assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = #{inspect(@lang)}"}]}]}|XML ==
                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = :elixir</code>\n  </paragraph>\n</document>"
+    end
+  end
+
+  describe "html" do
+    test "code with assigns" do
+      assigns = %{lang: ":elixir"}
+      assert ~MD|`lang = <%= @lang %>`|HTML == "<p><code>lang = &lt;%= @lang %&gt;</code></p>"
+    end
+
+    test "code block with assigns" do
+      assigns = %{lang: ":elixir"}
+
+      assert ~MD|
+      ```elixir
+      lang = <%= @lang %>
+      ```|HTML =~ "lang = &lt;%= @lang %&gt;"
+    end
+  end
+
+  describe "heex" do
+    test "code with assigns" do
+      assigns = %{lang: ":elixir"}
+      assert ~MD|`lang = <%= @lang %>`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lt;%= @lang %&gt;</code></p>"
+      assert ~MD|`lang = {@lang}`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lbrace;@lang&rbrace;</code></p>"
+    end
+
+    test "code block with assigns" do
+      assigns = %{lang: ":elixir"}
+
+      assert ~MD|
+      ```elixir
+      lang = <%= @lang %>
+      ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lt;%= @lang %&gt;"
+
+      assert ~MD|
+      ```elixir
+      lang = {@lang}
+      ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lbrace;@lang&rbrace;"
     end
   end
 end

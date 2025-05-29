@@ -11,7 +11,7 @@ defmodule LiquidExample do
     ## Lang
     {{ lang.name | capitalize }}
 
-    ## Projects {% assign projects = "phoenix, phoenix, live_view, beacon" | split: ", " %}
+    ## Projects {% assign projects = "phoenix, phoenix, live_view, mdex" | split: ", " %}
     {{ projects | uniq | join: ", " }}
 
     Updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}

@@ -3,7 +3,7 @@ defmodule MDEx.Sigil do
     extension: [
       strikethrough: true,
       table: true,
-      autolink: true,
+      autolink: false,
       tasklist: true,
       superscript: true,
       footnotes: true,
@@ -22,7 +22,8 @@ defmodule MDEx.Sigil do
       relaxed_autolinks: true
     ],
     render: [
-      unsafe_: true
+      unsafe_: true,
+      escape: false
     ]
   ]
 
@@ -31,18 +32,74 @@ defmodule MDEx.Sigil do
 
   ## Modifiers
 
-    * `HTML` - converts Markdown or `MDEx.Document` to HTML, equivalent to calling `MDEx.to_html!/2`
-    * `JSON` - converts Markdown or `MDEx.Document` to JSON, equivalent to calling `MDEx.to_json!/2`
-    * `XML` - converts Markdown or `MDEx.Document` to XML, equivalent to calling `MDEx.to_xml!/2`
-    * `MD` - converts `MDEx.Document` to Markdown, equivalent to calling `MDEx.to_markdown!/2`
+    * `HTML` - converts Markdown or `MDEx.Document` to HTML
 
-  Defaults to generating a `MDEx.Document` when no modifier is provided.
+    Use [EEx.SmartEngine](https://hexdocs.pm/eex/EEx.SmartEngine.html) to the document into HTML. It does support `assigns` but only the old `<%= ... %>` syntax,
+    and it doesn't support components. It's useful if you want to generate static HTML from Markdown or don't need components or don't want to define an `assigns` variable (it's optional).
+
+    * `HEEX` - converts Markdown or `MDEx.Document` to HEEx
+
+    Requires `:phoenix_live_view` dependency added to your project.
+
+    Compiles the document and returns a [Phoenix.LiveView.Rendered](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html) struct
+    that can be used in a Phoenix Controller or Phoenix LiveView, ie: it can replace the `~H` sigil.
+
+    It uses [Phoenix.LiveView.Engine](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Engine.html) under the hood to support the same
+    features as the `~H` sigil, including `{ ... }` expressions and components.
+
+    * `JSON` - converts Markdown or `MDEx.Document` to JSON
+
+    * `XML` - converts Markdown or `MDEx.Document` to XML
+
+    * `MD` - converts `MDEx.Document` to Markdown
+
+    * No modifier (default) - parses a Markdown string into a `MDEx.Document` struct
 
   Note that you should `import MDEx.Sigil` to use the `~MD` sigil.
 
+  ## HTML/HEEx Format Order
+
+  In order to generate the final result, the Markdown string or `MDEx.Document` (initial input) is first converted into a static HTML without escaping
+  the content, then the HTML is passed to the appropriate engine to generate the final output.
+
+  ## Assigns and Expressions
+
+  Only the `HTML` and `HEEX` modifiers support assigns, any other modifier will render the assign unmodified.
+  That's particularly important when generating a `MDEx.Document` which does represent the Markdown AST because it must respect
+  the Markdown content and also be able to convert back to a Markdown string.
+
+  > #### Use HEEx format to generate HTML {: .tip}
+  > If you want to use the HEEx syntax or components but generate a static HTML, then you can use the `HEEX` modifier and convert the `Rendered` struct to HTML using `MDEx.rendered_to_html/1`:
+  > ```elixir
+  > ~MD\"""
+  > <.link href={URI.parse("https://elixir-lang.org")}>Elixir</.link>
+  > \"""HEEX
+  > |> MDEx.rendered_to_html()
+  > ```
+
+  > #### Expressions inside code blocks are preserved {: .warning}
+  > Experssions as `<%= ... %>` or `{ ... }` inside code blocks are escaped and not evaluated, ie: they are preserved as is:
+  > ```elixir
+  > assigns = %{title: "Hello"}
+  > ~MD\"""
+  `{@title}`
+  > \"""HTML
+  > "<p><code>&lbrace;@title&rbrace;</code></p>"
+  > ```
+  >
+  > For such cases it's recommended to use a component to generate code blocks dynamically, for example:
+  > ```elixir
+  > assigns = %{title: "Hello"}
+  > ~MD\"""
+  <MyApp.InlineCode content={@title} />
+  > \"""HEEX
+  > |> MDEx.rendered_to_html()
+  > "<p><code>Hello</code></p>"
+  > ```
+
   ## Options
 
-  In order to support the most common scenarios, all sigils use the following options by default:
+  All modifiers use these options by default:
 
   ```elixir
   #{inspect(@opts, pretty: true)}
@@ -53,21 +110,31 @@ defmodule MDEx.Sigil do
   """
 
   @doc """
-  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, JSON or XML.
+  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, HEEx, JSON or XML.
 
   ## Assigns
 
-  You can define a variable `assigns` in the context of the sigil to pass values to the Markdown string, for example:
+  You can define a variable `assigns` in the context of the sigil to evaluate expressions:
 
-      assigns = %{lang: ":elixir"}
-      iex> ~MD|`lang = <%= @lang %>`|
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      iex> assigns = %{lang: ":elixir"}
+      iex> ~MD|`lang = <%= @lang %>`|HTML
+      "<p><code>lang = :elixir</code></p>"
+
+  Note that only the `HTML` and `HEEX` modifiers support assigns.
+
+  ## Phoenix Components
+
+  You can include Phoenix Components in the Markdown using the `HEEX` modifier, which will compile the Markdown into a Phoenix LiveView `Rendered` struct:
+
+      iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
+      iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX
+      %Phoenix.LiveView.Rendered{...}
+
+  You can use that modifier to replace the `~H` with a Markdown content.
 
   ## Examples
 
   ### Markdown to `MDEx.Document`
-
-  No modifier defaults to generating a `MDEx.Document`:
 
   ```elixir
   iex> ~MD[`lang = :elixir`]
@@ -105,37 +172,71 @@ defmodule MDEx.Sigil do
   ### Elixir Expressions
 
   ```elixir
-  iex> ~MD[## Section <%= 1 + 1 %>]
-  %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Section 2"}], level: 2, setext: false}]}
+  iex> ~MD[## Section <%= 1 + 1 %>]HTML
+  "<h2>Section 2</h2>"
   ```
 
   """
   defmacro sigil_MD({:<<>>, _meta, [expr]}, modifiers) do
     expr = expr(expr, __CALLER__)
 
-    quote generated: true do
-      cond do
-        unquote(modifiers) == [] -> MDEx.parse_document!(unquote(expr), unquote(@opts))
-        unquote(modifiers) == ~c"HTML" -> MDEx.to_html!(unquote(expr), unquote(@opts))
-        unquote(modifiers) == ~c"JSON" -> MDEx.to_json!(unquote(expr), unquote(@opts))
-        unquote(modifiers) == ~c"XML" -> MDEx.to_xml!(unquote(expr), unquote(@opts))
-        unquote(modifiers) == ~c"MD" -> MDEx.to_markdown!(unquote(expr), unquote(@opts))
-      end
-    end
-  end
+    case modifiers do
+      [] ->
+        expr
+        |> MDEx.parse_document!(@opts)
+        |> Macro.escape()
 
-  defp expr(expr, env) do
-    with {:ok, {:%, _, _} = quoted} <- Code.string_to_quoted(expr) do
-      expand_alias(quoted, env)
-    else
-      _ -> EEx.compile_string(expr)
+      ~c"HTML" ->
+        expr
+        |> MDEx.to_html!(@opts)
+        |> EEx.compile_string(
+          engine: EEx.SmartEngine,
+          file: __CALLER__.file,
+          line: __CALLER__.line + 1,
+          indentation: 0
+        )
+
+      ~c"HEEX" ->
+        if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
+          raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
+        end
+
+        expr
+        |> MDEx.to_html!(@opts)
+        |> EEx.compile_string(
+          engine: Phoenix.LiveView.TagEngine,
+          file: __CALLER__.file,
+          line: __CALLER__.line + 1,
+          caller: __CALLER__,
+          indentation: 0,
+          source: expr,
+          tag_handler: Phoenix.LiveView.HTMLEngine
+        )
+
+      ~c"MD" ->
+        expr
+        |> MDEx.to_markdown!(@opts)
+        |> Macro.escape()
+
+      ~c"JSON" ->
+        expr
+        |> MDEx.to_json!(@opts)
+        |> Macro.escape()
+
+      ~c"XML" ->
+        expr
+        |> MDEx.to_xml!(@opts)
+        |> Macro.escape()
+
+      _ ->
+        raise "unsupported modifier #{inspect(modifiers)} for sigil_MD"
     end
   end
 
   @deprecated "Use the ~MD sigil instead"
   defmacro sigil_M({:<<>>, _meta, [expr]}, modifiers) do
     expr = Macro.unescape_string(expr)
-    doc = to_doc(expr, __CALLER__)
+    doc = expr(expr, __CALLER__)
 
     doc =
       cond do
@@ -171,7 +272,7 @@ defmodule MDEx.Sigil do
   @deprecated "Use the ~MD sigil instead"
   defmacro sigil_m({:<<>>, _, [binary]}, modifiers) when is_binary(binary) do
     binary = Macro.unescape_string(binary)
-    doc = to_doc(binary, __CALLER__)
+    doc = expr(binary, __CALLER__)
 
     doc =
       cond do
@@ -222,22 +323,22 @@ defmodule MDEx.Sigil do
 
       modifiers == ~c"HTML" ->
         quote do
-          MDEx.to_html!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_html!(expr(unquote(binary), __ENV__), unquote(@opts))
         end
 
       modifiers == ~c"JSON" ->
         quote do
-          MDEx.to_json!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_json!(expr(unquote(binary), __ENV__), unquote(@opts))
         end
 
       modifiers == ~c"XML" ->
         quote do
-          MDEx.to_xml!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_xml!(expr(unquote(binary), __ENV__), unquote(@opts))
         end
 
       modifiers == ~c"MD" ->
         quote do
-          MDEx.to_markdown!(to_doc(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_markdown!(expr(unquote(binary), __ENV__), unquote(@opts))
         end
 
       :default ->
@@ -248,7 +349,7 @@ defmodule MDEx.Sigil do
   end
 
   @doc false
-  def to_doc(binary, env) do
+  def expr(binary, env) do
     with {:ok, {:%, _, _} = quoted} <- Code.string_to_quoted(binary),
          quoted = expand_alias(quoted, env),
          {doc, _} <- Code.eval_quoted(quoted) do
