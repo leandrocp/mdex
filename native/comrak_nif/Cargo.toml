@@ -22,7 +22,7 @@ autumnus = { version = "0.3", features = ["nif_version_2_15", "elixir"] }
 log = "0.4"
 lazy_static = "1.5"
 typed-arena = "2.0"
-lol_html = "2.3"
+lol_html = "2.4"
 
 [features]
 default = ["nif_version_2_15"]
