@@ -26,11 +26,11 @@ defmodule MDEx.Document do
 
   Let's go through these operations in the examples below.
 
-  In these examples we will be using the [~MD](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_M/2) sigil.
+  In these examples we will be using the [~MD](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_MD/2) sigil.
 
   ## String.Chars
 
-  Calling `Kernel.to_string/1` or interpolating the document AST will format it as CommonMark text.
+  Calling `Kernel.to_string/1` will format it as CommonMark text:
 
   ```elixir
   iex> to_string(~MD[# Hello])

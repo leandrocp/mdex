@@ -47,16 +47,10 @@ elixir heex.exs && open heex.html
 
 Convert markdown to a LiveView HEEx template supporting Phoenix components.
 
-Inspired by https://twitter.com/pepicrft/status/1714694213642637538
-
 ```sh
 iex live_view.exs
 ```
 
-To replicate this example in a real application, copy the `MDEx.LiveView` module into your application,
-then import it in your LiveView or in your application `Web` module (see `DemoLive` in the example).
-
-Note that you can change the options passed to `MDEx.to_html!/2` in the `sigil_M` macro.
 
 ## NimblePublisher + LiveView
 
