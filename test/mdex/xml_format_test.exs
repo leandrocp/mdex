@@ -23,7 +23,7 @@ defmodule MDEx.XmlFormatTest do
   def assert_format(document, expected, extension \\ []) do
     opts = [
       extension: Keyword.merge(@extension, extension),
-      render: [unsafe_: true]
+      render: [unsafe: true]
     ]
 
     assert {:ok, xml} = MDEx.to_xml(document, opts)

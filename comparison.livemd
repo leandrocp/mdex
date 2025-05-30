@@ -39,7 +39,7 @@ current = self()
 
 ```elixir
 md
-|> MDEx.to_html!(render: [unsafe_: true], extension: [shortcodes: true])
+|> MDEx.to_html!(render: [unsafe: true], extension: [shortcodes: true])
 |> IO.puts()
 ```
 

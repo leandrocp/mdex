@@ -13,7 +13,7 @@ defmodule MDExMermaidSample do
   end
 
   defp enable_unsafe(pipe) do
-    Pipe.put_render_options(pipe, unsafe_: true)
+    Pipe.put_render_options(pipe, unsafe: true)
   end
 
   defp inject_script(pipe) do
@@ -104,11 +104,11 @@ defmodule MDEx.PipeTest do
 
     test "update existing nested values", %{pipe: pipe} do
       pipe = Pipe.register_options(pipe, [:test])
-      pipe = Pipe.put_options(pipe, test: 1, render: [escape: false, unsafe_: true], extension: [table: true])
+      pipe = Pipe.put_options(pipe, test: 1, render: [escape: false, unsafe: true], extension: [table: true])
 
       assert get_in(pipe.options, [:test]) == 1
       refute get_in(pipe.options, [:render, :escape])
-      assert get_in(pipe.options, [:render, :unsafe_])
+      assert get_in(pipe.options, [:render, :unsafe])
       assert get_in(pipe.options, [:extension, :table])
     end
 

@@ -216,10 +216,10 @@ iex> ~m|`lang = #{inspect(lang)}`|
 iex> MDEx.to_html!("&lt;h1&gt;Hello&lt;/h1&gt;", render: [escape: true])
 "&amp;lt;h1&amp;gt;Hello&amp;lt;/h1&amp;gt;"
 
-iex> MDEx.to_html!("&lt;a href=https://elixir-lang.org/&gt;Elixir&lt;/a&gt;", render: [unsafe_: true], features: [sanitize: true])
+iex> MDEx.to_html!("&lt;a href=https://elixir-lang.org/&gt;Elixir&lt;/a&gt;", render: [unsafe: true], features: [sanitize: true])
 "&lt;p&gt;&lt;a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"&gt;Elixir&lt;/a&gt;&lt;/p&gt;"
 
-iex> MDEx.to_html!("&lt;script&gt;alert('hello')&lt;/script&gt;", render: [unsafe_: true])
+iex> MDEx.to_html!("&lt;script&gt;alert('hello')&lt;/script&gt;", render: [unsafe: true])
 "&lt;script&gt;alert('hello')&lt;/script&gt;"</code></pre>
                             </div>
                         </div>
@@ -259,7 +259,7 @@ parse: [
 ],
 render: [
   github_pre_lang: true,
-  unsafe_: true,
+  unsafe: true,
 ],
 features: [
   sanitize: true

@@ -7,7 +7,7 @@ defmodule HighlightExample do
 
   def run do
     opts = [
-      render: [unsafe_: true]
+      render: [unsafe: true]
     ]
 
     markdown = ~MD"""

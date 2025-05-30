@@ -8,6 +8,7 @@
 ### Enhancements
   * [Sigil] Introduced the `HEEX` modifier to compile Phoenix LiveView HEEx templates, supporting assigns, `{ }` expressions, and components.
   * Added utility function `MDEx.rendered_to_html/1` to convert a `%Phoenix.LiveView.Rendered{}` to static HTML string.
+  * [Options] Rename `:unsafe_` to `:unsafe` in `:render` options. The old `:unsafe_` option still works.
 
 ### Fixes
   * [Sigils] Remove `smart: true` option to avoid conversion of punctuation.

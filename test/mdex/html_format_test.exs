@@ -24,7 +24,7 @@ defmodule MDEx.HTMLFormatTest do
   def assert_commonmark(document, extension \\ []) do
     opts = [
       extension: Keyword.merge(@extension, extension),
-      render: [unsafe_: true]
+      render: [unsafe: true]
     ]
 
     assert {:ok, ast} = MDEx.parse_document(document, opts)
@@ -36,7 +36,7 @@ defmodule MDEx.HTMLFormatTest do
   def assert_format(document, expected, extension \\ []) do
     opts = [
       extension: Keyword.merge(@extension, extension),
-      render: [unsafe_: true]
+      render: [unsafe: true]
     ]
 
     assert {:ok, doc} = MDEx.parse_document(document, opts)

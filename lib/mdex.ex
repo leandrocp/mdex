@@ -220,7 +220,7 @@ defmodule MDEx do
       default: 0,
       doc: "The wrap column when outputting CommonMark."
     ],
-    unsafe_: [
+    unsafe: [
       type: :boolean,
       default: false,
       doc: "Allow rendering of raw HTML and potentially dangerous links."
@@ -889,7 +889,7 @@ defmodule MDEx do
       iex> MDEx.to_html("Hello ~world~ there", extension: [strikethrough: true])
       {:ok, "<p>Hello <del>world</del> there</p>"}
 
-      iex> MDEx.to_html("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
+      iex> MDEx.to_html("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe: true])
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
    Fragments of a document are also supported:
@@ -964,7 +964,7 @@ defmodule MDEx do
         </paragraph>
       </document>|
 
-      iex> {:ok, xml} = MDEx.to_xml("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe_: true])
+      iex> {:ok, xml} = MDEx.to_xml("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe: true])
       iex> xml
       ~s|<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE document SYSTEM "CommonMark.dtd">
@@ -1333,6 +1333,10 @@ defmodule MDEx do
       |> Keyword.take(@built_in_options)
       |> NimbleOptions.validate!(@options_schema)
       |> update_in([:sanitize], &adapt_sanitize_options/1)
+      |> update_in([:render], fn render ->
+        {unsafe, render} = Keyword.pop(render, :unsafe, false)
+        Keyword.put(render, :unsafe_, unsafe)
+      end)
 
     syntax_highlight =
       case options[:syntax_highlight] do
@@ -1487,7 +1491,7 @@ defmodule MDEx do
             escape: [atom()]
           ]
         ) :: String.t()
-  def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
+  def safe_html(unsafehtml, options \\ []) when is_binary(unsafehtml) and is_list(options) do
     sanitize =
       options
       |> opt([:sanitize], MDEx.default_sanitize_options())
@@ -1504,7 +1508,7 @@ defmodule MDEx do
 
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
-    Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
+    Native.safe_html(unsafehtml, sanitize, escape_content, escape_curly_braces_in_code)
   end
 
   if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
