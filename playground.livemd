@@ -28,7 +28,7 @@ defmodule Playground do
         relaxed_autolinks: true
       ],
       render: [
-        unsafe_: true,
+        unsafe: true,
       ],
       syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
     )

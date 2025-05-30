@@ -58,20 +58,20 @@ defmodule MDExTest do
     end
 
     test "sanitize nil (disabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: nil]) == "<script>hello</script>"
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: nil]) == "<script>hello</script>"
     end
 
     test "sanitize false (disabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: false]) == "<script>hello</script>"
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: false]) == "<script>hello</script>"
     end
 
     test "sanitize true (enabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true], features: [sanitize: true]) == ""
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: true]) == ""
     end
 
     test "sanitize with default options" do
       default_options = MDEx.default_sanitize_options()
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], features: [sanitize: default_options]) == "<h1>test</h1>"
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], features: [sanitize: default_options]) == "<h1>test</h1>"
     end
   end
 
@@ -287,19 +287,19 @@ defmodule MDExTest do
     end
 
     test "render raw html" do
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true]) == "<h1>test</h1>"
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true]) == "<h1>test</h1>"
     end
 
     test "sanitize unsafe raw html" do
       sanitize_options = MDEx.default_sanitize_options()
 
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe_: true], sanitize: sanitize_options) == "<h1>test</h1>"
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], sanitize: sanitize_options) == "<h1>test</h1>"
 
-      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe_: true], sanitize: sanitize_options) ==
+      assert MDEx.to_html!("<a href=https://elixir-lang.org/>Elixir</a>", render: [unsafe: true], sanitize: sanitize_options) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\">Elixir</a></p>"
 
       assert MDEx.to_html!("<a href=https://elixir-lang.org/><script>attack</script></a>",
-               render: [unsafe_: true],
+               render: [unsafe: true],
                sanitize: sanitize_options
              ) ==
                "<p><a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"></a></p>"
@@ -312,14 +312,14 @@ defmodule MDExTest do
       </h1>
       """
 
-      assert MDEx.to_html!(input, render: [unsafe_: true], sanitize: MDEx.default_sanitize_options()) <> "\n" == ~s"""
+      assert MDEx.to_html!(input, render: [unsafe: true], sanitize: MDEx.default_sanitize_options()) <> "\n" == ~s"""
              <h1>
              <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
              </h1>
              """
 
       assert MDEx.to_html!(input,
-               render: [unsafe_: true],
+               render: [unsafe: true],
                sanitize: [
                  tags: ["h1"],
                  add_tags: ["a", "strong"],
@@ -351,7 +351,7 @@ defmodule MDExTest do
                <a href="https://host/">elsewhere</a>
                </p>
                """,
-               render: [unsafe_: true],
+               render: [unsafe: true],
                sanitize: [
                  link_rel: nil,
                  url_relative: {:rewrite_with_root, {"https://example/root/", "index.html"}}
@@ -379,7 +379,7 @@ defmodule MDExTest do
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><span class="line" data-line="1"><span style="color: #848b98;">{</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #848b98;">}</span>
         </span></pre>
         """,
-        render: [unsafe_: true],
+        render: [unsafe: true],
         sanitize: [
           add_tags: ["code"],
           rm_tags: ["code"]

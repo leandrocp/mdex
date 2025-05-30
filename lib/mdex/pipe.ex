@@ -70,7 +70,7 @@ defmodule MDEx.Pipe do
 
         # to render raw html and <script> tags
         defp enable_unsafe(pipe) do
-          Pipe.put_render_options(pipe, unsafe_: true)
+          Pipe.put_render_options(pipe, unsafe: true)
         end
 
         defp inject_script(pipe) do
@@ -168,7 +168,7 @@ defmodule MDEx.Pipe do
       iex> pipe.options[:mermaid_version]
       "11"
 
-      iex> MDEx.new(rendr: [unsafe_: true])
+      iex> MDEx.new(rendr: [unsafe: true])
       ** (ArgumentError) unknown option :rendr. Did you mean :render?
 
   """
@@ -456,7 +456,7 @@ defmodule MDEx.Pipe do
       ...>     html_block = %MDEx.HtmlBlock{literal: "<p>Hello</p>"}
       ...>     MDEx.Pipe.put_node_in_document_root(pipe, html_block, :bottom)
       ...>   end)
-      iex> MDEx.to_html(pipe, document: "# Doc", render: [unsafe_: true])
+      iex> MDEx.to_html(pipe, document: "# Doc", render: [unsafe: true])
       {:ok, "<h1>Doc</h1>\\n<p>Hello</p>"}
 
   """

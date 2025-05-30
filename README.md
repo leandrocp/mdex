@@ -179,11 +179,11 @@ iex> MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
 But if the input is provided by external sources, it might be a good idea to sanitize it:
 
 ```elixir
-iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe_: true], sanitize: MDEx.default_sanitize_options())
+iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe: true], sanitize: MDEx.default_sanitize_options())
 "<p><a href=\"https://elixir-lang.org\" rel=\"noopener noreferrer\">Elixir</a></p>"
 ```
 
-Note that you must pass the `unsafe_: true` option to first generate the raw HTML in order to sanitize it.
+Note that you must pass the `unsafe: true` option to first generate the raw HTML in order to sanitize it.
 
 It does clean HTML with a [conservative set of defaults](https://docs.rs/ammonia/latest/ammonia/fn.clean.html)
 that works for most cases, but you can overwrite those rules for further customization.
@@ -192,7 +192,7 @@ For example, let's modify the [link rel](https://docs.rs/ammonia/latest/ammonia/
 to add `"nofollow"` into the `rel` attribute:
 
 ```elixir
-iex> MDEx.to_html!("<a href=https://someexternallink.com>External</a>", render: [unsafe_: true], sanitize: [link_rel: "nofollow noopener noreferrer"])
+iex> MDEx.to_html!("<a href=https://someexternallink.com>External</a>", render: [unsafe: true], sanitize: [link_rel: "nofollow noopener noreferrer"])
 "<p><a href=\"https://someexternallink.com\" rel=\"nofollow noopener noreferrer\">External</a></p>"
 ```
 
@@ -204,7 +204,7 @@ If those rules are too strict and you really trust the input, or you really need
 then you can just render it directly without escaping nor sanitizing:
 
 ```elixir
-iex> MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe_: true])
+iex> MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe: true])
 "<script>alert('hello')</script>"
 ```
 
@@ -270,7 +270,7 @@ parse: [
 ],
 render: [
   github_pre_lang: true,
-  unsafe_: true,
+  unsafe: true,
 ]) |> IO.puts()
 """
 <p>GitHub Flavored Markdown 🚀</p>

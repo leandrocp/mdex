@@ -22,7 +22,7 @@ defmodule MDEx.Sigil do
       relaxed_autolinks: true
     ],
     render: [
-      unsafe_: true,
+      unsafe: true,
       escape: false
     ]
   ]
