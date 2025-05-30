@@ -1491,7 +1491,7 @@ defmodule MDEx do
             escape: [atom()]
           ]
         ) :: String.t()
-  def safe_html(unsafehtml, options \\ []) when is_binary(unsafehtml) and is_list(options) do
+  def safe_html(unsafe_html, options \\ []) when is_binary(unsafe_html) and is_list(options) do
     sanitize =
       options
       |> opt([:sanitize], MDEx.default_sanitize_options())
@@ -1508,7 +1508,7 @@ defmodule MDEx do
 
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
-    Native.safe_html(unsafehtml, sanitize, escape_content, escape_curly_braces_in_code)
+    Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
   end
 
   if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
