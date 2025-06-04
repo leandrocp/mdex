@@ -338,6 +338,8 @@ Pre-compiled binaries are available for the following targets, so you don't need
 - `x86_64-unknown-linux-gnu`
 - `x86_64-unknown-linux-musl`
 
+**Note:** The pre-compiled binaries for Linux are compiled using Ubuntu 22 on libc 2.35, which requires minimum Ubuntu 22, Debian Bookworm or a system with a compatible libc version. For older Linux systems, you'll need to compile manually.
+
 ### Compile manually
 
 But in case you need or want to compile it yourself, you can do the following:
