@@ -376,6 +376,8 @@ config :mdex, use_legacy_artifacts: true
 - [Plural Console](https://github.com/pluralsh/console)
 - [Exmeralda](https://github.com/bitcrowd/exmeralda)
 - [Algora](https://github.com/algora-io/algora)
+- [Ash AI](https://github.com/ash-project/ash_ai)
+- [Canada Navigator](https://github.com/canada-ca/navigator)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
