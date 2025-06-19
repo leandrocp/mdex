@@ -20,7 +20,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #848b98;">&rbrace;</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </span></code></pre>
         """,
         features: [syntax_highlight_inline_style: true]
@@ -126,7 +126,7 @@ defmodule MDExTest do
     test "enabled by default" do
       expected =
         String.trim(~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #848b98;">&rbrace;</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </span></code></pre>
         """)
 
@@ -376,7 +376,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre>example</pre>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><span class="line" data-line="1"><span style="color: #848b98;">{</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #848b98;">}</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><span class="line" data-line="1"><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">}</span>
         </span></pre>
         """,
         render: [unsafe: true],
@@ -409,7 +409,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:mdex</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #848b98;">&rbrace;</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
         </span></code></pre>
         """,
         sanitize: MDEx.default_sanitize_options()
@@ -432,7 +432,7 @@ defmodule MDExTest do
         <ul>
         <li>Elixir {:ex}</li>
         </ul>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #848b98;">&lbrace;</span><span style="color: #56b6c2;">:ok</span><span style="color: #848b98;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #848b98;">&rbrace;</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:ok</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </span></code></pre>
         """
       )
