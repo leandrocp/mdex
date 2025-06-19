@@ -166,7 +166,7 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #abb2bf;">.</span><span style="color: #61afef;">trim</span><span style="color: #848b98;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #848b98;">)</span>
+      <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">trim</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #c678dd;">)</span>
       </span></code></pre>
       """
     )

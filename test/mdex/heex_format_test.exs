@@ -36,7 +36,7 @@ defmodule MDEx.HEExFormatTest do
            ```
            """HEEX
            |> MDEx.rendered_to_html() =~
-             "<span style=\"color: #d19a66;\">1</span> <span style=\"color: #abb2bf;\">&lt;</span> <span style=\"color: #d19a66;\">2</span>"
+             "<span style=\"color: #d19a66;\">1</span> <span style=\"color: #56b6c2;\">&lt;</span> <span style=\"color: #d19a66;\">2</span>"
   end
 
   test "components" do
