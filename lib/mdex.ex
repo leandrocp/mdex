@@ -172,6 +172,48 @@ defmodule MDEx do
       type: :boolean,
       default: false,
       doc: "Requires at least one space after a > character to generate a blockquote, and restarts blockquote nesting across unique lines of input."
+    ],
+    image_url_rewriter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: """
+        Wraps embedded image URLs using a string template.
+
+        Example:
+
+        Given this image `![alt text](http://unsafe.com/image.png)` and this rewriter:
+
+          image_url_rewriter: "https://example.com?url={@url}"
+
+        Renders `<p><img src="https://example.com?url=http://unsafe.com/image.png" alt="alt text" /></p>`
+
+        Notes:
+
+        - Assign `@url` is always passed to the template.
+        - Function callback is not supported, only string templates.
+          Transform the Document AST for more complex cases.
+      """
+    ],
+    link_url_rewriter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: """
+        Wraps link URLs using a string template.
+
+        Example:
+
+        Given this link `[my link](http://unsafe.example.com/bad)` and this rewriter:
+
+          link_url_rewriter: "https://safe.example.com/norefer?url={@url}"
+
+        Renders `<p><a href="https://safe.example.com/norefer?url=http://unsafe.example.com/bad">my link</a></p>`
+
+        Notes:
+
+        - Assign `@url` is always passed to the template.
+        - Function callback is not supported, only string templates.
+          Transform the Document AST for more complex cases.
+      """
     ]
   ]
 

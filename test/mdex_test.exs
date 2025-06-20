@@ -472,4 +472,54 @@ defmodule MDExTest do
       assert MDEx.to_markdown!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
     end
   end
+
+  describe "url rewriter" do
+    test "image_url_rewrite with {@url}" do
+      assert_output(
+        ~S"""
+        ![alt text](http://unsafe.com/image.png)
+        """,
+        ~S"""
+        <p><img src="https://safe.example.com?url=http://unsafe.com/image.png" alt="alt text" /></p>
+        """,
+        extension: [image_url_rewriter: "https://safe.example.com?url={@url}"]
+      )
+    end
+
+    test "image_url_rewrite without {@url}" do
+      assert_output(
+        ~S"""
+        ![alt text](http://unsafe.com/image.png)
+        """,
+        ~S"""
+        <p><img src="https://other.example.com/other.png" alt="alt text" /></p>
+        """,
+        extension: [image_url_rewriter: "https://other.example.com/other.png"]
+      )
+    end
+
+    test "link_url_rewrite with {@url}" do
+      assert_output(
+        ~S"""
+        [my link](http://unsafe.example.com/bad)
+        """,
+        ~S"""
+        <p><a href="https://safe.example.com/norefer?url=http://unsafe.example.com/bad">my link</a></p>
+        """,
+        extension: [link_url_rewriter: "https://safe.example.com/norefer?url={@url}"]
+      )
+    end
+
+    test "link_url_rewrite without {@url}" do
+      assert_output(
+        ~S"""
+        [my link](http://unsafe.example.com/bad)
+        """,
+        ~S"""
+        <p><a href="https://other.example.com">my link</a></p>
+        """,
+        extension: [link_url_rewriter: "https://other.example.com"]
+      )
+    end
+  end
 end
