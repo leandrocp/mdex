@@ -4,6 +4,8 @@
 
 ### Added
   * Allow to disable the built-in syntax highlighter
+  * Limited support for `:image_url_rewriter` extension
+  * Limited support for `:link_url_rewriter` extension
 
 ### Changed
   * [Sigil] Disable `autolink` to avoid conflicts on HEEx templates

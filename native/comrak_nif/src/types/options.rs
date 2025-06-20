@@ -3,6 +3,7 @@ mod sanitize;
 use autumnus::elixir::ExFormatterOption;
 use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
 pub use sanitize::*;
+use std::sync::Arc;
 
 #[derive(Debug, Default, NifMap)]
 pub struct ExExtensionOptions {
@@ -27,6 +28,8 @@ pub struct ExExtensionOptions {
     pub subscript: bool,
     pub spoiler: bool,
     pub greentext: bool,
+    pub image_url_rewriter: Option<String>,
+    pub link_url_rewriter: Option<String>,
 }
 
 impl From<ExExtensionOptions> for ExtensionOptions<'_> {
@@ -53,8 +56,14 @@ impl From<ExExtensionOptions> for ExtensionOptions<'_> {
             subscript: options.subscript,
             spoiler: options.spoiler,
             greentext: options.greentext,
-            image_url_rewriter: None,
-            link_url_rewriter: None,
+            image_url_rewriter: match options.image_url_rewriter {
+                None => None,
+                Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),
+            },
+            link_url_rewriter: match options.link_url_rewriter {
+                None => None,
+                Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),
+            },
         }
     }
 }
