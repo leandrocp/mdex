@@ -163,8 +163,6 @@ defmodule MDExTest do
       )
     end
 
-    # TODO: review this option since `nil` defaults to default formatter
-    @tag :skip
     test "can be disabled" do
       assert_output(
         ~S"""
