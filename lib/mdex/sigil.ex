@@ -59,7 +59,7 @@ defmodule MDEx.Sigil do
   the Markdown content and also be able to convert back to a Markdown string.
 
   > #### Expressions inside code blocks are preserved {: .warning}
-  > Experssions as `<%= ... %>` or `{ ... }` inside code blocks are escaped and not evaluated, ie: they are preserved as is:
+  > Expressions as `<%= ... %>` or `{ ... }` inside code blocks are escaped and not evaluated, ie: they are preserved as is:
   > ```elixir
   > assigns = %{title: "Hello"}
   > ~MD\"""

@@ -72,7 +72,7 @@ end
 
 defmodule MDEx.Posts do
   use NimblePublisher,
-    # Update thes filepath to this inside your application
+    # Update this filepath to your application
     # and move the `posts` folder inside your `priv` folder.
     #
     # from: Application.app_dir(:my_app, "priv/posts/*.md"),
