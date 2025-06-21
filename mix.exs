@@ -131,8 +131,6 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:autumn, ">= 0.3.1"},
       {:jason, "~> 1.0"},
-      {:phoenix_html, "~> 3.3 or ~> 4.0 or ~> 4.1"},
-      {:phoenix_live_view, "~> 0.20 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
   end

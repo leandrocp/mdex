@@ -35,23 +35,6 @@ Render `==` as `<mark>` tags as described at https://www.markdownguide.org/exten
 elixir highlight.exs && open highlight.html
 ```
 
-## HEEx
-
-Render Markdown with HEEx syntax and Phoenix Components
-
-```sh
-elixir heex.exs && open heex.html
-```
-
-## LiveView
-
-Convert markdown to a LiveView HEEx template supporting Phoenix components.
-
-```sh
-iex live_view.exs
-```
-
-
 ## NimblePublisher + LiveView
 
 Build your blog posts using the [NimblePublisher](https://github.com/dashbitco/nimble_publisher) library and serve them with LiveView.

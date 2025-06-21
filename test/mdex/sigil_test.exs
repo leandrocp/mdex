@@ -14,10 +14,10 @@ defmodule MDEx.SigilTest do
       assert ~MD|lang = <%= @lang %>|HTML == "<p>lang = :elixir</p>"
     end
 
-    test "markdown to heex" do
-      assigns = %{lang: ":elixir"}
-      assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX
-    end
+    # test "markdown to heex" do
+    #   assigns = %{lang: ":elixir"}
+    #   assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX
+    # end
 
     test "markdown to json" do
       assert ~MD|`lang = <%= @lang %>`|JSON ==
@@ -214,25 +214,25 @@ defmodule MDEx.SigilTest do
     end
   end
 
-  describe "heex" do
-    test "code with assigns" do
-      assigns = %{lang: ":elixir"}
-      assert ~MD|`lang = <%= @lang %>`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lt;%= @lang %&gt;</code></p>"
-      assert ~MD|`lang = {@lang}`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lbrace;@lang&rbrace;</code></p>"
-    end
-
-    test "code block with assigns" do
-      assigns = %{lang: ":elixir"}
-
-      assert ~MD|
-      ```elixir
-      lang = <%= @lang %>
-      ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lt;%= @lang %&gt;"
-
-      assert ~MD|
-      ```elixir
-      lang = {@lang}
-      ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lbrace;@lang&rbrace;"
-    end
-  end
+  # describe "heex" do
+  #   test "code with assigns" do
+  #     assigns = %{lang: ":elixir"}
+  #     assert ~MD|`lang = <%= @lang %>`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lt;%= @lang %&gt;</code></p>"
+  #     assert ~MD|`lang = {@lang}`|HEEX |> MDEx.rendered_to_html() == "<p><code>lang = &lbrace;@lang&rbrace;</code></p>"
+  #   end
+  #
+  #   test "code block with assigns" do
+  #     assigns = %{lang: ":elixir"}
+  #
+  #     assert ~MD|
+  #     ```elixir
+  #     lang = <%= @lang %>
+  #     ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lt;%= @lang %&gt;"
+  #
+  #     assert ~MD|
+  #     ```elixir
+  #     lang = {@lang}
+  #     ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lbrace;@lang&rbrace;"
+  #   end
+  # end
 end

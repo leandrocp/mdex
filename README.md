@@ -29,7 +29,6 @@
 - Support formats:
   - Markdown (CommonMark)
   - HTML
-  - HEEx (Phoenix LiveView)
   - JSON
   - XML
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
@@ -111,7 +110,7 @@ MDEx.new()
 
 ## ~MD Sigil
 
-Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, HEEx, JSON, and XML formats.
+Convert and generate AST (MDEx.Document), Markdown (CommonMark), HTML, JSON, and XML formats.
 
 ```elixir
 iex> import MDEx.Sigil
