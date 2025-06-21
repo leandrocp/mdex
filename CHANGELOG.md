@@ -1,18 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.7.1 (2025-06-20)
 
 ### Added
-  * Allow to disable the built-in syntax highlighter
-  * Limited support for `:image_url_rewriter` extension
-  * Limited support for `:link_url_rewriter` extension
+  - [Syntax Highlighter] Allow to disable the built-in syntax highlighter
+  - [Options] Limited support for `:image_url_rewriter` extension
+  - [Options] Limited support for `:link_url_rewriter` extension
 
 ### Changed
-  * [Sigil] Disable `autolink` to avoid conflicts on HEEx templates
-  * [Options] Rename `:unsafe_` to `:unsafe` in `:render` options. The old `:unsafe_` option still works.
+  - [Sigil] Disable `autolink` to avoid conflicts on HEEx templates
+  - [Options] Rename `:unsafe_` to `:unsafe` in `:render` options. The old `:unsafe_` option still works.
+  - [Syntax Highlighter] Update `autumnus` to v0.4.0 with new languages and themes
 
 ### Fixed
-  * [Sigils] Remove `smart: true` option to avoid conversion of punctuation.
+  - [Sigils] Remove `smart: true` option to avoid automatic conversion of punctuation.
+  - [Docs] Update image in Dockerfile example
 
 ## 0.7.0 (2025-05-21)
 
