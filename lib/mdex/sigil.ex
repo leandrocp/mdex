@@ -37,8 +37,6 @@ defmodule MDEx.Sigil do
     Use [EEx.SmartEngine](https://hexdocs.pm/eex/EEx.SmartEngine.html) to the document into HTML. It does support `assigns` but only the old `<%= ... %>` syntax,
     and it doesn't support components. It's useful if you want to generate static HTML from Markdown or don't need components or don't want to define an `assigns` variable (it's optional).
 
-    * `HEEX` - converts Markdown or `MDEx.Document` to HEEx
-
     Requires `:phoenix_live_view` dependency added to your project.
 
     Compiles the document and returns a [Phoenix.LiveView.Rendered](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html) struct
@@ -57,25 +55,16 @@ defmodule MDEx.Sigil do
 
   Note that you should `import MDEx.Sigil` to use the `~MD` sigil.
 
-  ## HTML/HEEx Format Order
+  ## HTML/EEx Format Order
 
   In order to generate the final result, the Markdown string or `MDEx.Document` (initial input) is first converted into a static HTML without escaping
   the content, then the HTML is passed to the appropriate engine to generate the final output.
 
   ## Assigns and Expressions
 
-  Only the `HTML` and `HEEX` modifiers support assigns, any other modifier will render the assign unmodified.
+  Only the `HTML` modifier support assigns, any other modifier will render the assign unmodified.
   That's particularly important when generating a `MDEx.Document` which does represent the Markdown AST because it must respect
   the Markdown content and also be able to convert back to a Markdown string.
-
-  > #### Use HEEx format to generate HTML {: .tip}
-  > If you want to use the HEEx syntax or components but generate a static HTML, then you can use the `HEEX` modifier and convert the `Rendered` struct to HTML using `MDEx.rendered_to_html/1`:
-  > ```elixir
-  > ~MD\"""
-  > <.link href={URI.parse("https://elixir-lang.org")}>Elixir</.link>
-  > \"""HEEX
-  > |> MDEx.rendered_to_html()
-  > ```
 
   > #### Expressions inside code blocks are preserved {: .warning}
   > Experssions as `<%= ... %>` or `{ ... }` inside code blocks are escaped and not evaluated, ie: they are preserved as is:
@@ -85,16 +74,6 @@ defmodule MDEx.Sigil do
   `{@title}`
   > \"""HTML
   > "<p><code>&lbrace;@title&rbrace;</code></p>"
-  > ```
-  >
-  > For such cases it's recommended to use a component to generate code blocks dynamically, for example:
-  > ```elixir
-  > assigns = %{title: "Hello"}
-  > ~MD\"""
-  <MyApp.InlineCode content={@title} />
-  > \"""HEEX
-  > |> MDEx.rendered_to_html()
-  > "<p><code>Hello</code></p>"
   > ```
 
   ## Options
@@ -110,7 +89,7 @@ defmodule MDEx.Sigil do
   """
 
   @doc """
-  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, HEEx, JSON or XML.
+  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, JSON or XML.
 
   ## Assigns
 
@@ -120,17 +99,7 @@ defmodule MDEx.Sigil do
       iex> ~MD|`lang = <%= @lang %>`|HTML
       "<p><code>lang = :elixir</code></p>"
 
-  Note that only the `HTML` and `HEEX` modifiers support assigns.
-
-  ## Phoenix Components
-
-  You can include Phoenix Components in the Markdown using the `HEEX` modifier, which will compile the Markdown into a Phoenix LiveView `Rendered` struct:
-
-      iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
-      iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX
-      %Phoenix.LiveView.Rendered{...}
-
-  You can use that modifier to replace the `~H` with a Markdown content.
+  Note that only the `HTML` modifier support assigns.
 
   ## Examples
 
@@ -196,22 +165,22 @@ defmodule MDEx.Sigil do
           indentation: 0
         )
 
-      ~c"HEEX" ->
-        if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
-          raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
-        end
-
-        expr
-        |> MDEx.to_html!(@opts)
-        |> EEx.compile_string(
-          engine: Phoenix.LiveView.TagEngine,
-          file: __CALLER__.file,
-          line: __CALLER__.line + 1,
-          caller: __CALLER__,
-          indentation: 0,
-          source: expr,
-          tag_handler: Phoenix.LiveView.HTMLEngine
-        )
+      # ~c"HEEX" ->
+      #   if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
+      #     raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
+      #   end
+      #
+      #   expr
+      #   |> MDEx.to_html!(@opts)
+      #   |> EEx.compile_string(
+      #     engine: Phoenix.LiveView.TagEngine,
+      #     file: __CALLER__.file,
+      #     line: __CALLER__.line + 1,
+      #     caller: __CALLER__,
+      #     indentation: 0,
+      #     source: expr,
+      #     tag_handler: Phoenix.LiveView.HTMLEngine
+      #   )
 
       ~c"MD" ->
         expr

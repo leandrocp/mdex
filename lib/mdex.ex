@@ -1553,27 +1553,27 @@ defmodule MDEx do
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
   end
 
-  if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
-    @doc """
-    Utility function to convert a `Phoenix.LiveView.Rendered` struct to HTML (string).
-
-    ## Example
-
-        iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
-        iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX |> MDEx.rendered_to_html()
-        "<a href=\\"https://elixir-lang.org\\">Elixir</a>"
-    """
-    @spec rendered_to_html(Phoenix.LiveView.Rendered.t()) :: String.t()
-    def rendered_to_html(%Phoenix.LiveView.Rendered{} = rendered) do
-      rendered
-      |> Phoenix.HTML.html_escape()
-      |> Phoenix.HTML.safe_to_string()
-    end
-  else
-    def rendered_to_html(_rendered) do
-      raise "MDEx.rendered_to_html/1 requires Phoenix.LiveView to be available"
-    end
-  end
+  # if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
+  #   @doc """
+  #   Utility function to convert a `Phoenix.LiveView.Rendered` struct to HTML (string).
+  #
+  #   ## Example
+  #
+  #       iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
+  #       iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX |> MDEx.rendered_to_html()
+  #       "<a href=\\"https://elixir-lang.org\\">Elixir</a>"
+  #   """
+  #   @spec rendered_to_html(Phoenix.LiveView.Rendered.t()) :: String.t()
+  #   def rendered_to_html(%Phoenix.LiveView.Rendered{} = rendered) do
+  #     rendered
+  #     |> Phoenix.HTML.html_escape()
+  #     |> Phoenix.HTML.safe_to_string()
+  #   end
+  # else
+  #   def rendered_to_html(_rendered) do
+  #     raise "MDEx.rendered_to_html/1 requires Phoenix.LiveView to be available"
+  #   end
+  # end
 
   defp opt(options, keys, default) do
     case get_in(options, keys) do
