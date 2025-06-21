@@ -37,14 +37,6 @@ defmodule MDEx.Sigil do
     Use [EEx.SmartEngine](https://hexdocs.pm/eex/EEx.SmartEngine.html) to the document into HTML. It does support `assigns` but only the old `<%= ... %>` syntax,
     and it doesn't support components. It's useful if you want to generate static HTML from Markdown or don't need components or don't want to define an `assigns` variable (it's optional).
 
-    Requires `:phoenix_live_view` dependency added to your project.
-
-    Compiles the document and returns a [Phoenix.LiveView.Rendered](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html) struct
-    that can be used in a Phoenix Controller or Phoenix LiveView, ie: it can replace the `~H` sigil.
-
-    It uses [Phoenix.LiveView.Engine](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Engine.html) under the hood to support the same
-    features as the `~H` sigil, including `{ ... }` expressions and components.
-
     * `JSON` - converts Markdown or `MDEx.Document` to JSON
 
     * `XML` - converts Markdown or `MDEx.Document` to XML
