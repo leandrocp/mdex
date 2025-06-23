@@ -129,7 +129,7 @@ defmodule MDEx.MixProject do
       {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
       {:nimble_options, "~> 1.0"},
-      {:autumn, ">= 0.3.1"},
+      {:autumn, ">= 0.4.0"},
       {:jason, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
