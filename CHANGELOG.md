@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2 (2025-06-23)
+
+### Fixed
+  - Make sure `:syntax_highlight` is decoded with latest `autumn` version
+
 ## 0.7.1 (2025-06-20)
 
 ### Added
