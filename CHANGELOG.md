@@ -5,6 +5,9 @@
 ### Added
   - Add `MDEx.anchorize/1` to format text as an anchor (@paradox460)
 
+### Changed
+  - Build `x86_64-pc-windows-msvc` target on `windows-2022` instead of unsupported `windows-2019`
+
 ## 0.7.2 (2025-06-23)
 
 ### Fixed
