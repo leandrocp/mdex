@@ -323,7 +323,6 @@ fn do_safe_html(
         .replace("&amp;rbrace;", "&rbrace;")
 }
 
-
 #[rustler::nif(schedule = "DirtyCpu")]
 pub fn text_to_anchor(env: Env<'_>, text: String) -> String {
     let mut anchorizer = Anchorizer::new();
