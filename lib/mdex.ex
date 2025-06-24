@@ -581,7 +581,7 @@ defmodule MDEx do
         Apply syntax highlighting to code blocks.
 
         Examples:
-        
+
             syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
 
             syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
@@ -1654,4 +1654,35 @@ defmodule MDEx do
     ])
     |> Pipe.put_options(options)
   end
+
+  @doc """
+  Converts a given `text` string to a format that can be used as an "anchor",
+  such as in a Table of Contents.
+
+  This uses the same algorithim GFM uses for anchor ids, so it can be used
+  reliably.
+
+  > [!NOTE]
+  > GFM will dedupe multiple repeated anchors with the same value by appending
+  > an incrementing number to the end of the anchor. That is beyond the scope of
+  > this function, so you will have to handle it yourself
+
+  ## Examples
+
+      iex> MDEx.anchorize("Hello World")
+      "hello-world"
+
+      iex> MDEx.anchorize("Hello, World!")
+      "hello-world"
+
+      iex> MDEx.anchorize("Hello -- World")
+      "hello----world"
+
+      iex> MDEx.anchorize("Hello World 123")
+      "hello-world-123"
+
+      iex> MDEx.anchorize("你好世界")
+      "你好世界"
+  """
+  defdelegate anchorize(string), to: Native, as: :text_to_anchor
 end

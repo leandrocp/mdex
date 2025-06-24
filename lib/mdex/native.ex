@@ -77,4 +77,8 @@ defmodule MDEx.Native do
   def document_to_html_with_options(_doc, _opts), do: :erlang.nif_error(:nif_not_loaded)
   def document_to_xml(_doc), do: :erlang.nif_error(:nif_not_loaded)
   def document_to_xml_with_options(_doc, _opts), do: :erlang.nif_error(:nif_not_loaded)
+
+  # util
+  #   - text_to_anchor
+  def text_to_anchor(_text), do: :erlang.nif_error(:nif_not_loaded)
 end

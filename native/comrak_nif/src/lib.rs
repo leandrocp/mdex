@@ -10,7 +10,7 @@ mod types;
 use autumnus_adapter::AutumnusAdapter;
 use comrak::html::{ChildRendering, Context};
 use comrak::{create_formatter, nodes::NodeValue};
-use comrak::{Arena, ComrakPlugins, Options};
+use comrak::{Anchorizer, Arena, ComrakPlugins, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
@@ -321,4 +321,10 @@ fn do_safe_html(
     // TODO: not so clean solution to undo double escaping, could be better
     html.replace("&amp;lbrace;", "&lbrace;")
         .replace("&amp;rbrace;", "&rbrace;")
+}
+
+#[rustler::nif(schedule = "DirtyCpu")]
+pub fn text_to_anchor(env: Env<'_>, text: String) -> String {
+    let mut anchorizer = Anchorizer::new();
+    anchorizer.anchorize(text)
 }
