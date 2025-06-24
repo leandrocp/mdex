@@ -40,8 +40,8 @@ jobs:
           - { target: x86_64-apple-darwin,          os: macos-13 }
           - { target: x86_64-pc-windows-gnu,        os: windows-2022,                  rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
           - { target: x86_64-pc-windows-gnu,        os: windows-2022,                  variant: "legacy_cpu" }
-          - { target: x86_64-pc-windows-msvc,       os: windows-2019,                  rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
-          - { target: x86_64-pc-windows-msvc,       os: windows-2019,                  variant: "legacy_cpu" }
+          - { target: x86_64-pc-windows-msvc,       os: windows-2022,                  rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
+          - { target: x86_64-pc-windows-msvc,       os: windows-2022,                  variant: "legacy_cpu" }
           - { target: x86_64-unknown-freebsd,       os: ubuntu-22.04, use-cross: true, rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
           - { target: x86_64-unknown-freebsd,       os: ubuntu-22.04, use-cross: true, variant: "legacy_cpu" }
           - { target: x86_64-unknown-linux-gnu,     os: ubuntu-22.04,                  rustflags: "-C target-feature=+fxsr,+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+avx,+fma" }
