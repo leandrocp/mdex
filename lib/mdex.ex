@@ -1656,16 +1656,14 @@ defmodule MDEx do
   end
 
   @doc """
-  Converts a given `text` string to a format that can be used as an "anchor",
-  such as in a Table of Contents.
+  Converts a given `text` string to a format that can be used as an "anchor", such as in a Table of Contents.
 
-  This uses the same algorithim GFM uses for anchor ids, so it can be used
-  reliably.
+  This uses the same algorithm GFM uses for anchor ids, so it can be used reliably.
 
-  > [!NOTE]
+  > #### Repeated anchors
   > GFM will dedupe multiple repeated anchors with the same value by appending
   > an incrementing number to the end of the anchor. That is beyond the scope of
-  > this function, so you will have to handle it yourself
+  > this function, so you will have to handle it yourself.
 
   ## Examples
 
@@ -1684,5 +1682,6 @@ defmodule MDEx do
       iex> MDEx.anchorize("你好世界")
       "你好世界"
   """
-  defdelegate anchorize(string), to: Native, as: :text_to_anchor
+  @spec anchorize(String.t()) :: String.t()
+  def anchorize(text), do: Native.text_to_anchor(text)
 end

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+  - Add `MDEx.anchorize/1` to format text as an anchor (@paradox460)
+
 ## 0.7.2 (2025-06-23)
 
 ### Fixed

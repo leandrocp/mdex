@@ -84,7 +84,6 @@ defmodule MDEx.MixProject do
           MDEx.DescriptionItem,
           MDEx.DescriptionList,
           MDEx.DescriptionTerm,
-          MDEx.Document,
           MDEx.Emph,
           MDEx.Escaped,
           MDEx.EscapedTag,
