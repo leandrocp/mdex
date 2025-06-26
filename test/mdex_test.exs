@@ -522,4 +522,21 @@ defmodule MDExTest do
       )
     end
   end
+
+  describe "code block meta" do
+    test "attrs" do
+      assert_output(
+        ~S"""
+        ```elixir foo foo-bar
+        @lang :elixir
+        ```
+        """,
+        ~S"""
+        TODO
+        """,
+        # render: [full_info_string: true]
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+  end
 end

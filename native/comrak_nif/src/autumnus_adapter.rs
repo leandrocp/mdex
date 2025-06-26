@@ -4,15 +4,20 @@ use autumnus::FormatterOption;
 use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::sync::Mutex;
 
 #[derive(Default)]
 pub struct AutumnusAdapter<'a> {
     formatter: FormatterOption<'a>,
+    language: Mutex<Option<Language>>,
 }
 
 impl<'a> AutumnusAdapter<'a> {
     pub fn new(formatter: FormatterOption<'a>) -> Self {
-        Self { formatter }
+        Self {
+            formatter,
+            language: Mutex::new(None),
+        }
     }
 }
 
@@ -20,8 +25,13 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
     fn write_pre_tag(
         &self,
         output: &mut dyn Write,
-        _attributes: HashMap<String, String>,
+        attributes: HashMap<String, String>,
     ) -> io::Result<()> {
+        if let Some(lang) = attributes.get("lang") {
+            let language = Language::guess(lang, "");
+            *self.language.lock().unwrap() = Some(language);
+        }
+
         match &self.formatter {
             FormatterOption::HtmlInline {
                 theme,
@@ -83,11 +93,23 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         output: &mut dyn Write,
         attributes: HashMap<String, String>,
     ) -> io::Result<()> {
-        let plaintext = "language-plaintext".to_string();
-        let language = attributes.get("class").unwrap_or(&plaintext);
-        let split: Vec<&str> = language.split('-').collect();
-        let language = split.get(1).unwrap_or(&"plaintext");
-        let lang: Language = Language::guess(language, "");
+        let mut language_lock = self.language.lock().unwrap();
+
+        let lang = if let Some(stored_lang) = *language_lock {
+            stored_lang
+        } else {
+            let determined_lang = if let Some(lang_attr) = attributes.get("lang") {
+                Language::guess(lang_attr, "")
+            } else if let Some(class_attr) = attributes.get("class") {
+                let language = class_attr.strip_prefix("language-").unwrap_or("plaintext");
+                Language::guess(language, "")
+            } else {
+                Language::guess("plaintext", "")
+            };
+
+            *language_lock = Some(determined_lang);
+            determined_lang
+        };
 
         match &self.formatter {
             FormatterOption::HtmlInline {
@@ -152,7 +174,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         lang: Option<&str>,
         source: &str,
     ) -> io::Result<()> {
-        let lang: Language = Language::guess(lang.unwrap_or("plaintext"), source);
+        let lang: Language = if let Some(stored_lang) = *self.language.lock().unwrap() {
+            stored_lang
+        } else {
+            Language::guess(lang.unwrap_or("plaintext"), source)
+        };
 
         match &self.formatter {
             FormatterOption::HtmlInline {
@@ -218,5 +244,40 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                 formatter.build().highlights(output)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_autumnus_adapter_with_foo_field() {
+        let formatter = FormatterOption::HtmlInline {
+            theme: None,
+            pre_class: None,
+            italic: false,
+            include_highlights: false,
+            highlight_lines: None,
+            header: None,
+        };
+
+        let adapter = AutumnusAdapter::new(formatter);
+
+        // Test that adapter can be created with the foo field
+        assert!(adapter.foo.lock().unwrap().is_none());
+
+        // Test write_pre_tag mutates foo field
+        let mut output = Vec::new();
+        let attributes = HashMap::new();
+        adapter.write_pre_tag(&mut output, attributes).unwrap();
+        assert_eq!(*adapter.foo.lock().unwrap(), Some("pre_tag".to_string()));
+
+        // Test write_code_tag mutates foo field
+        let mut output = Vec::new();
+        let mut attributes = HashMap::new();
+        attributes.insert("class".to_string(), "language-rust".to_string());
+        adapter.write_code_tag(&mut output, attributes).unwrap();
+        assert_eq!(*adapter.foo.lock().unwrap(), Some("code_tag".to_string()));
     }
 }
