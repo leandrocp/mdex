@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.4 (2025-07-02)
 
 ### Fixed
   - Accept the soft deprecated `:unsafe_` in `:render` options
