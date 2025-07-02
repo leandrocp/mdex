@@ -1365,6 +1365,7 @@ defmodule MDEx do
 
   @doc false
   def validate_options!(options) do
+    options = Keyword.put(options, :render, pop_unsafe_(options[:render]))
     sanitize_opts = update_deprecated_sanitize_options(get_in(options, [:features, :sanitize]) || get_in(options, [:sanitize]))
     deprecated_theme_opt = options[:features][:syntax_highlight_theme]
     deprecated_inline_style_opt = options[:features][:syntax_highlight_inline_style]
@@ -1491,6 +1492,13 @@ defmodule MDEx do
        strip_comments: options[:strip_comments],
        id_prefix: options[:id_prefix]
      }}
+  end
+
+  defp pop_unsafe_(nil = _render), do: []
+
+  defp pop_unsafe_(render) do
+    {unsafe_, render} = Keyword.pop(render, :unsafe_, false)
+    Keyword.put_new(render, :unsafe, unsafe_ || false)
   end
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}

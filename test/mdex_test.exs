@@ -73,6 +73,10 @@ defmodule MDExTest do
       default_options = MDEx.default_sanitize_options()
       assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], features: [sanitize: default_options]) == "<h1>test</h1>"
     end
+
+    test "unsafe_" do
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true]) == "<script>hello</script>"
+    end
   end
 
   test "wrap fragment in root document" do
