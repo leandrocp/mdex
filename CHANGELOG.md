@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.5 (2025-07-02)
+
+### Fixed
+  - Match all nodes in `MDEx.Pipe.update_nodes/3`
+
 ## 0.7.4 (2025-07-02)
 
 ### Fixed
