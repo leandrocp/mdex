@@ -498,17 +498,43 @@ defmodule MDEx.Pipe do
   end
 
   @doc """
-  Updates nodes in the document that match `selector`.
+  Updates all nodes in the document that match `selector`.
+
+  ## Example
+
+      iex> markdown = \"""
+      ...> # Hello
+      ...> ## World
+      ...> \"""
+      iex> pipe = MDEx.new(document: markdown)
+      iex> pipe = MDEx.Pipe.update_nodes(pipe, MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
+      iex> pipe.document
+      %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "HELLO"}], level: 1, setext: false}, %MDEx.Heading{nodes: [%MDEx.Text{literal: "WORLD"}], level: 2, setext: false}]}
+
   """
   @spec update_nodes(t(), MDEx.Document.selector(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: t()
   def update_nodes(%MDEx.Pipe{} = pipe, selector, fun) when is_function(fun, 1) do
+    pipe = maybe_resolve_document(pipe)
+
     document =
-      update_in(pipe.document, [:document, Access.key!(:nodes), Access.all(), selector], fn node ->
-        fun.(node)
+      MDEx.Document.Traversal.traverse_and_update(pipe.document, fn node ->
+        if match_selector?(node, selector) do
+          fun.(node)
+        else
+          node
+        end
       end)
 
     %{pipe | document: document}
   end
+
+  defp match_selector?(node, selector) when is_struct(selector), do: node == selector
+
+  defp match_selector?(%mod{} = _node, selector) when is_atom(selector) do
+    mod == MDEx.Document.Access.modulefy!(selector)
+  end
+
+  defp match_selector?(node, selector) when is_function(selector, 1), do: selector.(node)
 
   @doc """
   Halts the pipeline execution.
@@ -627,6 +653,12 @@ defmodule MDEx.Pipe do
     |> resolve_document()
     |> do_run()
   end
+
+  defp maybe_resolve_document(%MDEx.Pipe{document: nil} = pipe) do
+    resolve_document(pipe)
+  end
+
+  defp maybe_resolve_document(%MDEx.Pipe{} = pipe), do: pipe
 
   defp do_run(%{current_steps: [step | rest]} = pipe) do
     step = Keyword.fetch!(pipe.steps, step)

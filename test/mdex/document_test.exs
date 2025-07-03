@@ -12,7 +12,7 @@ defmodule MDEx.DocumentTest do
   ## Rust
   `rust`
 
-   more
+  more
   """
 
   describe "Access behaviour" do

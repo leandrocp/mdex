@@ -214,7 +214,6 @@ defmodule MDEx.PipeTest do
         ## Done
         """
       )
-      |> Pipe.resolve_document()
 
     selector = fn
       %MDEx.CodeBlock{info: "mermaid"} -> true
@@ -249,6 +248,47 @@ defmodule MDEx.PipeTest do
 
     assert %{registered_options: opts} = Pipe.register_options(%MDEx.Pipe{}, [:foo, :foo])
     assert MapSet.to_list(opts) == [:foo]
+  end
+
+  # issue #202
+  defp upcase(pipe, selector) do
+    Pipe.update_nodes(pipe, selector, fn node ->
+      %MDEx.Text{node | literal: String.upcase(node.literal)}
+    end)
+  end
+
+  test "update_nodes updates all matching nodes" do
+    document = """
+    foo
+    bar
+    baz
+    foo
+    """
+
+    expected = "<p>FOO<br />\nBAR<br />\nBAZ<br />\nFOO</p>"
+
+    pipe = MDEx.new(document: document, render: [hardbreaks: true])
+
+    assert pipe
+           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, :text) end)
+           |> MDEx.to_html!() == expected
+
+    assert pipe
+           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, MDEx.Text) end)
+           |> MDEx.to_html!() == expected
+
+    selector = fn
+      %MDEx.Text{} -> true
+      _ -> false
+    end
+
+    assert pipe
+           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, selector) end)
+           |> MDEx.to_html!() == expected
+
+    assert pipe
+           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, %MDEx.Text{literal: "foo"}) end)
+           |> MDEx.to_html!() == "<p>FOO<br />\nbar<br />\nbaz<br />\nFOO</p>"
   end
 
   describe "get_option" do
