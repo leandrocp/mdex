@@ -257,7 +257,7 @@ defmodule MDEx.PipeTest do
     # issue #202
     defp upcase(pipe, selector) do
       Pipe.update_nodes(pipe, selector, fn node ->
-        %MDEx.Text{node | literal: String.upcase(node.literal)}
+        %{node | literal: String.upcase(node.literal)}
       end)
     end
 

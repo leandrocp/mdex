@@ -1019,7 +1019,6 @@ end
 defimpl Enumerable,
   for: [
     MDEx.Document,
-    MDEx.FrontMatter,
     MDEx.BlockQuote,
     MDEx.List,
     MDEx.ListItem,
@@ -1031,29 +1030,18 @@ defimpl Enumerable,
     MDEx.HtmlBlock,
     MDEx.Paragraph,
     MDEx.Heading,
-    MDEx.ThematicBreak,
     MDEx.FootnoteDefinition,
-    MDEx.FootnoteReference,
     MDEx.Table,
     MDEx.TableRow,
     MDEx.TableCell,
-    MDEx.Text,
     MDEx.TaskItem,
-    MDEx.SoftBreak,
-    MDEx.LineBreak,
-    MDEx.Code,
-    MDEx.HtmlInline,
-    MDEx.Raw,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,
     MDEx.Superscript,
     MDEx.Link,
     MDEx.Image,
-    MDEx.ShortCode,
-    MDEx.Math,
     MDEx.MultilineBlockQuote,
-    MDEx.Escaped,
     MDEx.WikiLink,
     MDEx.Underline,
     MDEx.Subscript,
@@ -1065,36 +1053,91 @@ defimpl Enumerable,
   def member?(_, _), do: {:error, __MODULE__}
   def slice(_), do: {:error, __MODULE__}
 
-  def reduce(_list, {:halt, acc}, _fun), do: {:halted, acc}
-  def reduce(list, {:suspend, acc}, fun), do: {:suspended, acc, &reduce(list, &1, fun)}
-  def reduce([], {:cont, acc}, _fun), do: {:done, acc}
+  def reduce(_node, {:halt, acc}, _fun), do: {:halted, acc}
+  def reduce(node, {:suspend, acc}, fun), do: {:suspended, acc, &reduce(node, &1, fun)}
 
   def reduce(%{nodes: nodes} = node, {:cont, acc}, fun) do
-    reduce(nodes, fun.(node, acc), fun)
+    reduce_nodes(nodes, fun.(node, acc), fun)
   end
 
-  def reduce([%{nodes: nodes} = node | tail], {:cont, acc}, fun) do
-    acc = fun.(node, acc)
+  defp reduce_nodes([], acc, _fun), do: acc
 
-    case reduce(nodes, acc, fun) do
+  defp reduce_nodes([%{nodes: inner_nodes} = node | tail], acc, fun) do
+    case acc do
+      {:cont, acc} ->
+        acc = fun.(node, acc)
+
+        case reduce_nodes(inner_nodes, acc, fun) do
+          {:cont, acc} -> reduce_nodes(tail, {:cont, acc}, fun)
+          {:done, acc} -> {:done, acc}
+          {:halt, acc} -> {:halt, acc}
+          {:halted, acc} -> {:halted, acc}
+          {:suspended, acc, fun} -> {:suspended, acc, fun}
+          {:suspend, acc} -> {:suspended, acc, &reduce_nodes(tail, &1, fun)}
+        end
+
       {:done, acc} ->
-        reduce(tail, {:cont, acc}, fun)
+        {:done, acc}
 
-      {:halted, node} ->
-        {:done, node}
+      {:halt, acc} ->
+        {:halt, acc}
+
+      {:halted, acc} ->
+        {:halted, acc}
 
       {:suspended, acc, fun} ->
         {:suspended, acc, fun}
 
-      acc ->
-        reduce(tail, acc, fun)
+      {:suspend, acc} ->
+        {:suspended, acc, &reduce_nodes([%{nodes: _inner_nodes} = node | tail], &1, fun)}
     end
   end
 
-  def reduce([node | tail], {:cont, acc}, fun) do
-    acc = fun.(node, acc)
-    reduce(tail, acc, fun)
+  defp reduce_nodes([node | tail], acc, fun) do
+    case acc do
+      {:cont, acc} ->
+        reduce_nodes(tail, fun.(node, acc), fun)
+
+      {:done, acc} ->
+        {:done, acc}
+
+      {:halt, acc} ->
+        {:halt, acc}
+
+      {:halted, acc} ->
+        {:halted, acc}
+
+      {:suspended, acc, fun} ->
+        {:suspended, acc, fun}
+
+      {:suspend, acc} ->
+        {:suspended, acc, &reduce_nodes([node | tail], &1, fun)}
+    end
   end
+end
+
+defimpl Enumerable,
+  for: [
+    MDEx.FrontMatter,
+    MDEx.ThematicBreak,
+    MDEx.FootnoteReference,
+    MDEx.Text,
+    MDEx.SoftBreak,
+    MDEx.LineBreak,
+    MDEx.Code,
+    MDEx.HtmlInline,
+    MDEx.Raw,
+    MDEx.ShortCode,
+    MDEx.Math,
+    MDEx.Escaped
+  ] do
+  def count(_), do: {:error, __MODULE__}
+  def member?(_, _), do: {:error, __MODULE__}
+  def slice(_), do: {:error, __MODULE__}
+
+  def reduce(_node, {:halt, acc}, _fun), do: {:halted, acc}
+  def reduce(node, {:suspend, acc}, fun), do: {:suspended, acc, &reduce(node, &1, fun)}
+  def reduce(node, {:cont, acc}, fun), do: {:done, fun.(node, acc)}
 end
 
 defimpl String.Chars, for: [MDEx.Document] do
