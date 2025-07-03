@@ -1,6 +1,6 @@
 defmodule MDEx.Document.Traversal do
   @moduledoc false
-  # traverse_and_update/{2/3} based on https://github.com/philss/floki/blob/96955f925d62989b6f0bfaf09ce6505e67e04fbb/lib/floki/traversal.ex
+  # traverse_and_update/{2,3} based on https://github.com/philss/floki/blob/96955f925d62989b6f0bfaf09ce6505e67e04fbb/lib/floki/traversal.ex
 
   def traverse_and_update(%{nodes: nodes} = doc, fun) do
     fun.(%{doc | nodes: do_traverse_and_update(nodes, fun)})
