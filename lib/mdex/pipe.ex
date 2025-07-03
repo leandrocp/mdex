@@ -529,11 +529,7 @@ defmodule MDEx.Pipe do
   end
 
   defp match_selector?(node, selector) when is_struct(selector), do: node == selector
-
-  defp match_selector?(%mod{} = _node, selector) when is_atom(selector) do
-    mod == MDEx.Document.Access.modulefy!(selector)
-  end
-
+  defp match_selector?(%mod{} = _node, selector) when is_atom(selector), do: mod == MDEx.Document.Access.modulefy!(selector)
   defp match_selector?(node, selector) when is_function(selector, 1), do: selector.(node)
 
   @doc """
