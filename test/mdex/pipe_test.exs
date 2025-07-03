@@ -173,6 +173,20 @@ defmodule MDEx.PipeTest do
     end
   end
 
+  describe "put_render_options" do
+    test "multiple options" do
+      pipe = Pipe.put_render_options(%Pipe{}, hardbreaks: true, escape: true)
+      assert get_in(pipe.options, [:render, :hardbreaks])
+      assert get_in(pipe.options, [:render, :escape])
+    end
+
+    test "accept soft-deprecated unsafe_" do
+      pipe = Pipe.put_render_options(%Pipe{}, unsafe_: true)
+      refute get_in(pipe.options, [:render, :unsafe_])
+      assert get_in(pipe.options, [:render, :unsafe])
+    end
+  end
+
   describe "put_node_in_document_root" do
     setup do
       pipe =

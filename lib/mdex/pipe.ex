@@ -361,6 +361,9 @@ defmodule MDEx.Pipe do
   """
   @spec put_render_options(t(), MDEx.render_options()) :: t()
   def put_render_options(%MDEx.Pipe{} = pipe, options) when is_list(options) do
+    {unsafe_, options} = Keyword.pop(options, :unsafe_)
+    options = if unsafe_, do: Keyword.put_new(options, :unsafe, unsafe_), else: options
+
     NimbleOptions.validate!(options, MDEx.render_options_schema())
 
     %{
