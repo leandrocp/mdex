@@ -193,50 +193,93 @@ defmodule MDEx.PipeTest do
     end
   end
 
-  test "update_nodes" do
-    pipe =
-      MDEx.new(
-        document: """
-        # Test
+  describe "update_nodes" do
+    test "root nodes" do
+      pipe =
+        MDEx.new(
+          document: """
+          # Test
 
-        ```mermaid
-        1
-        ```
+          ```mermaid
+          1
+          ```
 
-        ```elixir
-        foo = :bar
-        ```
+          ```elixir
+          foo = :bar
+          ```
 
-        ```mermaid
-        2
-        ```
+          ```mermaid
+          2
+          ```
 
-        ## Done
-        """
-      )
+          ## Done
+          """
+        )
 
-    selector = fn
-      %MDEx.CodeBlock{info: "mermaid"} -> true
-      _ -> false
+      selector = fn
+        %MDEx.CodeBlock{info: "mermaid"} -> true
+        _ -> false
+      end
+
+      assert %Pipe{
+               document: %MDEx.Document{
+                 nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Test"}], level: 1, setext: false},
+                   %MDEx.HtmlBlock{nodes: [], literal: "<pre>1</pre>", block_type: 0},
+                   %MDEx.CodeBlock{info: "elixir"},
+                   %MDEx.HtmlBlock{nodes: [], literal: "<pre>2</pre>", block_type: 0},
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Done"}], level: 2, setext: false}
+                 ]
+               }
+             } =
+               Pipe.update_nodes(pipe, selector, fn node ->
+                 %MDEx.HtmlBlock{
+                   literal: "<pre>#{String.trim(node.literal)}</pre>",
+                   nodes: []
+                 }
+               end)
     end
 
-    assert %Pipe{
-             document: %MDEx.Document{
-               nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Test"}], level: 1, setext: false},
-                 %MDEx.HtmlBlock{nodes: [], literal: "<pre>1</pre>", block_type: 0},
-                 %MDEx.CodeBlock{info: "elixir"},
-                 %MDEx.HtmlBlock{nodes: [], literal: "<pre>2</pre>", block_type: 0},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Done"}], level: 2, setext: false}
-               ]
-             }
-           } =
-             Pipe.update_nodes(pipe, selector, fn node ->
-               %MDEx.HtmlBlock{
-                 literal: "<pre>#{String.trim(node.literal)}</pre>",
-                 nodes: []
-               }
-             end)
+    # issue #202
+    defp upcase(pipe, selector) do
+      Pipe.update_nodes(pipe, selector, fn node ->
+        %MDEx.Text{node | literal: String.upcase(node.literal)}
+      end)
+    end
+
+    test "all nested nodes" do
+      document = """
+      # foo
+      bar
+      ## baz
+      foo
+      """
+
+      expected = "<h1>FOO</h1>\n<p>BAR</p>\n<h2>BAZ</h2>\n<p>FOO</p>"
+
+      pipe = MDEx.new(document: document, render: [hardbreaks: true])
+
+      assert pipe
+             |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, :text) end)
+             |> MDEx.to_html!() == expected
+
+      assert pipe
+             |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, MDEx.Text) end)
+             |> MDEx.to_html!() == expected
+
+      selector = fn
+        %MDEx.Text{} -> true
+        _ -> false
+      end
+
+      assert pipe
+             |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, selector) end)
+             |> MDEx.to_html!() == expected
+
+      assert pipe
+             |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, %MDEx.Text{literal: "foo"}) end)
+             |> MDEx.to_html!() == "<h1>FOO</h1>\n<p>bar</p>\n<h2>baz</h2>\n<p>FOO</p>"
+    end
   end
 
   test "register_options" do
@@ -248,47 +291,6 @@ defmodule MDEx.PipeTest do
 
     assert %{registered_options: opts} = Pipe.register_options(%MDEx.Pipe{}, [:foo, :foo])
     assert MapSet.to_list(opts) == [:foo]
-  end
-
-  # issue #202
-  defp upcase(pipe, selector) do
-    Pipe.update_nodes(pipe, selector, fn node ->
-      %MDEx.Text{node | literal: String.upcase(node.literal)}
-    end)
-  end
-
-  test "update_nodes updates all matching nodes" do
-    document = """
-    foo
-    bar
-    baz
-    foo
-    """
-
-    expected = "<p>FOO<br />\nBAR<br />\nBAZ<br />\nFOO</p>"
-
-    pipe = MDEx.new(document: document, render: [hardbreaks: true])
-
-    assert pipe
-           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, :text) end)
-           |> MDEx.to_html!() == expected
-
-    assert pipe
-           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, MDEx.Text) end)
-           |> MDEx.to_html!() == expected
-
-    selector = fn
-      %MDEx.Text{} -> true
-      _ -> false
-    end
-
-    assert pipe
-           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, selector) end)
-           |> MDEx.to_html!() == expected
-
-    assert pipe
-           |> Pipe.append_steps(upcase: fn pipe -> upcase(pipe, %MDEx.Text{literal: "foo"}) end)
-           |> MDEx.to_html!() == "<p>FOO<br />\nbar<br />\nbaz<br />\nFOO</p>"
   end
 
   describe "get_option" do
