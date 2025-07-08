@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+  - Accept soft-deprecated `:unsafe_` in `MDEx.Pipe.put_render_options/2`
+
+## 0.7.5 (2025-07-02)
+
+### Fixed
+  - Match all nodes in `MDEx.Pipe.update_nodes/3`
+
+## 0.7.4 (2025-07-02)
+
+### Fixed
+  - Accept the soft deprecated `:unsafe_` in `:render` options
+
 ## 0.7.3 (2025-06-24)
 
 ### Added

@@ -18,7 +18,7 @@ autumnus = { version = "0.4", features = ["all-languages", "nif_version_2_15", "
 comrak = { version = "0.39", features = ["shortcodes"] }
 lazy_static = "1.5"
 log = "0.4"
-lol_html = "2.4"
+lol_html = "2.5"
 phf = { version = "0.12", features = ["macros"] }
 rustler = "0.36"
 serde = "1.0"
