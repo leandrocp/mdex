@@ -527,18 +527,137 @@ defmodule MDExTest do
     end
   end
 
-  describe "code block meta" do
-    test "attrs" do
+  describe "code block decorators" do
+    test "theme" do
       assert_output(
         ~S"""
-        ```elixir foo foo-bar
+        ```elixir theme=github_light
         @lang :elixir
         ```
         """,
         ~S"""
-        TODO
+        <pre class="athl" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #0550ae;"><span style="color: #0550ae;">@<span style="color: #6639ba;"><span style="color: #0550ae;">lang <span style="color: #0550ae;">:elixir</span></span></span></span></span>
+        </span></code></pre>
         """,
-        # render: [full_info_string: true]
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "pre_class" do
+      assert_output(
+        ~S"""
+        ```elixir pre_class="custom-class another-class"
+        @lang :elixir
+        ```
+        """,
+        ~S"""
+        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines with single line" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="1"
+        @lang :elixir
+        def hello, do: "world"
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines with range" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="1-2"
+        @lang :elixir
+        def hello, do: "world"
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span><span class="line" style="background-color: #414858;" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines with mixed single and range" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="1,3-4"
+        @lang :elixir
+        def hello, do: "world"
+        def greet(name), do: "Hello, #{name}!"
+        IO.puts(greet("Elixir"))
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span><span class="line" style="background-color: #414858;" data-line="3"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #e06c75;">name</span><span style="color: #c678dd;">)</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;Hello, <span style="color: #61afef;">#&lbrace;</span><span style="color: #e06c75;">name</span><span style="color: #61afef;">&rbrace;</span>!&quot;</span>
+        </span><span class="line" style="background-color: #414858;" data-line="4"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Elixir&quot;</span><span style="color: #c678dd;">)</span><span style="color: #c678dd;">)</span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines_style with custom style" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="1" highlight_lines_style="background-color: yellow; font-weight: bold;"
+        @lang :elixir
+        def hello, do: "world"
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: yellow; font-weight: bold;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "include_highlights" do
+      assert_output(
+        ~S"""
+        ```elixir include_highlights
+        @lang :elixir
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="operator" style="color: #56b6c2;"><span data-highlight="constant" style="color: #d19a66;">@<span data-highlight="function.call" style="color: #61afef;"><span data-highlight="constant" style="color: #d19a66;">lang <span data-highlight="string.special.symbol" style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </span></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "multiple decorators combined" do
+      assert_output(
+        ~S"""
+        ```elixir theme=github_light pre_class="custom-pre" highlight_lines="1" include_highlights
+        @lang :elixir
+        def hello, do: "world"
+        ```
+        """,
+        ~S"""
+        <pre class="athl custom-pre" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #dae9f9;" data-line="1"><span data-highlight="operator" style="color: #0550ae;"><span data-highlight="constant" style="color: #0550ae;">@<span data-highlight="function.call" style="color: #6639ba;"><span data-highlight="constant" style="color: #0550ae;">lang <span data-highlight="string.special.symbol" style="color: #0550ae;">:elixir</span></span></span></span></span>
+        </span><span class="line" data-line="2"><span data-highlight="keyword" style="color: #cf222e;">def</span> <span data-highlight="variable" style="color: #1f2328;">hello</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">,</span> <span data-highlight="string.special.symbol" style="color: #0550ae;">do: </span><span data-highlight="string" style="color: #0a3069;">&quot;world&quot;</span>
+        </span></code></pre>
+        """,
         render: [github_pre_lang: true, full_info_string: true]
       )
     end
