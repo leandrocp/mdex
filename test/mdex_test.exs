@@ -568,7 +568,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
         </span></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -585,7 +585,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" style="background-color: #414858;" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span><span class="line" style="background-color: #414858;" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
         </span></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -604,7 +604,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
         </span><span class="line" style="background-color: #414858;" data-line="3"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #e06c75;">name</span><span style="color: #c678dd;">)</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;Hello, <span style="color: #61afef;">#&lbrace;</span><span style="color: #e06c75;">name</span><span style="color: #61afef;">&rbrace;</span>!&quot;</span>
         </span><span class="line" style="background-color: #414858;" data-line="4"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Elixir&quot;</span><span style="color: #c678dd;">)</span><span style="color: #c678dd;">)</span>
         </span></code></pre>
@@ -623,7 +623,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: yellow; font-weight: bold;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
+        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
         </span></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -655,7 +655,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl custom-pre" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #dae9f9;" data-line="1"><span data-highlight="operator" style="color: #0550ae;"><span data-highlight="constant" style="color: #0550ae;">@<span data-highlight="function.call" style="color: #6639ba;"><span data-highlight="constant" style="color: #0550ae;">lang <span data-highlight="string.special.symbol" style="color: #0550ae;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span data-highlight="keyword" style="color: #cf222e;">def</span> <span data-highlight="variable" style="color: #1f2328;">hello</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">,</span> <span data-highlight="string.special.symbol" style="color: #0550ae;">do: </span><span data-highlight="string" style="color: #0a3069;">&quot;world&quot;</span>
+        </span><span class="line" data-line="2"><span data-highlight="keyword.function" style="color: #cf222e;">def</span> <span data-highlight="function" style="color: #6639ba;">hello</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">,</span> <span data-highlight="string.special.symbol" style="color: #0550ae;">do: </span><span data-highlight="string" style="color: #0a3069;">&quot;world&quot;</span>
         </span></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
