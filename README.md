@@ -495,8 +495,6 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 - [markdown](https://hex.pm/packages/markdown) is not precompiled and has not received updates in a while.
 - [cmark](https://hex.pm/packages/cmark) is a fast CommonMark parser but it requires compiling the C library, is hard to extend, and was archived on Apr 2024.
 
-_Note that MDEx is the only one that syntax highlights out-of-the-box which contributes to make it slower than cmark._
-
 ## Comparison
 
 |Feature|MDEx|Earmark|md|cmark|
@@ -505,6 +503,7 @@ _Note that MDEx is the only one that syntax highlights out-of-the-box which cont
 |Pure Elixir|❌|✅|✅|❌|
 |Extensible|✅|✅|✅|❌|
 |Syntax Highlighting|✅|❌|❌|❌|
+|Code Block Decorators|✅|❌|❌|❌|
 |AST|✅|✅|✅|❌|
 |AST to Markdown|✅|⚠️²|❌|❌|
 |To HTML|✅|✅|✅|✅|
@@ -529,19 +528,19 @@ A [simple script](benchmark.exs) is available to compare existing libs:
 
 ```
 Name              ips        average  deviation         median         99th %
-cmark         22.82 K      0.0438 ms    ±16.24%      0.0429 ms      0.0598 ms
-mdex           3.57 K        0.28 ms     ±9.79%        0.28 ms        0.33 ms
-md             0.34 K        2.95 ms    ±10.56%        2.90 ms        3.62 ms
-earmark        0.25 K        4.04 ms     ±4.50%        4.00 ms        4.44 ms
+cmark          7.17 K       0.139 ms     ±4.20%       0.138 ms       0.165 ms
+mdex           2.71 K        0.37 ms     ±7.95%        0.36 ms        0.45 ms
+md            0.196 K        5.11 ms     ±2.51%        5.08 ms        5.55 ms
+earmark      0.0372 K       26.91 ms     ±2.09%       26.77 ms       30.25 ms
 
 Comparison:
-cmark         22.82 K
-mdex           3.57 K - 6.39x slower +0.24 ms
-md             0.34 K - 67.25x slower +2.90 ms
-earmark        0.25 K - 92.19x slower +4.00 ms
+cmark          7.17 K
+mdex           2.71 K - 2.65x slower +0.23 ms
+md            0.196 K - 36.69x slower +4.98 ms
+earmark      0.0372 K - 193.04x slower +26.77 ms
 ```
 
-To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suit your needs.
+To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suits your needs.
 
 ## Acknowledgements
 

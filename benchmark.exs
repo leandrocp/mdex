@@ -8,7 +8,7 @@ defmodule Benchmark do
       "earmark" => fn -> Earmark.as_html(@markdown) end,
       "md" => fn -> Md.generate(@markdown) end,
       "cmark" => fn -> Cmark.to_html(@markdown) end,
-      "mdex_to_html/1" => fn -> MDEx.to_html(@markdown) end
+      "mdex" => fn -> MDEx.to_html(@markdown, syntax_highlight: nil) end
     })
   end
 end
