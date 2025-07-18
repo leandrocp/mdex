@@ -171,8 +171,8 @@ render: [
 - **`theme`** - Override the theme for a specific code block
 - **`pre_class`** - Add custom CSS classes to the `<pre>` element (appends to existing classes)
 - **`highlight_lines`** - Highlight specific lines and line ranges (inclusive) within the code block
-- **`highlight_lines_style`** - Customize the styling of highlighted lines
-- **`include_highlights`** - Enable syntax highlighting data attributes
+- **`highlight_lines_style`** - Customize the `style` of highlighted lines
+- **`include_highlights`** - Include the highlight token name
 
 #### Examples
 
