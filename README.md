@@ -540,6 +540,18 @@ md            0.196 K - 36.69x slower +4.98 ms
 earmark      0.0372 K - 193.04x slower +26.77 ms
 ```
 
+The most performance gain is using the `~MD` sigil to compile the Markdown instead of parsing it at runtime,
+prefer using it when possible:
+
+```
+Comparison:
+mdex_sigil_MD    176948.46 K
+cmark                31.47 K - 5622.76x slower +31.77 μs
+mdex_to_html/1        7.32 K - 24184.36x slower +136.67 μs
+md                    2.05 K - 86176.93x slower +487.01 μs
+earmark               0.21 K - 855844.67x slower +4836.68 μs
+```
+
 To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suits your needs.
 
 ## Acknowledgements
