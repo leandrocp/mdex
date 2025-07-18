@@ -153,6 +153,111 @@ iex> ~MD|Running <%= @lang %>|HTML
 
 See more info at https://hexdocs.pm/mdex/MDEx.Sigil.html
 
+## Code Block Decorators
+
+MDEx supports code block decorators that allow you to customize the appearance and behavior of individual code blocks. These decorators are added to the code block's info string (the part after the opening backticks).
+
+**Note** that not all formatters support all decorators and in order to enable code block decorators, you must enable both `github_pre_lang` and `full_info_string` render options:
+
+```elixir
+render: [
+  github_pre_lang: true,
+  full_info_string: true
+]
+```
+
+#### Supported Decorators
+
+- **`theme`** - Override the theme for a specific code block
+- **`pre_class`** - Add custom CSS classes to the `<pre>` element (appends to existing classes)
+- **`highlight_lines`** - Highlight specific lines and line ranges (inclusive) within the code block
+- **`highlight_lines_style`** - Customize the `style` of highlighted lines
+- **`include_highlights`** - Include the highlight token name
+
+#### Examples
+
+**Custom Theme:**
+````elixir
+MDEx.to_html!(~S"""
+```rust theme=github_light
+fn main() {
+    println!("Hello, world!");
+}
+```
+""")
+#=> <pre class="athl" style="color: #1f2328; background-color: #ffffff;"> ...
+````
+
+**Custom CSS Classes:**
+````elixir
+MDEx.to_html!(~S"""
+```rust pre_class="custom-class-1 custom-class-2"
+fn main() {
+    println!("Hello, world!");
+}
+```
+""")
+#=> <pre class="athl custom-class-1 custom-class-2" ...
+````
+
+**Highlighting Lines:**
+````elixir
+MDEx.to_html!(~S"""
+```rust highlight_lines="1,3-4"
+fn main() {
+    let x = 1;
+    let y = 2;
+    let sum = x + y;
+}
+```
+""")
+#=> <span class="line" style="background-color: #3b4252;" data-line="1">
+#=> <span class="line" data-line="2">
+#=> <span class="line" style="background-color: #3b4252;" data-line="3">
+#=> <span class="line" style="background-color: #3b4252;" data-line="4">
+#=> <span class="line" data-line="5">
+#=> ...
+````
+
+**Custom Highlight Styling:**
+````elixir
+MDEx.to_html!(~S"""
+```rust highlight_lines="1" highlight_lines_style="background-color: yellow"
+fn main() {
+    let x = 1;
+    let y = 2;
+    let sum = x + y;
+}
+```
+""")
+#=> <span class="line" style="background-color: yellow" data-line="1">
+````
+
+**Including Syntax Highlights:**
+````elixir
+MDEx.to_html!(~S"""
+```rust include_highlights
+fn main() {
+    let x = 1;
+}
+```
+""")
+#=> <span class="line" data-line="2"><span data-highlight="keyword" style="color: #81a1c1;">let</span></span>
+````
+
+**Combining Multiple Decorators:**
+````elixir
+MDEx.to_html!(~S"""
+```rust theme=github_light pre_class="custom-class" highlight_lines="1,3"
+fn main() {
+    let x = 1;
+    let y = 2;
+    let sum = x + y;
+}
+```
+""")
+````
+
 ## Safety
 
 For security reasons, every piece of raw HTML is omitted from the output by default:
