@@ -24,6 +24,9 @@ defmodule CodeBlockDecoratorExample do
 
     html =
       MDEx.to_html!(markdown,
+        syntax_highlight: [
+          formatter: {:html_inline, theme: "catppuccin_frappe"}
+        ],
         render: [
           github_pre_lang: true,
           full_info_string: true
