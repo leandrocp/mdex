@@ -671,19 +671,63 @@ defmodule MDEx do
   """
   @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
 
-  @typedoc "List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html)."
+  @typedoc """
+  List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("~~strikethrough~~", extension: [strikethrough: true])
+      #=> "<p><del>strikethrough</del></p>"
+
+  """
   @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
 
-  @typedoc "List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html)."
+  @typedoc """
+  List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("\"Hello\" -- world...", parse: [smart: true])
+      #=> "<p>“Hello” – world…</p>"
+
+  """
   @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
 
-  @typedoc "List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html)."
+  @typedoc """
+  List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("<script>alert('xss')</script>", render: [unsafe: true])
+      #=> "<script>alert('xss')</script>"
+
+  """
   @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
 
-  @typedoc "Syntax Highlight code blocks using [autumn](https://hexdocs.pm/autumn)."
+  @typedoc """
+  Syntax Highlight code blocks using [autumn](https://hexdocs.pm/autumn).
+
+  ## Example
+
+      MDEx.to_html!(\"""
+      ...> ```elixir
+      ...> {:mdex, "~> 0.1"}
+      ...> ```
+      ...> \""", syntax_highlight: [formatter: {:html_inline, theme: "nord"}])
+      #=> <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+      #=> </span></code></pre>
+  """
   @type syntax_highlight_options() :: [unquote(NimbleOptions.option_typespec(@syntax_highlight_options_schema))]
 
-  @typedoc "List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html)."
+  @typedoc """
+  List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html).
+
+  ## Example
+
+      iex> MDEx.to_html!("<h1>Title</h1><p>Content</p>", sanitize: [rm_tags: ["h1"]], render: [unsafe: true])
+      "Title<p>Content</p>"
+
+  """
   @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
 
   @doc """
