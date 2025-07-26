@@ -1,5 +1,5 @@
 Mix.install([
-  {:mdex, path: ".."},
+  :mdex,
   {:solid, "~> 0.15"}
 ])
 

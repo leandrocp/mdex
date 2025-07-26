@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
-use autumnus::formatter::html_inline::{HighlightLines, HighlightLinesStyle};
+use autumnus::formatter::html_inline::{
+    HighlightLines as HtmlInlineHighlightLines, HighlightLinesStyle,
+};
 use autumnus::formatter::html_linked::HighlightLines as HtmlLinkedHighlightLines;
 use autumnus::formatter::{
     Formatter, HtmlFormatter, HtmlInlineBuilder, HtmlLinkedBuilder, TerminalBuilder,
@@ -148,12 +150,17 @@ impl<'a> AutumnusAdapter<'a> {
             if let Some(highlight_lines_str) = attrs.get("highlight_lines") {
                 let lines = self.parse_highlight_lines(highlight_lines_str);
                 let style = match attrs.get("highlight_lines_style") {
-                    Some(style) if style == "theme" => HighlightLinesStyle::Theme,
-                    Some(custom_style) => HighlightLinesStyle::Style(custom_style.clone()),
-                    None => HighlightLinesStyle::Theme,
+                    Some(style) if style == "theme" => Some(HighlightLinesStyle::Theme),
+                    Some(custom_style) => Some(HighlightLinesStyle::Style(custom_style.clone())),
+                    None => Some(HighlightLinesStyle::Theme),
                 };
+                let class = attrs.get("highlight_lines_class").cloned();
 
-                let highlight_lines = HighlightLines { lines, style };
+                let highlight_lines = HtmlInlineHighlightLines {
+                    lines,
+                    style,
+                    class,
+                };
                 builder.highlight_lines(Some(highlight_lines));
             }
         }
@@ -209,7 +216,7 @@ impl<'a> AutumnusAdapter<'a> {
                     ..Default::default()
                 };
 
-                if let Some(class_str) = attrs.get("highlight_lines_style") {
+                if let Some(class_str) = attrs.get("highlight_lines_class") {
                     highlight_lines.class = class_str.clone();
                 }
                 builder.highlight_lines(Some(highlight_lines));
@@ -431,7 +438,9 @@ mod tests {
     use pretty_assertions::assert_str_eq;
 
     use super::*;
-    use autumnus::formatter::html_inline::{HighlightLines, HighlightLinesStyle};
+    use autumnus::formatter::html_inline::{
+        HighlightLines as HtmlInlineHighlightLines, HighlightLinesStyle,
+    };
     use autumnus::formatter::html_linked::HighlightLines as HtmlLinkedHighlightLines;
     use autumnus::formatter::HtmlElement;
     use autumnus::{themes, FormatterOption};
@@ -474,10 +483,10 @@ fn main() {
         let formatter = FormatterOption::default();
         let output = run_test(markdown, FormatterOption::default(), Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
-</span><span class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
-</span><span class="line" data-line="3"><span >&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
+</div><div class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
+</div><div class="line" data-line="3"><span >&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -503,10 +512,10 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
-</span><span class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
-</span><span class="line" data-line="3"><span >&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
+</div><div class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
+</div><div class="line" data-line="3"><span >&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -524,9 +533,10 @@ fn main() {
 "#;
 
         let theme = themes::get("nord").expect("Theme not found");
-        let highlight_lines = HighlightLines {
+        let highlight_lines = HtmlInlineHighlightLines {
             lines: vec![1..=1, 3..=4],
-            style: HighlightLinesStyle::Theme,
+            style: Some(HighlightLinesStyle::Theme),
+            class: None,
         };
         let header = HtmlElement {
             open_tag: "<div class=\"code-header\">Rust Code</div>".to_string(),
@@ -544,12 +554,95 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" style="background-color: #434c5e;" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">sum</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">+</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="5"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" style="background-color: #3b4252;" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+</div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" style="background-color: #3b4252;" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" style="background-color: #3b4252;" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">sum</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">+</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" data-line="5"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
+</div></code></pre>"#;
+
+        assert_str_eq!(output.trim(), expected.trim());
+    }
+
+    #[test]
+    fn test_html_inline_decorators() {
+        let markdown = r#"
+```rust pre_class="my-custom-pre extra-class" theme=github_light include_highlights highlight_lines="1,3-5" highlight_lines_style="background-color: #ffffcc; border-left: 3px solid #ff0000" highlight_lines_class="custom-highlight-class"
+fn main() {
+    let x = 1;
+    let y = 2;
+    let z = 3;
+    let message = "Hello, world!";
+}
+```
+"#;
+
+        let nord_theme = themes::get("nord").expect("Nord theme not found");
+        let formatter = FormatterOption::HtmlInline {
+            theme: Some(nord_theme),
+            pre_class: Some("default-pre-class"),
+            italic: true,
+            include_highlights: false,
+            highlight_lines: Some(HtmlInlineHighlightLines {
+                lines: vec![2..=2],
+                style: Some(HighlightLinesStyle::Theme),
+                class: Some("default-highlight".to_string()),
+            }),
+            header: Some(HtmlElement {
+                open_tag: "<div class=\"header\">Header</div>".to_string(),
+                close_tag: "</div>".to_string(),
+            }),
+        };
+
+        let mut options = Options::default();
+        options.render.github_pre_lang = true;
+        options.render.full_info_string = true;
+
+        let output = run_test(markdown, formatter, options);
+
+        let expected = r#"<pre class="athl my-custom-pre extra-class" style="color: #1f2328; background-color: #ffffff;"><code class="language-rust" translate="no" tabindex="0"><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
+</div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">x</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">1</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="3">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">y</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">2</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="4">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">z</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">3</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="5">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">message</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="string" style="color: #0a3069;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line" data-line="6"><span data-highlight="punctuation.bracket" style="color: #1f2328;">&rbrace;</span>
+</div></code></pre>"#;
+
+        assert_str_eq!(output.trim(), expected.trim());
+    }
+
+    #[test]
+    fn test_html_inline_decorators_without_github_pre_lang() {
+        let markdown = r#"
+```rust pre_class="custom-class" highlight_lines="1,3" theme=github_light
+fn main() {
+    let x = 1;
+    let message = "Hello, world!";
+}
+```
+"#;
+
+        let nord_theme = themes::get("nord").expect("Nord theme not found");
+        let formatter = FormatterOption::HtmlInline {
+            theme: Some(nord_theme),
+            pre_class: Some("default-class"),
+            italic: false,
+            include_highlights: true,
+            highlight_lines: None,
+            header: None,
+        };
+
+        let mut options = Options::default();
+        options.render.github_pre_lang = false;
+        options.render.full_info_string = true;
+
+        let output = run_test(markdown, formatter, options);
+
+        let expected = r#"<pre class="athl default-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" style="background-color: #e7eaf0;" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
+</div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">x</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">1</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line" style="background-color: #e7eaf0;" data-line="3">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">message</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="string" style="color: #0a3069;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
+</div><div class="line" data-line="4"><span data-highlight="punctuation.bracket" style="color: #1f2328;">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -572,10 +665,10 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
-</span><span class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">&quot;Hello, world!&quot;</span><span class="punctuation-delimiter">;</span>
-</span><span class="line" data-line="3"><span class="punctuation-bracket">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+</div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">&quot;Hello, world!&quot;</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="3"><span class="punctuation-bracket">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -609,200 +702,20 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><span class="line highlighted-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
-</span><span class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">a</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
-</span><span class="line highlighted-line" data-line="3">    <span class="keyword">let</span> <span class="variable">b</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
-</span><span class="line highlighted-line" data-line="4">    <span class="keyword">let</span> <span class="variable">sum</span> <span class="operator">=</span> <span class="variable">a</span> <span class="operator">+</span> <span class="variable">b</span><span class="punctuation-delimiter">;</span>
-</span><span class="line" data-line="5"><span class="punctuation-bracket">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><div class="line highlighted-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+</div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">a</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
+</div><div class="line highlighted-line" data-line="3">    <span class="keyword">let</span> <span class="variable">b</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
+</div><div class="line highlighted-line" data-line="4">    <span class="keyword">let</span> <span class="variable">sum</span> <span class="operator">=</span> <span class="variable">a</span> <span class="operator">+</span> <span class="variable">b</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="5"><span class="punctuation-bracket">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
 
     #[test]
-    fn test_decorator_pre_class() {
+    fn test_html_linked_decorators() {
         let markdown = r#"
-```rust pre_class="custom-class-1 custom-class-2"
-fn main() {
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: Some("default-pre-class"),
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl custom-class-1 custom-class-2" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_pre_class_unquoted() {
-        let markdown = r#"
-```rust pre_class=single-class
-fn main() {
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: Some("default-pre-class"),
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl single-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_highlight_lines() {
-        let markdown = r#"
-```rust highlight_lines="1,3-4"
-fn main() {
-    let x = 1;
-    let y = 2;
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: None,
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" style="background-color: #434c5e;" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">x</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">y</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="5"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_highlight_lines_with_custom_style() {
-        let markdown = r#"
-```rust highlight_lines="1,3" highlight_lines_style="background-color: yellow"
-fn main() {
-    let x = 1;
-    let y = 2;
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: None,
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" style="background-color: yellow" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">x</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: yellow" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">y</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="5"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_highlight_lines_single_line() {
-        let markdown = r#"
-```rust highlight_lines="2"
-fn main() {
-    let x = 1;
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: None,
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">x</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="4"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_highlight_lines_range_only() {
-        let markdown = r#"
-```rust highlight_lines="2-4"
+```rust pre_class="custom-linked-pre extra-linked" highlight_lines="1-2,4-5" highlight_lines_class="my-custom-highlight-line"
 fn main() {
     let x = 1;
     let y = 2;
@@ -812,14 +725,16 @@ fn main() {
 ```
 "#;
 
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
-            pre_class: None,
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
+        let formatter = FormatterOption::HtmlLinked {
+            pre_class: Some("default-linked-pre"),
+            highlight_lines: Some(HtmlLinkedHighlightLines {
+                lines: vec![3..=3],
+                class: "default-highlight-line".to_string(),
+            }),
+            header: Some(HtmlElement {
+                open_tag: "<div class=\"linked-header\">Linked Header</div>".to_string(),
+                close_tag: "</div>".to_string(),
+            }),
         };
 
         let mut options = Options::default();
@@ -828,119 +743,13 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">x</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">y</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" style="background-color: #434c5e;" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">z</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">3</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="5">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="6"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorator_theme() {
-        let markdown = r#"
-```rust theme=github_light
-fn main() {
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let nord_theme = themes::get("nord").expect("Nord theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(nord_theme),
-            pre_class: None,
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = true;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl" style="color: #1f2328; background-color: #ffffff;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">message</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="string" style="color: #0a3069;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
-</span><span class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #1f2328;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorators_without_github_pre_lang() {
-        let markdown = r#"
-```rust pre_class="custom-class" highlight_lines="1,3" theme=github_light
-fn main() {
-    let x = 1;
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let nord_theme = themes::get("nord").expect("Nord theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(nord_theme),
-            pre_class: Some("default-class"),
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = false;
-        options.render.full_info_string = true;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl default-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" style="background-color: #dae9f9;" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">x</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">1</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
-</span><span class="line" style="background-color: #dae9f9;" data-line="3">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">message</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="string" style="color: #0a3069;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
-</span><span class="line" data-line="4"><span data-highlight="punctuation.bracket" style="color: #1f2328;">&rbrace;</span>
-</span></code></pre>"#;
-
-        assert_str_eq!(output.trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_decorators_minimal_options() {
-        let markdown = r#"
-```rust pre_class="custom-class" highlight_lines="1,3" theme=github_light
-fn main() {
-    let x = 1;
-    let message = "Hello, world!";
-}
-```
-"#;
-
-        let nord_theme = themes::get("nord").expect("Nord theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(nord_theme),
-            pre_class: Some("default-class"),
-            italic: false,
-            include_highlights: true,
-            highlight_lines: None,
-            header: None,
-        };
-
-        let mut options = Options::default();
-        options.render.github_pre_lang = false;
-        options.render.full_info_string = false;
-
-        let output = run_test(markdown, formatter, options);
-
-        let expected = r#"<pre class="athl default-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">x</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="4"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl custom-linked-pre extra-linked"><code class="language-rust" translate="no" tabindex="0"><div class="line my-custom-highlight-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+</div><div class="line my-custom-highlight-line" data-line="2">    <span class="keyword">let</span> <span class="variable">x</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="3">    <span class="keyword">let</span> <span class="variable">y</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
+</div><div class="line my-custom-highlight-line" data-line="4">    <span class="keyword">let</span> <span class="variable">z</span> <span class="operator">=</span> <span class="number">3</span><span class="punctuation-delimiter">;</span>
+</div><div class="line my-custom-highlight-line" data-line="5">    <span class="keyword">let</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">&quot;Hello, world!&quot;</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="6"><span class="punctuation-bracket">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -971,10 +780,10 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+</div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }
@@ -1005,10 +814,10 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
-</span><span class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</span><span class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
-</span></code></pre>"#;
+        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+</div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
+</div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
     }

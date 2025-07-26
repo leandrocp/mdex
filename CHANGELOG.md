@@ -2,8 +2,16 @@
 
 ## Unreleased
 
-### Fixed
-  - Accept soft-deprecated `:unsafe_` in `MDEx.Pipe.put_render_options/2`
+### Added
+  - [Syntax Highlighter] Add support for Code Block Decorators
+  - [Syntax Highlighter] Add language `caddy` and `fish`
+
+### Changed
+  - [Deps] Require `autumnn >= 0.5.0`
+  - [Deps] Update `autumnus` to v0.7.0
+
+### Breaking Changes
+  - [Syntax Highlighter] Replace line tags `<span>` with `<div>`
 
 ## 0.7.5 (2025-07-02)
 

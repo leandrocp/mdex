@@ -20,8 +20,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        </div></code></pre>
         """,
         features: [syntax_highlight_inline_style: true]
       )
@@ -35,8 +35,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
+        </div></code></pre>
         """,
         features: [syntax_highlight_inline_style: false]
       )
@@ -50,8 +50,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
+        </div></code></pre>
         """,
         features: [syntax_highlight_theme: "Dracula"]
       )
@@ -130,8 +130,8 @@ defmodule MDExTest do
     test "enabled by default" do
       expected =
         String.trim(~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        </div></code></pre>
         """)
 
       assert {:ok, expected} ==
@@ -160,8 +160,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+        </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
       )
@@ -190,8 +190,8 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        </div></code></pre>
         """
       )
     end
@@ -204,8 +204,8 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><span class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        </div></code></pre>
         """
       )
     end
@@ -218,8 +218,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
+        </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_linked]
       )
@@ -378,8 +378,8 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre>example</pre>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><span class="line" data-line="1"><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">}</span>
-        </span></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><div><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">}</span>
+        </div></pre>
         """,
         render: [unsafe: true],
         sanitize: [
@@ -411,8 +411,8 @@ defmodule MDExTest do
         """,
         ~S"""
         <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
+        </div></code></pre>
         """,
         sanitize: MDEx.default_sanitize_options()
       )
@@ -434,8 +434,8 @@ defmodule MDExTest do
         <ul>
         <li>Elixir {:ex}</li>
         </ul>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:ok</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #c678dd;">&rbrace;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:ok</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        </div></code></pre>
         """
       )
     end
@@ -527,22 +527,7 @@ defmodule MDExTest do
     end
   end
 
-  describe "code block decorators" do
-    test "theme" do
-      assert_output(
-        ~S"""
-        ```elixir theme=github_light
-        @lang :elixir
-        ```
-        """,
-        ~S"""
-        <pre class="athl" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #0550ae;"><span style="color: #0550ae;">@<span style="color: #6639ba;"><span style="color: #0550ae;">lang <span style="color: #0550ae;">:elixir</span></span></span></span></span>
-        </span></code></pre>
-        """,
-        render: [github_pre_lang: true, full_info_string: true]
-      )
-    end
-
+  describe "html_inline: code block decorators" do
     test "pre_class" do
       assert_output(
         ~S"""
@@ -551,80 +536,23 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span></code></pre>
+        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
       )
     end
 
-    test "highlight_lines with single line" do
+    test "theme" do
       assert_output(
         ~S"""
-        ```elixir highlight_lines="1"
-        @lang :elixir
-        def hello, do: "world"
+        ```elixir theme=dracula
+        :hello
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
-        </span></code></pre>
-        """,
-        render: [github_pre_lang: true, full_info_string: true]
-      )
-    end
-
-    test "highlight_lines with range" do
-      assert_output(
-        ~S"""
-        ```elixir highlight_lines="1-2"
-        @lang :elixir
-        def hello, do: "world"
-        ```
-        """,
-        ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" style="background-color: #414858;" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
-        </span></code></pre>
-        """,
-        render: [github_pre_lang: true, full_info_string: true]
-      )
-    end
-
-    test "highlight_lines with mixed single and range" do
-      assert_output(
-        ~S"""
-        ```elixir highlight_lines="1,3-4"
-        @lang :elixir
-        def hello, do: "world"
-        def greet(name), do: "Hello, #{name}!"
-        IO.puts(greet("Elixir"))
-        ```
-        """,
-        ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #414858;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
-        </span><span class="line" style="background-color: #414858;" data-line="3"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #e06c75;">name</span><span style="color: #c678dd;">)</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;Hello, <span style="color: #61afef;">#&lbrace;</span><span style="color: #e06c75;">name</span><span style="color: #61afef;">&rbrace;</span>!&quot;</span>
-        </span><span class="line" style="background-color: #414858;" data-line="4"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #61afef;">greet</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Elixir&quot;</span><span style="color: #c678dd;">)</span><span style="color: #c678dd;">)</span>
-        </span></code></pre>
-        """,
-        render: [github_pre_lang: true, full_info_string: true]
-      )
-    end
-
-    test "highlight_lines_style with custom style" do
-      assert_output(
-        ~S"""
-        ```elixir highlight_lines="1" highlight_lines_style="background-color: yellow; font-weight: bold;"
-        @lang :elixir
-        def hello, do: "world"
-        ```
-        """,
-        ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: yellow; font-weight: bold;" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #98c379;">&quot;world&quot;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #bd93f9;">:hello</span>
+        </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
       )
@@ -634,31 +562,240 @@ defmodule MDExTest do
       assert_output(
         ~S"""
         ```elixir include_highlights
-        @lang :elixir
+        defmodule Example do
+        end
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span data-highlight="operator" style="color: #56b6c2;"><span data-highlight="constant" style="color: #d19a66;">@<span data-highlight="function.call" style="color: #61afef;"><span data-highlight="constant" style="color: #d19a66;">lang <span data-highlight="string.special.symbol" style="color: #e06c75;">:elixir</span></span></span></span></span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span>
+        </div><div class="line" data-line="2"><span data-highlight="keyword" style="color: #c678dd;">end</span>
+        </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
       )
     end
 
-    test "multiple decorators combined" do
+    test "highlight_lines single line" do
       assert_output(
         ~S"""
-        ```elixir theme=github_light pre_class="custom-pre" highlight_lines="1" include_highlights
-        @lang :elixir
-        def hello, do: "world"
+        ```elixir highlight_lines="2"
+        defmodule Example do
+          def hello, do: :world
+        end
         ```
         """,
         ~S"""
-        <pre class="athl custom-pre" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" style="background-color: #dae9f9;" data-line="1"><span data-highlight="operator" style="color: #0550ae;"><span data-highlight="constant" style="color: #0550ae;">@<span data-highlight="function.call" style="color: #6639ba;"><span data-highlight="constant" style="color: #0550ae;">lang <span data-highlight="string.special.symbol" style="color: #0550ae;">:elixir</span></span></span></span></span>
-        </span><span class="line" data-line="2"><span data-highlight="keyword.function" style="color: #cf222e;">def</span> <span data-highlight="function" style="color: #6639ba;">hello</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">,</span> <span data-highlight="string.special.symbol" style="color: #0550ae;">do: </span><span data-highlight="string" style="color: #0a3069;">&quot;world&quot;</span>
-        </span></code></pre>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line" style="background-color: #282c34;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #e06c75;">:world</span>
+        </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
+        </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines range" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2-3"
+        defmodule Example do
+          def hello do
+            :world
+          end
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line" style="background-color: #282c34;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line" style="background-color: #282c34;" data-line="3">    <span style="color: #e06c75;">:world</span>
+        </div><div class="line" data-line="4">  <span style="color: #c678dd;">end</span>
+        </div><div class="line" data-line="5"><span style="color: #c678dd;">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines_style custom" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2" highlight_lines_style="background-color: yellow; font-weight: bold;"
+        def hello do
+          :world
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line" style="background-color: yellow; font-weight: bold;" data-line="2">  <span style="color: #e06c75;">:world</span>
+        </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines_style theme" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="1" highlight_lines_style=theme
+        :hello
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" style="background-color: #282c34;" data-line="1"><span style="color: #e06c75;">:hello</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "highlight_lines_class" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2" highlight_lines_class="focus-line"
+        def hello do
+          :world
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line focus-line" style="background-color: #282c34;" data-line="2">  <span style="color: #e06c75;">:world</span>
+        </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "all combined" do
+      assert_output(
+        ~S"""
+        ```elixir pre_class="my-code" theme=dracula include_highlights highlight_lines="2-3" highlight_lines_style="background-color: #44475a;" highlight_lines_class="hl"
+        defmodule Example do
+          def hello do
+            :world
+          end
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #8be9fd;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
+        </div><div class="line hl" style="background-color: #44475a;" data-line="2">  <span data-highlight="keyword.function" style="color: #8be9fd;">def</span> <span data-highlight="function" style="color: #50fa7b;">hello</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
+        </div><div class="line hl" style="background-color: #44475a;" data-line="3">    <span data-highlight="string.special.symbol" style="color: #bd93f9;">:world</span>
+        </div><div class="line" data-line="4">  <span data-highlight="keyword" style="color: #ff79c6;">end</span>
+        </div><div class="line" data-line="5"><span data-highlight="keyword" style="color: #ff79c6;">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+  end
+
+  describe "html_linked: code block decorators" do
+    test "pre_class" do
+      assert_output(
+        ~S"""
+        ```elixir pre_class="custom-class another-class"
+        @lang :elixir
+        ```
+        """,
+        ~S"""
+        <pre class="athl custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="operator"><span class="constant">@<span class="function-call"><span class="constant">lang <span class="string-special-symbol">:elixir</span></span></span></span></span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_linked]
+      )
+    end
+
+    test "highlight_lines single line" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2"
+        defmodule Example do
+          def hello, do: :world
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line highlighted" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span><span class="punctuation-delimiter">,</span> <span class="string-special-symbol">do: </span><span class="string-special-symbol">:world</span>
+        </div><div class="line" data-line="3"><span class="keyword">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_linked]
+      )
+    end
+
+    test "highlight_lines range" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2-3"
+        defmodule Example do
+          def hello do
+            :world
+          end
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line highlighted" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        </div><div class="line highlighted" data-line="3">    <span class="string-special-symbol">:world</span>
+        </div><div class="line" data-line="4">  <span class="keyword">end</span>
+        </div><div class="line" data-line="5"><span class="keyword">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_linked]
+      )
+    end
+
+    test "highlight_lines_class" do
+      assert_output(
+        ~S"""
+        ```elixir highlight_lines="2" highlight_lines_class="focus-line"
+        def hello do
+          :world
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        </div><div class="line focus-line" data-line="2">  <span class="string-special-symbol">:world</span>
+        </div><div class="line" data-line="3"><span class="keyword">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_linked]
+      )
+    end
+
+    test "all combined" do
+      assert_output(
+        ~S"""
+        ```elixir pre_class="my-code" highlight_lines="2-3" highlight_lines_class="focus"
+        defmodule Example do
+          def hello do
+            :world
+          end
+        end
+        ```
+        """,
+        ~S"""
+        <pre class="athl my-code"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line focus" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        </div><div class="line focus" data-line="3">    <span class="string-special-symbol">:world</span>
+        </div><div class="line" data-line="4">  <span class="keyword">end</span>
+        </div><div class="line" data-line="5"><span class="keyword">end</span>
+        </div></code></pre>
+        """,
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_linked]
       )
     end
   end

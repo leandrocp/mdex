@@ -1,5 +1,5 @@
 Mix.install([
-  {:mdex, "~> 0.4"},
+  :mdex,
   {:phoenix_live_view, "~> 1.0"},
   {:phoenix_playground, "~> 0.1"},
   {:nimble_publisher, "~> 1.1"},
