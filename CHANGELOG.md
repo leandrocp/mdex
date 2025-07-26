@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 (2025-07-26)
 
 ### Added
   - [Syntax Highlighter] Add support for Code Block Decorators
