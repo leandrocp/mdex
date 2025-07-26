@@ -100,8 +100,9 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "autumnus"
-version = "0.6.0"
-source = "git+https://github.com/leandrocp/autumnus#790f33caaf267c17e44472dc13a5bc35d8279984"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6610793617f084d16d2ecd2c565cbf5deffa254af0d193be940c1b4638c5e7c"
 dependencies = [
  "anyhow",
  "cc",

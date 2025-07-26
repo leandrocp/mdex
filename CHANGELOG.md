@@ -7,7 +7,8 @@
   - [Syntax Highlighter] Add language `caddy` and `fish`
 
 ### Changed
-  - [Deps] Update `autumnus` to v0.6.0
+  - [Deps] Require `autumnn >= 0.5.0`
+  - [Deps] Update `autumnus` to v0.7.0
 
 ### Breaking Changes
   - [Syntax Highlighter] Replace line tags `<span>` with `<div>`

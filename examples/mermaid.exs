@@ -1,5 +1,5 @@
 Mix.install([
-  {:mdex, path: ".."}
+  :mdex
 ])
 
 defmodule MermaidExample do
