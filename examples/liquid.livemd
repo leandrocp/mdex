@@ -1,0 +1,38 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Liquid
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.8"},
+  {:kino, "~> 0.16"},
+  {:solid, "~> 0.15"}
+])
+```
+
+## Example
+
+```elixir
+markdown = """
+# [Liquid](https://shopify.github.io/liquid/) Example
+
+## Lang
+{{ lang.name | capitalize }}
+
+## Projects {% assign projects = "phoenix, phoenix, live_view, mdex" | split: ", " %}
+{{ projects | uniq | join: ", " }}
+
+Updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}
+"""
+
+assigns = %{"lang" => %{"name" => "elixir"}}
+
+with {:ok, parsed} <- Solid.parse(markdown),
+     {:ok, rendered} <- Solid.render(parsed, assigns) do
+  rendered
+  |> IO.iodata_to_binary()
+  |> MDEx.to_html!()
+  |> Kino.HTML.new()
+end
+
+```

@@ -1,0 +1,100 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Code Block Decorators
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.8"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## Decorator: theme
+
+````elixir
+import MDEx.Sigil
+
+~MD"""
+```elixir theme=gruvbox_light
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""HTML
+|> Kino.HTML.new()
+````
+
+## Decorator: highlight_lines
+
+````elixir
+import MDEx.Sigil
+
+~MD"""
+```elixir highlight_lines=2,5,8-10
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""HTML
+|> Kino.HTML.new()
+````
+
+## Decorator: highlight_lines_style
+
+````elixir
+import MDEx.Sigil
+
+~MD"""
+```elixir highlight_lines=2 highlight_lines_style="background-color: purple; font-weight: bold; font-size: 18px"
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""HTML
+|> Kino.HTML.new()
+````
+
+## Decorator: include_highlights
+
+````elixir
+~MD"""
+```elixir include_highlights
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""HTML
+|> Kino.HTML.new()
+````

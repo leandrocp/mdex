@@ -1,11 +1,20 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# NimblePublisher
+
+```elixir
 Mix.install([
-  :mdex,
+  {:mdex, "~> 0.8"},
   {:phoenix_live_view, "~> 1.0"},
   {:phoenix_playground, "~> 0.1"},
   {:nimble_publisher, "~> 1.1"},
   {:phoenix_html, "~> 4.2"}
 ])
+```
 
+## Example
+
+```elixir
 defmodule MDEx.Posts.Post do
   @enforce_keys [:id, :title, :date, :body]
   defstruct [:id, :title, :date, :body]
@@ -24,7 +33,15 @@ defmodule MDEx.Posts.Post do
     struct!(__MODULE__, Map.merge(attrs, %{id: id, date: date, body: body}))
   end
 end
+```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MDEx.Posts.Post, <<70, 79, 82, 49, 0, 0, 18, ...>>, {:build, 3}}
+```
+
+```elixir
 defmodule MDEx.Posts.Parser do
   def parse(_path, contents) do
     [header, markdown_body] = String.split(contents, "---\n", trim: true, parts: 2)
@@ -61,7 +78,15 @@ defmodule MDEx.Posts.Parser do
     )
   end
 end
+```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MDEx.Posts.Parser, <<70, 79, 82, 49, 0, 0, 11, ...>>, {:markdown_to_html!, 1}}
+```
+
+```elixir
 defmodule MDEx.Posts.HTMLConverter do
   # ⚠️ Important ⚠️
   # You need to provide a custom converter, because otherwise NimblePublisher
@@ -69,7 +94,15 @@ defmodule MDEx.Posts.HTMLConverter do
   # interfere with MDEx's conversion.
   def convert(_extname, body, _attrs, _opts), do: body
 end
+```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MDEx.Posts.HTMLConverter, <<70, 79, 82, 49, 0, 0, 7, ...>>, {:convert, 4}}
+```
+
+```elixir
 defmodule MDEx.Posts do
   use NimblePublisher,
     # Update this filepath to your application
@@ -96,7 +129,15 @@ defmodule MDEx.Posts do
       raise NotFoundError, "post with id=#{id} not found"
   end
 end
+```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MDEx.Posts, <<70, 79, 82, 49, 0, 0, 21, ...>>, {:get_post_by_id!, 1}}
+```
+
+```elixir
 defmodule MDEx.DemoLive do
   use Phoenix.LiveView
   import Phoenix.HTML
@@ -122,5 +163,76 @@ defmodule MDEx.DemoLive do
     """
   end
 end
+```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MDEx.DemoLive, <<70, 79, 82, 49, 0, 0, 24, ...>>, {:render, 1}}
+```
+
+```elixir
 PhoenixPlayground.start(live: MDEx.DemoLive)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+
+19:29:52.699 [info] Running PhoenixPlayground.Endpoint with Bandit 1.7.0 at 127.0.0.1:4000 (http)
+
+19:29:52.704 [info] Access PhoenixPlayground.Endpoint at http://localhost:4000
+
+19:29:52.731 [info] CONNECTED TO Phoenix.LiveView.Socket in 16µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"vsn" => "2.0.0"}
+
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, #PID<0.343.0>}
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+
+19:29:52.781 [debug] MOUNT PhoenixPlayground.Router.DelegateLive
+  Parameters: %{}
+  Session: %{}
+
+19:29:52.781 [debug] Replied in 115µs
+
+19:29:52.783 [debug] HANDLE PARAMS in PhoenixPlayground.Router.DelegateLive
+  Parameters: %{}
+
+19:29:52.783 [debug] Replied in 61µs
+
+19:29:52.801 [info] GET /
+
+19:29:52.805 [debug] Processing with PhoenixPlayground.Router.DelegateLive.index/2
+  Parameters: %{}
+  Pipelines: [:browser]
+
+19:29:52.816 [info] Sent 200 in 15ms
+
+19:29:52.843 [info] CONNECTED TO Phoenix.LiveView.Socket in 18µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"vsn" => "2.0.0"}
+
+19:29:52.844 [debug] MOUNT PhoenixPlayground.Router.DelegateLive
+  Parameters: %{}
+  Session: %{}
+
+19:29:52.844 [debug] Replied in 101µs
+
+19:29:52.844 [debug] HANDLE PARAMS in PhoenixPlayground.Router.DelegateLive
+  Parameters: %{}
+
+19:29:52.844 [debug] Replied in 21µs
+
+```
