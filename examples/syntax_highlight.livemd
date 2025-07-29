@@ -18,66 +18,43 @@ options = [
   syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_latte"}]
 ]
 
+"""
+# Elixir
+```elixir
+# elixir example
 
-html = MDEx.to_html!(
-  """
-  # Elixir
-  ```elixir
-  # elixir example
-  
-  def fib(n), do: fib(n, 1, 1)
-  
-  def fib(0, _a, _b), do: []
-  
-  def fib(n, a, b) when n > 0 do
-    [a | fib(n - 1, b, a + b)]
-  end
-  ```
-  
-  # Ruby
-  ```ruby
-  # ruby example
-  
-  def fibonacci(n)
-    return n if (0..1).include?(n)
-    (fibonacci(n - 1) + fibonacci(n - 2))
-  end
-  ```
-  
-  # Rust
-  ```rust
-  // rust example
-  
-  fn fibonacci(n: u32) -> u32 {
-    match n {
-      0 => 1,
-      1 => 1,
-      _ => fibonacci(n - 1) + fibonacci(n - 2),
-    }
+def fib(n), do: fib(n, 1, 1)
+
+def fib(0, _a, _b), do: []
+
+def fib(n, a, b) when n > 0 do
+  [a | fib(n - 1, b, a + b)]
+end
+```
+
+# Ruby
+```ruby
+# ruby example
+
+def fibonacci(n)
+  return n if (0..1).include?(n)
+  (fibonacci(n - 1) + fibonacci(n - 2))
+end
+```
+
+# Rust
+```rust
+// rust example
+
+fn fibonacci(n: u32) -> u32 {
+  match n {
+    0 => 1,
+    1 => 1,
+    _ => fibonacci(n - 1) + fibonacci(n - 2),
   }
-  ```
-  """,
-  options
-)
-
-
-html = EEx.eval_string(
-  """
-  <html>
-    <head>
-      <link rel="preconnect" href="https://fonts.bunny.net">
-      <link href="https://fonts.bunny.net/css?family=jetbrains-mono:100,200,300,400,500,600,700,800,900" rel="stylesheet">
-      <style>
-        * { font-family: JetBrains Mono, monospace; }
-      </style>
-    </head>
-    <body>
-      <%= @inner_content %>
-    </body>
-  </html>
-  """,
-  assigns: [inner_content: html]
-)
-
-Kino.HTML.new(html)
+}
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
 ````

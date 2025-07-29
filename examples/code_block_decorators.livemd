@@ -9,33 +9,12 @@ Mix.install([
 ])
 ```
 
-## Setup
-
-```elixir
-options = [
-  syntax_highlight: [
-    formatter: {:html_inline, theme: "catppuccin_frappe"}
-  ],
-  render: [
-    github_pre_lang: true,
-    full_info_string: true
-  ]
-]
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-[
-  syntax_highlight: [formatter: {:html_inline, [theme: "catppuccin_frappe"]}],
-  render: [github_pre_lang: true, full_info_string: true]
-]
-```
-
 ## Decorator: theme
 
 ````elixir
-"""
+import MDEx.Sigil
+
+~MD"""
 ```elixir theme=gruvbox_light
 defmodule Lines do
   @langs ["elixir", "rust"]
@@ -49,15 +28,16 @@ defmodule Lines do
   end
 end
 ```
-"""
-|> MDEx.to_html!(options)
+"""HTML
 |> Kino.HTML.new()
 ````
 
 ## Decorator: highlight_lines
 
 ````elixir
-"""
+import MDEx.Sigil
+
+~MD"""
 ```elixir highlight_lines=2,5,8-10
 defmodule Lines do
   @langs ["elixir", "rust"]
@@ -71,15 +51,16 @@ defmodule Lines do
   end
 end
 ```
-"""
-|> MDEx.to_html!(options)
+"""HTML
 |> Kino.HTML.new()
 ````
 
 ## Decorator: highlight_lines_style
 
 ````elixir
-"""
+import MDEx.Sigil
+
+~MD"""
 ```elixir highlight_lines=2 highlight_lines_style="background-color: purple; font-weight: bold; font-size: 18px"
 defmodule Lines do
   @langs ["elixir", "rust"]
@@ -93,23 +74,14 @@ defmodule Lines do
   end
 end
 ```
-"""
-|> MDEx.to_html!(
-  syntax_highlight: [
-    formatter: {:html_inline, theme: "catppuccin_frappe"}
-  ],
-  render: [
-    github_pre_lang: true,
-    full_info_string: true
-  ]
-)
+"""HTML
 |> Kino.HTML.new()
 ````
 
 ## Decorator: include_highlights
 
 ````elixir
-"""
+~MD"""
 ```elixir include_highlights
 defmodule Lines do
   @langs ["elixir", "rust"]
@@ -123,15 +95,6 @@ defmodule Lines do
   end
 end
 ```
-"""
-|> MDEx.to_html!(
-  syntax_highlight: [
-    formatter: {:html_inline, theme: "catppuccin_frappe"}
-  ],
-  render: [
-    github_pre_lang: true,
-    full_info_string: true
-  ]
-)
+"""HTML
 |> Kino.HTML.new()
 ````
