@@ -5,6 +5,10 @@
 ### Added
   - [Sigil] Enable Code Block Decorators in `~MD` sigil
 
+### Changed
+  - [Docs] Add Livebook examples
+  - [Docs] Reorganize docs to make it easier to navigate
+
 ## 0.8.0 (2025-07-26)
 
 ### Added
