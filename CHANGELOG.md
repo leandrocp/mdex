@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+  - [Sigil] Enable Code Block Decorators in `~MD` sigil
+
 ## 0.8.0 (2025-07-26)
 
 ### Added
