@@ -2,15 +2,10 @@
 
 <!-- MDOC -->
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="360" alt="MDEx logo">
-</p>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="360" alt="MDEx logo" />
+  <br>
 
-<p align="center">
-  Fast and Extensible Markdown for Elixir.
-</p>
-
-<p align="center">
   <a href="https://hex.pm/packages/mdex">
     <img alt="Hex Version" src="https://img.shields.io/hexpm/v/mdex">
   </a>
@@ -22,10 +17,14 @@
   <a href="https://opensource.org/licenses/MIT">
     <img alt="MIT" src="https://img.shields.io/hexpm/l/mdex">
   </a>
-</p>
+
+  <p align="center">Fast and Extensible Markdown for Elixir.</p>
+</div>
 
 ## Features
 
+- Fast
+- Compliant with the [CommonMark spec](https://commonmark.org)
 - Formats:
   - Markdown (CommonMark)
   - HTML
@@ -33,7 +32,6 @@
   - XML
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
 - Req-like [Pipeline API](https://hexdocs.pm/mdex/MDEx.Pipe.html)
-- Compliant with the [CommonMark spec](https://commonmark.org)
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
 - Discord and GitLab Flavored-ish Markdown
 - Wiki-style links
@@ -54,21 +52,12 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.7"}
+    {:mdex, "~> 0.8"}
   ]
 end
 ```
 
 ## Usage
-
-```elixir
-Mix.install([{:mdex, "~> 0.7"}])
-```
-
-```elixir
-iex> MDEx.to_html!("# Hello")
-"<h1>Hello</h1>"
-```
 
 ```elixir
 iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
@@ -81,6 +70,13 @@ iex> ~MD[
 ...> # Hello :smile:
 ...> ]HTML
 "<h1>Hello 😄</h1>"
+```
+```elixir
+iex> import MDEx.Sigil
+iex> ~MD[
+...> # Hello :smile:
+...> ]
+%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.ShortCode{code: "smile", emoji: "😄"}], level: 1, setext: false}]}
 ```
 
 ## Foundation
