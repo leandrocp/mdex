@@ -11,8 +11,6 @@ Mix.install([
 
 ## Example
 
-https://autumnus.dev
-
 ````elixir
 options = [
   syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_latte"}]

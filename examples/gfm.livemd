@@ -12,8 +12,6 @@ Mix.install([
 
 ## Example
 
-https://www.webfx.com/tools/emoji-cheat-sheet/
-
 ````elixir
 markdown = """
 # GitHub Flavored Markdown :eyes:
