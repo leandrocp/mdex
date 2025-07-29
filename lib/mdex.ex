@@ -1,10 +1,37 @@
 defmodule MDEx do
   @external_resource "README.md"
 
+  @inner_moduledoc """
+  ## Parsing
+
+  Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document programmatically.
+
+  The data structure format is inspired on [Floki](https://github.com/philss/floki) (with `:attributes_as_maps = true`) so we can keep similar APIs and keep the same mental model when
+  working with these documents, either Markdown or HTML, where each node is represented as a struct holding the node name as the struct name and its attributes and children, for eg:
+
+      %MDEx.Heading{
+        level: 1
+        nodes: [...],
+      }
+
+  The parent node that represents the root of the document is the `MDEx.Document` struct,
+  where you can find more more information about the AST and what operations are available.
+
+  The complete list of nodes is listed in the the section `Document Nodes`.
+
+  ## Formatting
+
+  Formatting is the process of converting from one format to another, for example from AST or Markdown to HTML.
+  Formatting to XML and to Markdown is also supported.
+
+  You can use `MDEx.parse_document/2` to generate an AST or any of the `to_*` functions to convert to Markdown (CommonMark), HTML, JSON, or XML.
+  """
+
   @moduledoc "README.md"
              |> File.read!()
              |> String.split("<!-- MDOC -->")
              |> Enum.fetch!(1)
+             |> Kernel.<>(@inner_moduledoc)
 
   alias MDEx.Native
   alias MDEx.Document

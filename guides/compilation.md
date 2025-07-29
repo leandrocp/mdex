@@ -1,4 +1,4 @@
-## Pre-compilation
+### Pre-compilation
 
 Pre-compiled binaries are available for the following targets, so you don't need to have Rust installed to compile and use this library:
 

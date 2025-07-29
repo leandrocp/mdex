@@ -76,13 +76,12 @@ defmodule MDEx.MixProject do
       source_url: @source_url,
       extras: [
         "CHANGELOG.md",
-        {"examples/README.md", title: "Examples"},
-        "examples/code_block_decorators.livemd",
         "examples/gfm.livemd",
+        "examples/syntax_highlight.livemd",
+        "examples/code_block_decorators.livemd",
+        "examples/mermaid.livemd",
         "examples/highlight_words.livemd",
         "examples/liquid.livemd",
-        "examples/mermaid.livemd",
-        "examples/syntax_highlight.livemd",
         {"guides/plugins.md", title: "Plugins"},
         {"guides/compilation.md", title: "Compilation"},
         {"guides/safety.md", title: "Safety"},
@@ -135,12 +134,12 @@ defmodule MDEx.MixProject do
       ],
       groups_for_extras: [
         Examples: [
-          "examples/code_block_decorators.livemd",
           "examples/gfm.livemd",
-          "examples/highlight_words.livemd",
-          "examples/liquid.livemd",
+          "examples/syntax_highlight.livemd",
+          "examples/code_block_decorators.livemd",
           "examples/mermaid.livemd",
-          "examples/syntax_highlight.livemd"
+          "examples/highlight_words.livemd",
+          "examples/liquid.livemd"
         ],
         Guides: [
           "guides/plugins.md",

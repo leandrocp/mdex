@@ -24,11 +24,9 @@
   </a>
 </p>
 
-<!-- MDOC -->
-
 ## Features
 
-- Support formats:
+- Formats:
   - Markdown (CommonMark)
   - HTML
   - JSON
@@ -36,22 +34,18 @@
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
 - Req-like [Pipeline API](https://hexdocs.pm/mdex/MDEx.Pipe.html)
 - Compliant with the [CommonMark spec](https://commonmark.org)
-- Additional features:
-  - GitHub Flavored Markdown
-  - Discord and GitLab features
-  - Wiki-style links
-  - Emoji shortcodes
-  - [Syntax highlighting](https://autumnus.dev) for code blocks
-  - HTML sanitization
-  - ~MD sigil for Markdown, HTML, JSON, and XML
+- [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+- Discord and GitLab Flavored-ish Markdown
+- Wiki-style links
+- [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
+- Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
+- [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators.html)
+- HTML sanitization
+- [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, JSON, and XML
 
-### Foundation
+## Examples
 
-The library is built on top of:
-
-- [comrak](https://crates.io/crates/comrak) - a fast Rust port of [GitHub's CommonMark parser](https://github.com/github/cmark-gfm)
-- [ammonia](https://crates.io/crates/ammonia) for HTML sanitization
-- [autumnus](https://crates.io/crates/autumnus) for syntax highlighting
+Livebook examples are available at [Pages / Examples](https://hexdocs.pm/mdex/gfm.html)
 
 ## Installation
 
@@ -81,32 +75,23 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>"
 ```
 
-## Parsing
-
-Converts Markdown to an AST data structure that can be inspected and manipulated to change the content of the document programmatically.
-
-The data structure format is inspired on [Floki](https://github.com/philss/floki) (with `:attributes_as_maps = true`) so we can keep similar APIs and keep the same mental model when
-working with these documents, either Markdown or HTML, where each node is represented as a struct holding the node name as the struct name and its attributes and children, for eg:
-
 ```elixir
-%MDEx.Heading{
-  level: 1
-  nodes: [...],
-}
+iex> import MDEx.Sigil
+iex> ~MD[
+...> # Hello :smile:
+...> ]HTML
+"<h1>Hello 😄</h1>"
 ```
 
-The parent node that represents the root of the document is the [MDEx.Document](https://hexdocs.pm/mdex/MDEx.Document.html) struct,
-where you can find more more information about the AST and what operations are available.
+## Foundation
 
-The complete list of nodes is listed in the [documentation](https://hexdocs.pm/mdex/), section `Document Nodes`.
+The library is built on top of:
 
-## Formatting
+- [comrak](https://crates.io/crates/comrak) - a fast Rust port of [GitHub's CommonMark parser](https://github.com/github/cmark-gfm)
+- [ammonia](https://crates.io/crates/ammonia) for HTML Sanitization
+- [autumnus](https://crates.io/crates/autumnus) for Syntax Highlighting
 
-Formatting is the process of converting from one format to another, for example from AST or Markdown to HTML.
-Formatting to XML and to Markdown is also supported.
-
-You can use [MDEx.parse_document/2](https://hexdocs.pm/mdex/MDEx.html#parse_document/2) to generate an AST or any of the `to_*` functions
-to convert to Markdown (CommonMark), HTML, JSON, or XML.
+<!-- MDOC -->
 
 ## Used By
 
