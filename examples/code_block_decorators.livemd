@@ -1,0 +1,137 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Code Block Decorators
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.8"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## Setup
+
+```elixir
+options = [
+  syntax_highlight: [
+    formatter: {:html_inline, theme: "catppuccin_frappe"}
+  ],
+  render: [
+    github_pre_lang: true,
+    full_info_string: true
+  ]
+]
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[
+  syntax_highlight: [formatter: {:html_inline, [theme: "catppuccin_frappe"]}],
+  render: [github_pre_lang: true, full_info_string: true]
+]
+```
+
+## Decorator: theme
+
+````elixir
+"""
+```elixir theme=gruvbox_light
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````
+
+## Decorator: highlight_lines
+
+````elixir
+"""
+```elixir highlight_lines=2,5,8-10
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````
+
+## Decorator: highlight_lines_style
+
+````elixir
+"""
+```elixir highlight_lines=2 highlight_lines_style="background-color: purple; font-weight: bold; font-size: 18px"
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""
+|> MDEx.to_html!(
+  syntax_highlight: [
+    formatter: {:html_inline, theme: "catppuccin_frappe"}
+  ],
+  render: [
+    github_pre_lang: true,
+    full_info_string: true
+  ]
+)
+|> Kino.HTML.new()
+````
+
+## Decorator: include_highlights
+
+````elixir
+"""
+```elixir include_highlights
+defmodule Lines do
+  @langs ["elixir", "rust"]
+
+  def langs do
+    @langs
+  end
+
+  def libs do
+    [:comrak, :ammonia, :autumnus]
+  end
+end
+```
+"""
+|> MDEx.to_html!(
+  syntax_highlight: [
+    formatter: {:html_inline, theme: "catppuccin_frappe"}
+  ],
+  render: [
+    github_pre_lang: true,
+    full_info_string: true
+  ]
+)
+|> Kino.HTML.new()
+````

@@ -1,0 +1,33 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Mermaid
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.8"},
+  {:mdex_mermaid, "~> 0.3"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## Example
+
+````elixir
+markdown = """
+# Flowchart
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+"""
+
+mdex = MDEx.new() |> MDExMermaid.attach()
+
+mdex
+|> MDEx.to_html!(document: markdown)
+|> Kino.HTML.new()
+````

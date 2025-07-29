@@ -30,6 +30,45 @@ defmodule MDEx.Sigil do
   @moduledoc """
   Sigils for parsing and formatting Markdown between different formats.
 
+  ## Examples
+
+  Defaults to parsing a Markdown string into a `MDEx.Document` struct:
+
+      iex> import MDEx.Sigil
+      iex> ~MD|# Hello from `~MD` sigil|
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Heading{
+            nodes: [
+              %MDEx.Text{literal: "Hello from "},
+              %MDEx.Code{num_backticks: 1, literal: "~MD"},
+              %MDEx.Text{literal: " sigil"}
+            ],
+            level: 1,
+            setext: false
+          }
+        ]
+      }
+
+  You can also convert Markdown to HTML, JSON or XML:
+
+      iex> import MDEx.Sigil
+      iex> ~MD|`~MD` also converts to HTML format|HTML
+      "<p><code>~MD</code> also converts to HTML format</p>"
+
+      iex> import MDEx.Sigil
+      iex> ~MD|and to XML as well|XML
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\\n<document xmlns=\"http://commonmark.org/xml/1.0\">\\n  <paragraph>\\n    <text xml:space=\"preserve\">and to XML as well</text>\\n  </paragraph>\\n</document>"
+
+  Assigns in the context can be referenced in the Markdown content using `<%= ... %>` syntax, which is evaluated at runtime:
+
+      `~MD` also accepts an `assigns` map to pass variables to the document:
+
+      iex> import MDEx.Sigil
+      iex> assigns = %{lang: "Elixir"}
+      iex> ~MD|Running <%= @lang %>|HTML
+      "<p>Running Elixir</p>"
+
   ## Modifiers
 
     * `HTML` - converts Markdown or `MDEx.Document` to HTML

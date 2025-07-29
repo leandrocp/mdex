@@ -57,6 +57,7 @@ defmodule MDEx.MixProject do
         native/comrak_nif/Cargo.*
         native/comrak_nif/Cross.toml
         examples
+        guides
         mix.exs
         benchmark.exs
         README.md
@@ -73,7 +74,20 @@ defmodule MDEx.MixProject do
       logo: "assets/images/mdex_icon.png",
       source_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["CHANGELOG.md", "playground.livemd", "comparison.livemd"],
+      extras: [
+        "CHANGELOG.md",
+        {"examples/README.md", title: "Examples"},
+        "examples/code_block_decorators.livemd",
+        "examples/gfm.livemd",
+        "examples/highlight_words.livemd",
+        "examples/liquid.livemd",
+        "examples/mermaid.livemd",
+        "examples/syntax_highlight.livemd",
+        {"guides/plugins.md", title: "Plugins"},
+        {"guides/compilation.md", title: "Compilation"},
+        {"guides/safety.md", title: "Safety"},
+        {"guides/code_block_decorators.md", title: "Code Block Decorators"}
+      ],
       groups_for_modules: [
         "Document Nodes": [
           MDEx.Alert,
@@ -117,6 +131,22 @@ defmodule MDEx.MixProject do
           MDEx.ThematicBreak,
           MDEx.Underline,
           MDEx.WikiLink
+        ]
+      ],
+      groups_for_extras: [
+        Examples: [
+          "examples/code_block_decorators.livemd",
+          "examples/gfm.livemd",
+          "examples/highlight_words.livemd",
+          "examples/liquid.livemd",
+          "examples/mermaid.livemd",
+          "examples/syntax_highlight.livemd"
+        ],
+        Guides: [
+          "guides/plugins.md",
+          "guides/compilation.md",
+          "guides/safety.md",
+          "guides/code_block_decorators.md"
         ]
       ],
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
