@@ -70,6 +70,19 @@ defmodule MDEx.SigilTest do
     end
   end
 
+  describe "sigil_MD with code block decorators" do
+    test "highlight_lines" do
+      html = ~MD|```elixir highlight_lines=2
+      defmodule Test do
+        @langs [:elixir, :rust]
+      end
+      ```|HTML
+
+      assert html =~ "<div class=\"line\" data-line=\"1\">"
+      assert html =~ "<div class=\"line\" style=\"background-color: #282c34;\" data-line=\"2\">"
+    end
+  end
+
   describe "sigil_M" do
     test "markdown to document" do
       assert ~M|`lang = :elixir`| ==

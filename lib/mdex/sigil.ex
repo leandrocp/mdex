@@ -23,7 +23,10 @@ defmodule MDEx.Sigil do
     ],
     render: [
       unsafe: true,
-      escape: false
+      escape: false,
+      # github_pre_lang and full_info_string are required to enable code block decorators
+      github_pre_lang: true,
+      full_info_string: true
     ]
   ]
 
