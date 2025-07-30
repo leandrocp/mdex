@@ -25,6 +25,7 @@
 
 - Fast
 - Compliant with the [CommonMark spec](https://commonmark.org)
+- [Plugins](https://hexdocs.pm/mdex/plugins.html)
 - Formats:
   - Markdown (CommonMark)
   - HTML
