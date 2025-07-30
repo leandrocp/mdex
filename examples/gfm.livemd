@@ -5,12 +5,13 @@
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
+  {:mdex_gfm, "~> 0.1"},
   {:kino, "~> 0.16"},
   {:req, "~> 0.5"}
 ])
 ```
 
-## Example
+## Setup
 
 ````elixir
 markdown = """
@@ -35,32 +36,56 @@ end
 
 Check out the spec at https://github.github.com/gfm/
 """
+````
 
+<!-- livebook:{"output":true} -->
+
+````
+"# GitHub Flavored Markdown :eyes:\n\n| Feature | Status |\n| ------- | ------ |\n| Fast | :white_check_mark: |\n| GFM  | :white_check_mark: |\n\n- [x] Task A\n- [x] Task B\n- [ ] Task C\n\n```elixir\ndef deps do\n  [\n    {:mdex, \"~> 0.8\"}\n  ]\nend\n```\n\nCheck out the spec at https://github.github.com/gfm/\n"
+````
+
+## Plugin
+
+```elixir
+MDEx.new()
+|> MDExGFM.attach()
+|> MDEx.to_html!(
+  document: markdown,
+  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+)
+|> Kino.HTML.new()
+
+```
+
+## Manual
+
+```elixir
 options = [
   extension: [
-  strikethrough: true,
-  tagfilter: true,
-  table: true,
-  autolink: true,
-  tasklist: true,
-  footnotes: true,
-  shortcodes: true,
-],
-parse: [
-  smart: true,
-  relaxed_tasklist_matching: true,
-  relaxed_autolinks: true
-],
-render: [
-  github_pre_lang: true,
-  unsafe: true,
-],
+    alerts: true,
+    autolink: true,
+    footnotes: true,
+    shortcodes: true,
+    strikethrough: true,
+    table: true,
+    tagfilter: true,
+    tasklist: true
+  ],
+  parse: [
+    relaxed_autolinks: true,
+    relaxed_tasklist_matching: true
+  ],
+  render: [
+    github_pre_lang: true,
+    full_info_string: true,
+    unsafe: true
+  ],
   syntax_highlight: [
-  formatter: {:html_inline, theme: "github_light"}
-]
+    formatter: {:html_inline, theme: "github_light"}
+  ]
 ]
 
 markdown
 |> MDEx.to_html!(options)
 |> Kino.HTML.new()
-````
+```
