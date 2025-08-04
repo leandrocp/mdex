@@ -1,0 +1,427 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Custom Theme
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.8"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## Example
+
+```elixir
+theme = Autumn.Theme.get("github_light")
+
+function_call_style =
+  %Autumn.Theme.Style{
+    fg: "#d1242f",
+    bg: "#e4b7be",
+    bold: true
+  }
+
+new_theme = put_in(
+  theme,
+  [Access.key!(:highlights), Access.key!("function.call")],
+  function_call_style
+)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%Autumn.Theme{
+  name: "github_light",
+  appearance: "light",
+  revision: "c106c9472154d6b2c74b74565616b877ae8ed31d",
+  highlights: %{
+    "function.macro" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "variable.builtin" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.list.checked" => %Autumn.Theme.Style{
+      fg: "#116329",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "character" => %Autumn.Theme.Style{
+      fg: "#0a3069",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.special.symbol" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.strong" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.list.unchecked" => %Autumn.Theme.Style{
+      fg: "#57606a",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "variable.parameter.builtin" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "character.special" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "boolean" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.escape" => %Autumn.Theme.Style{
+      fg: "#0a3069",
+      bg: nil,
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "keyword.exception" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "keyword" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "module" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "comment.error" => %Autumn.Theme.Style{
+      fg: "#ffffff",
+      bg: "#d1242f",
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.link.label" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.documentation" => %Autumn.Theme.Style{
+      fg: "#0a3069",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.underline" => %Autumn.Theme.Style{
+      fg: nil,
+      bg: nil,
+      underline: true,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "type" => %Autumn.Theme.Style{
+      fg: "#953800",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "highlighted" => %Autumn.Theme.Style{
+      fg: nil,
+      bg: "#e7eaf0",
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "keyword.conditional.ternary" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string" => %Autumn.Theme.Style{
+      fg: "#0a3069",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.link.url" => %Autumn.Theme.Style{
+      fg: nil,
+      bg: nil,
+      underline: true,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "keyword.conditional" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "comment" => %Autumn.Theme.Style{
+      fg: "#57606a",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "property" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "variable.parameter" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.special.url" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: true,
+      bold: false,
+      italic: true,
+      strikethrough: false
+    },
+    "comment.todo" => %Autumn.Theme.Style{
+      fg: "#ffffff",
+      bg: "#d0d7de",
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "function" => %Autumn.Theme.Style{
+      fg: "#6639ba",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.special" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.heading" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.heading.2" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "number.float" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "variable" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "markup.heading.6" => %Autumn.Theme.Style{
+      fg: "#0550ae",
+      bg: nil,
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "function.call" => %Autumn.Theme.Style{
+      fg: "#d1242f",
+      bg: "#e4b7be",
+      underline: false,
+      bold: true,
+      italic: false,
+      strikethrough: false
+    },
+    "diff.plus" => %Autumn.Theme.Style{
+      fg: "#1a7f37",
+      bg: "#b8d0bf",
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "keyword.directive.define" => %Autumn.Theme.Style{
+      fg: "#cf222e",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "function.method" => %Autumn.Theme.Style{
+      fg: "#6639ba",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      strikethrough: false
+    },
+    "string.special.path" => %Autumn.Theme.Style{
+      fg: "#1f2328",
+      bg: nil,
+      underline: false,
+      bold: false,
+      italic: false,
+      ...
+    },
+    "comment.note" => %Autumn.Theme.Style{
+      fg: "#0969da",
+      bg: nil,
+      underline: false,
+      bold: false,
+      ...
+    },
+    "markup.strikethrough" => %Autumn.Theme.Style{fg: "#1f2328", bg: nil, underline: false, ...},
+    "normal" => %Autumn.Theme.Style{fg: "#1f2328", bg: "#ffffff", ...},
+    "type.builtin" => %Autumn.Theme.Style{fg: "#cf222e", ...},
+    "keyword.operator" => %Autumn.Theme.Style{...},
+    ...
+  }
+}
+```
+
+````elixir
+options = [
+  syntax_highlight: [formatter: {:html_inline, theme: new_theme}]
+]
+
+"""
+# Elixir
+```elixir
+# elixir example
+
+def fib(n), do: fib(n, 1, 1)
+
+def fib(0, _a, _b), do: []
+
+def fib(n, a, b) when n > 0 do
+  [a | fib(n - 1, b, a + b)]
+end
+```
+
+# Ruby
+```ruby
+# ruby example
+
+def fibonacci(n)
+  return n if (0..1).include?(n)
+  (fibonacci(n - 1) + fibonacci(n - 2))
+end
+```
+
+# Rust
+```rust
+// rust example
+
+fn fibonacci(n: u32) -> u32 {
+  match n {
+    0 => 1,
+    1 => 1,
+    _ => fibonacci(n - 1) + fibonacci(n - 2),
+  }
+}
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````

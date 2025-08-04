@@ -78,6 +78,7 @@ defmodule MDEx.MixProject do
         "CHANGELOG.md",
         "examples/gfm.livemd",
         "examples/syntax_highlight.livemd",
+        "examples/custom_theme.livemd",
         "examples/code_block_decorators.livemd",
         "examples/mermaid.livemd",
         "examples/highlight_words.livemd",
@@ -136,6 +137,7 @@ defmodule MDEx.MixProject do
         Examples: [
           "examples/gfm.livemd",
           "examples/syntax_highlight.livemd",
+          "examples/custom_theme.livemd",
           "examples/code_block_decorators.livemd",
           "examples/mermaid.livemd",
           "examples/highlight_words.livemd",
