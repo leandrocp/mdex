@@ -38,7 +38,7 @@
 - Wiki-style links
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
-- [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators.html)
+- [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 - HTML sanitization
 - [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, JSON, and XML
 

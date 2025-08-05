@@ -26,6 +26,8 @@ render: [
 
 _Following examples assume `render: [github_pre_lang: true, full_info_string: true]` is set._
 
+You can find a Livebook at [Examples / Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-1.html)
+
 #### Override Theme
 
 Change the syntax highlighting theme for a specific code block:

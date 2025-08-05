@@ -4,18 +4,20 @@
 
 ```elixir
 Mix.install([
-  {:mdex, "~> 0.8"},
+  {:mdex, "~> 0.8.1"},
   {:kino, "~> 0.16"}
 ])
 ```
 
-## Decorator: theme
+## Docs
+
+All options and more examples at [Guides / Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 
 ````elixir
 import MDEx.Sigil
 
 ~MD"""
-```elixir theme=gruvbox_light
+```elixir highlight_lines=2,5,8-10 theme=github_light
 defmodule Lines do
   @langs ["elixir", "rust"]
 
@@ -34,11 +36,13 @@ end
 
 ## Decorator: highlight_lines
 
+## Decorator: theme
+
 ````elixir
 import MDEx.Sigil
 
 ~MD"""
-```elixir highlight_lines=2,5,8-10
+```elixir theme=gruvbox_light
 defmodule Lines do
   @langs ["elixir", "rust"]
 
