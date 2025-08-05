@@ -85,8 +85,7 @@ defmodule MDEx.MixProject do
         "examples/liquid.livemd",
         {"guides/plugins.md", title: "Plugins"},
         {"guides/compilation.md", title: "Compilation"},
-        {"guides/safety.md", title: "Safety"},
-        {"guides/code_block_decorators.md", title: "Code Block Decorators"}
+        {"guides/safety.md", title: "Safety"}
       ],
       groups_for_modules: [
         "Document Nodes": [
@@ -146,8 +145,7 @@ defmodule MDEx.MixProject do
         Guides: [
           "guides/plugins.md",
           "guides/compilation.md",
-          "guides/safety.md",
-          "guides/code_block_decorators.md"
+          "guides/safety.md"
         ]
       ],
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
