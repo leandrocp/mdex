@@ -100,9 +100,9 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "autumnus"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6610793617f084d16d2ecd2c565cbf5deffa254af0d193be940c1b4638c5e7c"
+checksum = "e87d47306a3f6ab6b2836872fbf8494bfb2a882cfd01b9ae9b39a4bd8d2d1e79"
 dependencies = [
  "anyhow",
  "cc",
@@ -148,7 +148,6 @@ dependencies = [
  "tree-sitter-json",
  "tree-sitter-language",
  "tree-sitter-lua",
- "tree-sitter-md",
  "tree-sitter-nix",
  "tree-sitter-objc",
  "tree-sitter-ocaml",
@@ -2004,16 +2003,6 @@ name = "tree-sitter-lua"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5cdb9adf0965fec58e7660cbb3a059dbb12ebeec9459e6dcbae3db004739641e"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-
-[[package]]
-name = "tree-sitter-md"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17f968c22a01010b83fc960455ae729db08dbeb6388617d9113897cb9204b030"
 dependencies = [
  "cc",
  "tree-sitter-language",
