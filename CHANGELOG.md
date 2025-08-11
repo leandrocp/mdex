@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+  - Add new `extension` option `cjk_friendly_emphasis`
+
 ## 0.8.1 (2025-07-29)
 
 ### Added

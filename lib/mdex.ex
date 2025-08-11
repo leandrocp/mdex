@@ -241,6 +241,11 @@ defmodule MDEx do
         - Function callback is not supported, only string templates.
           Transform the Document AST for more complex cases.
       """
+    ],
+    cjk_friendly_emphasis: [
+      type: :boolean,
+      default: false,
+      doc: "Recognizes many emphasis that appear in CJK contexts but are not recognized by plain CommonMark."
     ]
   ]
 

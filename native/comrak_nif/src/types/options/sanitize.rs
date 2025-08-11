@@ -233,7 +233,7 @@ pub enum ExSanitizeCustomUrlRelative {
 }
 
 impl ExSanitizeCustomUrlRelative {
-    fn to_ammonia(&self) -> UrlRelative {
+    fn to_ammonia(&self) -> UrlRelative<'_> {
         match self {
             &ExSanitizeCustomUrlRelative::Deny => UrlRelative::Deny,
             &ExSanitizeCustomUrlRelative::Passthrough => UrlRelative::PassThrough,
