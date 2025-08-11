@@ -1,11 +1,18 @@
-For security reasons, every piece of raw HTML is omitted from the output by default:
+MDEx employs 4 mechanisms to handle safety: omitting), escaping, sanitizing, and unsafe rendering.
+
+TL;DR is if you trust the input then just use `unsafe: true` option to render raw HTML,
+otherwise consider using `sanitize: MDEx.default_sanitize_options()` to be on the safe side.
+
+### Omitting/Removing unsafe content (default)
+
+For security reasons, MDEx does not render raw HTML by default:
 
 ```elixir
 iex> MDEx.to_html!("<h1>Hello</h1>")
 "<!-- raw HTML omitted -->"
 ```
 
-That's not very useful for most cases, but you have a few options:
+But that's not very useful for most cases, so you have a few other options:
 
 ### Escape
 

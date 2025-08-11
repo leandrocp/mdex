@@ -34,15 +34,17 @@ def deps do
 end
 ```
 
-Check out the spec at https://github.github.com/gfm/
+Check out the spec at https://github.github.com/gfm
 """
 ````
 
 <!-- livebook:{"output":true} -->
 
 ````
-"# GitHub Flavored Markdown :eyes:\n\n| Feature | Status |\n| ------- | ------ |\n| Fast | :white_check_mark: |\n| GFM  | :white_check_mark: |\n\n- [x] Task A\n- [x] Task B\n- [ ] Task C\n\n```elixir\ndef deps do\n  [\n    {:mdex, \"~> 0.8\"}\n  ]\nend\n```\n\nCheck out the spec at https://github.github.com/gfm/\n"
+"# GitHub Flavored Markdown :eyes:\n\n| Feature | Status |\n| ------- | ------ |\n| Fast | :white_check_mark: |\n| GFM  | :white_check_mark: |\n\n- [x] Task A\n- [x] Task B\n- [ ] Task C\n\n```elixir\ndef deps do\n  [\n    {:mdex, \"~> 0.8\"}\n  ]\nend\n```\n\nCheck out the spec at https://github.github.com/gfm\n"
 ````
+
+You can either use the [mdex_gfm](https://hex.pm/packages/mdex_gfm) plugin or set the options yourself. You can find either approaches below.
 
 ## Plugin
 

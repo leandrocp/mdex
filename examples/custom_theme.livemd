@@ -11,6 +11,8 @@ Mix.install([
 
 ## Example
 
+Below we'll customize an existing theme but any [%Autumn.Theme{}](https://hexdocs.pm/autumn/Autumn.Theme.html) would work, even if built from scratch.
+
 ```elixir
 theme = Autumn.Theme.get("github_light")
 
