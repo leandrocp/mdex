@@ -58,6 +58,12 @@ def deps do
 end
 ```
 
+Or use [Igniter](https://hexdocs.pm/igniter):
+
+```sh
+mix igniter.install mdex
+```
+
 ## Usage
 
 ```elixir
