@@ -49,7 +49,7 @@ jobs:
           - { target: x86_64-unknown-linux-musl,    os: ubuntu-22.04, use-cross: true }
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract crate information
         shell: bash
