@@ -8,6 +8,10 @@
   - [Docs] Add Code Block Decorators guide
   - [Docs] Add mdex_gfm plugin
 
+### Changed
+  - [Deps] Update `autumnus` to v0.7.3
+  - [Deps] Update `autumn` to v0.5.2
+
 ## 0.8.1 (2025-07-29)
 
 ### Added
