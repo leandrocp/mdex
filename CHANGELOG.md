@@ -1,7 +1,12 @@
 # Changelog
 
 ## Unreleased
+
+### Added
   - Add new `extension` option `cjk_friendly_emphasis`
+  - [Docs] Add Custom Theme example
+  - [Docs] Add Code Block Decorators guide
+  - [Docs] Add mdex_gfm plugin
 
 ## 0.8.1 (2025-07-29)
 
