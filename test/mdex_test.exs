@@ -279,6 +279,97 @@ defmodule MDExTest do
            }
   end
 
+  describe "parse_partial_fragment" do
+    test "text" do
+      assert MDEx.parse_partial_fragment("test") == %MDEx.Text{literal: "test"}
+      assert MDEx.parse_partial_fragment("") == %MDEx.Text{literal: ""}
+    end
+
+    test "code" do
+      assert MDEx.parse_partial_fragment("`elixir`") == %MDEx.Code{literal: "elixir", num_backticks: 1}
+      assert MDEx.parse_partial_fragment("`elixir") == %MDEx.Code{literal: "elixir", num_backticks: 1}
+      assert MDEx.parse_partial_fragment("`partial_code") == %MDEx.Code{literal: "partial_code", num_backticks: 1}
+      assert MDEx.parse_partial_fragment("`") == %MDEx.Code{literal: "", num_backticks: 1}
+    end
+
+    test "strong" do
+      assert MDEx.parse_partial_fragment("**bold**") == %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
+      assert MDEx.parse_partial_fragment("**partial_strong") == %MDEx.Strong{nodes: [%MDEx.Text{literal: "partial_strong"}]}
+      assert MDEx.parse_partial_fragment("**") == %MDEx.Strong{nodes: [%MDEx.Text{literal: ""}]}
+    end
+
+    test "emphasis" do
+      assert MDEx.parse_partial_fragment("*italic*") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}
+      assert MDEx.parse_partial_fragment("*em") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "em"}]}
+
+      assert MDEx.parse_partial_fragment("_italic_") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}
+      assert MDEx.parse_partial_fragment("_em") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "em"}]}
+
+      assert MDEx.parse_partial_fragment("_") == %MDEx.Emph{nodes: [%MDEx.Text{literal: ""}]}
+    end
+
+    test "image" do
+      assert MDEx.parse_partial_fragment("![alt text](image.png") == %MDEx.Image{
+               url: "image.png",
+               title: "",
+               nodes: [%MDEx.Text{literal: "alt text"}]
+             }
+
+      assert MDEx.parse_partial_fragment("![partial_image") == %MDEx.Image{url: "", title: "", nodes: [%MDEx.Text{literal: "partial_image"}]}
+      assert MDEx.parse_partial_fragment("![") == %MDEx.Image{url: "", title: "", nodes: [%MDEx.Text{literal: ""}]}
+    end
+
+    test "link" do
+      assert MDEx.parse_partial_fragment("[foo](bar") == %MDEx.Link{url: "bar", title: "", nodes: [%MDEx.Text{literal: "foo"}]}
+      assert MDEx.parse_partial_fragment("[partial_link") == %MDEx.Link{url: "", title: "", nodes: [%MDEx.Text{literal: "partial_link"}]}
+      assert MDEx.parse_partial_fragment("[") == %MDEx.Link{url: "", title: "", nodes: [%MDEx.Text{literal: ""}]}
+    end
+
+    test "spoilered text" do
+      assert MDEx.parse_partial_fragment("||spoiler||", extension: [spoiler: true]) == %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "spoiler"}]}
+
+      assert MDEx.parse_partial_fragment("||partial_spoiler", extension: [spoiler: true]) == %MDEx.SpoileredText{
+               nodes: [%MDEx.Text{literal: "partial_spoiler"}]
+             }
+
+      assert MDEx.parse_partial_fragment("||", extension: [spoiler: true]) == %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: ""}]}
+
+      assert MDEx.parse_partial_fragment("||spoiler||") == %MDEx.Text{literal: "||spoiler||"}
+      assert MDEx.parse_partial_fragment("||partial_spoiler") == %MDEx.Text{literal: "||partial_spoiler"}
+      assert MDEx.parse_partial_fragment("||") == %MDEx.Text{literal: "||"}
+    end
+
+    test "strikethrough" do
+      assert MDEx.parse_partial_fragment("~~strike~~", extension: [strikethrough: true]) == %MDEx.Strikethrough{
+               nodes: [%MDEx.Text{literal: "strike"}]
+             }
+
+      assert MDEx.parse_partial_fragment("~~partial_strike", extension: [strikethrough: true]) == %MDEx.Strikethrough{
+               nodes: [%MDEx.Text{literal: "partial_strike"}]
+             }
+
+      assert MDEx.parse_partial_fragment("~~", extension: [strikethrough: true]) == %MDEx.Strikethrough{nodes: [%MDEx.Text{literal: ""}]}
+
+      assert MDEx.parse_partial_fragment("~~strike~~") == %MDEx.Text{literal: "~~strike~~"}
+      assert MDEx.parse_partial_fragment("~~partial_strike") == %MDEx.Text{literal: "~~partial_strike"}
+      assert MDEx.parse_partial_fragment("~~") == %MDEx.Text{literal: "~~"}
+    end
+
+    test "shortcode" do
+      assert MDEx.parse_partial_fragment(":smile:", extension: [shortcodes: true]) == %MDEx.ShortCode{code: "smile", emoji: "😄"}
+      assert MDEx.parse_partial_fragment(":partial_code", extension: [shortcodes: true]) == %MDEx.ShortCode{code: "partial_code", emoji: ""}
+      assert MDEx.parse_partial_fragment(":", extension: [shortcodes: true]) == %MDEx.ShortCode{code: "", emoji: ""}
+
+      assert MDEx.parse_partial_fragment(":smile:") == %MDEx.Text{literal: ":smile:"}
+      assert MDEx.parse_partial_fragment(":partial_code") == %MDEx.Text{literal: ":partial_code"}
+      assert MDEx.parse_partial_fragment(":") == %MDEx.Text{literal: ":"}
+    end
+
+    test "heading" do
+      assert MDEx.parse_partial_fragment("# Test") == %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Test"}], setext: false}
+    end
+  end
+
   describe "security" do
     test "omit raw html by default" do
       assert MDEx.to_html!("<h1>test</h1>") == "<!-- raw HTML omitted -->"

@@ -459,24 +459,23 @@ defmodule MDEx.Document do
   def pop(%MDEx.Document{} = document, key, default \\ nil), do: MDEx.Document.Access.pop(document, key, default)
 
   defimpl Collectable do
-    def into(%MDEx.Document{nodes: nodes}) do
+    def into(%MDEx.Document{} = document) do
       fun = fn
-        acc, {:cont, node} when is_struct(node) ->
-          [node | acc]
+        doc, {:cont, node} when is_struct(node) ->
+          MDEx.Tree.append_node(doc, node)
 
-        acc, :done ->
-          nodes = nodes ++ :lists.reverse(acc)
-          %MDEx.Document{nodes: nodes}
+        doc, :done ->
+          doc
 
-        _acc, :halt ->
+        _doc, :halt ->
           :ok
 
-        _acc, {:cont, other} ->
+        _doc, {:cont, other} ->
           raise ArgumentError,
                 "collecting into MDEx.Document requires a MDEx node, got: #{inspect(other)}"
       end
 
-      {[], fun}
+      {document, fun}
     end
   end
 end

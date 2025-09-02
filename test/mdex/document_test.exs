@@ -453,7 +453,7 @@ defmodule MDEx.DocumentTest do
   end
 
   describe "Collectable protocol" do
-    test "into document" do
+    test "into document with smart tree appending" do
       nodes = [
         %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
         %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
@@ -472,6 +472,97 @@ defmodule MDEx.DocumentTest do
                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                  ]
                }
+    end
+
+    test "into document appends list items to existing list" do
+      list_items = [
+        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]},
+        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item3"}]}]}
+      ]
+
+      starting_doc = %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
+          %MDEx.List{
+            nodes: [
+              %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]}
+            ]
+          }
+        ]
+      }
+
+      result = Enum.into(list_items, starting_doc)
+
+      assert result == %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
+                 %MDEx.List{
+                   nodes: [
+                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
+                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]},
+                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item3"}]}]}
+                   ]
+                 }
+               ]
+             }
+
+      assert MDEx.to_markdown!(result) == "intro\n\n- item1\n- item2\n- item3"
+    end
+
+    test "into document creates new list for orphaned list items" do
+      list_items = [
+        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
+        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
+      ]
+
+      starting_doc = %MDEx.Document{
+        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]}]
+      }
+
+      result = Enum.into(list_items, starting_doc)
+
+      assert result == %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
+                 %MDEx.List{
+                   nodes: [
+                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
+                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
+                   ]
+                 }
+               ]
+             }
+
+      assert MDEx.to_markdown!(result) == "intro\n\n- item1\n- item2"
+    end
+
+    test "into document handles mixed node types intelligently" do
+      nodes = [
+        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item"}]}]},
+        %MDEx.CodeBlock{literal: "println!(\"Hello\");", info: "rust"},
+        %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "final"}]}
+      ]
+
+      starting_doc = %MDEx.Document{
+        nodes: [
+          %MDEx.List{
+            nodes: [
+              %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
+            ]
+          }
+        ]
+      }
+
+      result = Enum.into(nodes, starting_doc)
+
+      expected_markdown = "- first\n- item\n\n<!-- end list -->\n\n``` rust\nprintln!(\"Hello\");\n```\n\nfinal"
+      assert MDEx.to_markdown!(result) == expected_markdown
+    end
+
+    test "into document validates node types" do
+      assert_raise ArgumentError, ~r/collecting into MDEx\.Document requires a MDEx node/, fn ->
+        Enum.into(["not a node"], %MDEx.Document{})
+      end
     end
   end
 

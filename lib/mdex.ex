@@ -966,7 +966,11 @@ defmodule MDEx do
 
   """
   @spec parse_fragment(String.t(), options()) :: {:ok, Document.md_node()} | nil
-  def parse_fragment(markdown, options \\ []) when is_binary(markdown) do
+  def parse_fragment(markdown, options \\ [])
+
+  def parse_fragment("" = _markdown, _options), do: nil
+
+  def parse_fragment(markdown, options) when is_binary(markdown) do
     case parse_document(markdown, options) do
       {:ok, %Document{nodes: [%MDEx.Paragraph{nodes: [node]}]}} -> {:ok, node}
       {:ok, %Document{nodes: [node]}} -> {:ok, node}
@@ -989,6 +993,77 @@ defmodule MDEx do
       _ -> raise %InvalidInputError{found: markdown}
     end
   end
+
+  def parse_partial_fragment(markdown, options \\ [])
+
+  def parse_partial_fragment("" = _markdown, _options), do: %MDEx.Text{literal: ""}
+
+  def parse_partial_fragment(markdown, options) do
+    case parse_fragment(markdown, options) do
+      {:ok, %MDEx.Text{literal: literal}} -> upgrade_partial_text(literal, options)
+      {:ok, node} -> node
+      other -> other
+    end
+  end
+
+  defp upgrade_partial_text(<<"||", rest::binary>>, options) do
+    if Keyword.get(options, :extension, [])[:spoiler] do
+      %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: rest}]}
+    else
+      %MDEx.Text{literal: "||" <> rest}
+    end
+  end
+
+  defp upgrade_partial_text(<<"~~", rest::binary>>, options) do
+    if Keyword.get(options, :extension, [])[:strikethrough] do
+      %MDEx.Strikethrough{nodes: [%MDEx.Text{literal: rest}]}
+    else
+      %MDEx.Text{literal: "~~" <> rest}
+    end
+  end
+
+  defp upgrade_partial_text(<<":", rest::binary>>, options) do
+    if Keyword.get(options, :extension, [])[:shortcodes] do
+      case String.split(rest, ":", parts: 2) do
+        [code, _] -> %MDEx.ShortCode{code: code, emoji: ""}
+        [code] -> %MDEx.ShortCode{code: code, emoji: ""}
+      end
+    else
+      %MDEx.Text{literal: ":" <> rest}
+    end
+  end
+
+  defp upgrade_partial_text(<<"`", rest::binary>>, _options) do
+    %MDEx.Code{num_backticks: 1, literal: rest}
+  end
+
+  defp upgrade_partial_text(<<"**", rest::binary>>, _options) do
+    %MDEx.Strong{nodes: [%MDEx.Text{literal: rest}]}
+  end
+
+  defp upgrade_partial_text(<<"*", rest::binary>>, _options) do
+    %MDEx.Emph{nodes: [%MDEx.Text{literal: rest}]}
+  end
+
+  defp upgrade_partial_text(<<"_", rest::binary>>, _options) do
+    %MDEx.Emph{nodes: [%MDEx.Text{literal: rest}]}
+  end
+
+  defp upgrade_partial_text(<<"![", rest::binary>>, _options) do
+    case String.split(rest, "](", parts: 2) do
+      [alt_text, url] -> %MDEx.Image{url: url, title: "", nodes: [%MDEx.Text{literal: alt_text}]}
+      [alt_text] -> %MDEx.Image{url: "", title: "", nodes: [%MDEx.Text{literal: alt_text}]}
+    end
+  end
+
+  defp upgrade_partial_text(<<"[", rest::binary>>, _options) do
+    case String.split(rest, "](", parts: 2) do
+      [text, url] -> %MDEx.Link{url: url, title: "", nodes: [%MDEx.Text{literal: text}]}
+      [text] -> %MDEx.Link{url: "", title: "", nodes: [%MDEx.Text{literal: text}]}
+    end
+  end
+
+  defp upgrade_partial_text(literal, _options), do: %MDEx.Text{literal: literal}
 
   @doc """
   Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML.
