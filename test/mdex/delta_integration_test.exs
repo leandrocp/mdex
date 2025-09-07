@@ -478,4 +478,77 @@ defmodule MDEx.DeltaIntegrationTest do
       assert has_task, "Should contain task items"
     end
   end
+
+  describe "public API input types" do
+    test "converts Document struct directly" do
+      doc = %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Text{literal: "Direct document conversion"}]
+          }
+        ]
+      }
+      
+      assert {:ok, %{"ops" => [
+        %{"insert" => "Direct document conversion"},
+        %{"insert" => "\n"}
+      ]}} = MDEx.to_delta(doc)
+    end
+
+    test "converts Pipe struct" do
+      pipe = MDEx.new(document: "*italic*")
+      
+      assert {:ok, %{"ops" => [
+        %{"insert" => "italic", "attributes" => %{"italic" => true}},
+        %{"insert" => "\n"}
+      ]}} = MDEx.to_delta(pipe)
+    end
+
+    test "converts single node fragment" do
+      fragment = %MDEx.Text{literal: "Fragment text"}
+      
+      assert {:ok, %{"ops" => [
+        %{"insert" => "Fragment text"}
+      ]}} = MDEx.to_delta(fragment)
+    end
+
+    test "converts list of nodes fragment" do
+      fragment = [
+        %MDEx.Text{literal: "First "},
+        %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]},
+        %MDEx.Text{literal: " text"}
+      ]
+      
+      assert {:ok, %{"ops" => [
+        %{"insert" => "First "},
+        %{"insert" => "bold", "attributes" => %{"bold" => true}},
+        %{"insert" => " text"}
+      ]}} = MDEx.to_delta(fragment)
+    end
+
+    test "to_delta! returns delta directly on success" do
+      markdown = "**bold**"
+      
+      assert %{"ops" => [
+        %{"insert" => "bold", "attributes" => %{"bold" => true}},
+        %{"insert" => "\n"}
+      ]} = MDEx.to_delta!(markdown)
+    end
+
+    test "to_delta! raises on invalid input" do
+      assert_raise MDEx.InvalidInputError, fn ->
+        MDEx.to_delta!(%{invalid: "input"})
+      end
+    end
+
+    test "accepts custom_converters option" do
+      markdown = "Hello world"
+      options = [custom_converters: %{}]
+      
+      assert {:ok, %{"ops" => [
+        %{"insert" => "Hello world"},
+        %{"insert" => "\n"}
+      ]}} = MDEx.to_delta(markdown, options)
+    end
+  end
 end
