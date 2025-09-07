@@ -710,4 +710,187 @@ defmodule MDEx.DeltaConverterTest do
       assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
   end
+
+  describe "custom converters" do
+    test "custom table converter creates structured Delta objects" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Table{
+            nodes: [
+              %MDEx.TableRow{
+                header: true,
+                nodes: [
+                  %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Name"}]},
+                  %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Age"}]}
+                ]
+              },
+              %MDEx.TableRow{
+                header: false,
+                nodes: [
+                  %MDEx.TableCell{nodes: [%MDEx.Text{literal: "John"}]},
+                  %MDEx.TableCell{nodes: [%MDEx.Text{literal: "30"}]}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+
+      table_converter = fn %MDEx.Table{nodes: rows}, _current_attrs, _options ->
+        [%{
+          "insert" => %{
+            "table" => %{
+              "rows" => length(rows),
+              "data" => "custom_table_data"
+            }
+          }
+        }]
+      end
+
+      expected = %{"ops" => [
+        %{
+          "insert" => %{
+            "table" => %{
+              "rows" => 2,
+              "data" => "custom_table_data"
+            }
+          }
+        }
+      ]}
+
+      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Table => table_converter}})
+    end
+
+    test "skip converter skips nodes entirely" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "Before math "},
+              %MDEx.Math{literal: "x^2", display_math: false},
+              %MDEx.Text{literal: " after math"}
+            ]
+          }
+        ]
+      }
+
+      math_skipper = fn %MDEx.Math{}, _current_attrs, _options -> :skip end
+
+      expected = %{"ops" => [
+        %{"insert" => "Before math "},
+        %{"insert" => " after math"},
+        %{"insert" => "\n"}
+      ]}
+
+      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Math => math_skipper}})
+    end
+
+    test "custom image converter with custom format" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Image{url: "https://example.com/image.png", title: "Example Image"}
+            ]
+          }
+        ]
+      }
+
+      image_converter = fn %MDEx.Image{url: url, title: title}, _current_attrs, _options ->
+        [%{
+          "insert" => %{"custom_image" => %{"src" => url, "alt" => title || ""}},
+          "attributes" => %{"display" => "block"}
+        }]
+      end
+
+      expected = %{"ops" => [
+        %{
+          "insert" => %{"custom_image" => %{"src" => "https://example.com/image.png", "alt" => "Example Image"}},
+          "attributes" => %{"display" => "block"}
+        },
+        %{"insert" => "\n"}
+      ]}
+
+      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Image => image_converter}})
+    end
+
+    test "custom converter returning empty list skips the node" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "Before "},
+              %MDEx.Code{literal: "test"},
+              %MDEx.Text{literal: " after"}
+            ]
+          }
+        ]
+      }
+
+      skip_converter = fn %MDEx.Code{}, _current_attrs, _options -> [] end
+
+      expected = %{"ops" => [
+        %{"insert" => "Before "},
+        %{"insert" => " after"},
+        %{"insert" => "\n"}
+      ]}
+
+      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Code => skip_converter}})
+    end
+
+    test "custom converter returning error propagates error" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Code{literal: "test"}]
+          }
+        ]
+      }
+
+      error_converter = fn %MDEx.Code{}, _current_attrs, _options -> {:error, "Custom error"} end
+
+      assert {:error, {:custom_converter_error, "Custom error"}} = 
+        DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Code => error_converter}})
+    end
+
+    test "multiple custom converters work together" do
+      doc = %Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Strong{nodes: [%MDEx.Text{literal: "Bold"}]},
+              %MDEx.Text{literal: " and "},
+              %MDEx.Math{literal: "x^2", display_math: false}
+            ]
+          }
+        ]
+      }
+
+      math_to_text = fn %MDEx.Math{literal: math}, _current_attrs, _options ->
+        [%{"insert" => "[MATH: #{math}]", "attributes" => %{"math_placeholder" => true}}]
+      end
+
+      strong_to_caps = fn %MDEx.Strong{nodes: children}, _current_attrs, _options ->
+        child_text = Enum.map_join(children, "", fn
+          %MDEx.Text{literal: text} -> String.upcase(text)
+          _ -> ""
+        end)
+        [%{"insert" => child_text, "attributes" => %{"uppercase" => true}}]
+      end
+
+      expected = %{"ops" => [
+        %{"insert" => "BOLD", "attributes" => %{"uppercase" => true}},
+        %{"insert" => " and "},
+        %{"insert" => "[MATH: x^2]", "attributes" => %{"math_placeholder" => true}},
+        %{"insert" => "\n"}
+      ]}
+
+      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{
+        custom_converters: %{
+          MDEx.Math => math_to_text,
+          MDEx.Strong => strong_to_caps
+        }
+      })
+    end
+  end
 end

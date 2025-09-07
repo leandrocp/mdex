@@ -1308,6 +1308,51 @@ defmodule MDEx do
 
     * `:custom_converters` - map of node types to converter functions for custom behavior
 
+  ## Custom Converters
+
+  Custom converters allow you to override the default behavior for any node type:
+
+      # Example: Custom table converter that creates structured Delta objects
+      table_converter = fn %MDEx.Table{nodes: rows}, _current_attrs, _options ->
+        [%{
+          "insert" => %{
+            "table" => %{
+              "rows" => length(rows),
+              "data" => "custom_table_data"
+            }
+          }
+        }]
+      end
+
+      # Example: Skip math nodes entirely
+      math_skipper = fn %MDEx.Math{}, _current_attrs, _options -> :skip end
+
+      # Example: Convert images to custom format
+      image_converter = fn %MDEx.Image{url: url, title: title}, _current_attrs, _options ->
+        [%{
+          "insert" => %{"custom_image" => %{"src" => url, "alt" => title || ""}},
+          "attributes" => %{"display" => "block"}
+        }]
+      end
+
+      # Usage
+      MDEx.to_delta(document, [
+        custom_converters: %{
+          MDEx.Table => table_converter,
+          MDEx.Math => math_skipper,
+          MDEx.Image => image_converter
+        }
+      ])
+
+  ### Custom Converter Contract
+
+  Input: `(node :: MDEx.Document.md_node(), current_attrs :: [map()], options :: keyword())`
+  
+  Output: 
+    - `[delta_op()]` - List of Delta operations to insert
+    - `:skip` - Skip this node entirely
+    - `{:error, reason}` - Return an error
+
   """
   @spec to_delta(source(), keyword()) :: 
           {:ok, map()} | {:error, MDEx.DecodeError.t()} | {:error, MDEx.InvalidInputError.t()}

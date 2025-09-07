@@ -64,21 +64,39 @@ defmodule MDEx.DeltaConverter do
 
   # Convert individual nodes to delta operations
   @spec convert_node(term(), [map()], options()) :: [delta_op()]
-  defp convert_node(node, current_attrs, options)
+  defp convert_node(node, current_attrs, options) do
+    # Check for custom converters first
+    case get_in(options, [:custom_converters, node.__struct__]) do
+      converter when is_function(converter, 3) ->
+        case converter.(node, current_attrs, options) do
+          :skip -> []
+          {:error, reason} -> throw({:custom_converter_error, reason})
+          ops when is_list(ops) -> ops
+          other -> throw({:custom_converter_error, "Custom converter returned invalid value: #{inspect(other)}"})
+        end
+      nil ->
+        # Use default conversion
+        default_convert_node(node, current_attrs, options)
+    end
+  end
+
+  # Default conversion for all node types
+  @spec default_convert_node(term(), [map()], options()) :: [delta_op()]
+  defp default_convert_node(node, current_attrs, options)
 
   # Document - process child nodes
-  defp convert_node(%MDEx.Document{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Document{nodes: nodes}, current_attrs, options) do
     convert_nodes(nodes, current_attrs, options)
   end
 
   # Paragraph - process children, add paragraph break at end
-  defp convert_node(%MDEx.Paragraph{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Paragraph{nodes: nodes}, current_attrs, options) do
     child_ops = convert_nodes(nodes, current_attrs, options)
     child_ops ++ [%{"insert" => "\n"}]
   end
 
   # Text - insert literal content
-  defp convert_node(%MDEx.Text{literal: text}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.Text{literal: text}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
     if map_size(attrs) == 0 do
       [%{"insert" => text}]
@@ -88,75 +106,75 @@ defmodule MDEx.DeltaConverter do
   end
 
   # Strong (bold) - add bold attribute to children
-  defp convert_node(%MDEx.Strong{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Strong{nodes: nodes}, current_attrs, options) do
     new_attrs = [%{"bold" => true} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Emph (italic) - add italic attribute to children
-  defp convert_node(%MDEx.Emph{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Emph{nodes: nodes}, current_attrs, options) do
     new_attrs = [%{"italic" => true} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Code (inline) - add code attribute to children
-  defp convert_node(%MDEx.Code{literal: code}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.Code{literal: code}, current_attrs, _options) do
     attrs = merge_attributes([%{"code" => true} | current_attrs])
     [%{"insert" => code, "attributes" => attrs}]
   end
 
   # Headings - process children with header attribute on line break
-  defp convert_node(%MDEx.Heading{nodes: nodes, level: level}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Heading{nodes: nodes, level: level}, current_attrs, options) do
     child_ops = convert_nodes(nodes, current_attrs, options)
     header_attrs = merge_attributes([%{"header" => level} | current_attrs])
     child_ops ++ [%{"insert" => "\n", "attributes" => header_attrs}]
   end
 
   # SoftBreak - insert space (Quill doesn't distinguish soft/hard breaks in plain text)
-  defp convert_node(%MDEx.SoftBreak{}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.SoftBreak{}, _current_attrs, _options) do
     [%{"insert" => " "}]
   end
 
   # LineBreak - insert explicit line break
-  defp convert_node(%MDEx.LineBreak{}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.LineBreak{}, _current_attrs, _options) do
     [%{"insert" => "\n"}]
   end
 
   # Phase 2: Exotic Nodes with Custom Attributes
 
   # Strikethrough - add strike attribute to children
-  defp convert_node(%MDEx.Strikethrough{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Strikethrough{nodes: nodes}, current_attrs, options) do
     new_attrs = [%{"strike" => true} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Underline - add underline attribute to children
-  defp convert_node(%MDEx.Underline{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Underline{nodes: nodes}, current_attrs, options) do
     new_attrs = [%{"underline" => true} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Link - add link attribute to children
-  defp convert_node(%MDEx.Link{url: url, nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Link{url: url, nodes: nodes}, current_attrs, options) do
     new_attrs = [%{"link" => url} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Image - use custom insert object
-  defp convert_node(%MDEx.Image{url: url, title: title}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.Image{url: url, title: title}, _current_attrs, _options) do
     image_data = %{"image" => url}
     image_data = if title, do: Map.put(image_data, "alt", title), else: image_data
     [%{"insert" => image_data}]
   end
 
   # BlockQuote - apply blockquote attribute to newlines
-  defp convert_node(%MDEx.BlockQuote{nodes: nodes}, current_attrs, options) do
+  defp default_convert_node(%MDEx.BlockQuote{nodes: nodes}, current_attrs, options) do
     child_ops = convert_nodes(nodes, current_attrs, options)
     apply_block_format(child_ops, %{"blockquote" => true})
   end
 
   # CodeBlock - insert code with code-block attribute
-  defp convert_node(%MDEx.CodeBlock{literal: code, info: info}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.CodeBlock{literal: code, info: info}, _current_attrs, _options) do
     attrs = %{"code-block" => true}
     attrs = if info && info != "", do: Map.put(attrs, "code-block-lang", info), else: attrs
     [
@@ -166,16 +184,16 @@ defmodule MDEx.DeltaConverter do
   end
 
   # ThematicBreak (HR) - convert to text representation
-  defp convert_node(%MDEx.ThematicBreak{}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.ThematicBreak{}, _current_attrs, _options) do
     [%{"insert" => "---\n"}]
   end
 
   # Lists - support for bullet and ordered
-  defp convert_node(%MDEx.List{nodes: items}, current_attrs, options) do
+  defp default_convert_node(%MDEx.List{nodes: items}, current_attrs, options) do
     convert_nodes(items, current_attrs, options)
   end
 
-  defp convert_node(%MDEx.ListItem{list_type: list_type, nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.ListItem{list_type: list_type, nodes: children}, current_attrs, options) do
     # Extract content and apply list formatting
     child_ops = Enum.flat_map(children, fn
       %MDEx.Paragraph{nodes: paragraph_children} ->
@@ -194,7 +212,7 @@ defmodule MDEx.DeltaConverter do
   end
 
   # TaskItem - block-level attribute on newline
-  defp convert_node(%MDEx.TaskItem{checked: checked, nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.TaskItem{checked: checked, nodes: children}, current_attrs, options) do
     # Extract content from children (usually paragraphs)
     child_ops = Enum.flat_map(children, fn
       %MDEx.Paragraph{nodes: paragraph_children} ->
@@ -209,13 +227,13 @@ defmodule MDEx.DeltaConverter do
   end
 
   # FootnoteReference - inline attribute
-  defp convert_node(%MDEx.FootnoteReference{name: name}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.FootnoteReference{name: name}, current_attrs, _options) do
     attrs = merge_attributes([%{"footnote_ref" => name} | current_attrs])
     [%{"insert" => "[^#{name}]", "attributes" => attrs}]
   end
 
   # FootnoteDefinition - block-level attribute on newline
-  defp convert_node(%MDEx.FootnoteDefinition{name: name, nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.FootnoteDefinition{name: name, nodes: children}, current_attrs, options) do
     child_ops = convert_nodes(children, current_attrs, options)
     
     # Apply footnote definition to the final newline
@@ -239,25 +257,25 @@ defmodule MDEx.DeltaConverter do
   end
 
   # Subscript and superscript - inline attributes
-  defp convert_node(%MDEx.Subscript{nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Subscript{nodes: children}, current_attrs, options) do
     new_attrs = [%{"subscript" => true} | current_attrs]
     convert_nodes(children, new_attrs, options)
   end
 
-  defp convert_node(%MDEx.Superscript{nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Superscript{nodes: children}, current_attrs, options) do
     new_attrs = [%{"superscript" => true} | current_attrs]
     convert_nodes(children, new_attrs, options)
   end
 
   # Math - inline attribute with type
-  defp convert_node(%MDEx.Math{literal: math, display_math: display?}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.Math{literal: math, display_math: display?}, current_attrs, _options) do
     math_type = if display?, do: "display", else: "inline"
     attrs = merge_attributes([%{"math" => math_type} | current_attrs])
     [%{"insert" => math, "attributes" => attrs}]
   end
 
   # Alerts - custom attributes for type and styling
-  defp convert_node(%MDEx.Alert{alert_type: type, title: title, nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Alert{alert_type: type, title: title, nodes: children}, current_attrs, options) do
     child_ops = convert_nodes(children, current_attrs, options)
     
     alert_attrs = %{"alert" => Atom.to_string(type)}
@@ -267,23 +285,23 @@ defmodule MDEx.DeltaConverter do
   end
 
   # SpoileredText - inline attribute
-  defp convert_node(%MDEx.SpoileredText{nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.SpoileredText{nodes: children}, current_attrs, options) do
     new_attrs = [%{"spoiler" => true} | current_attrs]
     convert_nodes(children, new_attrs, options)
   end
 
   # WikiLinks - link with wikilink attribute
-  defp convert_node(%MDEx.WikiLink{url: url, nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.WikiLink{url: url, nodes: children}, current_attrs, options) do
     new_attrs = [%{"link" => url, "wikilink" => true} | current_attrs]
     convert_nodes(children, new_attrs, options)
   end
 
   # Tables - simplified tab-separated text with table attributes
-  defp convert_node(%MDEx.Table{nodes: rows}, current_attrs, options) do
+  defp default_convert_node(%MDEx.Table{nodes: rows}, current_attrs, options) do
     convert_nodes(rows, current_attrs, options)
   end
 
-  defp convert_node(%MDEx.TableRow{header: is_header, nodes: cells}, current_attrs, options) do
+  defp default_convert_node(%MDEx.TableRow{header: is_header, nodes: cells}, current_attrs, options) do
     cell_ops = Enum.flat_map(cells, fn cell ->
       cell_content = convert_node(cell, current_attrs, options)
       cell_content ++ [%{"insert" => "\t"}]
@@ -296,25 +314,25 @@ defmodule MDEx.DeltaConverter do
     cell_ops ++ [%{"insert" => "\n", "attributes" => row_attrs}]
   end
 
-  defp convert_node(%MDEx.TableCell{nodes: children}, current_attrs, options) do
+  defp default_convert_node(%MDEx.TableCell{nodes: children}, current_attrs, options) do
     convert_nodes(children, current_attrs, options)
   end
 
   # HTML nodes - block vs inline attributes
-  defp convert_node(%MDEx.HtmlBlock{literal: html}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.HtmlBlock{literal: html}, _current_attrs, _options) do
     [
       %{"insert" => html},
       %{"insert" => "\n", "attributes" => %{"html" => "block"}}
     ]
   end
 
-  defp convert_node(%MDEx.HtmlInline{literal: html}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.HtmlInline{literal: html}, current_attrs, _options) do
     attrs = merge_attributes([%{"html" => "inline"} | current_attrs])
     [%{"insert" => html, "attributes" => attrs}]
   end
 
   # ShortCode - already processed to emoji, treat as text
-  defp convert_node(%MDEx.ShortCode{emoji: emoji}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.ShortCode{emoji: emoji}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
     if map_size(attrs) == 0 do
       [%{"insert" => emoji}]
@@ -324,7 +342,7 @@ defmodule MDEx.DeltaConverter do
   end
 
   # Raw - pass through as-is
-  defp convert_node(%MDEx.Raw{literal: content}, current_attrs, _options) do
+  defp default_convert_node(%MDEx.Raw{literal: content}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
     if map_size(attrs) == 0 do
       [%{"insert" => content}]
@@ -334,29 +352,16 @@ defmodule MDEx.DeltaConverter do
   end
 
   # FrontMatter - block-level attribute
-  defp convert_node(%MDEx.FrontMatter{literal: content}, _current_attrs, _options) do
+  defp default_convert_node(%MDEx.FrontMatter{literal: content}, _current_attrs, _options) do
     [
       %{"insert" => content},
       %{"insert" => "\n", "attributes" => %{"front_matter" => true}}
     ]
   end
 
-  # Custom converter fallback
-  defp convert_node(node, current_attrs, %{custom_converters: converters}) do
-    node_type = node.__struct__
-    case Map.get(converters, node_type) do
-      nil ->
-        # Unknown node type - try to extract text content or skip
-        extract_text_content(node, current_attrs)
-      converter when is_function(converter, 3) ->
-        converter.(node, current_attrs, %{custom_converters: converters})
-      _ ->
-        []
-    end
-  end
-
-  defp convert_node(node, current_attrs, _options) do
-    # Unknown node type without custom converters
+  # Fallback for unknown node types
+  defp default_convert_node(node, current_attrs, _options) do
+    # Unknown node type - try to extract text content or skip
     extract_text_content(node, current_attrs)
   end
 
