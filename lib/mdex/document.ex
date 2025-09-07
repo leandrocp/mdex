@@ -1249,3 +1249,329 @@ defimpl Jason.Encoder,
     Jason.Encode.map(map, opts)
   end
 end
+
+defimpl Inspect, for: MDEx.Document do
+  import Inspect.Algebra
+
+  def inspect(%MDEx.Document{nodes: nodes}, opts) do
+    count = Enum.count(%MDEx.Document{nodes: nodes}) - 1
+    count_text = if count == 1, do: "1 node", else: "#{count} nodes"
+    
+    open = color("#MDEx.Document<", :atom, opts)
+    close = color(">", :atom, opts)
+    
+    if nodes == [] do
+      concat([open, "0 nodes", close])
+    else
+      {body, _final_index} = 
+        nodes
+        |> Enum.with_index()
+        |> Enum.map_reduce(1, fn {node, node_index}, index ->
+          is_last_node = node_index == length(nodes) - 1
+          {node_doc, next_index} = inspect_node(node, opts, 0, index, is_last_node)
+          {node_doc, next_index}
+        end)
+      
+      body_doc = body |> Enum.intersperse(line()) |> concat()
+      
+      force_unfit(concat([
+        open,
+        line(),
+        count_text,
+        line(),
+        line(),
+        body_doc,
+        line(),
+        close
+      ]))
+    end
+  end
+
+  defp inspect_node(node, opts, level, index, is_last) do
+    {type, attrs, children} = extract_node_info(node, opts)
+    
+    index_doc = color("[#{index}]", :number, opts)
+    type_doc = color(type, :atom, opts)
+    
+    attrs_doc = case attrs do
+      "" -> empty()
+      {:literal_only, value} -> concat([" ", color(inspect(value), :string, opts)])
+      {:formatted_attrs, formatted} -> concat([" ", color(formatted, :cyan, opts)])
+      other -> concat([" ", color(other, :cyan, opts)])
+    end
+    
+    prefix = if level == 0 do
+      ""
+    else
+      tree_connector = if is_last, do: "└─ ", else: "├─ "
+      String.duplicate("   ", level - 1) <> tree_connector
+    end
+    
+    node_doc = concat([prefix, index_doc, " ", type_doc, attrs_doc])
+    
+    if children == [] do
+      {node_doc, index + 1}
+    else
+      {children_docs, next_index} = 
+        children
+        |> Enum.with_index()
+        |> Enum.map_reduce(index + 1, fn {child, child_index}, acc_index ->
+          is_last_child = child_index == length(children) - 1
+          {child_doc, new_index} = inspect_node(child, opts, level + 1, acc_index, is_last_child)
+          {child_doc, new_index}
+        end)
+      
+      base_prefix = String.duplicate("   ", level)
+      separator = if children != [] and type == "paragraph", do: [base_prefix <> "│"], else: []
+      
+      all_content = [node_doc] ++ separator ++ children_docs
+      
+      {all_content |> Enum.intersperse(line()) |> concat(), next_index}
+    end
+  end
+
+  defp extract_node_info(%MDEx.FrontMatter{literal: literal}, opts) do
+    {"front_matter", format_attrs(%{literal: literal}, opts), []}
+  end
+
+  defp extract_node_info(%MDEx.BlockQuote{nodes: nodes}, _opts) do
+    {"block_quote", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.List{nodes: nodes, list_type: list_type, marker_offset: marker_offset, 
+                                     padding: padding, start: start, delimiter: delimiter, 
+                                     bullet_char: bullet_char, tight: tight, is_task_list: is_task_list}, opts) do
+    attrs = %{
+      list_type: list_type, marker_offset: marker_offset, padding: padding, 
+      start: start, delimiter: delimiter, bullet_char: bullet_char, 
+      tight: tight, is_task_list: is_task_list
+    }
+    {"list", format_attrs(attrs, opts), nodes}
+  end
+
+  defp extract_node_info(%MDEx.ListItem{nodes: nodes, list_type: list_type, marker_offset: marker_offset,
+                                         padding: padding, start: start, delimiter: delimiter,
+                                         bullet_char: bullet_char, tight: tight, is_task_list: is_task_list}) do
+    attrs = %{
+      list_type: list_type, marker_offset: marker_offset, padding: padding,
+      start: start, delimiter: delimiter, bullet_char: bullet_char,
+      tight: tight, is_task_list: is_task_list
+    }
+    {"list_item", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.DescriptionList{nodes: nodes}) do
+    {"description_list", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.DescriptionItem{nodes: nodes, marker_offset: marker_offset, 
+                                                padding: padding, tight: tight}) do
+    attrs = %{marker_offset: marker_offset, padding: padding, tight: tight}
+    {"description_item", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.DescriptionTerm{nodes: nodes}) do
+    {"description_term", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.DescriptionDetails{nodes: nodes}) do
+    {"description_details", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.CodeBlock{fenced: fenced, fence_char: fence_char, fence_length: fence_length,
+                                          fence_offset: fence_offset, info: info, literal: literal}) do
+    attrs = %{
+      fenced: fenced, fence_char: fence_char, fence_length: fence_length,
+      fence_offset: fence_offset, info: info, literal: literal
+    }
+    {"code_block", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.HtmlBlock{block_type: block_type, literal: literal}) do
+    attrs = %{block_type: block_type, literal: literal}
+    {"html_block", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.Paragraph{nodes: nodes}, _opts) do
+    {"paragraph", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Heading{nodes: nodes, level: level, setext: setext}, opts) do
+    attrs = %{level: level, setext: setext}
+    {"heading", format_attrs(attrs, opts), nodes}
+  end
+
+  defp extract_node_info(%MDEx.ThematicBreak{}) do
+    {"thematic_break", "", []}
+  end
+
+  defp extract_node_info(%MDEx.FootnoteDefinition{nodes: nodes, name: name, total_references: total_references}) do
+    attrs = %{name: name, total_references: total_references}
+    {"footnote_definition", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.FootnoteReference{name: name, ref_num: ref_num, ix: ix}) do
+    attrs = %{name: name, ref_num: ref_num, ix: ix}
+    {"footnote_reference", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.Table{nodes: nodes, alignments: alignments, num_columns: num_columns,
+                                      num_rows: num_rows, num_nonempty_cells: num_nonempty_cells}) do
+    attrs = %{
+      alignments: alignments, num_columns: num_columns,
+      num_rows: num_rows, num_nonempty_cells: num_nonempty_cells
+    }
+    {"table", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.TableRow{nodes: nodes, header: header}) do
+    attrs = %{header: header}
+    {"table_row", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.TableCell{nodes: nodes}) do
+    {"table_cell", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Text{literal: literal}, opts) do
+    attrs = %{literal: literal}
+    {"text", format_attrs(attrs, opts), []}
+  end
+
+  defp extract_node_info(%MDEx.TaskItem{nodes: nodes, checked: checked, marker: marker}) do
+    attrs = %{checked: checked, marker: marker}
+    {"task_item", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.SoftBreak{}) do
+    {"soft_break", "", []}
+  end
+
+  defp extract_node_info(%MDEx.LineBreak{}) do
+    {"line_break", "", []}
+  end
+
+  defp extract_node_info(%MDEx.Code{num_backticks: num_backticks, literal: literal}, opts) do
+    attrs = %{num_backticks: num_backticks, literal: literal}
+    {"code", format_attrs(attrs, opts), []}
+  end
+
+  defp extract_node_info(%MDEx.HtmlInline{literal: literal}) do
+    attrs = %{literal: literal}
+    {"html_inline", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.Raw{literal: literal}) do
+    attrs = %{literal: literal}
+    {"raw", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.Emph{nodes: nodes}) do
+    {"emph", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Strong{nodes: nodes}) do
+    {"strong", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Strikethrough{nodes: nodes}) do
+    {"strikethrough", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Superscript{nodes: nodes}) do
+    {"superscript", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Link{nodes: nodes, url: url, title: title}) do
+    attrs = %{url: url, title: title}
+    {"link", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.Image{nodes: nodes, url: url, title: title}) do
+    attrs = %{url: url, title: title}
+    {"image", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.ShortCode{code: code, emoji: emoji}) do
+    attrs = %{code: code, emoji: emoji}
+    {"short_code", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.Math{dollar_math: dollar_math, display_math: display_math, literal: literal}) do
+    attrs = %{dollar_math: dollar_math, display_math: display_math, literal: literal}
+    {"math", attrs_string(attrs), []}
+  end
+
+  defp extract_node_info(%MDEx.MultilineBlockQuote{nodes: nodes, fence_length: fence_length, fence_offset: fence_offset}) do
+    attrs = %{fence_length: fence_length, fence_offset: fence_offset}
+    {"multiline_block_quote", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.Escaped{}) do
+    {"escaped", "", []}
+  end
+
+  defp extract_node_info(%MDEx.WikiLink{nodes: nodes, url: url}) do
+    attrs = %{url: url}
+    {"wiki_link", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.Underline{nodes: nodes}) do
+    {"underline", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.Subscript{nodes: nodes}) do
+    {"subscript", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.SpoileredText{nodes: nodes}) do
+    {"spoilered_text", "", nodes}
+  end
+
+  defp extract_node_info(%MDEx.EscapedTag{nodes: nodes, literal: literal}) do
+    attrs = %{literal: literal}
+    {"escaped_tag", attrs_string(attrs), nodes}
+  end
+
+  defp extract_node_info(%MDEx.Alert{nodes: nodes, alert_type: alert_type, title: title,
+                                      multiline: multiline, fence_length: fence_length, fence_offset: fence_offset}) do
+    attrs = %{
+      alert_type: alert_type, title: title, multiline: multiline,
+      fence_length: fence_length, fence_offset: fence_offset
+    }
+    {"alert", attrs_string(attrs), nodes}
+  end
+
+  defp format_attrs(attrs, opts \\ []) do
+    filtered_attrs = attrs
+                    |> Enum.reject(fn {_k, v} -> is_nil(v) or v == "" or v == [] or v == 0 or v == false end)
+    
+    case filtered_attrs do
+      [] -> ""
+      [{:literal, value}] -> {:literal_only, value}
+      list when opts != [] ->
+        formatted_attrs = list
+        |> Enum.map(fn 
+          {k, v} when is_binary(v) -> "#{k}: #{inspect(v)}"
+          {k, v} -> "#{k}: #{inspect(v)}"
+        end)
+        |> Enum.join(", ")
+        {:formatted_attrs, formatted_attrs}
+      list -> 
+        list
+        |> Enum.map(fn 
+          {k, v} when is_binary(v) -> "#{k}: #{inspect(v)}"
+          {k, v} -> "#{k}: #{inspect(v)}"
+        end)
+        |> Enum.join(", ")
+    end
+  end
+
+  defp extract_node_info(node, _opts) when is_struct(node) do
+    module_name = node.__struct__ |> to_string() |> String.replace_prefix("Elixir.MDEx.", "") |> Macro.underscore()
+    nodes = Map.get(node, :nodes, [])
+    {module_name, "", nodes}
+  end
+
+  defp attrs_string(attrs), do: format_attrs(attrs)
+end
