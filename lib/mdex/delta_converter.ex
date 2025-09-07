@@ -26,9 +26,7 @@ defmodule MDEx.DeltaConverter do
   @type delta :: %{ops: [delta_op()]}
 
   @typedoc "Conversion options"
-  @type options :: %{
-          custom_converters: %{atom() => function()}
-        }
+  @type options :: keyword()
 
   @doc """
   Convert an MDEx document to Quill Delta format.
@@ -43,6 +41,8 @@ defmodule MDEx.DeltaConverter do
   @spec convert(Document.t(), options()) :: {:ok, [delta_op()]} | {:error, term()}
   def convert(%Document{nodes: nodes}, options) do
     try do
+      # Initialize list_depth if not provided
+      options = Keyword.put_new(options, :list_depth, 0)
       ops = convert_nodes(nodes, [], options)
       {:ok, ops}
     rescue
@@ -66,7 +66,9 @@ defmodule MDEx.DeltaConverter do
   @spec convert_node(term(), [map()], options()) :: [delta_op()]
   defp convert_node(node, current_attrs, options) do
     # Check for custom converters first
-    case get_in(options, [:custom_converters, node.__struct__]) do
+    custom_converters = Keyword.get(options, :custom_converters, %{})
+
+    case Map.get(custom_converters, node.__struct__) do
       converter when is_function(converter, 2) ->
         case converter.(node, options) do
           :skip -> []
@@ -197,9 +199,17 @@ defmodule MDEx.DeltaConverter do
   end
 
   defp default_convert_node(%MDEx.ListItem{list_type: list_type, nodes: children}, current_attrs, options) do
-    # Extract content and apply list formatting
-    child_ops =
-      Enum.flat_map(children, fn
+    current_depth = Keyword.get(options, :list_depth, 0)
+
+    # Separate paragraph content from nested lists
+    {paragraph_content, nested_lists} =
+      Enum.split_with(children, fn node ->
+        not match?(%MDEx.List{}, node)
+      end)
+
+    # Process paragraph content first
+    paragraph_ops =
+      Enum.flat_map(paragraph_content, fn
         %MDEx.Paragraph{nodes: paragraph_children} ->
           convert_nodes(paragraph_children, current_attrs, options)
 
@@ -207,6 +217,7 @@ defmodule MDEx.DeltaConverter do
           convert_node(node, current_attrs, options)
       end)
 
+    # Create list attributes with proper indent
     list_attr =
       case list_type do
         :bullet -> "bullet"
@@ -214,7 +225,26 @@ defmodule MDEx.DeltaConverter do
         _ -> "bullet"
       end
 
-    child_ops ++ [%{"insert" => "\n", "attributes" => %{"list" => list_attr}}]
+    list_attrs = %{"list" => list_attr}
+
+    list_attrs =
+      if current_depth > 0 do
+        Map.put(list_attrs, "indent", current_depth)
+      else
+        list_attrs
+      end
+
+    # Add the list item newline
+    list_item_ops = paragraph_ops ++ [%{"insert" => "\n", "attributes" => list_attrs}]
+
+    # Process nested lists after the current item with increased depth
+    nested_ops =
+      Enum.flat_map(nested_lists, fn nested_list ->
+        nested_options = Keyword.put(options, :list_depth, current_depth + 1)
+        convert_node(nested_list, current_attrs, nested_options)
+      end)
+
+    list_item_ops ++ nested_ops
   end
 
   # TaskItem - block-level attribute on newline
@@ -371,13 +401,13 @@ defmodule MDEx.DeltaConverter do
   end
 
   # Fallback for unknown node types
-  defp default_convert_node(node, current_attrs, _options) do
+  defp default_convert_node(node, current_attrs, options) do
     # Unknown node type - try to extract text content or skip
-    extract_text_content(node, current_attrs)
+    extract_text_content(node, current_attrs, options)
   end
 
   # Helper to extract text content from unknown nodes
-  defp extract_text_content(%{literal: text}, current_attrs) when is_binary(text) do
+  defp extract_text_content(%{literal: text}, current_attrs, options) when is_binary(text) do
     attrs = merge_attributes(current_attrs)
 
     if map_size(attrs) == 0 do
@@ -387,12 +417,12 @@ defmodule MDEx.DeltaConverter do
     end
   end
 
-  defp extract_text_content(%{nodes: nodes}, current_attrs) when is_list(nodes) do
+  defp extract_text_content(%{nodes: nodes}, current_attrs, options) when is_list(nodes) do
     # Try to process child nodes for containers we don't explicitly handle
-    convert_nodes(nodes, current_attrs, %{custom_converters: %{}})
+    convert_nodes(nodes, current_attrs, options)
   end
 
-  defp extract_text_content(_node, _current_attrs) do
+  defp extract_text_content(_node, _current_attrs, _options) do
     # Unknown node structure - skip it
     []
   end

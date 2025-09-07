@@ -8,7 +8,7 @@ defmodule MDEx.DeltaConverterTest do
     test "converts empty document" do
       input = %Document{nodes: []}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == []
     end
@@ -16,7 +16,7 @@ defmodule MDEx.DeltaConverterTest do
     test "converts simple text" do
       input = %Document{nodes: [%MDEx.Text{literal: "Hello World"}]}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Hello World"}]
     end
@@ -30,7 +30,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Bold text", "attributes" => %{"bold" => true}}]
     end
@@ -44,7 +44,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Italic text", "attributes" => %{"italic" => true}}]
     end
@@ -54,7 +54,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Code{literal: "console.log()", num_backticks: 1}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "console.log()", "attributes" => %{"code" => true}}]
     end
@@ -72,7 +72,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Bold italic", "attributes" => %{"bold" => true, "italic" => true}}
@@ -88,7 +88,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Paragraph text"},
@@ -104,7 +104,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "First paragraph"},
@@ -125,7 +125,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Main Title"},
@@ -144,7 +144,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Subtitle"},
@@ -164,7 +164,7 @@ defmodule MDEx.DeltaConverterTest do
           ]
         }
 
-        {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+        {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
         assert result == [
                  %{"insert" => "Header #{level}"},
@@ -188,7 +188,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Bold Title", "attributes" => %{"bold" => true}},
@@ -205,7 +205,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Line one"},
@@ -223,7 +223,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Line one"},
@@ -254,7 +254,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Title"},
@@ -275,7 +275,7 @@ defmodule MDEx.DeltaConverterTest do
       unknown_node = %{__struct__: UnknownNode, literal: "unknown content"}
       input = %Document{nodes: [unknown_node]}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "unknown content"}]
     end
@@ -291,7 +291,7 @@ defmodule MDEx.DeltaConverterTest do
       converters = %{CustomNode => custom_converter}
       input = %Document{nodes: [custom_node]}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: converters})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: converters)
 
       assert result == [%{"insert" => "CUSTOM: custom"}]
     end
@@ -299,7 +299,7 @@ defmodule MDEx.DeltaConverterTest do
     test "handles empty text nodes" do
       input = %Document{nodes: [%MDEx.Text{literal: ""}]}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => ""}]
     end
@@ -309,7 +309,7 @@ defmodule MDEx.DeltaConverterTest do
       unknown_container = %{__struct__: UnknownContainer, nodes: [%MDEx.Text{literal: "nested"}]}
       input = %Document{nodes: [unknown_container]}
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "nested"}]
     end
@@ -321,7 +321,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Strikethrough{nodes: [%MDEx.Text{literal: "struck text"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "struck text", "attributes" => %{"strike" => true}}]
     end
@@ -331,7 +331,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Underline{nodes: [%MDEx.Text{literal: "underlined text"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "underlined text", "attributes" => %{"underline" => true}}]
     end
@@ -341,7 +341,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Link{url: "https://example.com", nodes: [%MDEx.Text{literal: "link text"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "link text", "attributes" => %{"link" => "https://example.com"}}]
     end
@@ -351,7 +351,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Image{url: "https://example.com/image.png", title: "Alt text"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => %{"image" => "https://example.com/image.png", "alt" => "Alt text"}}]
     end
@@ -361,7 +361,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Image{url: "https://example.com/image.png", title: nil}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => %{"image" => "https://example.com/image.png"}}]
     end
@@ -377,7 +377,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Quote text"},
@@ -390,7 +390,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.CodeBlock{literal: "console.log('hello');", info: "javascript"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "console.log('hello');"},
@@ -403,7 +403,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.CodeBlock{literal: "echo hello", info: nil}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "echo hello"},
@@ -411,13 +411,12 @@ defmodule MDEx.DeltaConverterTest do
              ]
     end
 
-
     test "converts thematic breaks" do
       input = %Document{
         nodes: [%MDEx.ThematicBreak{}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "***\n"}]
     end
@@ -440,7 +439,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "First item"},
@@ -468,7 +467,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "First item"},
@@ -488,7 +487,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Completed task"},
@@ -506,7 +505,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Pending task"},
@@ -519,7 +518,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.FootnoteReference{name: "note1"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "[^note1]", "attributes" => %{"footnote_ref" => "note1"}}]
     end
@@ -534,7 +533,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Footnote content"},
@@ -547,7 +546,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Subscript{nodes: [%MDEx.Text{literal: "H2O"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "H2O", "attributes" => %{"subscript" => true}}]
     end
@@ -557,7 +556,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Superscript{nodes: [%MDEx.Text{literal: "E=mc2"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "E=mc2", "attributes" => %{"superscript" => true}}]
     end
@@ -567,7 +566,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Math{literal: "x^2 + y^2 = z^2", display_math: false}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "x^2 + y^2 = z^2", "attributes" => %{"math" => "inline"}}]
     end
@@ -577,7 +576,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Math{literal: "\\sum_{i=1}^n x_i", display_math: true}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "\\sum_{i=1}^n x_i", "attributes" => %{"math" => "display"}}]
     end
@@ -593,7 +592,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "This is a warning"},
@@ -612,7 +611,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "This is a note"},
@@ -625,7 +624,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Hidden content"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Hidden content", "attributes" => %{"spoiler" => true}}]
     end
@@ -635,7 +634,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.WikiLink{url: "WikiPage", nodes: [%MDEx.Text{literal: "Wiki Page"}]}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Wiki Page", "attributes" => %{"link" => "WikiPage", "wikilink" => true}}]
     end
@@ -664,7 +663,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "Name"},
@@ -683,7 +682,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.HtmlBlock{literal: "<div>HTML content</div>"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "<div>HTML content</div>"},
@@ -696,7 +695,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.HtmlInline{literal: "<span>inline HTML</span>"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "<span>inline HTML</span>", "attributes" => %{"html" => "inline"}}]
     end
@@ -706,7 +705,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.ShortCode{emoji: "😀", code: ":smile:"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "😀"}]
     end
@@ -716,7 +715,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.Raw{literal: "raw content"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "raw content"}]
     end
@@ -726,7 +725,7 @@ defmodule MDEx.DeltaConverterTest do
         nodes: [%MDEx.FrontMatter{literal: "---\ntitle: Test\n---"}]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{"insert" => "---\ntitle: Test\n---"},
@@ -751,7 +750,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [
                %{
@@ -804,7 +803,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       end
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Table => table_converter}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{MDEx.Table => table_converter})
 
       assert result == [
                %{
@@ -833,7 +832,7 @@ defmodule MDEx.DeltaConverterTest do
 
       math_skipper = fn %MDEx.Math{}, _options -> :skip end
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Math => math_skipper}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{MDEx.Math => math_skipper})
 
       assert result == [
                %{"insert" => "Before math "},
@@ -862,7 +861,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       end
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Image => image_converter}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{MDEx.Image => image_converter})
 
       assert result == [
                %{
@@ -888,7 +887,7 @@ defmodule MDEx.DeltaConverterTest do
 
       skip_converter = fn %MDEx.Code{}, _options -> [] end
 
-      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => skip_converter}})
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{MDEx.Code => skip_converter})
 
       assert result == [
                %{"insert" => "Before "},
@@ -909,7 +908,7 @@ defmodule MDEx.DeltaConverterTest do
       error_converter = fn %MDEx.Code{}, _options -> {:error, "Custom error"} end
 
       assert {:error, {:custom_converter_error, "Custom error"}} =
-               DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => error_converter}})
+               DeltaConverter.convert(input, custom_converters: %{MDEx.Code => error_converter})
     end
 
     test "multiple custom converters work together" do
@@ -940,18 +939,144 @@ defmodule MDEx.DeltaConverterTest do
       end
 
       {:ok, result} =
-        DeltaConverter.convert(input, %{
+        DeltaConverter.convert(input,
           custom_converters: %{
             MDEx.Math => math_to_text,
             MDEx.Strong => strong_to_caps
           }
-        })
+        )
 
       assert result == [
                %{"insert" => "BOLD", "attributes" => %{"uppercase" => true}},
                %{"insert" => " and "},
                %{"insert" => "[MATH: x^2]", "attributes" => %{"math_placeholder" => true}},
                %{"insert" => "\n"}
+             ]
+    end
+
+    test "converts nested bullet lists with indent attributes" do
+      input = %Document{
+        nodes: [
+          %MDEx.List{
+            nodes: [
+              %MDEx.ListItem{
+                list_type: :bullet,
+                nodes: [
+                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "First item"}]},
+                  %MDEx.List{
+                    nodes: [
+                      %MDEx.ListItem{
+                        list_type: :bullet,
+                        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Nested item"}]}]
+                      }
+                    ]
+                  }
+                ]
+              },
+              %MDEx.ListItem{
+                list_type: :bullet,
+                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Second item"}]}]
+              }
+            ]
+          }
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [
+               %{"insert" => "First item"},
+               %{"insert" => "\n", "attributes" => %{"list" => "bullet"}},
+               %{"insert" => "Nested item"},
+               %{"insert" => "\n", "attributes" => %{"list" => "bullet", "indent" => 1}},
+               %{"insert" => "Second item"},
+               %{"insert" => "\n", "attributes" => %{"list" => "bullet"}}
+             ]
+    end
+
+    test "converts deeply nested ordered lists with correct indents" do
+      input = %Document{
+        nodes: [
+          %MDEx.List{
+            nodes: [
+              %MDEx.ListItem{
+                list_type: :ordered,
+                nodes: [
+                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Level 1"}]},
+                  %MDEx.List{
+                    nodes: [
+                      %MDEx.ListItem{
+                        list_type: :ordered,
+                        nodes: [
+                          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Level 2"}]},
+                          %MDEx.List{
+                            nodes: [
+                              %MDEx.ListItem{
+                                list_type: :ordered,
+                                nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Level 3"}]}]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [
+               %{"insert" => "Level 1"},
+               %{"insert" => "\n", "attributes" => %{"list" => "ordered"}},
+               %{"insert" => "Level 2"},
+               %{"insert" => "\n", "attributes" => %{"list" => "ordered", "indent" => 1}},
+               %{"insert" => "Level 3"},
+               %{"insert" => "\n", "attributes" => %{"list" => "ordered", "indent" => 2}}
+             ]
+    end
+
+    test "converts mixed nested lists with proper indentation" do
+      input = %Document{
+        nodes: [
+          %MDEx.List{
+            nodes: [
+              %MDEx.ListItem{
+                list_type: :bullet,
+                nodes: [
+                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Bullet item"}]},
+                  %MDEx.List{
+                    nodes: [
+                      %MDEx.ListItem{
+                        list_type: :ordered,
+                        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Ordered nested"}]}]
+                      },
+                      %MDEx.ListItem{
+                        list_type: :ordered,
+                        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Another ordered"}]}]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [
+               %{"insert" => "Bullet item"},
+               %{"insert" => "\n", "attributes" => %{"list" => "bullet"}},
+               %{"insert" => "Ordered nested"},
+               %{"insert" => "\n", "attributes" => %{"list" => "ordered", "indent" => 1}},
+               %{"insert" => "Another ordered"},
+               %{"insert" => "\n", "attributes" => %{"list" => "ordered", "indent" => 1}}
              ]
     end
   end
