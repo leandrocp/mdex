@@ -1304,6 +1304,40 @@ defmodule MDEx do
         %{"insert" => "\\n"}
       ]}}
 
+  ## Node Type Mappings
+
+  The following table shows how MDEx node types are converted to Delta attributes:
+
+  | MDEx Node Type | Delta Attribute | Example |
+  |---|---|---|
+  | `MDEx.Strong` | `{"bold": true}` | `**text**` → `{"insert": "text", "attributes": {"bold": true}}` |
+  | `MDEx.Emph` | `{"italic": true}` | `*text*` → `{"insert": "text", "attributes": {"italic": true}}` |
+  | `MDEx.Code` | `{"code": true}` | `` `code` `` → `{"insert": "code", "attributes": {"code": true}}` |
+  | `MDEx.Strikethrough` | `{"strike": true}` | `~~text~~` → `{"insert": "text", "attributes": {"strike": true}}` |
+  | `MDEx.Underline` | `{"underline": true}` | `__text__` → `{"insert": "text", "attributes": {"underline": true}}` |
+  | `MDEx.Subscript` | `{"subscript": true}` | `H~2~O` → `{"insert": "2", "attributes": {"subscript": true}}` |
+  | `MDEx.Superscript` | `{"superscript": true}` | `E=mc^2^` → `{"insert": "2", "attributes": {"superscript": true}}` |
+  | `MDEx.SpoileredText` | `{"spoiler": true}` | `\|\|spoiler\|\|` → `{"insert": "spoiler", "attributes": {"spoiler": true}}` |
+  | `MDEx.Link` | `{"link": "url"}` | `[text](url)` → `{"insert": "text", "attributes": {"link": "url"}}` |
+  | `MDEx.WikiLink` | `{"link": "url", "wikilink": true}` | `[[WikiPage]]` → `{"insert": "WikiPage", "attributes": {"link": "WikiPage", "wikilink": true}}` |
+  | `MDEx.Math` | `{"math": "inline"\|"display"}` | `$x^2$` → `{"insert": "x^2", "attributes": {"math": "inline"}}` |
+  | `MDEx.FootnoteReference` | `{"footnote_ref": "id"}` | `[^1]` → `{"insert": "[^1]", "attributes": {"footnote_ref": "1"}}` |
+  | `MDEx.HtmlInline` | `{"html": "inline"}` | `<span>text</span>` → `{"insert": "<span>text</span>", "attributes": {"html": "inline"}}` |
+  | `MDEx.Heading` | `{"header": level}` | `# Title` → `{"insert": "Title"}`, `{"insert": "\\n", "attributes": {"header": 1}}` |
+  | `MDEx.BlockQuote` | `{"blockquote": true}` | `> quote` → `{"insert": "\\n", "attributes": {"blockquote": true}}` |
+  | `MDEx.CodeBlock` | `{"code-block": true, "code-block-lang": "lang"}` | ` ```js\\ncode``` ` → `{"insert": "\\n", "attributes": {"code-block": true, "code-block-lang": "js"}}` |
+  | `MDEx.List` (bullet) | `{"list": "bullet"}` | `- item` → `{"insert": "\\n", "attributes": {"list": "bullet"}}` |
+  | `MDEx.List` (ordered) | `{"list": "ordered"}` | `1. item` → `{"insert": "\\n", "attributes": {"list": "ordered"}}` |
+  | `MDEx.TaskItem` | `{"list": "bullet", "task": true\|false}` | `- [x] done` → `{"insert": "\\n", "attributes": {"list": "bullet", "task": true}}` |
+  | `MDEx.Table` | `{"table": "header"\|"row"}` | Table rows → `{"insert": "\\n", "attributes": {"table": "header"}}` |
+  | `MDEx.Alert` | `{"alert": "type", "alert_title": "title"}` | `> [!NOTE]\\n> text` → `{"insert": "\\n", "attributes": {"alert": "note"}}` |
+  | `MDEx.FootnoteDefinition` | `{"footnote_definition": "id"}` | `[^1]: def` → `{"insert": "\\n", "attributes": {"footnote_definition": "1"}}` |
+  | `MDEx.HtmlBlock` | `{"html": "block"}` | `<div>block</div>` → `{"insert": "\\n", "attributes": {"html": "block"}}` |
+  | `MDEx.FrontMatter` | `{"front_matter": true}` | `---\\ntitle: x\\n---` → `{"insert": "\\n", "attributes": {"front_matter": true}}` |
+
+  **Note**: Block-level attributes are applied to newline characters (`\\n`) following Quill Delta conventions.
+  Inline attributes are applied directly to text content. Multiple attributes can be combined (e.g., bold + italic).
+
   ## Options
 
     * `:custom_converters` - map of node types to converter functions for custom behavior
@@ -1313,7 +1347,7 @@ defmodule MDEx do
   Custom converters allow you to override the default behavior for any node type:
 
       # Example: Custom table converter that creates structured Delta objects
-      table_converter = fn %MDEx.Table{nodes: rows}, _current_attrs, _options ->
+      table_converter = fn %MDEx.Table{nodes: rows}, _options ->
         [%{
           "insert" => %{
             "table" => %{
@@ -1325,10 +1359,10 @@ defmodule MDEx do
       end
 
       # Example: Skip math nodes entirely
-      math_skipper = fn %MDEx.Math{}, _current_attrs, _options -> :skip end
+      math_skipper = fn %MDEx.Math{}, _options -> :skip end
 
       # Example: Convert images to custom format
-      image_converter = fn %MDEx.Image{url: url, title: title}, _current_attrs, _options ->
+      image_converter = fn %MDEx.Image{url: url, title: title}, _options ->
         [%{
           "insert" => %{"custom_image" => %{"src" => url, "alt" => title || ""}},
           "attributes" => %{"display" => "block"}
@@ -1346,12 +1380,14 @@ defmodule MDEx do
 
   ### Custom Converter Contract
 
-  Input: `(node :: MDEx.Document.md_node(), current_attrs :: [map()], options :: keyword())`
+  Input: `(node :: MDEx.Document.md_node(), options :: keyword())`
   
   Output: 
     - `[delta_op()]` - List of Delta operations to insert
     - `:skip` - Skip this node entirely
     - `{:error, reason}` - Return an error
+  
+  **Note**: If you need default conversion behavior for child nodes, call `MDEx.DeltaConverter.convert/2` on them.
 
   """
   @spec to_delta(source(), keyword()) :: 

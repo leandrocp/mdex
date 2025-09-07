@@ -787,7 +787,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      table_converter = fn %MDEx.Table{nodes: rows}, _current_attrs, _options ->
+      table_converter = fn %MDEx.Table{nodes: rows}, _options ->
         [%{
           "insert" => %{
             "table" => %{
@@ -825,7 +825,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      math_skipper = fn %MDEx.Math{}, _current_attrs, _options -> :skip end
+      math_skipper = fn %MDEx.Math{}, _options -> :skip end
 
       {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Math => math_skipper}})
 
@@ -847,7 +847,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      image_converter = fn %MDEx.Image{url: url, title: title}, _current_attrs, _options ->
+      image_converter = fn %MDEx.Image{url: url, title: title}, _options ->
         [%{
           "insert" => %{"custom_image" => %{"src" => url, "alt" => title || ""}},
           "attributes" => %{"display" => "block"}
@@ -878,7 +878,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      skip_converter = fn %MDEx.Code{}, _current_attrs, _options -> [] end
+      skip_converter = fn %MDEx.Code{}, _options -> [] end
 
       {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => skip_converter}})
 
@@ -898,7 +898,7 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      error_converter = fn %MDEx.Code{}, _current_attrs, _options -> {:error, "Custom error"} end
+      error_converter = fn %MDEx.Code{}, _options -> {:error, "Custom error"} end
 
       assert {:error, {:custom_converter_error, "Custom error"}} = 
         DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => error_converter}})
@@ -917,11 +917,11 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
 
-      math_to_text = fn %MDEx.Math{literal: math}, _current_attrs, _options ->
+      math_to_text = fn %MDEx.Math{literal: math}, _options ->
         [%{"insert" => "[MATH: #{math}]", "attributes" => %{"math_placeholder" => true}}]
       end
 
-      strong_to_caps = fn %MDEx.Strong{nodes: children}, _current_attrs, _options ->
+      strong_to_caps = fn %MDEx.Strong{nodes: children}, _options ->
         child_text = Enum.map_join(children, "", fn
           %MDEx.Text{literal: text} -> String.upcase(text)
           _ -> ""

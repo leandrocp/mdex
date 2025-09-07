@@ -190,7 +190,7 @@ defmodule MDEx.DeltaPropertyTest do
       input = "# Header\n\n**Bold** text with `code`"
       
       # Custom converter that replaces bold with uppercase
-      custom_converter = fn %MDEx.Strong{nodes: children}, _current_attrs, _options ->
+      custom_converter = fn %MDEx.Strong{nodes: children}, _options ->
         text = Enum.map_join(children, "", fn
           %MDEx.Text{literal: text} -> String.upcase(text)
           _ -> ""

@@ -67,8 +67,8 @@ defmodule MDEx.DeltaConverter do
   defp convert_node(node, current_attrs, options) do
     # Check for custom converters first
     case get_in(options, [:custom_converters, node.__struct__]) do
-      converter when is_function(converter, 3) ->
-        case converter.(node, current_attrs, options) do
+      converter when is_function(converter, 2) ->
+        case converter.(node, options) do
           :skip -> []
           {:error, reason} -> throw({:custom_converter_error, reason})
           ops when is_list(ops) -> ops
