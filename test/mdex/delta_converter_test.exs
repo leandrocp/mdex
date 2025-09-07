@@ -667,13 +667,16 @@ defmodule MDEx.DeltaConverterTest do
 
       assert result == [
                %{"insert" => "Name"},
-               %{"insert" => "\t"},
+               %{"insert" => "\n", "attributes" => %{"table-cell-line" => %{"row" => "row-1", "cell" => "cell-1"}}},
                %{"insert" => "Age"},
-               %{"insert" => "\n", "attributes" => %{"table" => "header"}},
+               %{"insert" => "\n", "attributes" => %{"table-cell-line" => %{"row" => "row-1", "cell" => "cell-2"}}},
+               %{"insert" => "\n", "attributes" => %{"table-row" => "row-1"}},
                %{"insert" => "John"},
-               %{"insert" => "\t"},
+               %{"insert" => "\n", "attributes" => %{"table-cell-line" => %{"row" => "row-2", "cell" => "cell-1"}}},
                %{"insert" => "30"},
-               %{"insert" => "\n", "attributes" => %{"table" => "row"}}
+               %{"insert" => "\n", "attributes" => %{"table-cell-line" => %{"row" => "row-2", "cell" => "cell-2"}}},
+               %{"insert" => "\n", "attributes" => %{"table-row" => "row-2"}},
+               %{"insert" => "\n", "attributes" => %{"table" => true}}
              ]
     end
 

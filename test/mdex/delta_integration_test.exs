@@ -234,18 +234,17 @@ defmodule MDEx.DeltaIntegrationTest do
       {:ok, result} = parse_with_extensions(input)
       ops = result
 
-      # Check for table elements
+      # Check for table elements using new standard format
       assert Enum.any?(ops, fn op ->
-               Map.get(op, "attributes", %{}) |> Map.get("table") == "header"
+               Map.get(op, "attributes", %{}) |> Map.has_key?("table-cell-line")
              end)
 
       assert Enum.any?(ops, fn op ->
-               Map.get(op, "attributes", %{}) |> Map.get("table") == "row"
+               Map.get(op, "attributes", %{}) |> Map.has_key?("table-row")
              end)
 
-      # Check for tab characters (table separators)
       assert Enum.any?(ops, fn op ->
-               Map.get(op, "insert") == "\t"
+               Map.get(op, "attributes", %{}) |> Map.get("table") == true
              end)
 
       # Should have alert content

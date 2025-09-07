@@ -334,40 +334,19 @@ defmodule MDEx.DeltaConverter do
     convert_nodes(children, new_attrs, options)
   end
 
-  # Tables - simplified tab-separated text with table attributes
+  # Tables - standard Quill Delta format with table-cell-line, table-row, and table attributes
   defp default_convert_node(%MDEx.Table{nodes: rows}, current_attrs, options) do
-    convert_nodes(rows, current_attrs, options)
-  end
-
-  defp default_convert_node(%MDEx.TableRow{header: is_header, nodes: cells}, current_attrs, options) do
-    cell_ops =
-      Enum.flat_map(cells, fn cell ->
-        cell_content = convert_node(cell, current_attrs, options)
-        cell_content ++ [%{"insert" => "\t"}]
+    # Process all rows and collect their ops
+    row_ops =
+      rows
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {row, row_index} ->
+        row_id = "row-#{row_index + 1}"
+        convert_table_row(row, row_id, current_attrs, options)
       end)
 
-    # Remove last tab, add newline with table attributes
-    cell_ops = List.delete_at(cell_ops, -1)
-    row_attrs = if is_header, do: %{"table" => "header"}, else: %{"table" => "row"}
-
-    cell_ops ++ [%{"insert" => "\n", "attributes" => row_attrs}]
-  end
-
-  defp default_convert_node(%MDEx.TableCell{nodes: children}, current_attrs, options) do
-    convert_nodes(children, current_attrs, options)
-  end
-
-  # HTML nodes - block vs inline attributes
-  defp default_convert_node(%MDEx.HtmlBlock{literal: html}, _current_attrs, _options) do
-    [
-      %{"insert" => html},
-      %{"insert" => "\n", "attributes" => %{"html" => "block"}}
-    ]
-  end
-
-  defp default_convert_node(%MDEx.HtmlInline{literal: html}, current_attrs, _options) do
-    attrs = merge_attributes([%{"html" => "inline"} | current_attrs])
-    [%{"insert" => html, "attributes" => attrs}]
+    # Add final table newline
+    row_ops ++ [%{"insert" => "\n", "attributes" => %{"table" => true}}]
   end
 
   # ShortCode - already processed to emoji, treat as text
@@ -400,6 +379,19 @@ defmodule MDEx.DeltaConverter do
     ]
   end
 
+  # HTML nodes - block vs inline attributes
+  defp default_convert_node(%MDEx.HtmlBlock{literal: html}, _current_attrs, _options) do
+    [
+      %{"insert" => html},
+      %{"insert" => "\n", "attributes" => %{"html" => "block"}}
+    ]
+  end
+
+  defp default_convert_node(%MDEx.HtmlInline{literal: html}, current_attrs, _options) do
+    attrs = merge_attributes([%{"html" => "inline"} | current_attrs])
+    [%{"insert" => html, "attributes" => attrs}]
+  end
+
   # Fallback for unknown node types
   defp default_convert_node(node, current_attrs, options) do
     # Unknown node type - try to extract text content or skip
@@ -407,7 +399,7 @@ defmodule MDEx.DeltaConverter do
   end
 
   # Helper to extract text content from unknown nodes
-  defp extract_text_content(%{literal: text}, current_attrs, options) when is_binary(text) do
+  defp extract_text_content(%{literal: text}, current_attrs, _options) when is_binary(text) do
     attrs = merge_attributes(current_attrs)
 
     if map_size(attrs) == 0 do
@@ -425,6 +417,53 @@ defmodule MDEx.DeltaConverter do
   defp extract_text_content(_node, _current_attrs, _options) do
     # Unknown node structure - skip it
     []
+  end
+
+  # Helper function to convert table rows with proper IDs
+  defp convert_table_row(%MDEx.TableRow{header: _is_header, nodes: cells}, row_id, current_attrs, options) do
+    # Process all cells in the row
+    cell_ops =
+      cells
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {cell, cell_index} ->
+        cell_id = "cell-#{cell_index + 1}"
+        convert_table_cell(cell, row_id, cell_id, current_attrs, options)
+      end)
+
+    # Add row-ending newline
+    cell_ops ++ [%{"insert" => "\n", "attributes" => %{"table-row" => row_id}}]
+  end
+
+  # Helper function to convert table cells with proper attributes
+  defp convert_table_cell(%MDEx.TableCell{nodes: children}, row_id, cell_id, current_attrs, options) do
+    # Process cell content recursively for formatting
+    cell_content = convert_nodes(children, current_attrs, options)
+
+    # Add table-cell-line attribute to the cell content newline
+    # If the cell content ends with a newline (from paragraph), modify it
+    case List.last(cell_content) do
+      %{"insert" => "\n"} ->
+        List.replace_at(cell_content, -1, %{
+          "insert" => "\n",
+          "attributes" => %{"table-cell-line" => %{"row" => row_id, "cell" => cell_id}}
+        })
+
+      %{"insert" => "\n", "attributes" => attrs} ->
+        List.replace_at(cell_content, -1, %{
+          "insert" => "\n",
+          "attributes" => Map.put(attrs, "table-cell-line", %{"row" => row_id, "cell" => cell_id})
+        })
+
+      _ ->
+        # No trailing newline, add one with table-cell-line attribute
+        cell_content ++
+          [
+            %{
+              "insert" => "\n",
+              "attributes" => %{"table-cell-line" => %{"row" => row_id, "cell" => cell_id}}
+            }
+          ]
+    end
   end
 
   # Merge attribute maps from the attribute stack
