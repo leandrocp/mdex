@@ -18,17 +18,17 @@ defmodule MDEx.DeltaConverter do
 
   @typedoc "Delta operation map"
   @type delta_op :: %{
-    required(:insert) => String.t(),
-    optional(:attributes) => map()
-  }
+          required(:insert) => String.t(),
+          optional(:attributes) => map()
+        }
 
   @typedoc "Complete Delta document"
   @type delta :: %{ops: [delta_op()]}
 
   @typedoc "Conversion options"
   @type options :: %{
-    custom_converters: %{atom() => function()}
-  }
+          custom_converters: %{atom() => function()}
+        }
 
   @doc """
   Convert an MDEx document to Quill Delta format.
@@ -37,14 +37,14 @@ defmodule MDEx.DeltaConverter do
 
       iex> doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "Hello"}]}
       iex> MDEx.DeltaConverter.convert(doc, %{})
-      {:ok, %{"ops" => [%{"insert" => "Hello"}]}}
+      {:ok, [%{"insert" => "Hello"}]}
 
   """
-  @spec convert(Document.t(), options()) :: {:ok, delta()} | {:error, term()}
+  @spec convert(Document.t(), options()) :: {:ok, [delta_op()]} | {:error, term()}
   def convert(%Document{nodes: nodes}, options) do
     try do
       ops = convert_nodes(nodes, [], options)
-      {:ok, %{"ops" => ops}}
+      {:ok, ops}
     rescue
       error -> {:error, error}
     catch
@@ -74,6 +74,7 @@ defmodule MDEx.DeltaConverter do
           ops when is_list(ops) -> ops
           other -> throw({:custom_converter_error, "Custom converter returned invalid value: #{inspect(other)}"})
         end
+
       nil ->
         # Use default conversion
         default_convert_node(node, current_attrs, options)
@@ -98,6 +99,7 @@ defmodule MDEx.DeltaConverter do
   # Text - insert literal content
   defp default_convert_node(%MDEx.Text{literal: text}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
+
     if map_size(attrs) == 0 do
       [%{"insert" => text}]
     else
@@ -177,6 +179,7 @@ defmodule MDEx.DeltaConverter do
   defp default_convert_node(%MDEx.CodeBlock{literal: code, info: info}, _current_attrs, _options) do
     attrs = %{"code-block" => true}
     attrs = if info && info != "", do: Map.put(attrs, "code-block-lang", info), else: attrs
+
     [
       %{"insert" => code},
       %{"insert" => "\n", "attributes" => attrs}
@@ -195,32 +198,37 @@ defmodule MDEx.DeltaConverter do
 
   defp default_convert_node(%MDEx.ListItem{list_type: list_type, nodes: children}, current_attrs, options) do
     # Extract content and apply list formatting
-    child_ops = Enum.flat_map(children, fn
-      %MDEx.Paragraph{nodes: paragraph_children} ->
-        convert_nodes(paragraph_children, current_attrs, options)
-      node ->
-        convert_node(node, current_attrs, options)
-    end)
-    
-    list_attr = case list_type do
-      :bullet -> "bullet"
-      :ordered -> "ordered"
-      _ -> "bullet"
-    end
-    
+    child_ops =
+      Enum.flat_map(children, fn
+        %MDEx.Paragraph{nodes: paragraph_children} ->
+          convert_nodes(paragraph_children, current_attrs, options)
+
+        node ->
+          convert_node(node, current_attrs, options)
+      end)
+
+    list_attr =
+      case list_type do
+        :bullet -> "bullet"
+        :ordered -> "ordered"
+        _ -> "bullet"
+      end
+
     child_ops ++ [%{"insert" => "\n", "attributes" => %{"list" => list_attr}}]
   end
 
   # TaskItem - block-level attribute on newline
   defp default_convert_node(%MDEx.TaskItem{checked: checked, nodes: children}, current_attrs, options) do
     # Extract content from children (usually paragraphs)
-    child_ops = Enum.flat_map(children, fn
-      %MDEx.Paragraph{nodes: paragraph_children} ->
-        convert_nodes(paragraph_children, current_attrs, options)
-      node ->
-        convert_node(node, current_attrs, options)
-    end)
-    
+    child_ops =
+      Enum.flat_map(children, fn
+        %MDEx.Paragraph{nodes: paragraph_children} ->
+          convert_nodes(paragraph_children, current_attrs, options)
+
+        node ->
+          convert_node(node, current_attrs, options)
+      end)
+
     # Apply task attribute as block-level on the newline
     task_attrs = %{"list" => "bullet", "task" => checked}
     child_ops ++ [%{"insert" => "\n", "attributes" => task_attrs}]
@@ -235,21 +243,21 @@ defmodule MDEx.DeltaConverter do
   # FootnoteDefinition - block-level attribute on newline
   defp default_convert_node(%MDEx.FootnoteDefinition{name: name, nodes: children}, current_attrs, options) do
     child_ops = convert_nodes(children, current_attrs, options)
-    
+
     # Apply footnote definition to the final newline
     case List.last(child_ops) do
       %{"insert" => "\n"} ->
         List.replace_at(child_ops, -1, %{
-          "insert" => "\n", 
+          "insert" => "\n",
           "attributes" => %{"footnote_definition" => name}
         })
-      
+
       %{"insert" => "\n", "attributes" => attrs} ->
         List.replace_at(child_ops, -1, %{
           "insert" => "\n",
           "attributes" => Map.put(attrs, "footnote_definition", name)
         })
-      
+
       _ ->
         # No trailing newline, add one with the attribute
         child_ops ++ [%{"insert" => "\n", "attributes" => %{"footnote_definition" => name}}]
@@ -277,10 +285,10 @@ defmodule MDEx.DeltaConverter do
   # Alerts - custom attributes for type and styling
   defp default_convert_node(%MDEx.Alert{alert_type: type, title: title, nodes: children}, current_attrs, options) do
     child_ops = convert_nodes(children, current_attrs, options)
-    
+
     alert_attrs = %{"alert" => Atom.to_string(type)}
     alert_attrs = if title, do: Map.put(alert_attrs, "alert_title", title), else: alert_attrs
-    
+
     apply_block_format(child_ops, alert_attrs)
   end
 
@@ -302,15 +310,16 @@ defmodule MDEx.DeltaConverter do
   end
 
   defp default_convert_node(%MDEx.TableRow{header: is_header, nodes: cells}, current_attrs, options) do
-    cell_ops = Enum.flat_map(cells, fn cell ->
-      cell_content = convert_node(cell, current_attrs, options)
-      cell_content ++ [%{"insert" => "\t"}]
-    end)
-    
+    cell_ops =
+      Enum.flat_map(cells, fn cell ->
+        cell_content = convert_node(cell, current_attrs, options)
+        cell_content ++ [%{"insert" => "\t"}]
+      end)
+
     # Remove last tab, add newline with table attributes
     cell_ops = List.delete_at(cell_ops, -1)
     row_attrs = if is_header, do: %{"table" => "header"}, else: %{"table" => "row"}
-    
+
     cell_ops ++ [%{"insert" => "\n", "attributes" => row_attrs}]
   end
 
@@ -334,6 +343,7 @@ defmodule MDEx.DeltaConverter do
   # ShortCode - already processed to emoji, treat as text
   defp default_convert_node(%MDEx.ShortCode{emoji: emoji}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
+
     if map_size(attrs) == 0 do
       [%{"insert" => emoji}]
     else
@@ -344,6 +354,7 @@ defmodule MDEx.DeltaConverter do
   # Raw - pass through as-is
   defp default_convert_node(%MDEx.Raw{literal: content}, current_attrs, _options) do
     attrs = merge_attributes(current_attrs)
+
     if map_size(attrs) == 0 do
       [%{"insert" => content}]
     else
@@ -368,6 +379,7 @@ defmodule MDEx.DeltaConverter do
   # Helper to extract text content from unknown nodes
   defp extract_text_content(%{literal: text}, current_attrs) when is_binary(text) do
     attrs = merge_attributes(current_attrs)
+
     if map_size(attrs) == 0 do
       [%{"insert" => text}]
     else
@@ -400,8 +412,10 @@ defmodule MDEx.DeltaConverter do
       case op do
         %{"insert" => "\n"} ->
           %{"insert" => "\n", "attributes" => block_attributes}
+
         %{"insert" => "\n", "attributes" => attrs} ->
           %{"insert" => "\n", "attributes" => Map.merge(attrs, block_attributes)}
+
         other ->
           other
       end

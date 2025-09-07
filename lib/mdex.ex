@@ -1289,20 +1289,20 @@ defmodule MDEx do
   ## Examples
 
       iex> MDEx.to_delta("# Hello\\n**World**")
-      {:ok, %{"ops" => [
+      {:ok, [
         %{"insert" => "Hello"},
         %{"insert" => "\\n", "attributes" => %{"header" => 1}},
         %{"insert" => "World", "attributes" => %{"bold" => true}},
         %{"insert" => "\\n"}
-      ]}}
+      ]}
 
       iex> doc = MDEx.parse_document!("*italic* text")
       iex> MDEx.to_delta(doc)
-      {:ok, %{"ops" => [
+      {:ok, [
         %{"insert" => "italic", "attributes" => %{"italic" => true}},
         %{"insert" => " text"},
         %{"insert" => "\\n"}
-      ]}}
+      ]}
 
   ## Node Type Mappings
 
@@ -1381,17 +1381,17 @@ defmodule MDEx do
   ### Custom Converter Contract
 
   Input: `(node :: MDEx.Document.md_node(), options :: keyword())`
-  
+
   Output: 
     - `[delta_op()]` - List of Delta operations to insert
     - `:skip` - Skip this node entirely
     - `{:error, reason}` - Return an error
-  
+
   **Note**: If you need default conversion behavior for child nodes, call `MDEx.DeltaConverter.convert/2` on them.
 
   """
-  @spec to_delta(source(), keyword()) :: 
-          {:ok, map()} | {:error, MDEx.DecodeError.t()} | {:error, MDEx.InvalidInputError.t()}
+  @spec to_delta(source(), keyword()) ::
+          {:ok, [map()]} | {:error, MDEx.DecodeError.t()} | {:error, MDEx.InvalidInputError.t()}
   def to_delta(source, options \\ [])
 
   def to_delta(source, options) when is_binary(source) and is_list(options) do
@@ -1409,10 +1409,11 @@ defmodule MDEx do
 
   def to_delta(%Document{} = document, options) when is_list(options) do
     validated_options = validate_delta_options!(options)
-    
+
     case MDEx.DeltaConverter.convert(document, validated_options) do
-      {:ok, delta_map} ->
-        {:ok, delta_map}
+      {:ok, ops} ->
+        {:ok, ops}
+
       {:error, reason} ->
         {:error, %DecodeError{document: document, error: reason}}
     end
@@ -1435,13 +1436,13 @@ defmodule MDEx do
   ## Examples
 
       iex> MDEx.to_delta!("# Title")
-      %{"ops" => [
+      [
         %{"insert" => "Title"},
         %{"insert" => "\\n", "attributes" => %{"header" => 1}}
-      ]}
+      ]
 
   """
-  @spec to_delta!(source(), keyword()) :: map()
+  @spec to_delta!(source(), keyword()) :: [map()]
   def to_delta!(source, options \\ []) do
     case to_delta(source, options) do
       {:ok, result} -> result
@@ -1454,7 +1455,7 @@ defmodule MDEx do
     delta_schema = [
       custom_converters: [type: :map, default: %{}]
     ]
-    
+
     # Extract only delta-specific options and validate them
     delta_options = Keyword.take(options, [:custom_converters])
     NimbleOptions.validate!(delta_options, delta_schema)

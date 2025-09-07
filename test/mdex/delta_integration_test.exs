@@ -72,32 +72,32 @@ defmodule MDEx.DeltaIntegrationTest do
       """
 
       {:ok, result} = parse_with_extensions(input)
-      ops = result["ops"]
-      
+      ops = result
+
       # Verify it produces valid ops
       assert is_list(ops)
       assert length(ops) > 0
-      
+
       # Check for key structural elements
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("header") == 1
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("code-block") == true
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("list") == "ordered"
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("list") == "bullet"
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("blockquote") == true
-      end)
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("header") == 1
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("code-block") == true
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("list") == "ordered"
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("list") == "bullet"
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("blockquote") == true
+             end)
     end
 
     test "converts blog post with various formatting" do
@@ -152,37 +152,38 @@ defmodule MDEx.DeltaIntegrationTest do
       """
 
       {:ok, result} = parse_with_extensions(input)
-      ops = result["ops"]
-      
+      ops = result
+
       # Verify various formatting elements are present
-      text_content = result["ops"]
+      text_content =
+        result
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
         |> Enum.map(fn op -> Map.get(op, "insert") end)
         |> Enum.join("")
-      
+
       assert String.contains?(text_content, "Future of Web Development")
       assert String.contains?(text_content, "useState, useEffect")
-      
+
       # Check for formatting attributes
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("italic") == true
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("bold") == true
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("link")
-      end)
-      
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("italic") == true
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("bold") == true
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("link")
+             end)
+
       # Check for image
-      assert Enum.any?(ops, fn op -> 
-        case Map.get(op, "insert") do
-          %{"image" => _} -> true
-          _ -> false
-        end
-      end)
+      assert Enum.any?(ops, fn op ->
+               case Map.get(op, "insert") do
+                 %{"image" => _} -> true
+                 _ -> false
+               end
+             end)
     end
 
     test "converts technical documentation with tables and alerts" do
@@ -231,28 +232,29 @@ defmodule MDEx.DeltaIntegrationTest do
       """
 
       {:ok, result} = parse_with_extensions(input)
-      ops = result["ops"]
-      
+      ops = result
+
       # Check for table elements
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("table") == "header"
-      end)
-      
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("table") == "row"
-      end)
-      
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("table") == "header"
+             end)
+
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "attributes", %{}) |> Map.get("table") == "row"
+             end)
+
       # Check for tab characters (table separators)
-      assert Enum.any?(ops, fn op -> 
-        Map.get(op, "insert") == "\t"
-      end)
-      
+      assert Enum.any?(ops, fn op ->
+               Map.get(op, "insert") == "\t"
+             end)
+
       # Should have alert content
-      text_content = result["ops"]
+      text_content =
+        result
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
         |> Enum.map(fn op -> Map.get(op, "insert") end)
         |> Enum.join("")
-      
+
       assert String.contains?(text_content, "All API requests")
       assert String.contains?(text_content, "1000 per hour")
     end
@@ -353,56 +355,67 @@ defmodule MDEx.DeltaIntegrationTest do
       """
 
       {:ok, result} = parse_with_extensions(input)
-      ops = result["ops"]
-      
+      ops = result
+
       # Comprehensive verification
       assert is_list(ops)
-      assert length(ops) > 50  # Should be a substantial document
-      
+      # Should be a substantial document
+      assert length(ops) > 50
+
       # Check for presence of various formatting types
-      has_bold = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("bold") == true
-      end)
-      
-      has_italic = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("italic") == true
-      end)
-      
-      has_strike = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("strike") == true
-      end)
-      
+      has_bold =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("bold") == true
+        end)
+
+      has_italic =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("italic") == true
+        end)
+
+      has_strike =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("strike") == true
+        end)
+
       # Note: Underline syntax (++text++) may not be enabled in current extensions
-      _has_underline = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("underline") == true
-      end)
-      
-      has_code = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("code") == true
-      end)
-      
-      has_link = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.has_key?("link")
-      end)
-      
-      has_header = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.has_key?("header")
-      end)
-      
-      has_list = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.has_key?("list")
-      end)
-      
-      has_blockquote = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("blockquote") == true
-      end)
-      
-      has_code_block = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("code-block") == true
-      end)
-      
+      _has_underline =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("underline") == true
+        end)
+
+      has_code =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("code") == true
+        end)
+
+      has_link =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.has_key?("link")
+        end)
+
+      has_header =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.has_key?("header")
+        end)
+
+      has_list =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.has_key?("list")
+        end)
+
+      has_blockquote =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("blockquote") == true
+        end)
+
+      has_code_block =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("code-block") == true
+        end)
+
       assert has_bold, "Should contain bold formatting"
-      assert has_italic, "Should contain italic formatting" 
+      assert has_italic, "Should contain italic formatting"
       assert has_strike, "Should contain strikethrough formatting"
       # Skip underline test for now as the syntax may not be properly configured
       # assert has_underline, "Should contain underline formatting"
@@ -418,28 +431,30 @@ defmodule MDEx.DeltaIntegrationTest do
       # Empty document
       input = ""
       {:ok, result} = parse_with_extensions(input)
-      assert result == %{"ops" => []}
-      
+      assert result == []
+
       # Just whitespace
       input = "   \n  \n  "
       {:ok, result} = parse_with_extensions(input)
-      assert result == %{"ops" => []}
-      
+      assert result == []
+
       # Single word
       input = "Hello"
       {:ok, result} = parse_with_extensions(input)
-      assert result == %{"ops" => [
-        %{"insert" => "Hello"},
-        %{"insert" => "\n"}
-      ]}
-      
+
+      assert result == [
+               %{"insert" => "Hello"},
+               %{"insert" => "\n"}
+             ]
+
       # Single header
       input = "# Title"
       {:ok, result} = parse_with_extensions(input)
-      assert result == %{"ops" => [
-        %{"insert" => "Title"},
-        %{"insert" => "\n", "attributes" => %{"header" => 1}}
-      ]}
+
+      assert result == [
+               %{"insert" => "Title"},
+               %{"insert" => "\n", "attributes" => %{"header" => 1}}
+             ]
     end
 
     test "handles documents with only exotic nodes" do
@@ -464,26 +479,30 @@ defmodule MDEx.DeltaIntegrationTest do
       """
 
       {:ok, result} = parse_with_extensions(input)
-      
+
       # Check for exotic node attributes
-      has_subscript = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("subscript") == true
-      end)
-      
-      has_superscript = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.get("superscript") == true
-      end)
-      
-      has_math = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.has_key?("math")
-      end)
-      
-      has_task = Enum.any?(result["ops"], fn op -> 
-        Map.get(op, "attributes", %{}) |> Map.has_key?("task")
-      end)
-      
+      has_subscript =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("subscript") == true
+        end)
+
+      has_superscript =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.get("superscript") == true
+        end)
+
+      has_math =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.has_key?("math")
+        end)
+
+      has_task =
+        Enum.any?(result, fn op ->
+          Map.get(op, "attributes", %{}) |> Map.has_key?("task")
+        end)
+
       assert has_subscript, "Should contain subscript formatting"
-      assert has_superscript, "Should contain superscript formatting"  
+      assert has_superscript, "Should contain superscript formatting"
       assert has_math, "Should contain math formatting"
       assert has_task, "Should contain task items"
     end
@@ -498,34 +517,34 @@ defmodule MDEx.DeltaIntegrationTest do
           }
         ]
       }
-      
+
       {:ok, result} = MDEx.to_delta(input)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "Direct document conversion"},
-        %{"insert" => "\n"}
-      ]}
+
+      assert result == [
+               %{"insert" => "Direct document conversion"},
+               %{"insert" => "\n"}
+             ]
     end
 
     test "converts Pipe struct" do
       input = MDEx.new(document: "*italic*")
-      
+
       {:ok, result} = MDEx.to_delta(input)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "italic", "attributes" => %{"italic" => true}},
-        %{"insert" => "\n"}
-      ]}
+
+      assert result == [
+               %{"insert" => "italic", "attributes" => %{"italic" => true}},
+               %{"insert" => "\n"}
+             ]
     end
 
     test "converts single node fragment" do
       input = %MDEx.Text{literal: "Fragment text"}
-      
+
       {:ok, result} = MDEx.to_delta(input)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "Fragment text"}
-      ]}
+
+      assert result == [
+               %{"insert" => "Fragment text"}
+             ]
     end
 
     test "converts list of nodes fragment" do
@@ -534,25 +553,25 @@ defmodule MDEx.DeltaIntegrationTest do
         %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]},
         %MDEx.Text{literal: " text"}
       ]
-      
+
       {:ok, result} = MDEx.to_delta(input)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "First "},
-        %{"insert" => "bold", "attributes" => %{"bold" => true}},
-        %{"insert" => " text"}
-      ]}
+
+      assert result == [
+               %{"insert" => "First "},
+               %{"insert" => "bold", "attributes" => %{"bold" => true}},
+               %{"insert" => " text"}
+             ]
     end
 
     test "to_delta! returns delta directly on success" do
       input = "**bold**"
-      
+
       result = MDEx.to_delta!(input)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "bold", "attributes" => %{"bold" => true}},
-        %{"insert" => "\n"}
-      ]}
+
+      assert result == [
+               %{"insert" => "bold", "attributes" => %{"bold" => true}},
+               %{"insert" => "\n"}
+             ]
     end
 
     test "to_delta! raises on invalid input" do
@@ -564,13 +583,13 @@ defmodule MDEx.DeltaIntegrationTest do
     test "accepts custom_converters option" do
       input = "Hello world"
       options = [custom_converters: %{}]
-      
+
       {:ok, result} = MDEx.to_delta(input, options)
-      
-      assert result == %{"ops" => [
-        %{"insert" => "Hello world"},
-        %{"insert" => "\n"}
-      ]}
+
+      assert result == [
+               %{"insert" => "Hello world"},
+               %{"insert" => "\n"}
+             ]
     end
   end
 end
