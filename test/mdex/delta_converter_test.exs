@@ -6,19 +6,23 @@ defmodule MDEx.DeltaConverterTest do
 
   describe "convert/2" do
     test "converts empty document" do
-      doc = %Document{nodes: []}
-      assert {:ok, %{"ops" => []}} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      input = %Document{nodes: []}
+      
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => []}
     end
 
     test "converts simple text" do
-      doc = %Document{nodes: [%MDEx.Text{literal: "Hello World"}]}
+      input = %Document{nodes: [%MDEx.Text{literal: "Hello World"}]}
       
-      assert {:ok, %{"ops" => [%{"insert" => "Hello World"}]}} = 
-        DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "Hello World"}]}
     end
 
     test "converts text with bold formatting" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Strong{
             nodes: [%MDEx.Text{literal: "Bold text"}]
@@ -26,12 +30,13 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [%{"insert" => "Bold text", "attributes" => %{"bold" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "Bold text", "attributes" => %{"bold" => true}}]}
     end
 
     test "converts text with italic formatting" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Emph{
             nodes: [%MDEx.Text{literal: "Italic text"}]
@@ -39,21 +44,23 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [%{"insert" => "Italic text", "attributes" => %{"italic" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "Italic text", "attributes" => %{"italic" => true}}]}
     end
 
     test "converts inline code" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Code{literal: "console.log()", num_backticks: 1}]
       }
       
-      expected = %{"ops" => [%{"insert" => "console.log()", "attributes" => %{"code" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "console.log()", "attributes" => %{"code" => true}}]}
     end
 
     test "converts nested formatting (bold + italic)" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Strong{
             nodes: [
@@ -65,14 +72,15 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Bold italic", "attributes" => %{"bold" => true, "italic" => true}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts paragraph" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [%MDEx.Text{literal: "Paragraph text"}]
@@ -80,32 +88,34 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Paragraph text"},
         %{"insert" => "\n"}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts multiple paragraphs" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "First paragraph"}]},
           %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Second paragraph"}]}
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "First paragraph"},
         %{"insert" => "\n"},
         %{"insert" => "Second paragraph"},
         %{"insert" => "\n"}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts heading level 1" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Heading{
             level: 1,
@@ -115,15 +125,16 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Main Title"},
         %{"insert" => "\n", "attributes" => %{"header" => 1}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts heading level 2" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Heading{
             level: 2,
@@ -133,16 +144,17 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Subtitle"},
         %{"insert" => "\n", "attributes" => %{"header" => 2}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts all heading levels" do
       for level <- 1..6 do
-        doc = %Document{
+        input = %Document{
           nodes: [
             %MDEx.Heading{
               level: level,
@@ -152,16 +164,17 @@ defmodule MDEx.DeltaConverterTest do
           ]
         }
         
-        expected = %{"ops" => [
+        {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+        
+        assert result == %{"ops" => [
           %{"insert" => "Header #{level}"},
           %{"insert" => "\n", "attributes" => %{"header" => level}}
         ]}
-        assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
       end
     end
 
     test "converts heading with formatting" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Heading{
             level: 1,
@@ -175,15 +188,16 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Bold Title", "attributes" => %{"bold" => true}},
         %{"insert" => "\n", "attributes" => %{"header" => 1}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts soft break as space" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Text{literal: "Line one"},
           %MDEx.SoftBreak{},
@@ -191,16 +205,17 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Line one"},
         %{"insert" => " "},
         %{"insert" => "line two"}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts line break" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Text{literal: "Line one"},
           %MDEx.LineBreak{},
@@ -208,16 +223,17 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Line one"},
         %{"insert" => "\n"},
         %{"insert" => "Line two"}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts complex mixed content" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Heading{
             level: 1,
@@ -238,7 +254,9 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Title"},
         %{"insert" => "\n", "attributes" => %{"header" => 1}},
         %{"insert" => "This is "},
@@ -250,16 +268,16 @@ defmodule MDEx.DeltaConverterTest do
         %{"insert" => "."},
         %{"insert" => "\n"}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "handles unknown nodes gracefully" do
       # Create a mock unknown node type
       unknown_node = %{__struct__: UnknownNode, literal: "unknown content"}
-      doc = %Document{nodes: [unknown_node]}
+      input = %Document{nodes: [unknown_node]}
       
-      expected = %{"ops" => [%{"insert" => "unknown content"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "unknown content"}]}
     end
 
     test "uses custom converter when provided" do
@@ -271,77 +289,85 @@ defmodule MDEx.DeltaConverterTest do
       end
       
       converters = %{CustomNode => custom_converter}
-      doc = %Document{nodes: [custom_node]}
+      input = %Document{nodes: [custom_node]}
       
-      expected = %{"ops" => [%{"insert" => "CUSTOM: custom"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: converters})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: converters})
+      
+      assert result == %{"ops" => [%{"insert" => "CUSTOM: custom"}]}
     end
 
     test "handles empty text nodes" do
-      doc = %Document{nodes: [%MDEx.Text{literal: ""}]}
+      input = %Document{nodes: [%MDEx.Text{literal: ""}]}
       
-      expected = %{"ops" => [%{"insert" => ""}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => ""}]}
     end
 
     test "handles nested container nodes" do
       # Test a container node we don't explicitly handle
       unknown_container = %{__struct__: UnknownContainer, nodes: [%MDEx.Text{literal: "nested"}]}
-      doc = %Document{nodes: [unknown_container]}
+      input = %Document{nodes: [unknown_container]}
       
-      expected = %{"ops" => [%{"insert" => "nested"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "nested"}]}
     end
   end
 
   describe "Phase 2: Exotic Node Support" do
     test "converts strikethrough text" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Strikethrough{nodes: [%MDEx.Text{literal: "struck text"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "struck text", "attributes" => %{"strike" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "struck text", "attributes" => %{"strike" => true}}]}
     end
 
     test "converts underline text" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Underline{nodes: [%MDEx.Text{literal: "underlined text"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "underlined text", "attributes" => %{"underline" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "underlined text", "attributes" => %{"underline" => true}}]}
     end
 
     test "converts links" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Link{url: "https://example.com", nodes: [%MDEx.Text{literal: "link text"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "link text", "attributes" => %{"link" => "https://example.com"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "link text", "attributes" => %{"link" => "https://example.com"}}]}
     end
 
     test "converts images with title" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Image{url: "https://example.com/image.png", title: "Alt text"}]
       }
       
-      expected = %{"ops" => [%{"insert" => %{"image" => "https://example.com/image.png", "alt" => "Alt text"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => %{"image" => "https://example.com/image.png", "alt" => "Alt text"}}]}
     end
 
     test "converts images without title" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Image{url: "https://example.com/image.png", title: nil}]
       }
       
-      expected = %{"ops" => [%{"insert" => %{"image" => "https://example.com/image.png"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => %{"image" => "https://example.com/image.png"}}]}
     end
 
     test "converts blockquotes" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.BlockQuote{
             nodes: [
@@ -351,48 +377,52 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Quote text"},
         %{"insert" => "\n", "attributes" => %{"blockquote" => true}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts code blocks with language" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.CodeBlock{literal: "console.log('hello');", info: "javascript"}]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "console.log('hello');"},
         %{"insert" => "\n", "attributes" => %{"code-block" => true, "code-block-lang" => "javascript"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts code blocks without language" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.CodeBlock{literal: "echo hello", info: nil}]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "echo hello"},
         %{"insert" => "\n", "attributes" => %{"code-block" => true}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts thematic breaks" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.ThematicBreak{}]
       }
       
-      expected = %{"ops" => [%{"insert" => "---\n"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "---\n"}]}
     end
 
     test "converts bullet lists" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.List{
             nodes: [
@@ -409,17 +439,18 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "First item"},
         %{"insert" => "\n", "attributes" => %{"list" => "bullet"}},
         %{"insert" => "Second item"},
         %{"insert" => "\n", "attributes" => %{"list" => "bullet"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts ordered lists" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.List{
             nodes: [
@@ -436,17 +467,18 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "First item"},
         %{"insert" => "\n", "attributes" => %{"list" => "ordered"}},
         %{"insert" => "Second item"},
         %{"insert" => "\n", "attributes" => %{"list" => "ordered"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts task items checked" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.TaskItem{
             checked: true,
@@ -455,15 +487,16 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Completed task"},
         %{"insert" => "\n", "attributes" => %{"list" => "bullet", "task" => true}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts task items unchecked" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.TaskItem{
             checked: false,
@@ -472,24 +505,26 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Pending task"},
         %{"insert" => "\n", "attributes" => %{"list" => "bullet", "task" => false}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts footnote references" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.FootnoteReference{name: "note1"}]
       }
       
-      expected = %{"ops" => [%{"insert" => "[^note1]", "attributes" => %{"footnote_ref" => "note1"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "[^note1]", "attributes" => %{"footnote_ref" => "note1"}}]}
     end
 
     test "converts footnote definitions" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.FootnoteDefinition{
             name: "note1",
@@ -498,51 +533,56 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Footnote content"},
         %{"insert" => "\n", "attributes" => %{"footnote_definition" => "note1"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts subscript" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Subscript{nodes: [%MDEx.Text{literal: "H2O"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "H2O", "attributes" => %{"subscript" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "H2O", "attributes" => %{"subscript" => true}}]}
     end
 
     test "converts superscript" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Superscript{nodes: [%MDEx.Text{literal: "E=mc2"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "E=mc2", "attributes" => %{"superscript" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "E=mc2", "attributes" => %{"superscript" => true}}]}
     end
 
     test "converts inline math" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Math{literal: "x^2 + y^2 = z^2", display_math: false}]
       }
       
-      expected = %{"ops" => [%{"insert" => "x^2 + y^2 = z^2", "attributes" => %{"math" => "inline"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "x^2 + y^2 = z^2", "attributes" => %{"math" => "inline"}}]}
     end
 
     test "converts display math" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Math{literal: "\\sum_{i=1}^n x_i", display_math: true}]
       }
       
-      expected = %{"ops" => [%{"insert" => "\\sum_{i=1}^n x_i", "attributes" => %{"math" => "display"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "\\sum_{i=1}^n x_i", "attributes" => %{"math" => "display"}}]}
     end
 
     test "converts alerts with title" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Alert{
             alert_type: :warning,
@@ -552,15 +592,16 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "This is a warning"},
         %{"insert" => "\n", "attributes" => %{"alert" => "warning", "alert_title" => "Important"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts alerts without title" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Alert{
             alert_type: :note,
@@ -570,33 +611,36 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "This is a note"},
         %{"insert" => "\n", "attributes" => %{"alert" => "note"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts spoilered text" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Hidden content"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "Hidden content", "attributes" => %{"spoiler" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "Hidden content", "attributes" => %{"spoiler" => true}}]}
     end
 
     test "converts wiki links" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.WikiLink{url: "WikiPage", nodes: [%MDEx.Text{literal: "Wiki Page"}]}]
       }
       
-      expected = %{"ops" => [%{"insert" => "Wiki Page", "attributes" => %{"link" => "WikiPage", "wikilink" => true}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "Wiki Page", "attributes" => %{"link" => "WikiPage", "wikilink" => true}}]}
     end
 
     test "converts simple table" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Table{
             nodes: [
@@ -619,7 +663,9 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Name"},
         %{"insert" => "\t"},
         %{"insert" => "Age"},
@@ -629,62 +675,66 @@ defmodule MDEx.DeltaConverterTest do
         %{"insert" => "30"},
         %{"insert" => "\n", "attributes" => %{"table" => "row"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts HTML block" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.HtmlBlock{literal: "<div>HTML content</div>"}]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "<div>HTML content</div>"},
         %{"insert" => "\n", "attributes" => %{"html" => "block"}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts HTML inline" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.HtmlInline{literal: "<span>inline HTML</span>"}]
       }
       
-      expected = %{"ops" => [%{"insert" => "<span>inline HTML</span>", "attributes" => %{"html" => "inline"}}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "<span>inline HTML</span>", "attributes" => %{"html" => "inline"}}]}
     end
 
     test "converts short codes" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.ShortCode{emoji: "😀", code: ":smile:"}]
       }
       
-      expected = %{"ops" => [%{"insert" => "😀"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "😀"}]}
     end
 
     test "converts raw content" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.Raw{literal: "raw content"}]
       }
       
-      expected = %{"ops" => [%{"insert" => "raw content"}]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [%{"insert" => "raw content"}]}
     end
 
     test "converts front matter" do
-      doc = %Document{
+      input = %Document{
         nodes: [%MDEx.FrontMatter{literal: "---\ntitle: Test\n---"}]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "---\ntitle: Test\n---"},
         %{"insert" => "\n", "attributes" => %{"front_matter" => true}}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
 
     test "converts complex nested formatting" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Strong{
             nodes: [
@@ -700,20 +750,21 @@ defmodule MDEx.DeltaConverterTest do
         ]
       }
       
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
+      
+      assert result == %{"ops" => [
         %{"insert" => "Bold italic strike", "attributes" => %{
           "bold" => true, 
           "italic" => true, 
           "strike" => true
         }}
       ]}
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{}})
     end
   end
 
   describe "custom converters" do
     test "custom table converter creates structured Delta objects" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Table{
             nodes: [
@@ -747,7 +798,9 @@ defmodule MDEx.DeltaConverterTest do
         }]
       end
 
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Table => table_converter}})
+
+      assert result == %{"ops" => [
         %{
           "insert" => %{
             "table" => %{
@@ -757,12 +810,10 @@ defmodule MDEx.DeltaConverterTest do
           }
         }
       ]}
-
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Table => table_converter}})
     end
 
     test "skip converter skips nodes entirely" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [
@@ -776,17 +827,17 @@ defmodule MDEx.DeltaConverterTest do
 
       math_skipper = fn %MDEx.Math{}, _current_attrs, _options -> :skip end
 
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Math => math_skipper}})
+
+      assert result == %{"ops" => [
         %{"insert" => "Before math "},
         %{"insert" => " after math"},
         %{"insert" => "\n"}
       ]}
-
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Math => math_skipper}})
     end
 
     test "custom image converter with custom format" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [
@@ -803,19 +854,19 @@ defmodule MDEx.DeltaConverterTest do
         }]
       end
 
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Image => image_converter}})
+
+      assert result == %{"ops" => [
         %{
           "insert" => %{"custom_image" => %{"src" => "https://example.com/image.png", "alt" => "Example Image"}},
           "attributes" => %{"display" => "block"}
         },
         %{"insert" => "\n"}
       ]}
-
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Image => image_converter}})
     end
 
     test "custom converter returning empty list skips the node" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [
@@ -829,17 +880,17 @@ defmodule MDEx.DeltaConverterTest do
 
       skip_converter = fn %MDEx.Code{}, _current_attrs, _options -> [] end
 
-      expected = %{"ops" => [
+      {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => skip_converter}})
+
+      assert result == %{"ops" => [
         %{"insert" => "Before "},
         %{"insert" => " after"},
         %{"insert" => "\n"}
       ]}
-
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Code => skip_converter}})
     end
 
     test "custom converter returning error propagates error" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [%MDEx.Code{literal: "test"}]
@@ -850,11 +901,11 @@ defmodule MDEx.DeltaConverterTest do
       error_converter = fn %MDEx.Code{}, _current_attrs, _options -> {:error, "Custom error"} end
 
       assert {:error, {:custom_converter_error, "Custom error"}} = 
-        DeltaConverter.convert(doc, %{custom_converters: %{MDEx.Code => error_converter}})
+        DeltaConverter.convert(input, %{custom_converters: %{MDEx.Code => error_converter}})
     end
 
     test "multiple custom converters work together" do
-      doc = %Document{
+      input = %Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [
@@ -878,19 +929,19 @@ defmodule MDEx.DeltaConverterTest do
         [%{"insert" => child_text, "attributes" => %{"uppercase" => true}}]
       end
 
-      expected = %{"ops" => [
-        %{"insert" => "BOLD", "attributes" => %{"uppercase" => true}},
-        %{"insert" => " and "},
-        %{"insert" => "[MATH: x^2]", "attributes" => %{"math_placeholder" => true}},
-        %{"insert" => "\n"}
-      ]}
-
-      assert {:ok, ^expected} = DeltaConverter.convert(doc, %{
+      {:ok, result} = DeltaConverter.convert(input, %{
         custom_converters: %{
           MDEx.Math => math_to_text,
           MDEx.Strong => strong_to_caps
         }
       })
+
+      assert result == %{"ops" => [
+        %{"insert" => "BOLD", "attributes" => %{"uppercase" => true}},
+        %{"insert" => " and "},
+        %{"insert" => "[MATH: x^2]", "attributes" => %{"math_placeholder" => true}},
+        %{"insert" => "\n"}
+      ]}
     end
   end
 end

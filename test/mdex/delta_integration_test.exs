@@ -28,7 +28,7 @@ defmodule MDEx.DeltaIntegrationTest do
 
   describe "real-world document conversion" do
     test "converts complex README-style document" do
-      markdown = """
+      input = """
       # Project Title
 
       A brief description of what this project does and who it's for.
@@ -71,7 +71,8 @@ defmodule MDEx.DeltaIntegrationTest do
       This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
       """
 
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions(markdown)
+      {:ok, result} = parse_with_extensions(input)
+      ops = result["ops"]
       
       # Verify it produces valid ops
       assert is_list(ops)
@@ -100,7 +101,7 @@ defmodule MDEx.DeltaIntegrationTest do
     end
 
     test "converts blog post with various formatting" do
-      markdown = """
+      input = """
       # The Future of Web Development
 
       *Published on January 15, 2025*
@@ -150,10 +151,11 @@ defmodule MDEx.DeltaIntegrationTest do
       *What do you think about these trends? Share your thoughts in the comments below.*
       """
 
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions(markdown)
+      {:ok, result} = parse_with_extensions(input)
+      ops = result["ops"]
       
       # Verify various formatting elements are present
-      text_content = ops
+      text_content = result["ops"]
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
         |> Enum.map(fn op -> Map.get(op, "insert") end)
         |> Enum.join("")
@@ -184,7 +186,7 @@ defmodule MDEx.DeltaIntegrationTest do
     end
 
     test "converts technical documentation with tables and alerts" do
-      markdown = """
+      input = """
       # API Reference
 
       ## Authentication
@@ -228,7 +230,8 @@ defmodule MDEx.DeltaIntegrationTest do
       Requests are limited to **1000 per hour** per API key.
       """
 
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions(markdown)
+      {:ok, result} = parse_with_extensions(input)
+      ops = result["ops"]
       
       # Check for table elements
       assert Enum.any?(ops, fn op -> 
@@ -245,7 +248,7 @@ defmodule MDEx.DeltaIntegrationTest do
       end)
       
       # Should have alert content
-      text_content = ops
+      text_content = result["ops"]
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
         |> Enum.map(fn op -> Map.get(op, "insert") end)
         |> Enum.join("")
@@ -255,7 +258,7 @@ defmodule MDEx.DeltaIntegrationTest do
     end
 
     test "converts mixed content with all node types" do
-      markdown = """
+      input = """
       # Complete Demo
 
       This document showcases **all** *major* ~~features~~ <u>available</u> in MDEx.
@@ -349,51 +352,52 @@ defmodule MDEx.DeltaIntegrationTest do
       That's all folks! 🎉
       """
 
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions(markdown)
+      {:ok, result} = parse_with_extensions(input)
+      ops = result["ops"]
       
       # Comprehensive verification
       assert is_list(ops)
       assert length(ops) > 50  # Should be a substantial document
       
       # Check for presence of various formatting types
-      has_bold = Enum.any?(ops, fn op -> 
+      has_bold = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("bold") == true
       end)
       
-      has_italic = Enum.any?(ops, fn op -> 
+      has_italic = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("italic") == true
       end)
       
-      has_strike = Enum.any?(ops, fn op -> 
+      has_strike = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("strike") == true
       end)
       
       # Note: Underline syntax (++text++) may not be enabled in current extensions
-      _has_underline = Enum.any?(ops, fn op -> 
+      _has_underline = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("underline") == true
       end)
       
-      has_code = Enum.any?(ops, fn op -> 
+      has_code = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("code") == true
       end)
       
-      has_link = Enum.any?(ops, fn op -> 
+      has_link = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.has_key?("link")
       end)
       
-      has_header = Enum.any?(ops, fn op -> 
+      has_header = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.has_key?("header")
       end)
       
-      has_list = Enum.any?(ops, fn op -> 
+      has_list = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.has_key?("list")
       end)
       
-      has_blockquote = Enum.any?(ops, fn op -> 
+      has_blockquote = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("blockquote") == true
       end)
       
-      has_code_block = Enum.any?(ops, fn op -> 
+      has_code_block = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("code-block") == true
       end)
       
@@ -412,28 +416,34 @@ defmodule MDEx.DeltaIntegrationTest do
 
     test "handles empty and minimal documents" do
       # Empty document
-      assert {:ok, %{"ops" => []}} = parse_with_extensions("")
+      input = ""
+      {:ok, result} = parse_with_extensions(input)
+      assert result == %{"ops" => []}
       
       # Just whitespace
-      assert {:ok, %{"ops" => []}} = parse_with_extensions("   \n  \n  ")
+      input = "   \n  \n  "
+      {:ok, result} = parse_with_extensions(input)
+      assert result == %{"ops" => []}
       
       # Single word
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions("Hello")
-      assert ops == [
+      input = "Hello"
+      {:ok, result} = parse_with_extensions(input)
+      assert result == %{"ops" => [
         %{"insert" => "Hello"},
         %{"insert" => "\n"}
-      ]
+      ]}
       
       # Single header
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions("# Title")
-      assert ops == [
+      input = "# Title"
+      {:ok, result} = parse_with_extensions(input)
+      assert result == %{"ops" => [
         %{"insert" => "Title"},
         %{"insert" => "\n", "attributes" => %{"header" => 1}}
-      ]
+      ]}
     end
 
     test "handles documents with only exotic nodes" do
-      markdown = """
+      input = """
       H~2~O and E=mc^2^
 
       $\\\\sum x_i$ inline math
@@ -453,22 +463,22 @@ defmodule MDEx.DeltaIntegrationTest do
       > This is an alert
       """
 
-      assert {:ok, %{"ops" => ops}} = parse_with_extensions(markdown)
+      {:ok, result} = parse_with_extensions(input)
       
       # Check for exotic node attributes
-      has_subscript = Enum.any?(ops, fn op -> 
+      has_subscript = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("subscript") == true
       end)
       
-      has_superscript = Enum.any?(ops, fn op -> 
+      has_superscript = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.get("superscript") == true
       end)
       
-      has_math = Enum.any?(ops, fn op -> 
+      has_math = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.has_key?("math")
       end)
       
-      has_task = Enum.any?(ops, fn op -> 
+      has_task = Enum.any?(result["ops"], fn op -> 
         Map.get(op, "attributes", %{}) |> Map.has_key?("task")
       end)
       
@@ -481,7 +491,7 @@ defmodule MDEx.DeltaIntegrationTest do
 
   describe "public API input types" do
     test "converts Document struct directly" do
-      doc = %MDEx.Document{
+      input = %MDEx.Document{
         nodes: [
           %MDEx.Paragraph{
             nodes: [%MDEx.Text{literal: "Direct document conversion"}]
@@ -489,50 +499,60 @@ defmodule MDEx.DeltaIntegrationTest do
         ]
       }
       
-      assert {:ok, %{"ops" => [
+      {:ok, result} = MDEx.to_delta(input)
+      
+      assert result == %{"ops" => [
         %{"insert" => "Direct document conversion"},
         %{"insert" => "\n"}
-      ]}} = MDEx.to_delta(doc)
+      ]}
     end
 
     test "converts Pipe struct" do
-      pipe = MDEx.new(document: "*italic*")
+      input = MDEx.new(document: "*italic*")
       
-      assert {:ok, %{"ops" => [
+      {:ok, result} = MDEx.to_delta(input)
+      
+      assert result == %{"ops" => [
         %{"insert" => "italic", "attributes" => %{"italic" => true}},
         %{"insert" => "\n"}
-      ]}} = MDEx.to_delta(pipe)
+      ]}
     end
 
     test "converts single node fragment" do
-      fragment = %MDEx.Text{literal: "Fragment text"}
+      input = %MDEx.Text{literal: "Fragment text"}
       
-      assert {:ok, %{"ops" => [
+      {:ok, result} = MDEx.to_delta(input)
+      
+      assert result == %{"ops" => [
         %{"insert" => "Fragment text"}
-      ]}} = MDEx.to_delta(fragment)
+      ]}
     end
 
     test "converts list of nodes fragment" do
-      fragment = [
+      input = [
         %MDEx.Text{literal: "First "},
         %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]},
         %MDEx.Text{literal: " text"}
       ]
       
-      assert {:ok, %{"ops" => [
+      {:ok, result} = MDEx.to_delta(input)
+      
+      assert result == %{"ops" => [
         %{"insert" => "First "},
         %{"insert" => "bold", "attributes" => %{"bold" => true}},
         %{"insert" => " text"}
-      ]}} = MDEx.to_delta(fragment)
+      ]}
     end
 
     test "to_delta! returns delta directly on success" do
-      markdown = "**bold**"
+      input = "**bold**"
       
-      assert %{"ops" => [
+      result = MDEx.to_delta!(input)
+      
+      assert result == %{"ops" => [
         %{"insert" => "bold", "attributes" => %{"bold" => true}},
         %{"insert" => "\n"}
-      ]} = MDEx.to_delta!(markdown)
+      ]}
     end
 
     test "to_delta! raises on invalid input" do
@@ -542,13 +562,15 @@ defmodule MDEx.DeltaIntegrationTest do
     end
 
     test "accepts custom_converters option" do
-      markdown = "Hello world"
+      input = "Hello world"
       options = [custom_converters: %{}]
       
-      assert {:ok, %{"ops" => [
+      {:ok, result} = MDEx.to_delta(input, options)
+      
+      assert result == %{"ops" => [
         %{"insert" => "Hello world"},
         %{"insert" => "\n"}
-      ]}} = MDEx.to_delta(markdown, options)
+      ]}
     end
   end
 end

@@ -32,9 +32,10 @@ defmodule MDEx.DeltaPropertyTest do
         "# Header\n\n- Item 1\n- Item 2\n\n> Quote"
       ]
 
-      for markdown <- markdown_samples do
-        assert {:ok, %{"ops" => ops}} = MDEx.to_delta(markdown, extension: [strikethrough: true])
-        assert is_list(ops), "Delta ops should be a list for input: #{inspect(markdown)}"
+      for input <- markdown_samples do
+        {:ok, result} = MDEx.to_delta(input, extension: [strikethrough: true])
+        ops = result["ops"]
+        assert is_list(ops), "Delta ops should be a list for input: #{inspect(input)}"
         
         # Verify each operation is valid
         for op <- ops do
@@ -66,7 +67,8 @@ defmodule MDEx.DeltaPropertyTest do
       ]
 
       for {input, expected_text} <- test_cases do
-        assert {:ok, %{"ops" => ops}} = MDEx.to_delta(input)
+        {:ok, result} = MDEx.to_delta(input)
+        ops = result["ops"]
         
         # Extract all text from ops
         actual_text = ops
@@ -83,7 +85,9 @@ defmodule MDEx.DeltaPropertyTest do
     test "nested formatting preserves all attributes" do
       # Test that nested formatting combines attributes correctly
       # Using simpler case that we know works
-      assert {:ok, %{"ops" => ops}} = MDEx.to_delta("***bold italic***")
+      input = "***bold italic***"
+      {:ok, result} = MDEx.to_delta(input)
+      ops = result["ops"]
       
       # Find ops with attributes
       attr_ops = Enum.filter(ops, fn op -> 
@@ -112,7 +116,8 @@ defmodule MDEx.DeltaPropertyTest do
       ]
 
       for {input, expected_attrs} <- test_cases do
-        assert {:ok, %{"ops" => ops}} = MDEx.to_delta(input)
+        {:ok, result} = MDEx.to_delta(input)
+        ops = result["ops"]
         
         # Find newline operations with attributes
         newline_ops = Enum.filter(ops, fn op ->
@@ -137,7 +142,8 @@ defmodule MDEx.DeltaPropertyTest do
       empty_inputs = ["", "   ", "\n", "\n\n", " \n ", "\t", "  \n  \n  "]
       
       for input <- empty_inputs do
-        assert {:ok, %{"ops" => ops}} = MDEx.to_delta(input)
+        {:ok, result} = MDEx.to_delta(input)
+        ops = result["ops"]
         
         # Should either be empty or contain only whitespace
         for op <- ops do
@@ -167,7 +173,8 @@ defmodule MDEx.DeltaPropertyTest do
 
       for input <- malformed_inputs do
         # Should not crash, should return something reasonable
-        assert {:ok, %{"ops" => ops}} = MDEx.to_delta(input, extension: [strikethrough: true])
+        {:ok, result} = MDEx.to_delta(input, extension: [strikethrough: true])
+        ops = result["ops"]
         assert is_list(ops), "Should return valid ops list even for malformed input: #{input}"
         
         # Should contain some text content
@@ -180,7 +187,7 @@ defmodule MDEx.DeltaPropertyTest do
 
     test "custom converters don't break invariants" do
       # Test that custom converters maintain the basic structure
-      markdown = "# Header\n\n**Bold** text with `code`"
+      input = "# Header\n\n**Bold** text with `code`"
       
       # Custom converter that replaces bold with uppercase
       custom_converter = fn %MDEx.Strong{nodes: children}, _current_attrs, _options ->
@@ -191,9 +198,10 @@ defmodule MDEx.DeltaPropertyTest do
         [%{"insert" => text, "attributes" => %{"custom" => "uppercase"}}]
       end
       
-      assert {:ok, %{"ops" => ops}} = MDEx.to_delta(markdown, 
+      {:ok, result} = MDEx.to_delta(input, 
         custom_converters: %{MDEx.Strong => custom_converter}
       )
+      ops = result["ops"]
       
       # Should still be valid Delta structure
       assert is_list(ops)
@@ -238,9 +246,10 @@ defmodule MDEx.DeltaPropertyTest do
         """
       end
       
-      large_markdown = Enum.join(sections, "\n")
+      input = Enum.join(sections, "\n")
       
-      assert {:ok, %{"ops" => ops}} = MDEx.to_delta(large_markdown)
+      {:ok, result} = MDEx.to_delta(input)
+      ops = result["ops"]
       
       # Should handle large documents without issues
       assert is_list(ops)
