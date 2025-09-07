@@ -411,6 +411,7 @@ defmodule MDEx.DeltaConverterTest do
              ]
     end
 
+
     test "converts thematic breaks" do
       input = %Document{
         nodes: [%MDEx.ThematicBreak{}]
@@ -418,7 +419,7 @@ defmodule MDEx.DeltaConverterTest do
 
       {:ok, result} = DeltaConverter.convert(input, %{custom_converters: %{}})
 
-      assert result == [%{"insert" => "---\n"}]
+      assert result == [%{"insert" => "***\n"}]
     end
 
     test "converts bullet lists" do

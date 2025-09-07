@@ -1326,6 +1326,7 @@ defmodule MDEx do
   | `MDEx.Heading` | `{"header": level}` | `# Title` → `{"insert": "Title"}`, `{"insert": "\\n", "attributes": {"header": 1}}` |
   | `MDEx.BlockQuote` | `{"blockquote": true}` | `> quote` → `{"insert": "\\n", "attributes": {"blockquote": true}}` |
   | `MDEx.CodeBlock` | `{"code-block": true, "code-block-lang": "lang"}` | ` ```js\\ncode``` ` → `{"insert": "\\n", "attributes": {"code-block": true, "code-block-lang": "js"}}` |
+  | `MDEx.ThematicBreak` | Text insertion | `---` → `{"insert": "***\\n"}` |
   | `MDEx.List` (bullet) | `{"list": "bullet"}` | `- item` → `{"insert": "\\n", "attributes": {"list": "bullet"}}` |
   | `MDEx.List` (ordered) | `{"list": "ordered"}` | `1. item` → `{"insert": "\\n", "attributes": {"list": "ordered"}}` |
   | `MDEx.TaskItem` | `{"list": "bullet", "task": true\|false}` | `- [x] done` → `{"insert": "\\n", "attributes": {"list": "bullet", "task": true}}` |

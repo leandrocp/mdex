@@ -188,7 +188,7 @@ defmodule MDEx.DeltaConverter do
 
   # ThematicBreak (HR) - convert to text representation
   defp default_convert_node(%MDEx.ThematicBreak{}, _current_attrs, _options) do
-    [%{"insert" => "---\n"}]
+    [%{"insert" => "***\n"}]
   end
 
   # Lists - support for bullet and ordered
