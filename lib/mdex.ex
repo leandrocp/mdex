@@ -1280,6 +1280,106 @@ defmodule MDEx do
   end
 
   @doc """
+  Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to Quill Delta format.
+
+  Quill Delta is a JSON-based format that represents documents as a sequence
+  of insert, retain, and delete operations. This format is commonly used by
+  the Quill rich text editor.
+
+  ## Examples
+
+      iex> MDEx.to_delta("# Hello\\n**World**")
+      {:ok, %{"ops" => [
+        %{"insert" => "Hello"},
+        %{"insert" => "\\n", "attributes" => %{"header" => 1}},
+        %{"insert" => "World", "attributes" => %{"bold" => true}},
+        %{"insert" => "\\n"}
+      ]}}
+
+      iex> doc = MDEx.parse_document!("*italic* text")
+      iex> MDEx.to_delta(doc)
+      {:ok, %{"ops" => [
+        %{"insert" => "italic", "attributes" => %{"italic" => true}},
+        %{"insert" => " text"},
+        %{"insert" => "\\n"}
+      ]}}
+
+  ## Options
+
+    * `:custom_converters` - map of node types to converter functions for custom behavior
+
+  """
+  @spec to_delta(source(), keyword()) :: 
+          {:ok, map()} | {:error, MDEx.DecodeError.t()} | {:error, MDEx.InvalidInputError.t()}
+  def to_delta(source, options \\ [])
+
+  def to_delta(source, options) when is_binary(source) and is_list(options) do
+    with {:ok, document} <- parse_document(source, options) do
+      to_delta(document, options)
+    end
+  end
+
+  def to_delta(%Pipe{} = pipe, options) when is_list(options) do
+    pipe
+    |> Pipe.put_options(options)
+    |> Pipe.run()
+    |> then(&to_delta(&1.document, &1.options))
+  end
+
+  def to_delta(%Document{} = document, options) when is_list(options) do
+    validated_options = validate_delta_options!(options)
+    
+    case MDEx.DeltaConverter.convert(document, validated_options) do
+      {:ok, delta_map} ->
+        {:ok, delta_map}
+      {:error, reason} ->
+        {:error, %DecodeError{document: document, error: reason}}
+    end
+  rescue
+    error ->
+      {:error, %DecodeError{document: document, error: error}}
+  end
+
+  def to_delta(source, options) do
+    if is_fragment(source) do
+      to_delta(%Document{nodes: List.wrap(source)}, options)
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_delta/2` but raises on error.
+
+  ## Examples
+
+      iex> MDEx.to_delta!("# Title")
+      %{"ops" => [
+        %{"insert" => "Title"},
+        %{"insert" => "\\n", "attributes" => %{"header" => 1}}
+      ]}
+
+  """
+  @spec to_delta!(source(), keyword()) :: map()
+  def to_delta!(source, options \\ []) do
+    case to_delta(source, options) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  # Add validation function for delta-specific options
+  defp validate_delta_options!(options) do
+    delta_schema = [
+      custom_converters: [type: :map, default: %{}]
+    ]
+    
+    # Extract only delta-specific options and validate them
+    delta_options = Keyword.take(options, [:custom_converters])
+    NimbleOptions.validate!(delta_options, delta_schema)
+  end
+
+  @doc """
   Convert `MDEx.Document` or `MDEx.Pipe` to Markdown using default options.
 
   Use `to_markdown/2` to pass custom options.
