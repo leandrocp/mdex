@@ -26,7 +26,7 @@ defmodule MDEx.Document.Access do
   def fetch(document, selector) when is_atom(selector) do
     selector = modulefy!(selector)
 
-    case Enum.filter(document, fn %node{} -> node == selector end) do
+    case Enum.filter(document, fn %{__struct__: mod} -> mod == selector end) do
       [] -> :error
       node -> {:ok, node}
     end
@@ -64,7 +64,7 @@ defmodule MDEx.Document.Access do
         node, {:halted, old} ->
           {node, {:halted, old}}
 
-        %mod{} = node, {:cont, _old} = acc ->
+        %{__struct__: mod} = node, {:cont, _old} = acc ->
           if mod == selector do
             {old, new} = fun.(node)
             {new, {:halted, old}}
@@ -123,7 +123,7 @@ defmodule MDEx.Document.Access do
         node, {:halted, old} ->
           {node, {:halted, old}}
 
-        %mod{} = node, {:cont, _} = acc ->
+        %{__struct__: mod} = node, {:cont, _} = acc ->
           if mod == key do
             {:pop, {:halted, node}}
           else

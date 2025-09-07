@@ -21,35 +21,121 @@ defmodule MDEx.Document do
 
   You can check out each node's documentation in the `Document Nodes` section, for example `MDEx.HtmlBlock`.
 
-  The wrapping `MDEx.Document` module represents the root of a document and it implements some behaviours and protocols
+  The `MDEx.Document` module represents the root of a document and implements several behaviours and protocols
   to enable operations to fetch, update, and manipulate the document tree.
-
-  Let's go through these operations in the examples below.
 
   In these examples we will be using the [~MD](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_MD/2) sigil.
 
-  ## String.Chars
+  ## Tree Traversal
 
-  Calling `Kernel.to_string/1` will format it as CommonMark text:
+  **Understanding tree traversal is fundamental to working with MDEx documents**, as it affects how all 
+  `Enum` functions, `Access` operations, and other protocols behave.
+
+  The document tree is enumerated using **depth-first pre-order traversal**. This means:
+
+  1. The parent node is visited first
+  2. Then each child node is visited recursively
+  3. Children are processed in the order they appear in the `:nodes` list
+
+  This traversal order affects all `Enum` functions, including `Enum.at/2`, `Enum.map/2`, `Enum.find/2`, etc.
 
   ```elixir
-  iex> to_string(~MD[# Hello])
-  "# Hello"
+  iex> doc = ~MD[# Hello]
+  iex> Enum.at(doc, 0)
+  %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}]}
+  iex> Enum.at(doc, 1)
+  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}
+  iex> Enum.at(doc, 2)
+  %MDEx.Text{literal: "Hello"}
   ```
 
-  Fragments (nodes without the parent `%Document{}`) are also formatted:
+  More complex traversal with nested elements:
 
   ```elixir
-  iex> to_string(%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1})
-  "# Hello"
+  iex> doc = ~MD[**bold** text]
+  iex> Enum.at(doc, 0)
+  %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}, %MDEx.Text{literal: " text"}]}]}
+  iex> Enum.at(doc, 1)
+  %MDEx.Paragraph{nodes: [%MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}, %MDEx.Text{literal: " text"}]}
+  iex> Enum.at(doc, 2)
+  %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
+  iex> Enum.at(doc, 3)
+  %MDEx.Text{literal: "bold"}
+  iex> Enum.at(doc, 4)
+  %MDEx.Text{literal: " text"}
+  ```
+
+  ## Enumerable
+
+  The `Enumerable` protocol allows us to call `Enum` functions to iterate over and manipulate the document tree.
+  All enumeration follows the depth-first traversal order described above.
+
+  Count the nodes in a document:
+
+  ```elixir
+  iex> doc = ~MD\"""
+  ...> # Languages
+  ...>
+  ...> `elixir`
+  ...>
+  ...> `rust`
+  ...> \"""
+  iex> Enum.count(doc)
+  7
+  ```
+
+  Count how many nodes have the `:literal` attribute:
+
+  ```elixir
+  iex> doc = ~MD\"""
+  ...> # Languages
+  ...>
+  ...> `elixir`
+  ...>
+  ...> `rust`
+  ...> \"""
+  iex> Enum.reduce(doc, 0, fn
+  ...>   %{literal: _literal}, acc -> acc + 1
+  ...>
+  ...>   _node, acc -> acc
+  ...> end)
+  3
+  ```
+
+  Check if a node is member of the document:
+
+  ```elixir
+  iex> doc = ~MD\"""
+  ...> # Languages
+  ...>
+  ...> `elixir`
+  ...>
+  ...> `rust`
+  ...> \"""
+  iex> Enum.member?(doc, %MDEx.Code{literal: "elixir", num_backticks: 1})
+  true
+  ```
+
+  Map each node to its module name:
+
+  ```elixir
+  iex> doc = ~MD\"""
+  ...> # Languages
+  ...>
+  ...> `elixir`
+  ...>
+  ...> `rust`
+  ...> \"""
+  iex> Enum.map(doc, fn %node{} -> inspect(node) end)
+  ["MDEx.Document", "MDEx.Heading", "MDEx.Text", "MDEx.Paragraph", "MDEx.Code", "MDEx.Paragraph", "MDEx.Code"]
   ```
 
   ## Access
 
   The `Access` behaviour gives you the ability to fetch and update nodes using different types of keys.
+  Access operations also follow the depth-first traversal order when searching through nodes.
 
-  Starting with a simple Markdown document with a single heading and a text,
-  let's fetch only the text node by matching the `MDEx.Text` node:
+  Starting with a simple Markdown document, let's fetch only the text node by matching the `MDEx.Text` node:
 
   ```elixir
   iex> ~MD[# Hello][%MDEx.Text{literal: "Hello"}]
@@ -69,7 +155,7 @@ defmodule MDEx.Document do
 
   The key can also be modules, atoms, and even functions! For example:
 
-  - Fetches all Code nodes, either by `MDEx.Code` module or the `:code` atom representing the Code node
+  Fetch all Code nodes, either by `MDEx.Code` module or the `:code` atom representing the Code node:
 
   ```elixir
   iex> doc = ~MD\"""
@@ -85,7 +171,7 @@ defmodule MDEx.Document do
   [%MDEx.Code{num_backticks: 1, literal: "elixir"}, %MDEx.Code{num_backticks: 1, literal: "rust"}]
   ```
 
-  - Dynamically fetch Code nodes where the `:literal` (node content) starts with `"eli"` using a function to filter the result
+  Dynamically fetch Code nodes where the `:literal` (node content) starts with `"eli"` using a function to filter the result:
 
   ```elixir
   iex> doc = ~MD\"""
@@ -99,9 +185,9 @@ defmodule MDEx.Document do
   [%MDEx.Code{num_backticks: 1, literal: "elixir"}]
   ```
 
-  That's the most flexible option, in the case where struct, modules, or atoms are not enough to match the node you want.
+  That's the most flexible option, in case struct, modules, or atoms are not enough to match the node you want.
 
-  This protocol also allows us to update nodes that matches a selector.
+  The Access protocol also allows us to update nodes that match a selector.
   In the example below we'll capitalize the content of all `MDEx.Code` nodes:
 
   ```elixir
@@ -127,68 +213,20 @@ defmodule MDEx.Document do
   }
   ```
 
-  ## Enumerable
+  ## String.Chars
 
-  Probably the most used protocol in Elixir, it allows us to call `Enum` functions to manipulate the document. Let's see some examples:
-
-  * Count the nodes in a document:
+  Calling `Kernel.to_string/1` will format it as CommonMark text:
 
   ```elixir
-  iex> doc = ~MD\"""
-  ...> # Languages
-  ...>
-  ...> `elixir`
-  ...>
-  ...> `rust`
-  ...> \"""
-  iex> Enum.count(doc)
-  7
+  iex> to_string(~MD[# Hello])
+  "# Hello"
   ```
 
-  * Count how many nodes have the `:literal` attribute:
+  Fragments (nodes without the parent `%Document{}`) are also formatted:
 
   ```elixir
-  iex> doc = ~MD\"""
-  ...> # Languages
-  ...>
-  ...> `elixir`
-  ...>
-  ...> `rust`
-  ...> \"""
-  iex> Enum.reduce(doc, 0, fn
-  ...>   %{literal: _literal}, acc -> acc + 1
-  ...>
-  ...>   _node, acc -> acc
-  ...> end)
-  3
-  ```
-
-  * Returns true if node is member of the document:
-
-  ```elixir
-  iex> doc = ~MD\"""
-  ...> # Languages
-  ...>
-  ...> `elixir`
-  ...>
-  ...> `rust`
-  ...> \"""
-  iex> Enum.member?(doc, %MDEx.Code{literal: "elixir", num_backticks: 1})
-  true
-  ```
-
-  * Map each node:
-
-  ```elixir
-  iex> doc = ~MD\"""
-  ...> # Languages
-  ...>
-  ...> `elixir`
-  ...>
-  ...> `rust`
-  ...> \"""
-  iex> Enum.map(doc, fn %node{} -> inspect(node) end)
-  ["MDEx.Document", "MDEx.Heading", "MDEx.Text", "MDEx.Paragraph", "MDEx.Code", "MDEx.Paragraph", "MDEx.Code"]
+  iex> to_string(%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1})
+  "# Hello"
   ```
 
   ## Traverse and Update
@@ -196,9 +234,11 @@ defmodule MDEx.Document do
   You can also use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
   to traverse each node of the AST and either update the nodes or do some calculation with an accumulator.
 
-  ## Examples
+  ## Practical Examples
 
-  #### Update all code block nodes filtees by the `selector` function
+  Here are some common patterns for working with MDEx documents that combine the protocols described above.
+
+  ### Update all code block nodes filtered by the `selector` function
 
   _Add line "// Modified" in Rust block codes_:
 
@@ -244,7 +284,7 @@ defmodule MDEx.Document do
   }
   ```
 
-  #### Collect headings by level
+  ### Collect headings by level
 
   ```elixir
   iex> doc = ~MD\"""
@@ -268,7 +308,7 @@ defmodule MDEx.Document do
   }
   ```
 
-  #### Extract and transform task list items
+  ### Extract and transform task list items
 
   ```elixir
   iex> doc = ~MD\"""
@@ -291,7 +331,7 @@ defmodule MDEx.Document do
   ]
   ```
 
-  #### Bump all heading levels, except level 6
+  ### Bump all heading levels, except level 6
 
   ```elixir
   iex> doc = ~MD\"""
@@ -465,8 +505,7 @@ defmodule MDEx.Document do
           [node | acc]
 
         acc, :done ->
-          nodes = nodes ++ :lists.reverse(acc)
-          %MDEx.Document{nodes: nodes}
+          %MDEx.Document{nodes: nodes ++ :lists.reverse(acc)}
 
         _acc, :halt ->
           :ok
@@ -1062,58 +1101,28 @@ defimpl Enumerable,
 
   defp reduce_nodes([], acc, _fun), do: acc
 
-  defp reduce_nodes([%{nodes: inner_nodes} = node | tail], acc, fun) do
-    case acc do
-      {:cont, acc} ->
-        acc = fun.(node, acc)
-
-        case reduce_nodes(inner_nodes, acc, fun) do
-          {:cont, acc} -> reduce_nodes(tail, {:cont, acc}, fun)
-          {:done, acc} -> {:done, acc}
-          {:halt, acc} -> {:halt, acc}
-          {:halted, acc} -> {:halted, acc}
-          {:suspended, acc, fun} -> {:suspended, acc, fun}
-          {:suspend, acc} -> {:suspended, acc, &reduce_nodes(tail, &1, fun)}
-        end
-
-      {:done, acc} ->
-        {:done, acc}
-
-      {:halt, acc} ->
-        {:halt, acc}
-
-      {:halted, acc} ->
-        {:halted, acc}
-
-      {:suspended, acc, fun} ->
-        {:suspended, acc, fun}
-
-      {:suspend, acc} ->
-        {:suspended, acc, &reduce_nodes([%{nodes: _inner_nodes} = node | tail], &1, fun)}
+  defp reduce_nodes([%{nodes: inner_nodes} = node | tail], {:cont, acc}, fun) do
+    case reduce_nodes(inner_nodes, fun.(node, acc), fun) do
+      {:cont, acc} -> reduce_nodes(tail, {:cont, acc}, fun)
+      result -> result
     end
   end
 
-  defp reduce_nodes([node | tail], acc, fun) do
-    case acc do
-      {:cont, acc} ->
-        reduce_nodes(tail, fun.(node, acc), fun)
-
-      {:done, acc} ->
-        {:done, acc}
-
-      {:halt, acc} ->
-        {:halt, acc}
-
-      {:halted, acc} ->
-        {:halted, acc}
-
-      {:suspended, acc, fun} ->
-        {:suspended, acc, fun}
-
-      {:suspend, acc} ->
-        {:suspended, acc, &reduce_nodes([node | tail], &1, fun)}
-    end
+  defp reduce_nodes([%{nodes: _inner_nodes} = node | tail], {:suspend, acc}, fun) do
+    {:suspended, acc, &reduce_nodes([node | tail], &1, fun)}
   end
+
+  defp reduce_nodes([%{nodes: _inner_nodes} = _node | _tail], acc, _fun), do: acc
+
+  defp reduce_nodes([node | tail], {:cont, acc}, fun) do
+    reduce_nodes(tail, fun.(node, acc), fun)
+  end
+
+  defp reduce_nodes([node | tail], {:suspend, acc}, fun) do
+    {:suspended, acc, &reduce_nodes([node | tail], &1, fun)}
+  end
+
+  defp reduce_nodes([_node | _tail], acc, _fun), do: acc
 end
 
 defimpl Enumerable,
