@@ -773,7 +773,22 @@ defmodule MDEx.DocumentTest do
   end
 
   describe "Collectable protocol" do
-    test "into document" do
+    test "merge documents" do
+      second = %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "second"}]}]}
+
+      assert Enum.into(
+               second,
+               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]},
+                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "second"}]}
+                 ]
+               }
+    end
+
+    test "collect top-level nodes" do
       nodes = [
         %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
         %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
@@ -806,17 +821,6 @@ defmodule MDEx.DocumentTest do
       initial_doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}
       result = Enum.into([], initial_doc)
       assert result == initial_doc
-    end
-
-    test "into document preserves order" do
-      nodes = [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
-        %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Second"}]},
-        %MDEx.Code{literal: "third", num_backticks: 1}
-      ]
-
-      result = Enum.into(nodes, %MDEx.Document{nodes: []})
-      assert result.nodes == nodes
     end
 
     test "into document with mixed node types" do

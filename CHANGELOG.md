@@ -7,6 +7,10 @@
   - Support for all MDEx node types in Delta conversion with comprehensive attribute mappings (@Valian)
   - Custom converter system for Delta format allowing node-specific behavior overrides (@Valian)
 
+### Changed
+  - [Document] Permit collecting (`Enum.into/2`) pieces of node nested into documents
+  - [Document] Merge documents using `Enum.into/2`
+
 ## 0.8.2 (2025-08-20)
 
 ### Added

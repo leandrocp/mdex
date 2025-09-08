@@ -499,23 +499,34 @@ defmodule MDEx.Document do
   def pop(%MDEx.Document{} = document, key, default \\ nil), do: MDEx.Document.Access.pop(document, key, default)
 
   defimpl Collectable do
-    def into(%MDEx.Document{nodes: nodes}) do
+    def into(%MDEx.Document{} = document) do
+      state = {document, MapSet.new()}
+
       fun = fn
-        acc, {:cont, node} when is_struct(node) ->
-          [node | acc]
+        {doc, processed_nodes}, {:cont, %MDEx.Document{} = other_doc} ->
+          merged = MDEx.Tree.merge(doc, other_doc)
+          new_processed = Enum.reduce(other_doc, processed_nodes, fn node, acc -> MapSet.put(acc, node) end)
+          {merged, new_processed}
 
-        acc, :done ->
-          %MDEx.Document{nodes: nodes ++ :lists.reverse(acc)}
+        {doc, processed_nodes}, {:cont, node} when is_struct(node) ->
+          if MapSet.member?(processed_nodes, node) do
+            {doc, processed_nodes}
+          else
+            {MDEx.Tree.append_node(doc, node), processed_nodes}
+          end
 
-        _acc, :halt ->
+        {doc, _processed_nodes}, :done ->
+          doc
+
+        _state, :halt ->
           :ok
 
-        _acc, {:cont, other} ->
+        _state, {:cont, other} ->
           raise ArgumentError,
                 "collecting into MDEx.Document requires a MDEx node, got: #{inspect(other)}"
       end
 
-      {[], fun}
+      {state, fun}
     end
   end
 end
