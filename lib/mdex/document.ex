@@ -1204,6 +1204,135 @@ defimpl String.Chars,
   end
 end
 
+defimpl Inspect, for: MDEx.Document do
+  import Inspect.Algebra
+
+  def inspect(%MDEx.Document{} = doc, _opts) do
+    node_count = Enum.count(doc) - 1
+    header = "#MDEx.Document(#{node_count} nodes)<"
+
+    content =
+      case doc.nodes do
+        [] ->
+          empty()
+
+        nodes ->
+          tree_content = build_tree_lines(nodes, [], 1, true)
+          concat([line(), tree_content])
+      end
+
+    concat([
+      header,
+      content,
+      line(),
+      ">"
+    ])
+  end
+
+  defp build_tree_lines([], _prefix_acc, _index, _is_last), do: empty()
+
+  defp build_tree_lines([node], prefix_acc, index, _is_last) do
+    prefix = build_prefix(prefix_acc, true)
+    line_content = build_node_line(node, index, prefix)
+
+    case get_child_nodes(node) do
+      [] ->
+        line_content
+
+      children ->
+        child_content = build_tree_lines(children, [true | prefix_acc], index + 1, true)
+        concat([line_content, line(), child_content])
+    end
+  end
+
+  defp build_tree_lines([node | rest], prefix_acc, index, _is_last) do
+    prefix = build_prefix(prefix_acc, false)
+    line_content = build_node_line(node, index, prefix)
+
+    case get_child_nodes(node) do
+      [] ->
+        next_index = index + 1
+        rest_content = build_tree_lines(rest, prefix_acc, next_index, length(rest) == 0)
+        concat([line_content, line(), rest_content])
+
+      children ->
+        child_count = count_nodes_in_subtree(children)
+        child_content = build_tree_lines(children, [false | prefix_acc], index + 1, true)
+        next_index = index + child_count + 1
+        rest_content = build_tree_lines(rest, prefix_acc, next_index, length(rest) == 0)
+        concat([line_content, line(), child_content, line(), rest_content])
+    end
+  end
+
+  defp build_prefix(prefix_acc, is_last) do
+    prefix_parts =
+      prefix_acc
+      |> Enum.reverse()
+      |> Enum.map(fn
+        true -> "    "
+        false -> "│   "
+      end)
+
+    connector = if is_last, do: "└── ", else: "├── "
+
+    concat([concat(prefix_parts), connector])
+  end
+
+  defp build_node_line(node, index, prefix) do
+    node_name = get_node_name(node)
+    attributes = get_node_attributes(node)
+
+    line_parts = [
+      prefix,
+      "#{index} [#{node_name}]"
+    ]
+
+    line_parts = if attributes == "", do: line_parts, else: line_parts ++ [" #{attributes}"]
+
+    concat(line_parts)
+  end
+
+  defp get_node_name(node) do
+    node.__struct__
+    |> to_string()
+    |> String.replace_prefix("Elixir.MDEx.", "")
+    |> Macro.underscore()
+  end
+
+  defp get_node_attributes(%{literal: literal} = node) when is_binary(literal) do
+    other_attrs = get_other_attributes(node, [:literal, :nodes])
+
+    if other_attrs == "" and literal != "" do
+      "\"#{literal}\""
+    else
+      literal_attr = if literal != "", do: "literal: #{inspect(literal)}", else: ""
+      [literal_attr, other_attrs] |> Enum.reject(&(&1 == "")) |> Enum.join(", ")
+    end
+  end
+
+  defp get_node_attributes(node) do
+    get_other_attributes(node, [:nodes])
+  end
+
+  defp get_other_attributes(node, exclude_keys) do
+    node
+    |> Map.from_struct()
+    |> Map.drop(exclude_keys)
+    |> Enum.map(fn {k, v} -> "#{k}: #{inspect(v)}" end)
+    |> Enum.join(", ")
+  end
+
+  defp get_child_nodes(%{nodes: nodes}) when is_list(nodes), do: nodes
+  defp get_child_nodes(_), do: []
+
+  defp count_nodes_in_subtree(nodes) do
+    Enum.reduce(nodes, 0, fn node, acc ->
+      children = get_child_nodes(node)
+      acc + 1 + count_nodes_in_subtree(children)
+    end)
+  end
+end
+
 defimpl Jason.Encoder,
   for: [
     MDEx.Document,

@@ -7,6 +7,9 @@
   - Support for all MDEx node types in Delta conversion with comprehensive attribute mappings (@Valian)
   - Custom converter system for Delta format allowing node-specific behavior overrides (@Valian)
 
+### Changed
+  - [Document] Implement the `Inspect` protocol for `%MDEx.Document{}` to pretty print the AST as a tree
+
 ## 0.8.2 (2025-08-20)
 
 ### Added
