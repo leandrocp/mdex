@@ -15,7 +15,7 @@ defmodule MDEx.InvalidInputError do
 
     Got:
 
-      #{found}
+      #{inspect(found)}
 
     """
   end
