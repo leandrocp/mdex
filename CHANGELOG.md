@@ -3,9 +3,9 @@
 ## Unreleased
 
 ### Added
-  - Add `MDEx.to_delta/2` and `MDEx.to_delta!/2` functions to convert Markdown to Quill Delta format
-  - Support for all MDEx node types in Delta conversion with comprehensive attribute mappings
-  - Custom converter system for Delta format allowing node-specific behavior overrides
+  - Add `MDEx.to_delta/2` and `MDEx.to_delta!/2` functions to convert Markdown to Quill Delta format (@Valian)
+  - Support for all MDEx node types in Delta conversion with comprehensive attribute mappings (@Valian)
+  - Custom converter system for Delta format allowing node-specific behavior overrides (@Valian)
 
 ## 0.8.2 (2025-08-20)
 
