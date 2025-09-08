@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.3 (2025-09-08)
 
 ### Added
   - Add `MDEx.to_delta/2` and `MDEx.to_delta!/2` functions to convert Markdown to Quill Delta format (@Valian)
