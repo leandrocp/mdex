@@ -31,7 +31,7 @@
   - HTML
   - JSON
   - XML
-  - Quill Delta
+  - [Quill Delta](https://quilljs.com/docs/delta/)
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
 - Req-like [Pipeline API](https://hexdocs.pm/mdex/MDEx.Pipe.html)
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
