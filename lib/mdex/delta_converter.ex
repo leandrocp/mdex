@@ -263,16 +263,16 @@ defmodule MDEx.DeltaConverter do
 
     # Apply footnote definition to the final newline
     case List.last(child_ops) do
-      %{"insert" => "\n"} ->
-        List.replace_at(child_ops, -1, %{
-          "insert" => "\n",
-          "attributes" => %{"footnote_definition" => name}
-        })
-
       %{"insert" => "\n", "attributes" => attrs} ->
         List.replace_at(child_ops, -1, %{
           "insert" => "\n",
           "attributes" => Map.put(attrs, "footnote_definition", name)
+        })
+
+      %{"insert" => "\n"} ->
+        List.replace_at(child_ops, -1, %{
+          "insert" => "\n",
+          "attributes" => %{"footnote_definition" => name}
         })
 
       _ ->
@@ -429,16 +429,16 @@ defmodule MDEx.DeltaConverter do
     # Add table-cell-line attribute to the cell content newline
     # If the cell content ends with a newline (from paragraph), modify it
     case List.last(cell_content) do
-      %{"insert" => "\n"} ->
-        List.replace_at(cell_content, -1, %{
-          "insert" => "\n",
-          "attributes" => %{"table-cell-line" => %{"row" => row_id, "cell" => cell_id}}
-        })
-
       %{"insert" => "\n", "attributes" => attrs} ->
         List.replace_at(cell_content, -1, %{
           "insert" => "\n",
           "attributes" => Map.put(attrs, "table-cell-line", %{"row" => row_id, "cell" => cell_id})
+        })
+
+      %{"insert" => "\n"} ->
+        List.replace_at(cell_content, -1, %{
+          "insert" => "\n",
+          "attributes" => %{"table-cell-line" => %{"row" => row_id, "cell" => cell_id}}
         })
 
       _ ->
@@ -466,11 +466,11 @@ defmodule MDEx.DeltaConverter do
   defp apply_block_format(ops, block_attributes) do
     Enum.map(ops, fn op ->
       case op do
-        %{"insert" => "\n"} ->
-          %{"insert" => "\n", "attributes" => block_attributes}
-
         %{"insert" => "\n", "attributes" => attrs} ->
           %{"insert" => "\n", "attributes" => Map.merge(attrs, block_attributes)}
+
+        %{"insert" => "\n"} ->
+          %{"insert" => "\n", "attributes" => block_attributes}
 
         other ->
           other
