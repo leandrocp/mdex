@@ -137,6 +137,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |To XML|✅|❌|❌|✅|
 |To Manpage|❌|❌|❌|✅|
 |To LaTeX|❌|❌|❌|✅|
+|To Quill Delta|✅|❌|❌|❌|
 |Emoji|✅|❌|❌|❌|
 |GFM³|✅|✅|❌|❌|
 |GitLab⁴|⚠️¹|❌|❌|❌|
