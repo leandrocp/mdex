@@ -1,18 +1,5 @@
 defmodule MDEx.DeltaConverter do
-  @moduledoc """
-  Converts MDEx documents to Quill Delta format.
-
-  Quill Delta is a format for describing rich text documents as a series of
-  operations. Each operation can insert text with optional formatting attributes.
-
-  This module implements the Phase 1 conversion for core CommonMark nodes:
-  - Document (root container)
-  - Paragraph
-  - Text content
-  - Basic formatting: Strong (bold), Emphasis (italic), Code (inline code)
-  - Headings (1-6)
-  - Line breaks (SoftBreak, LineBreak)
-  """
+  @moduledoc false
 
   alias MDEx.Document
 
