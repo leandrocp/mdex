@@ -8,7 +8,7 @@
   - Custom converter system for Delta format allowing node-specific behavior overrides (@Valian)
 
 ### Changed
-  - [Document] Permit collecting (`Enum.into/2`) pieces of node nested into documents
+  - [Document] Collect (`Enum.into/2`) nodes into documents respecting nested structures and inline/block rules
   - [Document] Merge documents using `Enum.into/2`
 
 ## 0.8.2 (2025-08-20)
