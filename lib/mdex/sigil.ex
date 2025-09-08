@@ -85,6 +85,8 @@ defmodule MDEx.Sigil do
 
     * `MD` - converts `MDEx.Document` to Markdown
 
+    * `DELTA` - converts Markdown or `MDEx.Document` to Quill Delta format
+
     * No modifier (default) - parses a Markdown string into a `MDEx.Document` struct
 
   Note that you should `import MDEx.Sigil` to use the `~MD` sigil.
@@ -172,6 +174,13 @@ defmodule MDEx.Sigil do
   "`lang = :elixir`"
   ```
 
+  ### Markdown to Quill Delta
+
+  ```elixir
+  iex> ~MD|`lang = :elixir`|DELTA
+  [%{"insert" => "lang = :elixir", "attributes" => %{"code" => true}}, %{"insert" => "\\n"}]
+  ```
+
   ### Elixir Expressions
 
   ```elixir
@@ -229,6 +238,11 @@ defmodule MDEx.Sigil do
       ~c"XML" ->
         expr
         |> MDEx.to_xml!(@opts)
+        |> Macro.escape()
+
+      ~c"DELTA" ->
+        expr
+        |> MDEx.to_delta!(@opts)
         |> Macro.escape()
 
       _ ->
