@@ -1317,10 +1317,10 @@ defmodule MDEx do
   | `MDEx.Underline` | `{"underline": true}` | `__text__` → `{"insert": "text", "attributes": {"underline": true}}` |
   | `MDEx.Subscript` | `{"subscript": true}` | `H~2~O` → `{"insert": "2", "attributes": {"subscript": true}}` |
   | `MDEx.Superscript` | `{"superscript": true}` | `E=mc^2^` → `{"insert": "2", "attributes": {"superscript": true}}` |
-  | `MDEx.SpoileredText` | `{"spoiler": true}` | `\|\|spoiler\|\|` → `{"insert": "spoiler", "attributes": {"spoiler": true}}` |
+  | `MDEx.SpoileredText` | `{"spoiler": true}` | `\\|\\|spoiler\\|\\|` → `{"insert": "spoiler", "attributes": {"spoiler": true}}` |
   | `MDEx.Link` | `{"link": "url"}` | `[text](url)` → `{"insert": "text", "attributes": {"link": "url"}}` |
   | `MDEx.WikiLink` | `{"link": "url", "wikilink": true}` | `[[WikiPage]]` → `{"insert": "WikiPage", "attributes": {"link": "WikiPage", "wikilink": true}}` |
-  | `MDEx.Math` | `{"math": "inline"\|"display"}` | `$x^2$` → `{"insert": "x^2", "attributes": {"math": "inline"}}` |
+  | `MDEx.Math` | `{"math": "inline"\\|"display"}` | `$x^2$` → `{"insert": "x^2", "attributes": {"math": "inline"}}` |
   | `MDEx.FootnoteReference` | `{"footnote_ref": "id"}` | `[^1]` → `{"insert": "[^1]", "attributes": {"footnote_ref": "1"}}` |
   | `MDEx.HtmlInline` | `{"html": "inline"}` | `<span>text</span>` → `{"insert": "<span>text</span>", "attributes": {"html": "inline"}}` |
   | `MDEx.Heading` | `{"header": level}` | `# Title` → `{"insert": "Title"}`, `{"insert": "\\n", "attributes": {"header": 1}}` |
@@ -1329,8 +1329,8 @@ defmodule MDEx do
   | `MDEx.ThematicBreak` | Text insertion | `---` → `{"insert": "***\\n"}` |
   | `MDEx.List` (bullet) | `{"list": "bullet"}` | `- item` → `{"insert": "\\n", "attributes": {"list": "bullet"}}` |
   | `MDEx.List` (ordered) | `{"list": "ordered"}` | `1. item` → `{"insert": "\\n", "attributes": {"list": "ordered"}}` |
-  | `MDEx.TaskItem` | `{"list": "bullet", "task": true\|false}` | `- [x] done` → `{"insert": "\\n", "attributes": {"list": "bullet", "task": true}}` |
-  | `MDEx.Table` | `{"table": "header"\|"row"}` | Table rows → `{"insert": "\\n", "attributes": {"table": "header"}}` |
+  | `MDEx.TaskItem` | `{"list": "bullet", "task": true/false}` | `- [x] done` → `{"insert": "\\n", "attributes": {"list": "bullet", "task": true}}` |
+  | `MDEx.Table` | `{"table": "header/row"}` | Table rows → `{"insert": "\\n", "attributes": {"table": "header"}}` |
   | `MDEx.Alert` | `{"alert": "type", "alert_title": "title"}` | `> [!NOTE]\\n> text` → `{"insert": "\\n", "attributes": {"alert": "note"}}` |
   | `MDEx.FootnoteDefinition` | `{"footnote_definition": "id"}` | `[^1]: def` → `{"insert": "\\n", "attributes": {"footnote_definition": "1"}}` |
   | `MDEx.HtmlBlock` | `{"html": "block"}` | `<div>block</div>` → `{"insert": "\\n", "attributes": {"html": "block"}}` |
@@ -1383,12 +1383,12 @@ defmodule MDEx do
 
   Input: `(node :: MDEx.Document.md_node(), options :: keyword())`
 
-  Output: 
+  Output:
     - `[delta_op()]` - List of Delta operations to insert
     - `:skip` - Skip this node entirely
     - `{:error, reason}` - Return an error
 
-  **Note**: If you need default conversion behavior for child nodes, call `MDEx.DeltaConverter.convert/2` on them.
+  **Note**: If you need default conversion behavior for child nodes, call `MDEx.to_delta/2` on them.
 
   """
   @spec to_delta(source(), keyword()) ::
