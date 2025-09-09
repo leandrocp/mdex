@@ -130,6 +130,60 @@ defmodule MDEx.Document do
   ["MDEx.Document", "MDEx.Heading", "MDEx.Text", "MDEx.Paragraph", "MDEx.Code", "MDEx.Paragraph", "MDEx.Code"]
   ```
 
+  ## Collectable
+
+  The `Collectable` protocol allows you to build documents by collecting nodes or merging multiple documents together.
+  This is particularly useful for programmatically constructing documents from various sources.
+
+  Merge two documents together using `Enum.into/2`:
+
+  ```elixir
+  iex> first_doc = ~MD[# First Document]
+  iex> second_doc = ~MD[# Second Document]
+  iex> Enum.into(second_doc, first_doc)
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "First Document"}], level: 1, setext: false},
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second Document"}], level: 1, setext: false}
+    ]
+  }
+  ```
+
+  Collect individual nodes into a document:
+
+  ```elixir
+  iex> nodes = [
+  ...>   %MDEx.Text{literal: "Hello"},
+  ...>   %MDEx.Code{literal: "world", num_backticks: 1}
+  ...> ]
+  iex> Enum.into(nodes, %MDEx.Document{})
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Text{literal: "Hello"},
+      %MDEx.Code{literal: "world", num_backticks: 1}
+    ]
+  }
+  ```
+
+  Build a document incrementally by collecting mixed content:
+
+  ```elixir
+  iex> mixed_content = [
+  ...>   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false},
+  ...>   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Some text"}]},
+  ...>   %MDEx.Text{literal: " and more text"},
+  ...>   %MDEx.CodeBlock{literal: "def hello, do: :world", info: "elixir"}
+  ...> ]
+  iex> result = Enum.into(mixed_content, %MDEx.Document{})
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false},
+      %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Some text"}, %MDEx.Text{literal: " and more text"}]},
+      %MDEx.CodeBlock{literal: "def hello, do: :world", info: "elixir"}
+    ]
+  }
+  ```
+
   ## Access
 
   The `Access` behaviour gives you the ability to fetch and update nodes using different types of keys.
