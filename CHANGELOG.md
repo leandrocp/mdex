@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.4 (2025-09-09
+
+### Changes
+  - [Delta] Support extra newlines between consecutive paragraphs (@Valian)
+
+### Fixed
+  - [Delta] Correct escape characters in table entries (@Valian)
+
 ## 0.8.3 (2025-09-08)
 
 ### Added
