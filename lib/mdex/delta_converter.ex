@@ -46,7 +46,16 @@ defmodule MDEx.DeltaConverter do
   defp convert_nodes([node | rest], current_attrs, options) do
     node_ops = convert_node(node, current_attrs, options)
     rest_ops = convert_nodes(rest, current_attrs, options)
-    node_ops ++ rest_ops
+
+    # Add extra newline between consecutive paragraphs only
+    case {node, rest} do
+      {%MDEx.Paragraph{}, [%MDEx.Paragraph{} | _]} ->
+        # Paragraph followed by another paragraph - add extra newline for visual separation
+        node_ops ++ [%{"insert" => "\n"}] ++ rest_ops
+
+      _ ->
+        node_ops ++ rest_ops
+    end
   end
 
   # Convert individual nodes to delta operations
