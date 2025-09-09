@@ -152,36 +152,57 @@ defmodule MDEx.Document do
   Collect individual nodes into a document:
 
   ```elixir
-  iex> nodes = [
-  ...>   %MDEx.Text{literal: "Hello"},
+  iex> chunks = [
+  ...>   %MDEx.Text{literal: "Hello "},
   ...>   %MDEx.Code{literal: "world", num_backticks: 1}
   ...> ]
-  iex> Enum.into(nodes, %MDEx.Document{})
+  iex> document = Enum.into(chunks, %MDEx.Document{})
   %MDEx.Document{
     nodes: [
-      %MDEx.Text{literal: "Hello"},
+      %MDEx.Text{literal: "Hello "},
       %MDEx.Code{literal: "world", num_backticks: 1}
     ]
   }
+  iex> MDEx.to_html!(document)
+  "Hello <code>world</code>"
   ```
 
   Build a document incrementally by collecting mixed content:
 
   ```elixir
-  iex> mixed_content = [
+  iex> chunks = [
   ...>   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false},
-  ...>   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Some text"}]},
-  ...>   %MDEx.Text{literal: " and more text"},
-  ...>   %MDEx.CodeBlock{literal: "def hello, do: :world", info: "elixir"}
+  ...>   %MDEx.Paragraph{nodes: []},
+  ...>   %MDEx.Text{literal: "Some text"},
+  ...>   %MDEx.ListItem{nodes: [%MDEx.Text{literal: "Item 1"}]},
+  ...>   %MDEx.Text{literal: " - WIP"},
   ...> ]
-  iex> result = Enum.into(mixed_content, %MDEx.Document{})
+  iex> document = Enum.into(chunks, %MDEx.Document{})
   %MDEx.Document{
     nodes: [
-      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false},
-      %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Some text"}, %MDEx.Text{literal: " and more text"}]},
-      %MDEx.CodeBlock{literal: "def hello, do: :world", info: "elixir"}
+      %MDEx.Heading{
+        level: 1,
+        nodes: [%MDEx.Text{literal: "Title"}],
+        setext: false
+      },
+      %MDEx.Paragraph{
+        nodes: [%MDEx.Text{literal: "Some text"}]
+      },
+      %MDEx.List{
+        bullet_char: "-",
+        delimiter: :period,
+        is_task_list: false,
+        list_type: :bullet,
+        marker_offset: 0,
+        nodes: [%MDEx.ListItem{nodes: [%MDEx.Text{literal: "Item 1 - WIP"}], list_type: :bullet, marker_offset: 0, padding: 2, start: 1, delimiter: :period, bullet_char: "-", tight: true, is_task_list: false}],
+        padding: 2,
+        start: 1,
+        tight: true
+      }
     ]
   }
+  iex> MDEx.to_html!(document)
+  "<h1>Title</h1>\\n<p>Some text</p>\\n<ul>\\n<li>Item 1 - WIP</li>\\n</ul>"
   ```
 
   ## Access

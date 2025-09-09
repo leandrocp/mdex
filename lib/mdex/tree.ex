@@ -10,7 +10,7 @@ defmodule MDEx.Tree do
 
     updated_nodes =
       Enum.reduce(new_nodes, nodes, fn
-        [], new_node ->
+        new_node, [] ->
           [wrap_node(new_node)]
 
         new_node, acc when is_struct(new_node) ->
@@ -31,6 +31,21 @@ defmodule MDEx.Tree do
 
   defp maybe_append_to_node(%MDEx.List{list_type: type, nodes: parent_nodes} = parent, %MDEx.List{list_type: type, nodes: new_nodes}) do
     {:ok, %{parent | nodes: parent_nodes ++ new_nodes}}
+  end
+
+  defp maybe_append_to_node(%MDEx.ListItem{nodes: child_nodes} = parent, %MDEx.Text{literal: new_text}) do
+    case List.last(child_nodes) do
+      %MDEx.Text{literal: existing_text} = last_text ->
+        updated_text = %{last_text | literal: existing_text <> new_text}
+        updated_nodes = List.replace_at(child_nodes, -1, updated_text)
+        {:ok, %{parent | nodes: updated_nodes}}
+
+      _ ->
+        case try_append_recursive(child_nodes, %MDEx.Text{literal: new_text}) do
+          {:ok, updated_children} -> {:ok, %{parent | nodes: updated_children}}
+          :error -> :error
+        end
+    end
   end
 
   defp maybe_append_to_node(%{nodes: child_nodes} = parent, new_node) do

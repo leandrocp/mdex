@@ -830,8 +830,14 @@ defmodule MDEx.DocumentTest do
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "heading"}], level: 2, setext: false}
       ]
 
-      result = Enum.into(mixed_nodes, %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]})
-      assert result.nodes == [%MDEx.Text{literal: "existing"} | mixed_nodes]
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Text{literal: "existing"},
+                 %MDEx.Text{literal: "text"},
+                 %MDEx.Code{num_backticks: 1, literal: "code"},
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "heading"}], level: 2, setext: false}
+               ]
+             } = Enum.into(mixed_nodes, %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]})
     end
 
     test "collectable protocol error handling" do
