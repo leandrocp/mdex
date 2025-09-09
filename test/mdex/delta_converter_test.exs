@@ -108,8 +108,77 @@ defmodule MDEx.DeltaConverterTest do
 
       assert result == [
                %{"insert" => "First paragraph"},
+               # End of first paragraph
+               %{"insert" => "\n"},
+               # Extra space between paragraphs
                %{"insert" => "\n"},
                %{"insert" => "Second paragraph"},
+               # End of second paragraph
+               %{"insert" => "\n"}
+             ]
+    end
+
+    test "converts paragraphs with empty lines between them" do
+      # This test case simulates what happens when there are empty lines between paragraphs
+      # In markdown: "Para 1\n\nPara 2" should preserve the spacing
+      input = %Document{
+        nodes: [
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "First paragraph"}]},
+          # Empty paragraph representing blank line
+          %MDEx.Paragraph{nodes: []},
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Second paragraph"}]}
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      # Should preserve the empty line as an extra newline between paragraphs
+      assert result == [
+               %{"insert" => "First paragraph"},
+               %{"insert" => "\n"},
+               # Extra spacing before empty paragraph
+               %{"insert" => "\n"},
+               # Empty paragraph 
+               %{"insert" => "\n"},
+               # Extra spacing before next paragraph
+               %{"insert" => "\n"},
+               %{"insert" => "Second paragraph"},
+               %{"insert" => "\n"}
+             ]
+    end
+
+    test "handles multiple consecutive newlines in text content" do
+      # Test what happens when text contains multiple newlines
+      input = %Document{
+        nodes: [
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Line 1\n\nLine 3"}]}
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      # The question is: are internal newlines in text preserved?
+      assert result == [
+               # Should preserve internal newlines
+               %{"insert" => "Line 1\n\nLine 3"},
+               # Paragraph terminator
+               %{"insert" => "\n"}
+             ]
+    end
+
+    test "converts paragraph that contains only whitespace" do
+      # Test edge case: paragraph with only spaces/newlines
+      input = %Document{
+        nodes: [
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "  \n  "}]}
+        ]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      # Should this preserve the whitespace content?
+      assert result == [
+               %{"insert" => "  \n  "},
                %{"insert" => "\n"}
              ]
     end

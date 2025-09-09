@@ -127,11 +127,11 @@ defmodule MDEx.DeltaIntegrationTest do
 
       function useCounter(initialValue = 0) {
         const [count, setCount] = useState(initialValue);
-        
+
         useEffect(() => {
           document.title = `Count: ${count}`;
         }, [count]);
-        
+
         return [count, setCount];
       }
       ```
@@ -208,7 +208,7 @@ defmodule MDEx.DeltaIntegrationTest do
       The API returns standard HTTP status codes:
 
       - `200` - Success
-      - `400` - Bad Request  
+      - `400` - Bad Request
       - `401` - Unauthorized
       - `500` - Internal Server Error
 
@@ -267,7 +267,7 @@ defmodule MDEx.DeltaIntegrationTest do
       ## Text Formatting
 
       - **Bold text**
-      - *Italic text*  
+      - *Italic text*
       - ~~Strikethrough~~
       - ++Underlined++
       - `inline code`
@@ -310,7 +310,7 @@ defmodule MDEx.DeltaIntegrationTest do
       ## Block Elements
 
       > This is a blockquote with some **bold** text inside.
-      > 
+      >
       > It can span multiple paragraphs.
 
       ---
@@ -587,6 +587,38 @@ defmodule MDEx.DeltaIntegrationTest do
 
       assert result == [
                %{"insert" => "Hello world"},
+               %{"insert" => "\n"}
+             ]
+    end
+
+    test "paragraph spacing preserves blank lines" do
+      input = """
+      First paragraph.
+
+      Second paragraph after blank line.
+
+      Third paragraph.
+      """
+
+      # Let's first see how the parser structures this
+      {:ok, ast} = MDEx.parse_document(input, extension: @extension)
+
+      {:ok, result} = parse_with_extensions(input)
+
+      # Expected: paragraphs should have proper spacing between them
+      assert result == [
+               %{"insert" => "First paragraph."},
+               # End first paragraph
+               %{"insert" => "\n"},
+               # Extra space before next paragraph
+               %{"insert" => "\n"},
+               %{"insert" => "Second paragraph after blank line."},
+               # End second paragraph
+               %{"insert" => "\n"},
+               # Extra space before next paragraph
+               %{"insert" => "\n"},
+               %{"insert" => "Third paragraph."},
+               # End final paragraph
                %{"insert" => "\n"}
              ]
     end
