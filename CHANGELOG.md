@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+  - [Document] Add pretty print inspection for document AST
+
+### Fixed
+  - [Collectable] Fix inline node merging
+
 ## 0.8.4 (2025-09-09
 
 ### Changes

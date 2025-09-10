@@ -1349,7 +1349,7 @@ defimpl Inspect, for: MDEx.Document do
   import Inspect.Algebra
 
   def inspect(%MDEx.Document{nodes: nodes}, _opts) do
-    node_count = Enum.count(%MDEx.Document{nodes: nodes})
+    node_count = Enum.count(%MDEx.Document{nodes: nodes}) - 1
     header = concat(["#MDEx.Document(", to_string(node_count), " nodes)<"])
 
     if Enum.empty?(nodes) do
