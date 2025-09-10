@@ -1344,3 +1344,69 @@ defimpl Jason.Encoder,
     Jason.Encode.map(map, opts)
   end
 end
+
+defimpl Inspect, for: MDEx.Document do
+  import Inspect.Algebra
+
+  def inspect(%MDEx.Document{nodes: nodes}, _opts) do
+    node_count = Enum.count(%MDEx.Document{nodes: nodes}) - 1
+    header = concat(["#MDEx.Document(", to_string(node_count), " nodes)<"])
+
+    if Enum.empty?(nodes) do
+      concat([header, ">"])
+    else
+      {tree_lines, _} = build_tree_lines(nodes, [], 1)
+      tree_content = Enum.join(tree_lines, "\n")
+
+      concat([
+        header,
+        line(),
+        tree_content,
+        line(),
+        ">"
+      ])
+    end
+  end
+
+  defp build_tree_lines([], _prefixes, start_index), do: {[], start_index}
+
+  defp build_tree_lines([node | rest], prefixes, start_index) do
+    is_last = Enum.empty?(rest)
+    {current_lines, next_index} = format_node(node, prefixes, is_last, start_index)
+    {remaining_lines, final_index} = build_tree_lines(rest, prefixes, next_index)
+    {current_lines ++ remaining_lines, final_index}
+  end
+
+  defp format_node(node, prefixes, is_last, index) do
+    connector = if is_last, do: "└── ", else: "├── "
+    prefix = Enum.join(prefixes, "")
+    node_info = get_node_info(node)
+    line_content = "#{prefix}#{connector}#{index} #{node_info}"
+    child_prefix = if is_last, do: "    ", else: "│   "
+    new_prefixes = prefixes ++ [child_prefix]
+
+    case Map.get(node, :nodes, []) do
+      [] ->
+        {[line_content], index + 1}
+
+      children ->
+        {child_lines, final_index} = build_tree_lines(children, new_prefixes, index + 1)
+        {[line_content | child_lines], final_index}
+    end
+  end
+
+  defp get_node_info(node) do
+    module_name = node.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
+
+    attrs =
+      node
+      |> Map.from_struct()
+      |> Map.delete(:nodes)
+      |> Enum.map(fn {k, v} -> "#{k}: #{inspect(v)}" end)
+
+    case attrs do
+      [] -> "[#{module_name}]"
+      attrs -> "[#{module_name}] #{Enum.join(attrs, ", ")}"
+    end
+  end
+end
