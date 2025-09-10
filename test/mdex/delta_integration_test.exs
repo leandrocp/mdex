@@ -600,12 +600,8 @@ defmodule MDEx.DeltaIntegrationTest do
       Third paragraph.
       """
 
-      # Let's first see how the parser structures this
-      {:ok, ast} = MDEx.parse_document(input, extension: @extension)
-
       {:ok, result} = parse_with_extensions(input)
 
-      # Expected: paragraphs should have proper spacing between them
       assert result == [
                %{"insert" => "First paragraph."},
                # End first paragraph

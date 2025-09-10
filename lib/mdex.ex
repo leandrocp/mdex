@@ -990,6 +990,36 @@ defmodule MDEx do
     end
   end
 
+  # @doc """
+  # """
+  # @spec parse_fragments(String.t(), options()) :: {:ok, {[Document.md_node()], map()}} | {:error, any()}
+  # def parse_fragments(markdown, options \\ []) when is_binary(markdown) do
+  #   {completed, delimiter} = MDEx.FragmentParser.complete(markdown)
+  #
+  #   case extract_fragment_nodes(completed, options) do
+  #     {:ok, nodes} -> {:ok, {nodes, %{delimiter: delimiter}}}
+  #     error -> error
+  #   end
+  # end
+  #
+  # defp extract_fragment_nodes(markdown, options) do
+  #   case parse_document(markdown, options) do
+  #     {:ok, %Document{nodes: [%MDEx.Paragraph{nodes: nodes}]}} -> {:ok, nodes}
+  #     {:ok, %Document{nodes: nodes}} -> {:ok, nodes}
+  #     error -> error
+  #   end
+  # end
+
+  @doc """
+  Creates a new markdown stream.
+  """
+  def stream(options \\ []) do
+    # Validate early so streaming raises on invalid options (keeps behavior consistent
+    # with other entry points that validate on parse/render).
+    validate_options!(options)
+    %MDEx.Stream{document: %MDEx.Document{}, options: options}
+  end
+
   @doc """
   Convert Markdown, `MDEx.Document`, or `MDEx.Pipe` to HTML.
 
@@ -1623,7 +1653,7 @@ defmodule MDEx do
   def traverse_and_update(ast, acc, fun), do: MDEx.Document.Traversal.traverse_and_update(ast, acc, fun)
 
   @doc false
-  def validate_options!(options) do
+  def validate_options!(options) when is_list(options) do
     options = Keyword.put(options, :render, pop_unsafe_(options[:render]))
     sanitize_opts = update_deprecated_sanitize_options(get_in(options, [:features, :sanitize]) || get_in(options, [:sanitize]))
     deprecated_theme_opt = options[:features][:syntax_highlight_theme]
@@ -1669,6 +1699,8 @@ defmodule MDEx do
       sanitize: options[:sanitize]
     }
   end
+
+  def validate_options!(options) when is_map(options), do: options
 
   defp update_deprecated_sanitize_options(true = _options) do
     Logger.warning("""

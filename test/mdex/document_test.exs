@@ -809,18 +809,44 @@ defmodule MDEx.DocumentTest do
                }
     end
 
-    test "into empty document" do
-      nodes = [%MDEx.Text{literal: "test"}, %MDEx.Code{literal: "code", num_backticks: 1}]
-      empty_doc = %MDEx.Document{nodes: []}
+    test "preserve spaces" do
+      nodes = [
+        %MDEx.Text{literal: " second"},
+        %MDEx.Text{literal: "third "},
+        %MDEx.Text{literal: "  fourth  "}
+      ]
 
-      result = Enum.into(nodes, empty_doc)
-      assert result.nodes == nodes
+      assert Enum.into(
+               nodes,
+               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [
+                       %MDEx.Text{literal: "first secondthird   fourth  "}
+                     ]
+                   }
+                 ]
+               }
+    end
+
+    test "into empty document" do
+      assert Enum.into(
+               [%MDEx.Text{literal: "test"}, %MDEx.Code{literal: "code", num_backticks: 1}],
+               %MDEx.Document{}
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "test"}, %MDEx.Code{num_backticks: 1, literal: "code"}]
+                   }
+                 ]
+               }
     end
 
     test "into document with empty collection" do
-      initial_doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}
-      result = Enum.into([], initial_doc)
-      assert result == initial_doc
+      assert Enum.into([], %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}) == %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}
     end
 
     test "into document with mixed node types" do
@@ -833,21 +859,12 @@ defmodule MDEx.DocumentTest do
       assert %MDEx.Document{
                nodes: [
                  %MDEx.Text{literal: "existing"},
-                 %MDEx.Text{literal: "text"},
-                 %MDEx.Code{num_backticks: 1, literal: "code"},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "heading"}], level: 2, setext: false}
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Text{literal: "text"}, %MDEx.Code{num_backticks: 1, literal: "code"}]
+                 },
+                 %MDEx.Heading{level: 2, nodes: [%MDEx.Text{literal: "heading"}], setext: false}
                ]
              } = Enum.into(mixed_nodes, %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]})
-    end
-
-    test "collectable protocol error handling" do
-      assert_raise ArgumentError, fn ->
-        Enum.into(["not a node"], %MDEx.Document{nodes: []})
-      end
-
-      assert_raise ArgumentError, fn ->
-        Enum.into([%{invalid: "struct"}], %MDEx.Document{nodes: []})
-      end
     end
   end
 

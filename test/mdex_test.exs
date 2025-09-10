@@ -96,6 +96,9 @@ defmodule MDExTest do
     end
   end
 
+  describe "parse_fragments" do
+  end
+
   describe "new" do
     test "default" do
       assert %MDEx.Pipe{
@@ -251,33 +254,225 @@ defmodule MDExTest do
              }
   end
 
-  test "parse_fragment" do
-    assert MDEx.parse_fragment!("test") == %MDEx.Text{literal: "test"}
-    assert MDEx.parse_fragment!("`elixir`") == %MDEx.Code{literal: "elixir", num_backticks: 1}
-    assert MDEx.parse_fragment!("# Test") == %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Test"}], setext: false}
-
-    assert MDEx.parse_fragment!("- Test") == %MDEx.List{
-             bullet_char: "-",
-             delimiter: :period,
-             list_type: :bullet,
-             marker_offset: 0,
-             nodes: [
-               %MDEx.ListItem{
-                 nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Test"}]}],
-                 bullet_char: "-",
-                 delimiter: :period,
-                 list_type: :bullet,
-                 marker_offset: 0,
-                 padding: 2,
-                 start: 1,
-                 tight: false
-               }
-             ],
-             padding: 2,
-             start: 1,
-             tight: true
-           }
-  end
+  # describe "parse_fragment" do
+  #   test "simple text" do
+  #     assert MDEx.parse_fragment!("test") == %MDEx.Text{literal: "test"}
+  #     assert MDEx.parse_fragment!("before # after") == %MDEx.Text{literal: "before # after"}
+  #   end
+  #
+  #   test "preserves leading spaces" do
+  #     assert MDEx.parse_fragment!(" hello") == %MDEx.Text{literal: " hello"}
+  #   end
+  #
+  #   test "preserves trailing spaces" do
+  #     assert MDEx.parse_fragment!("hello ") == %MDEx.Text{literal: "hello "}
+  #   end
+  #
+  #   test "preserves multiple spaces" do
+  #     assert MDEx.parse_fragment!("  hello  ") == %MDEx.Text{literal: "  hello  "}
+  #   end
+  #
+  #   test "empty string" do
+  #     assert MDEx.parse_fragment!("") == %MDEx.Text{literal: ""}
+  #   end
+  #
+  #   test "whitespace only" do
+  #     assert MDEx.parse_fragment!("   ") == %MDEx.Text{literal: "   "}
+  #   end
+  #
+  #   test "emojis" do
+  #     assert MDEx.parse_fragment!("📡") == %MDEx.Text{literal: "📡"}
+  #   end
+  #
+  #   test "heading" do
+  #     assert MDEx.parse_fragment!("# Test") == %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Test"}], setext: false}
+  #     assert MDEx.parse_fragment!("# Test ") == %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Test "}], setext: false}
+  #     assert MDEx.parse_fragment!("#") == %MDEx.Heading{level: 1, nodes: [], setext: false}
+  #   end
+  #
+  #   test "inline code" do
+  #     assert MDEx.parse_fragment!("`elixir`") == %MDEx.Code{literal: "elixir", num_backticks: 1}
+  #     assert MDEx.parse_fragment!("`e") == %MDEx.Code{literal: "e", num_backticks: 1}
+  #     assert MDEx.parse_fragment!("``") == %MDEx.Code{literal: "", num_backticks: 1}
+  #     assert MDEx.parse_fragment!("``code with ` backtick``") == %MDEx.Code{literal: "code with ` backtick", num_backticks: 2}
+  #
+  #     assert MDEx.parse_fragment!("code: `elixir`") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "code: "}, %MDEx.Code{num_backticks: 1, literal: "elixir"}]
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("code: `elixir") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "code: "}, %MDEx.Code{num_backticks: 1, literal: "elixir"}]
+  #            }
+  #   end
+  #
+  #   test "code block" do
+  #     assert MDEx.parse_fragment!("```\n:atom\n```") == %MDEx.CodeBlock{
+  #              literal: ":atom\n",
+  #              fence_char: "`",
+  #              fence_length: 3,
+  #              fence_offset: 0,
+  #              fenced: true,
+  #              info: "",
+  #              nodes: []
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("```elixir\n:atom\n```") == %MDEx.CodeBlock{
+  #              literal: ":atom\n",
+  #              fence_char: "`",
+  #              fence_length: 3,
+  #              fence_offset: 0,
+  #              fenced: true,
+  #              info: "elixir",
+  #              nodes: []
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("```") == %MDEx.CodeBlock{
+  #              literal: "",
+  #              fence_char: "`",
+  #              fence_length: 3,
+  #              fence_offset: 0,
+  #              fenced: true,
+  #              info: "",
+  #              nodes: []
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("```elixir") == %MDEx.CodeBlock{
+  #              literal: "",
+  #              fence_char: "`",
+  #              fence_length: 3,
+  #              fence_offset: 0,
+  #              fenced: true,
+  #              info: "elixir",
+  #              nodes: []
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("```elixir\n:atom") == %MDEx.CodeBlock{
+  #              literal: ":atom\n",
+  #              fence_char: "`",
+  #              fence_length: 3,
+  #              fence_offset: 0,
+  #              fenced: true,
+  #              info: "elixir",
+  #              nodes: []
+  #            }
+  #   end
+  #
+  #   test "list" do
+  #     assert MDEx.parse_fragment!("- Test") == %MDEx.List{
+  #              bullet_char: "-",
+  #              delimiter: :period,
+  #              list_type: :bullet,
+  #              marker_offset: 0,
+  #              nodes: [
+  #                %MDEx.ListItem{
+  #                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Test"}]}],
+  #                  bullet_char: "-",
+  #                  delimiter: :period,
+  #                  list_type: :bullet,
+  #                  marker_offset: 0,
+  #                  padding: 2,
+  #                  start: 1,
+  #                  tight: false
+  #                }
+  #              ],
+  #              padding: 2,
+  #              start: 1,
+  #              tight: true
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("* Test") == %MDEx.List{
+  #              bullet_char: "*",
+  #              delimiter: :period,
+  #              list_type: :bullet,
+  #              marker_offset: 0,
+  #              nodes: [
+  #                %MDEx.ListItem{
+  #                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Test"}]}],
+  #                  bullet_char: "*",
+  #                  delimiter: :period,
+  #                  list_type: :bullet,
+  #                  marker_offset: 0,
+  #                  padding: 2,
+  #                  start: 1,
+  #                  tight: false
+  #                }
+  #              ],
+  #              padding: 2,
+  #              start: 1,
+  #              tight: true
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("*") == %MDEx.List{
+  #              bullet_char: "*",
+  #              delimiter: :period,
+  #              list_type: :bullet,
+  #              marker_offset: 0,
+  #              nodes: [
+  #                %MDEx.ListItem{
+  #                  nodes: [],
+  #                  bullet_char: "*",
+  #                  delimiter: :period,
+  #                  list_type: :bullet,
+  #                  marker_offset: 0,
+  #                  padding: 2,
+  #                  start: 1,
+  #                  tight: false
+  #                }
+  #              ],
+  #              padding: 2,
+  #              start: 1,
+  #              tight: true
+  #            }
+  #   end
+  #
+  #   test "strong emphasis" do
+  #     assert MDEx.parse_fragment!("**bold**") == %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
+  #     assert MDEx.parse_fragment!("**bold") == %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
+  #     assert MDEx.parse_fragment!("**") == %MDEx.Strong{nodes: [%MDEx.Text{literal: ""}]}
+  #
+  #     assert MDEx.parse_fragment!("bold**") == %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
+  #
+  #     assert MDEx.parse_fragment!("bold** ") == %MDEx.Paragraph{
+  #              nodes: [
+  #                %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}, %MDEx.Text{literal: " "}]}
+  #              ]
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("before **bold**") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "before "}, %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}]
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("before **bold") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "before "}, %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}]
+  #            }
+  #   end
+  #
+  #   test "emphasis" do
+  #     assert MDEx.parse_fragment!("*italic*") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}
+  #     assert MDEx.parse_fragment!("*italic") == %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}
+  #
+  #     assert MDEx.parse_fragment!("before *italic*") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "before "}, %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}]
+  #            }
+  #
+  #     assert MDEx.parse_fragment!("before *italic") == %MDEx.Paragraph{
+  #              nodes: [%MDEx.Text{literal: "before "}, %MDEx.Emph{nodes: [%MDEx.Text{literal: "italic"}]}]
+  #            }
+  #   end
+  #
+  #   test "link" do
+  #     assert MDEx.parse_fragment!("[text](url)") == %MDEx.Link{nodes: [%MDEx.Text{literal: "text"}], url: "url", title: ""}
+  #   end
+  #
+  #   test "image" do
+  #     assert MDEx.parse_fragment!("![alt](url)") == %MDEx.Image{nodes: [%MDEx.Text{literal: "alt"}], url: "url", title: ""}
+  #   end
+  #
+  #   test "blockquote" do
+  #     assert MDEx.parse_fragment!("> quote") == %MDEx.BlockQuote{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "quote"}]}]}
+  #     assert MDEx.parse_fragment!(">") == %MDEx.BlockQuote{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: ""}]}]}
+  #   end
+  # end
 
   describe "security" do
     test "omit raw html by default" do

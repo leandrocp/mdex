@@ -1,185 +1,225 @@
 defmodule MDEx.Tree do
   @moduledoc false
 
-  def append_node(%MDEx.Document{} = document, new_node) do
-    append_nodes(document, [new_node])
+  alias MDEx.Alert
+  alias MDEx.BlockQuote
+  alias MDEx.Code
+  alias MDEx.CodeBlock
+  alias MDEx.DescriptionDetails
+  alias MDEx.DescriptionItem
+  alias MDEx.DescriptionList
+  alias MDEx.DescriptionTerm
+  alias MDEx.Document
+  alias MDEx.Emph
+  alias MDEx.EscapedTag
+  alias MDEx.FootnoteDefinition
+  alias MDEx.FootnoteReference
+  alias MDEx.FrontMatter
+  alias MDEx.Heading
+  alias MDEx.HtmlBlock
+  alias MDEx.HtmlInline
+  alias MDEx.Image
+  alias MDEx.Link
+  alias MDEx.List
+  alias MDEx.ListItem
+  alias MDEx.Math
+  alias MDEx.MultilineBlockQuote
+  alias MDEx.Paragraph
+  alias MDEx.SpoileredText
+  alias MDEx.Strikethrough
+  alias MDEx.Strong
+  alias MDEx.Subscript
+  alias MDEx.Superscript
+  alias MDEx.Table
+  alias MDEx.TableCell
+  alias MDEx.TableRow
+  alias MDEx.TaskItem
+  alias MDEx.Text
+  alias MDEx.ThematicBreak
+  alias MDEx.Underline
+  alias MDEx.WikiLink
+
+  def append(%Document{} = document, nodes) when is_list(nodes) do
+    Enum.reduce(nodes, document, &append(&2, &1))
   end
 
-  def append_nodes(%MDEx.Document{nodes: nodes} = document, new_nodes) when is_list(new_nodes) do
-    new_nodes = List.flatten(new_nodes)
+  def append(%Document{} = document, node) when is_struct(node), do: append_into(document, node)
 
-    updated_nodes =
-      Enum.reduce(new_nodes, nodes, fn
-        new_node, [] ->
-          [wrap_node(new_node)]
+  def append(parent, node) when is_struct(parent), do: append_into(%Document{nodes: [parent]}, node)
 
-        new_node, acc when is_struct(new_node) ->
-          {rightmost, remaining} = List.pop_at(acc, -1)
-
-          case maybe_append_to_node(rightmost, new_node) do
-            {:ok, updated_node} -> remaining ++ [updated_node]
-            :error -> acc ++ [wrap_node(new_node)]
-          end
-      end)
-
-    %{document | nodes: updated_nodes}
+  defp append_into(%Document{nodes: []} = doc, node) do
+    cond do
+      list_item?(node) -> %{doc | nodes: [list_from_item(node)]}
+      block?(node) -> %{doc | nodes: [node]}
+      true -> %{doc | nodes: [%Paragraph{nodes: [normalize_inline(node)]}]}
+    end
   end
 
-  def merge(%MDEx.Document{} = document, %MDEx.Document{nodes: nodes}) do
-    append_nodes(document, nodes)
-  end
+  defp append_into(%Document{nodes: nodes} = doc, node) do
+    last = :lists.last(nodes)
 
-  defp maybe_append_to_node(%MDEx.List{list_type: type, nodes: parent_nodes} = parent, %MDEx.List{list_type: type, nodes: new_nodes}) do
-    {:ok, %{parent | nodes: parent_nodes ++ new_nodes}}
-  end
+    case {last, node} do
+      {%CodeBlock{fenced: f, fence_char: ch, fence_length: len, fence_offset: off, info: info, literal: a} = lb,
+       %CodeBlock{fenced: f, fence_char: ch, fence_length: len, fence_offset: off, info: info, literal: b}} ->
+        %{doc | nodes: replace_last(nodes, %{lb | literal: merge_codeblock_literals(a, b)})}
 
-  defp maybe_append_to_node(%MDEx.ListItem{nodes: child_nodes} = parent, %MDEx.Text{literal: new_text}) do
-    case List.last(child_nodes) do
-      %MDEx.Text{literal: existing_text} = last_text ->
-        updated_text = %{last_text | literal: existing_text <> new_text}
-        updated_nodes = List.replace_at(child_nodes, -1, updated_text)
-        {:ok, %{parent | nodes: updated_nodes}}
+      {parent, child} ->
+        cond do
+          can_contain?(parent, child) ->
+            %{doc | nodes: replace_last(nodes, append_child(parent, child))}
 
-      _ ->
-        case try_append_recursive(child_nodes, %MDEx.Text{literal: new_text}) do
-          {:ok, updated_children} -> {:ok, %{parent | nodes: updated_children}}
-          :error -> :error
+          match?(%List{}, parent) and not block?(child) ->
+            %List{nodes: items} = parent
+            last_item = :lists.last(items)
+            updated_item = append_child(last_item, child)
+            updated_list = %{parent | nodes: replace_last(items, updated_item)}
+            %{doc | nodes: replace_last(nodes, updated_list)}
+
+          list_item?(child) ->
+            %{doc | nodes: nodes ++ [list_from_item(child)]}
+
+          block?(child) ->
+            %{doc | nodes: nodes ++ [child]}
+
+          true ->
+            %{doc | nodes: nodes ++ [%Paragraph{nodes: [normalize_inline(child)]}]}
         end
     end
   end
 
-  defp maybe_append_to_node(%{nodes: child_nodes} = parent, new_node) do
-    if can_contain?(parent, new_node) do
-      {:ok, %{parent | nodes: child_nodes ++ [new_node]}}
-    else
-      case try_append_recursive(child_nodes, new_node) do
-        {:ok, updated_children} -> {:ok, %{parent | nodes: updated_children}}
-        :error -> :error
-      end
+  defp append_child(%{nodes: nodes} = parent, child) do
+    child = normalize_inline(child)
+
+    case nodes do
+      [] ->
+        %{parent | nodes: [child]}
+
+      _ ->
+        last = :lists.last(nodes)
+
+        case {last, child} do
+          {%Text{literal: a}, %Text{literal: b}} ->
+            %{parent | nodes: replace_last(nodes, %Text{literal: a <> b})}
+
+          {%Code{num_backticks: nb, literal: a}, %Code{num_backticks: nb2, literal: b}} ->
+            %{parent | nodes: replace_last(nodes, %Code{num_backticks: max(nb, nb2), literal: a <> b})}
+
+          _ ->
+            %{parent | nodes: nodes ++ [child]}
+        end
     end
   end
 
-  defp maybe_append_to_node(_parent, _new_node), do: :error
+  defp replace_last([_], new), do: [new]
+  defp replace_last([h | t], new), do: [h | replace_last(t, new)]
 
-  defp try_append_recursive([], _new_node), do: :error
-
-  defp try_append_recursive(nodes, new_node) do
-    {rightmost, remaining} = List.pop_at(nodes, -1)
-
-    case maybe_append_to_node(rightmost, new_node) do
-      {:ok, updated_node} -> {:ok, remaining ++ [updated_node]}
-      :error -> :error
-    end
+  defp merge_codeblock_literals(a, b) do
+    if ends_with_nl?(a), do: a <> b, else: a <> "\n" <> b
   end
 
-  defp wrap_node(item) when is_struct(item, MDEx.ListItem) or is_struct(item, MDEx.TaskItem) do
-    %MDEx.List{nodes: [item]}
+  defp ends_with_nl?(<<>>), do: false
+
+  defp ends_with_nl?(bin) do
+    :binary.part(bin, byte_size(bin) - 1, 1) == "\n"
   end
 
-  defp wrap_node(%MDEx.DescriptionItem{} = item) do
-    %MDEx.DescriptionList{nodes: [item]}
+  defp normalize_inline(%Code{num_backticks: 0} = n), do: %{n | num_backticks: 1}
+  defp normalize_inline(n), do: n
+
+  # Returns true if `parent` can directly contain `child` as per CommonMark rules.
+  defp can_contain?(_, %Document{}), do: false
+  defp can_contain?(%Document{}, %FrontMatter{}), do: true
+  defp can_contain?(%Document{}, child), do: block?(child) and not list_item?(child)
+
+  defp can_contain?(%BlockQuote{}, child), do: block?(child) and not list_item?(child)
+  defp can_contain?(%FootnoteDefinition{}, child), do: block?(child) and not list_item?(child)
+  defp can_contain?(%DescriptionTerm{}, child), do: block?(child) and not list_item?(child)
+  defp can_contain?(%DescriptionDetails{}, child), do: block?(child) and not list_item?(child)
+  defp can_contain?(%MultilineBlockQuote{}, child), do: block?(child) and not list_item?(child)
+  defp can_contain?(%Alert{}, child), do: block?(child) and not list_item?(child)
+
+  defp can_contain?(%List{}, %ListItem{}), do: true
+  defp can_contain?(%List{}, %TaskItem{}), do: true
+
+  defp can_contain?(%DescriptionList{}, %DescriptionItem{}), do: true
+  defp can_contain?(%DescriptionItem{}, %DescriptionTerm{}), do: true
+  defp can_contain?(%DescriptionItem{}, %DescriptionDetails{}), do: true
+
+  defp can_contain?(%Paragraph{}, child), do: not block?(child)
+  defp can_contain?(%Heading{}, child), do: not block?(child)
+  defp can_contain?(%Emph{}, child), do: not block?(child)
+  defp can_contain?(%Strong{}, child), do: not block?(child)
+  defp can_contain?(%Link{}, child), do: not block?(child)
+  defp can_contain?(%Image{}, child), do: not block?(child)
+  defp can_contain?(%WikiLink{}, child), do: not block?(child)
+  defp can_contain?(%Strikethrough{}, child), do: not block?(child)
+  defp can_contain?(%Superscript{}, child), do: not block?(child)
+  defp can_contain?(%SpoileredText{}, child), do: not block?(child)
+  defp can_contain?(%Underline{}, child), do: not block?(child)
+  defp can_contain?(%Subscript{}, child), do: not block?(child)
+  defp can_contain?(%EscapedTag{}, child), do: not block?(child)
+
+  defp can_contain?(%Table{}, %TableRow{}), do: true
+  defp can_contain?(%TableRow{}, %TableCell{}), do: true
+  defp can_contain?(%TableCell{}, %Text{}), do: true
+  defp can_contain?(%TableCell{}, %Code{}), do: true
+  defp can_contain?(%TableCell{}, %Emph{}), do: true
+  defp can_contain?(%TableCell{}, %Strong{}), do: true
+  defp can_contain?(%TableCell{}, %Link{}), do: true
+  defp can_contain?(%TableCell{}, %Image{}), do: true
+  defp can_contain?(%TableCell{}, %Strikethrough{}), do: true
+  defp can_contain?(%TableCell{}, %HtmlInline{}), do: true
+  defp can_contain?(%TableCell{}, %Math{}), do: true
+  defp can_contain?(%TableCell{}, %WikiLink{}), do: true
+  defp can_contain?(%TableCell{}, %FootnoteReference{}), do: true
+  defp can_contain?(%TableCell{}, %Superscript{}), do: true
+  defp can_contain?(%TableCell{}, %SpoileredText{}), do: true
+  defp can_contain?(%TableCell{}, %Underline{}), do: true
+  defp can_contain?(%TableCell{}, %Subscript{}), do: true
+
+  defp can_contain?(_, _), do: false
+
+  defp block?(%Alert{}), do: true
+  defp block?(%BlockQuote{}), do: true
+  defp block?(%CodeBlock{}), do: true
+  defp block?(%DescriptionDetails{}), do: true
+  defp block?(%DescriptionItem{}), do: true
+  defp block?(%DescriptionList{}), do: true
+  defp block?(%DescriptionTerm{}), do: true
+  defp block?(%Document{}), do: true
+  defp block?(%FootnoteDefinition{}), do: true
+  defp block?(%Heading{}), do: true
+  defp block?(%HtmlBlock{}), do: true
+  defp block?(%ListItem{}), do: true
+  defp block?(%List{}), do: true
+  defp block?(%MultilineBlockQuote{}), do: true
+  defp block?(%Paragraph{}), do: true
+  defp block?(%TableCell{}), do: true
+  defp block?(%TableRow{}), do: true
+  defp block?(%Table{}), do: true
+  defp block?(%TaskItem{}), do: true
+  defp block?(%ThematicBreak{}), do: true
+  defp block?(_), do: false
+
+  defp list_item?(%ListItem{}), do: true
+  defp list_item?(%TaskItem{}), do: true
+  defp list_item?(_), do: false
+
+  defp list_from_item(%ListItem{} = item) do
+    %List{
+      nodes: [item],
+      list_type: item.list_type,
+      marker_offset: item.marker_offset,
+      padding: item.padding,
+      start: item.start,
+      delimiter: item.delimiter,
+      bullet_char: item.bullet_char,
+      tight: item.tight,
+      is_task_list: item.is_task_list
+    }
   end
 
-  defp wrap_node(%MDEx.TableRow{nodes: row_nodes} = row) do
-    %MDEx.Table{nodes: [row], num_columns: length(row_nodes), num_rows: 1}
+  defp list_from_item(%TaskItem{} = task) do
+    %List{nodes: [task], tight: false, is_task_list: true}
   end
-
-  defp wrap_node(new_node), do: new_node
-
-  @doc false
-  # https://github.com/kivikakk/comrak/blob/d2dd7c1140a869c5041e8fa9a9a96fbca83374a7/src/nodes.rs#L749
-  def can_contain?(_, %MDEx.Document{}), do: false
-  def can_contain?(%MDEx.Document{}, %MDEx.FrontMatter{}), do: true
-  def can_contain?(%MDEx.Document{}, node), do: is_block_node?(node)
-
-  def can_contain?(%MDEx.List{list_type: type}, %MDEx.List{list_type: type}), do: true
-  def can_contain?(%MDEx.List{list_type: type}, %MDEx.ListItem{list_type: type}), do: true
-  def can_contain?(%MDEx.List{}, %MDEx.TaskItem{}), do: true
-  def can_contain?(%MDEx.List{}, _), do: false
-
-  def can_contain?(%MDEx.ListItem{list_type: type}, %MDEx.List{list_type: type}), do: true
-  def can_contain?(%MDEx.ListItem{}, %MDEx.List{}), do: false
-
-  def can_contain?(%MDEx.DescriptionList{}, %MDEx.DescriptionItem{}), do: true
-  def can_contain?(%MDEx.DescriptionList{}, _), do: false
-
-  def can_contain?(%MDEx.DescriptionItem{}, %MDEx.DescriptionTerm{}), do: true
-  def can_contain?(%MDEx.DescriptionItem{}, %MDEx.DescriptionDetails{}), do: true
-  def can_contain?(%MDEx.DescriptionItem{}, _), do: false
-
-  def can_contain?(%MDEx.Table{}, %MDEx.TableRow{}), do: true
-  def can_contain?(%MDEx.Table{}, _), do: false
-
-  def can_contain?(%MDEx.TableRow{}, %MDEx.TableCell{}), do: true
-  def can_contain?(%MDEx.TableRow{}, _), do: false
-
-  def can_contain?(%MDEx.TableCell{}, child), do: is_inline_node?(child)
-
-  def can_contain?(%MDEx.BlockQuote{}, child), do: is_block_node?(child)
-  def can_contain?(%MDEx.FootnoteDefinition{}, child), do: is_block_node?(child)
-  def can_contain?(%MDEx.DescriptionTerm{}, child), do: is_block_node?(child)
-  def can_contain?(%MDEx.DescriptionDetails{}, child), do: is_block_node?(child)
-  def can_contain?(%MDEx.ListItem{}, child), do: is_block_node?(child)
-  def can_contain?(%MDEx.TaskItem{}, child), do: is_block_node?(child)
-
-  def can_contain?(%MDEx.Paragraph{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Heading{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Emph{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Strong{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Link{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Image{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Strikethrough{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Superscript{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Underline{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.Subscript{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.SpoileredText{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.WikiLink{}, child), do: is_inline_node?(child)
-  def can_contain?(%MDEx.EscapedTag{}, child), do: is_inline_node?(child)
-
-  def can_contain?(_, _), do: false
-
-  defp is_block_node?(%MDEx.Document{}), do: true
-  defp is_block_node?(%MDEx.BlockQuote{}), do: true
-  defp is_block_node?(%MDEx.List{}), do: true
-  defp is_block_node?(%MDEx.ListItem{}), do: true
-  defp is_block_node?(%MDEx.DescriptionList{}), do: true
-  defp is_block_node?(%MDEx.DescriptionItem{}), do: true
-  defp is_block_node?(%MDEx.DescriptionTerm{}), do: true
-  defp is_block_node?(%MDEx.DescriptionDetails{}), do: true
-  defp is_block_node?(%MDEx.CodeBlock{}), do: true
-  defp is_block_node?(%MDEx.HtmlBlock{}), do: true
-  defp is_block_node?(%MDEx.Paragraph{}), do: true
-  defp is_block_node?(%MDEx.Heading{}), do: true
-  defp is_block_node?(%MDEx.ThematicBreak{}), do: true
-  defp is_block_node?(%MDEx.FootnoteDefinition{}), do: true
-  defp is_block_node?(%MDEx.Table{}), do: true
-  defp is_block_node?(%MDEx.TableRow{}), do: true
-  defp is_block_node?(%MDEx.TableCell{}), do: true
-  defp is_block_node?(%MDEx.TaskItem{}), do: true
-  defp is_block_node?(%MDEx.MultilineBlockQuote{}), do: true
-  defp is_block_node?(%MDEx.Alert{}), do: true
-  defp is_block_node?(_), do: false
-
-  defp is_inline_node?(%MDEx.Text{}), do: true
-  defp is_inline_node?(%MDEx.SoftBreak{}), do: true
-  defp is_inline_node?(%MDEx.LineBreak{}), do: true
-  defp is_inline_node?(%MDEx.Code{}), do: true
-  defp is_inline_node?(%MDEx.HtmlInline{}), do: true
-  defp is_inline_node?(%MDEx.Raw{}), do: true
-  defp is_inline_node?(%MDEx.Emph{}), do: true
-  defp is_inline_node?(%MDEx.Strong{}), do: true
-  defp is_inline_node?(%MDEx.Strikethrough{}), do: true
-  defp is_inline_node?(%MDEx.Superscript{}), do: true
-  defp is_inline_node?(%MDEx.Link{}), do: true
-  defp is_inline_node?(%MDEx.Image{}), do: true
-  defp is_inline_node?(%MDEx.FootnoteReference{}), do: true
-  defp is_inline_node?(%MDEx.Math{}), do: true
-  defp is_inline_node?(%MDEx.Escaped{}), do: true
-  defp is_inline_node?(%MDEx.WikiLink{}), do: true
-  defp is_inline_node?(%MDEx.Underline{}), do: true
-  defp is_inline_node?(%MDEx.Subscript{}), do: true
-  defp is_inline_node?(%MDEx.SpoileredText{}), do: true
-  defp is_inline_node?(%MDEx.EscapedTag{}), do: true
-  defp is_inline_node?(%MDEx.ShortCode{}), do: true
-  defp is_inline_node?(_), do: false
 end

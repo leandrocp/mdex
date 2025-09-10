@@ -159,12 +159,13 @@ defmodule MDEx.Document do
   iex> document = Enum.into(chunks, %MDEx.Document{})
   %MDEx.Document{
     nodes: [
-      %MDEx.Text{literal: "Hello "},
-      %MDEx.Code{literal: "world", num_backticks: 1}
+      %MDEx.Paragraph{
+        nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.Code{num_backticks: 1, literal: "world"}]
+      }
     ]
   }
   iex> MDEx.to_html!(document)
-  "Hello <code>world</code>"
+  "<p>Hello <code>world</code></p>"
   ```
 
   Build a document incrementally by collecting mixed content:
@@ -180,30 +181,35 @@ defmodule MDEx.Document do
   iex> document = Enum.into(chunks, %MDEx.Document{})
   %MDEx.Document{
     nodes: [
-      %MDEx.Heading{
-        level: 1,
-        nodes: [%MDEx.Text{literal: "Title"}],
-        setext: false
-      },
-      %MDEx.Paragraph{
-        nodes: [%MDEx.Text{literal: "Some text"}]
-      },
+      %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false},
+      %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Some text"}]},
       %MDEx.List{
-        bullet_char: "-",
-        delimiter: :period,
-        is_task_list: false,
+        nodes: [
+          %MDEx.ListItem{
+            nodes: [%MDEx.Text{literal: "Item 1 - WIP"}],
+            list_type: :bullet,
+            marker_offset: 0,
+            padding: 2,
+            start: 1,
+            delimiter: :period,
+            bullet_char: "-",
+            tight: true,
+            is_task_list: false
+          }
+        ],
         list_type: :bullet,
         marker_offset: 0,
-        nodes: [%MDEx.ListItem{nodes: [%MDEx.Text{literal: "Item 1 - WIP"}], list_type: :bullet, marker_offset: 0, padding: 2, start: 1, delimiter: :period, bullet_char: "-", tight: true, is_task_list: false}],
         padding: 2,
         start: 1,
-        tight: true
+        delimiter: :period,
+        bullet_char: "-",
+        tight: true,
+        is_task_list: false
       }
     ]
   }
   iex> MDEx.to_html!(document)
-  "<h1>Title</h1>\\n<p>Some text</p>\\n<ul>\\n<li>Item 1 - WIP</li>\\n</ul>"
-  ```
+  "<h1>Title</h1>\n<p>Some text</p>\n<ul>\n<li>Item 1 - WIP</li>\n</ul>"
 
   ## Access
 
@@ -430,7 +436,6 @@ defmodule MDEx.Document do
       %MDEx.Heading{nodes: [%MDEx.Text{literal: "Notes"}], level: 6, setext: false}
     ]
   }
-  ```
   """
 
   @typedoc """
@@ -575,33 +580,15 @@ defmodule MDEx.Document do
 
   defimpl Collectable do
     def into(%MDEx.Document{} = document) do
-      state = {document, MapSet.new()}
-
-      fun = fn
-        {doc, processed_nodes}, {:cont, %MDEx.Document{} = other_doc} ->
-          merged = MDEx.Tree.merge(doc, other_doc)
-          new_processed = Enum.reduce(other_doc, processed_nodes, fn node, acc -> MapSet.put(acc, node) end)
-          {merged, new_processed}
-
-        {doc, processed_nodes}, {:cont, node} when is_struct(node) ->
-          if MapSet.member?(processed_nodes, node) do
-            {doc, processed_nodes}
-          else
-            {MDEx.Tree.append_node(doc, node), processed_nodes}
-          end
-
-        {doc, _processed_nodes}, :done ->
-          doc
-
-        _state, :halt ->
-          :ok
-
-        _state, {:cont, other} ->
-          raise ArgumentError,
-                "collecting into MDEx.Document requires a MDEx node, got: #{inspect(other)}"
+      collector = fn
+        {doc, :normal}, {:cont, %MDEx.Document{nodes: nodes}} -> {MDEx.Tree.append(doc, nodes), :ignore}
+        {doc, :ignore}, {:cont, _} -> {doc, :ignore}
+        {doc, :normal}, {:cont, collect} when is_struct(collect) or is_list(collect) -> {MDEx.Tree.append(doc, collect), :normal}
+        {doc, _}, :done -> doc
+        {_doc, _}, :halt -> :ok
       end
 
-      {state, fun}
+      {{document, :normal}, collector}
     end
   end
 end
