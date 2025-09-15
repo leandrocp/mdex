@@ -21,7 +21,7 @@ lazy_static = "1.5"
 log = "0.4"
 lol_html = "2.6"
 phf = { version = "0.13", features = ["macros"] }
-rustler = "0.36"
+rustler = "0.37"
 serde = "1.0"
 shlex = "1.3.0"
 typed-arena = "2.0"
