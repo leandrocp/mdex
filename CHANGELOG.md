@@ -1,10 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.8.5 (2025-09-16)
 
 ### Added
-  - [Document] Add pretty print inspection for document AST
+  - [Document] Pretty print the `MDEx.Document` AST
   - [Document] Add access by integer index for nodes in depth-first traversal order
+
+### Changes
+  - [Deps] Update `comrak` to v0.41.0
 
 ### Fixed
   - [Collectable] Fix inline node merging
