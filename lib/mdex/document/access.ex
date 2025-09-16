@@ -39,6 +39,13 @@ defmodule MDEx.Document.Access do
     end
   end
 
+  def fetch(document, selector) when is_integer(selector) do
+    case Enum.at(document, selector) do
+      nil -> :error
+      node -> {:ok, node}
+    end
+  end
+
   def get_and_update(document, selector, fun) when is_struct(selector) do
     {document, {_, old}} =
       MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
@@ -97,6 +104,17 @@ defmodule MDEx.Document.Access do
     {old, document}
   end
 
+  def get_and_update(document, selector, fun) when is_integer(selector) do
+    node = Enum.at(document, selector)
+
+    if node do
+      {old, _new} = fun.(node)
+      {old, document}
+    else
+      {nil, document}
+    end
+  end
+
   def pop(document, key, default \\ nil)
 
   def pop(document, key, default) when is_struct(key) do
@@ -135,6 +153,11 @@ defmodule MDEx.Document.Access do
       end)
 
     {old || default, new}
+  end
+
+  def pop(document, key, default) when is_integer(key) do
+    node = Enum.at(document, key)
+    {node || default, document}
   end
 
   @doc false

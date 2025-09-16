@@ -210,6 +210,30 @@ defmodule MDEx.Document do
   The `Access` behaviour gives you the ability to fetch and update nodes using different types of keys.
   Access operations also follow the depth-first traversal order when searching through nodes.
 
+  ### Access by Index
+
+  You can access nodes by their position in the depth-first traversal using integer indices:
+
+  ```elixir
+  iex> doc = ~MD[# Hello]
+  iex> doc[0]  # First node (the document itself)
+  %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}]}
+  iex> doc[1]  # Second node (the heading)
+  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}
+  iex> doc[2]  # Third node (the text)
+  %MDEx.Text{literal: "Hello"}
+  ```
+
+  Negative indices access nodes from the end:
+
+  ```elixir
+  iex> doc = ~MD[# Hello **world**]
+  iex> doc[-1]  # Last node
+  %MDEx.Text{literal: "world"}
+  ```
+
+  ### Access by Node Type
+
   Starting with a simple Markdown document, let's fetch only the text node by matching the `MDEx.Text` node:
 
   ```elixir

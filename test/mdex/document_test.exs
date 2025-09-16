@@ -48,10 +48,6 @@ defmodule MDEx.DocumentTest do
       assert_raise FunctionClauseError, fn ->
         @document["string"]
       end
-
-      assert_raise FunctionClauseError, fn ->
-        @document[123]
-      end
     end
 
     test "get_in" do
@@ -295,6 +291,12 @@ defmodule MDEx.DocumentTest do
       assert MDEx.Document.pop(@document, :table) == {nil, @document}
     end
 
+    test "pop by integer index" do
+      assert MDEx.Document.pop(@document, 2) == {%MDEx.Text{literal: "Languages"}, @document}
+      assert MDEx.Document.pop(@document, 100) == {nil, @document}
+      assert MDEx.Document.pop(@document, 100, :default) == {:default, @document}
+    end
+
     test "get_and_update with empty document" do
       empty_doc = %MDEx.Document{nodes: []}
 
@@ -315,6 +317,39 @@ defmodule MDEx.DocumentTest do
       assert MDEx.Document.get_and_update(@document, :table, fn node ->
                {node, node}
              end) == {nil, @document}
+    end
+
+    test "get_and_update by integer index" do
+      assert MDEx.Document.get_and_update(@document, 2, fn node ->
+               {node, %{node | literal: String.upcase(node.literal)}}
+             end) == {%MDEx.Text{literal: "Languages"}, @document}
+
+      assert MDEx.Document.get_and_update(@document, 100, fn node ->
+               {node, node}
+             end) == {nil, @document}
+    end
+
+    test "fetch by integer index" do
+      assert @document[0] == %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
+                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
+                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+               ]
+             }
+
+      assert @document[1] == %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false}
+      assert @document[2] == %MDEx.Text{literal: "Languages"}
+      assert @document[12] == %MDEx.Text{literal: "more"}
+    end
+
+    test "fetch by integer index out of bounds" do
+      assert @document[100] == nil
+      assert @document[-1] == %MDEx.Text{literal: "more"}
+      assert @document[-100] == nil
     end
 
     test "access with complex function selectors" do

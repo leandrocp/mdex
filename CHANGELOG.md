@@ -4,6 +4,7 @@
 
 ### Added
   - [Document] Add pretty print inspection for document AST
+  - [Document] Add access by integer index for nodes in depth-first traversal order
 
 ### Fixed
   - [Collectable] Fix inline node merging
