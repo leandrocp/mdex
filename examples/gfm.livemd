@@ -49,12 +49,9 @@ You can either use the [mdex_gfm](https://hex.pm/packages/mdex_gfm) plugin or se
 ## Plugin
 
 ```elixir
-MDEx.new()
+MDEx.new(markdown: markdown)
 |> MDExGFM.attach()
-|> MDEx.to_html!(
-  document: markdown,
-  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
-)
+|> MDEx.to_html!(syntax_highlight: [formatter: {:html_inline, theme: "github_light"}])
 |> Kino.HTML.new()
 
 ```

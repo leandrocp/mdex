@@ -25,9 +25,11 @@ graph TD;
 ```
 """
 
-mdex = MDEx.new() |> MDExMermaid.attach()
+mdex =
+  MDEx.new(markdown: markdown)
+  |> MDExMermaid.attach()
 
 mdex
-|> MDEx.to_html!(document: markdown)
+|> MDEx.to_html!()
 |> Kino.HTML.new()
 ````

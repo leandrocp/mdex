@@ -216,7 +216,7 @@ iex> ~m|`lang = #{inspect(lang)}`|
 iex> MDEx.to_html!("&lt;h1&gt;Hello&lt;/h1&gt;", render: [escape: true])
 "&amp;lt;h1&amp;gt;Hello&amp;lt;/h1&amp;gt;"
 
-iex> MDEx.to_html!("&lt;a href=https://elixir-lang.org/&gt;Elixir&lt;/a&gt;", render: [unsafe: true], features: [sanitize: true])
+iex> MDEx.to_html!("&lt;a href=https://elixir-lang.org/&gt;Elixir&lt;/a&gt;", render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options())
 "&lt;p&gt;&lt;a href=\"https://elixir-lang.org/\" rel=\"noopener noreferrer\"&gt;Elixir&lt;/a&gt;&lt;/p&gt;"
 
 iex> MDEx.to_html!("&lt;script&gt;alert('hello')&lt;/script&gt;", render: [unsafe: true])
@@ -261,9 +261,8 @@ render: [
   github_pre_lang: true,
   unsafe: true,
 ],
-features: [
-  sanitize: true
-])</code></pre>
+sanitize: MDEx.Document.default_sanitize_options()
+)</code></pre>
                             </div>
                         </div>
                     </div>
@@ -277,7 +276,7 @@ features: [
 String.upcase("elixir")
 ```
 """,
-features: [syntax_highlight_theme: "catppuccin_latte"]
+syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_latte"}]
 )</code></pre>
                             </div>
                         </div>

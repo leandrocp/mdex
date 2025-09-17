@@ -33,7 +33,7 @@
   - XML
   - [Quill Delta](https://quilljs.com/docs/delta/)
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
-- Req-like [Pipeline API](https://hexdocs.pm/mdex/MDEx.Pipe.html)
+- Req-like [Document pipeline API](https://hexdocs.pm/mdex/MDEx.Document.html)
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
 - Discord and GitLab Flavored-ish Markdown
 - Wiki-style links
@@ -41,7 +41,7 @@
 - Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 - HTML sanitization
-- [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, JSON, and XML
+- [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, JSON, XML, and Quill Delta
 
 ## Examples
 
@@ -73,17 +73,19 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 ```
 
 ```elixir
-iex> import MDEx.Sigil
-iex> ~MD[
-...> # Hello :smile:
-...> ]HTML
+iex> MDEx.new(markdown: "# Hello :smile:", extension: [shortcodes: true]) |> MDEx.to_html!()
 "<h1>Hello 😄</h1>"
 ```
+
 ```elixir
 iex> import MDEx.Sigil
-iex> ~MD[
-...> # Hello :smile:
-...> ]
+iex> ~MD[# Hello :smile:]HTML
+"<h1>Hello 😄</h1>"
+```
+
+```elixir
+iex> import MDEx.Sigil
+iex> ~MD[# Hello :smile:]
 %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.ShortCode{code: "smile", emoji: "😄"}], level: 1, setext: false}]}
 ```
 

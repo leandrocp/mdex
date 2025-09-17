@@ -3,10 +3,15 @@ defmodule MDEx.SigilTest do
   import MDEx.Sigil
   alias MDEx.Code
 
+  defp assert_json(json, expected) do
+    assert Jason.decode!(json) == expected
+  end
+
   describe "sigil_MD with assigns" do
     test "markdown to document" do
-      assert ~MD|`lang = <%= @lang %>`| ==
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = <%= @lang %>"}]}]}
+      assert %MDEx.Document{
+               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = <%= @lang %>"}]}]
+             } = ~MD|`lang = <%= @lang %>`|
     end
 
     test "markdown to html" do
@@ -20,8 +25,24 @@ defmodule MDEx.SigilTest do
     # end
 
     test "markdown to json" do
-      assert ~MD|`lang = <%= @lang %>`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = <%= @lang %>\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~MD|`lang = <%= @lang %>`|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = <%= @lang %>"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "markdown to xml" do
@@ -32,7 +53,9 @@ defmodule MDEx.SigilTest do
 
   describe "sigil_MD without assigns" do
     test "markdown to document" do
-      assert ~MD|`lang = :elixir`| == %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      assert %MDEx.Document{
+               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]
+             } = ~MD|`lang = :elixir`|
     end
 
     test "markdown to html" do
@@ -40,8 +63,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to json" do
-      assert ~MD|`lang = :elixir`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~MD|`lang = :elixir`|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "markdown to xml" do
@@ -65,8 +104,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "document to json" do
-      assert ~MD|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~MD|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "document to xml" do
@@ -95,8 +150,9 @@ defmodule MDEx.SigilTest do
 
   describe "sigil_M" do
     test "markdown to document" do
-      assert ~M|`lang = :elixir`| ==
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      assert %MDEx.Document{
+               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]
+             } = ~M|`lang = :elixir`|
     end
 
     test "markdown to html" do
@@ -105,8 +161,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to json" do
-      assert ~M|`lang = :elixir`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~M|`lang = :elixir`|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "markdown to xml" do
@@ -125,8 +197,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "document to json" do
-      assert ~M|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~M|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "document to xml" do
@@ -137,8 +225,9 @@ defmodule MDEx.SigilTest do
 
   describe "sigil_m without interpolation" do
     test "markdown to document" do
-      assert ~m|`lang = :elixir`| ==
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      assert %MDEx.Document{
+               nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]
+             } = ~m|`lang = :elixir`|
     end
 
     test "markdown to html" do
@@ -147,8 +236,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to json" do
-      assert ~m|`lang = :elixir`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~m|`lang = :elixir`|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "markdown to xml" do
@@ -167,8 +272,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "document to json" do
-      assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = :elixir"}]}]}|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "document to xml" do
@@ -181,8 +302,9 @@ defmodule MDEx.SigilTest do
     @lang :elixir
 
     test "markdown to document" do
-      assert ~m|`lang = #{inspect(@lang)}`| ==
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}
+      assert %MDEx.Document{
+               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]
+             } = ~m|`lang = #{inspect(@lang)}`|
     end
 
     test "markdown to html" do
@@ -191,8 +313,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "markdown to json" do
-      assert ~m|`lang = #{inspect(@lang)}`|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~m|`lang = #{inspect(@lang)}`|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "markdown to xml" do
@@ -211,8 +349,24 @@ defmodule MDEx.SigilTest do
     end
 
     test "document to json" do
-      assert ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = #{inspect(@lang)}"}]}]}|JSON ==
-               "{\"nodes\":[{\"nodes\":[{\"literal\":\"lang = :elixir\",\"num_backticks\":1,\"node_type\":\"MDEx.Code\"}],\"node_type\":\"MDEx.Paragraph\"}],\"node_type\":\"MDEx.Document\"}"
+      assert_json(
+        ~m|%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%Code{num_backticks: 1, literal: "lang = #{inspect(@lang)}"}]}]}|JSON,
+        %{
+          "node_type" => "MDEx.Document",
+          "nodes" => [
+            %{
+              "node_type" => "MDEx.Paragraph",
+              "nodes" => [
+                %{
+                  "node_type" => "MDEx.Code",
+                  "num_backticks" => 1,
+                  "literal" => "lang = :elixir"
+                }
+              ]
+            }
+          ]
+        }
+      )
     end
 
     test "document to xml" do
