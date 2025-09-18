@@ -115,7 +115,7 @@ dependencies = [
  "quote",
  "rayon",
  "regex",
- "rustler",
+ "rustler 0.36.2",
  "serde",
  "serde_json",
  "strum",
@@ -354,7 +354,7 @@ dependencies = [
  "lol_html",
  "phf 0.13.1",
  "pretty_assertions",
- "rustler",
+ "rustler 0.37.0",
  "serde",
  "shlex",
  "typed-arena",
@@ -1363,7 +1363,19 @@ dependencies = [
  "inventory",
  "libloading",
  "regex-lite",
- "rustler_codegen",
+ "rustler_codegen 0.36.2",
+]
+
+[[package]]
+name = "rustler"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb867bb35b291ef105abbe0a0d04bd4d7af372e023d08845698687bc254f222b"
+dependencies = [
+ "inventory",
+ "libloading",
+ "regex-lite",
+ "rustler_codegen 0.37.0",
 ]
 
 [[package]]
@@ -1371,6 +1383,19 @@ name = "rustler_codegen"
 version = "0.36.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb3b8de901ae61418e2036245d28e41ef58080d04f40b68430471ae36a4e84ed"
+dependencies = [
+ "heck",
+ "inventory",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "rustler_codegen"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90993223c5ac0fb580ff966fb9477289c4e8a610a2f4639912a2639c5e7b5095"
 dependencies = [
  "heck",
  "inventory",
