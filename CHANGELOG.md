@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.6 (2025-09-19)
 
 ### Changed
   - [Deps] Require `autumnus >= 0.5.3`
