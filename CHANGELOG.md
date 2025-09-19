@@ -42,7 +42,7 @@ The `MDEx.Document` module now provides an unified API to create, manipulate, an
   - [Document] Add extra fields in `%MDEx.Document{}` to store options, private data, and pipeline state. Use functions in `MDEx.Document` to manipulate these fields.
 
 ### Changed
-  - [Deps] Require `autumnus >= 0.5.3`
+  - [Deps] Require `autumnus >= 0.5.4`
   - **BREAKING** Remove `MDEx.Pipe` in favour of unifying all functionality in `MDEx.Document`
   - **BREAKING** Return `%MDEx.Document{}` in `MDEx.new/1` instead of `%MDEx.Pipe{}`
   - **BREAKING** Move type definitions from `MDEx` to `MDEx.Document` (`extension_options`, `parse_options`, `render_options`, `syntax_highlight_options`, `sanitize_options`, `options`)
