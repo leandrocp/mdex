@@ -51,7 +51,12 @@ The `MDEx.Document` module now provides an unified API to create, manipulate, an
   - **DEPRECATED** Soft-removed `:document` option from `MDEx.to_*/2` functions
   - **DEPRECATED** Move `MDEx.default_extension_options/0`, `MDEx.default_parse_options/0`, `MDEx.default_render_options/0`, `MDEx.default_syntax_highlight_options/0`, and `MDEx.default_sanitize_options/0` to `MDEx.Document`
 
-## 0.8.5 (2025-09-16)
+## 0.8.6 (2025-09-19)
+
+### Changed
+  - [Deps] Require `autumnus >= 0.5.3`
+
+### Fixed
 
 ### Added
   - [Document] Pretty print the `MDEx.Document` AST

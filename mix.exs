@@ -2,7 +2,11 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
+<<<<<<< HEAD
   @version "0.9.0-dev"
+=======
+  @version "0.8.6"
+>>>>>>> 848ee20b88b57dbcbbbaf58628579349f7744ed5
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -159,8 +163,7 @@ defmodule MDEx.MixProject do
       {:rustler, "~> 0.32", optional: not (@dev? or @force_build?)},
       {:rustler_precompiled, "~> 0.7"},
       {:nimble_options, "~> 1.0"},
-      # {:autumn, ">= 0.5.3"},
-      {:autumn, path: "/Users/leandro/code/github/leandrocp/autumn", override: true},
+      {:autumn, ">= 0.5.3"},
       {:jason, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:makeup_elixir, "~> 1.0.1 or ~> 1.1", only: :docs},

@@ -602,7 +602,6 @@ defmodule MDEx.DeltaIntegrationTest do
 
       {:ok, result} = parse_with_extensions(input)
 
-      # Expected: paragraphs should have proper spacing between them
       assert result == [
                %{"insert" => "First paragraph."},
                # End first paragraph
