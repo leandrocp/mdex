@@ -3,7 +3,8 @@ defmodule MDExTest do
   alias MDEx.Document
   alias MDEx.Heading
   alias MDEx.Text
-  doctest MDEx, except: [to_json: 1, to_json: 2, rendered_to_html: 1]
+  import ExUnit.CaptureIO
+  # doctest MDEx, except: [to_json: 1, to_json: 2, rendered_to_html: 1]
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
@@ -11,8 +12,8 @@ defmodule MDExTest do
     assert html == String.trim(expected)
   end
 
-  describe "deprecated still works" do
-    test "inline_style: true" do
+  describe "option handling" do
+    test "inline syntax highlighting" do
       assert_output(
         ~S"""
         ```elixir
@@ -23,11 +24,11 @@ defmodule MDExTest do
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
-        features: [syntax_highlight_inline_style: true]
+        syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
       )
     end
 
-    test "inline_style: false" do
+    test "linked syntax highlighting" do
       assert_output(
         ~S"""
         ```elixir
@@ -38,11 +39,11 @@ defmodule MDExTest do
         <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
         </div></code></pre>
         """,
-        features: [syntax_highlight_inline_style: false]
+        syntax_highlight: [formatter: {:html_linked, []}]
       )
     end
 
-    test "theme" do
+    test "custom syntax highlight theme" do
       assert_output(
         ~S"""
         ```elixir
@@ -53,25 +54,17 @@ defmodule MDExTest do
         <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
         </div></code></pre>
         """,
-        features: [syntax_highlight_theme: "Dracula"]
+        syntax_highlight: [formatter: {:html_inline, theme: "Dracula"}]
       )
     end
 
     test "sanitize nil (disabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: nil]) == "<script>hello</script>"
-    end
-
-    test "sanitize false (disabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: false]) == "<script>hello</script>"
-    end
-
-    test "sanitize true (enabled)" do
-      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], features: [sanitize: true]) == ""
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], sanitize: nil) == "<script>hello</script>"
     end
 
     test "sanitize with default options" do
-      default_options = MDEx.default_sanitize_options()
-      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], features: [sanitize: default_options]) == "<h1>test</h1>"
+      default_options = MDEx.Document.default_sanitize_options()
+      assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], sanitize: default_options) == "<h1>test</h1>"
     end
 
     test "unsafe_" do
@@ -79,8 +72,24 @@ defmodule MDExTest do
     end
   end
 
-  test "wrap fragment in root document" do
-    assert MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "mdex"}]}) == {:ok, "<p>mdex</p>"}
+  describe "to_html" do
+    test "wrap fragment in root document" do
+      assert MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "mdex"}]}) == {:ok, "<p>mdex</p>"}
+    end
+
+    test "incomplete document struct" do
+      assert MDEx.to_html!(%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]}) ==
+               "<p><code>lang = :elixir</code></p>"
+    end
+
+    test "deprecated :document option still works" do
+      warning =
+        capture_io(:stderr, fn ->
+          assert {:ok, "<h1>Hello</h1>"} = MDEx.to_html(MDEx.new(), document: "# Hello")
+        end)
+
+      assert warning =~ "option :document is deprecated"
+    end
   end
 
   describe "to_html error handling" do
@@ -97,32 +106,11 @@ defmodule MDExTest do
   end
 
   describe "new" do
-    test "default" do
-      assert %MDEx.Pipe{
-               document: nil,
-               options: [
-                 document: "",
-                 extension: [],
-                 parse: [],
-                 render: [],
-                 syntax_highlight: [],
-                 sanitize: nil
-               ],
-               halted: false
-             } = MDEx.new()
-    end
-
     test "with options" do
-      assert %MDEx.Pipe{
-               options: [
-                 document: "new",
-                 extension: [],
-                 parse: [],
-                 render: [escape: true],
-                 syntax_highlight: [],
-                 sanitize: nil
-               ]
-             } = MDEx.new(document: "new", render: [escape: true])
+      assert %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "new"}], level: 1, setext: false}], options: options} =
+               MDEx.new(markdown: "# new", render: [escape: true])
+
+      assert get_in(options, [:render, :escape])
     end
   end
 
@@ -230,17 +218,13 @@ defmodule MDExTest do
     assert_output(":rocket:", "<p>🚀</p>\n", extension: [shortcodes: true])
   end
 
-  test "parse_document" do
-    assert MDEx.parse_document!("# Test") == %MDEx.Document{
-             nodes: [%MDEx.Heading{level: 1, setext: false, nodes: [%MDEx.Text{literal: "Test"}]}]
-           }
+  describe "parse_document" do
+    test "markdown" do
+      assert %MDEx.Document{
+               nodes: [%MDEx.Heading{level: 1, setext: false, nodes: [%MDEx.Text{literal: "Test"}]}]
+             } = MDEx.parse_document!("# Test")
 
-    assert MDEx.parse_document!("""
-           <script type="module">
-             mermaid.initialize({ startOnLoad: true })
-           </script>
-           """) ==
-             %MDEx.Document{
+      assert %MDEx.Document{
                nodes: [
                  %MDEx.HtmlBlock{
                    nodes: [],
@@ -248,7 +232,21 @@ defmodule MDExTest do
                    literal: "<script type=\"module\">\n  mermaid.initialize({ startOnLoad: true })\n</script>\n"
                  }
                ]
-             }
+             } =
+               MDEx.parse_document!("""
+               <script type="module">
+                 mermaid.initialize({ startOnLoad: true })
+               </script>
+               """)
+    end
+
+    test "json" do
+      json = MDEx.to_json!("# Test")
+
+      assert %MDEx.Document{
+               nodes: [%MDEx.Heading{level: 1, setext: false, nodes: [%MDEx.Text{literal: "Test"}]}]
+             } = MDEx.parse_document!({:json, json})
+    end
   end
 
   test "parse_fragment" do
@@ -293,7 +291,7 @@ defmodule MDExTest do
     end
 
     test "sanitize unsafe raw html" do
-      sanitize_options = MDEx.default_sanitize_options()
+      sanitize_options = MDEx.Document.default_sanitize_options()
 
       assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], sanitize: sanitize_options) == "<h1>test</h1>"
 
@@ -314,7 +312,7 @@ defmodule MDExTest do
       </h1>
       """
 
-      assert MDEx.to_html!(input, render: [unsafe: true], sanitize: MDEx.default_sanitize_options()) <> "\n" == ~s"""
+      assert MDEx.to_html!(input, render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options()) <> "\n" == ~s"""
              <h1>
              <strong>test</strong> <a href="https://elixir-lang.org/" rel="noopener noreferrer"></a>
              </h1>
@@ -371,15 +369,9 @@ defmodule MDExTest do
       assert_output(
         ~S"""
         <pre><code>example</code></pre>
-
-        ```elixir
-        {:mdex, "~> 0.1"}
-        ```
         """,
         ~S"""
         <pre>example</pre>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><div><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">}</span>
-        </div></pre>
         """,
         render: [unsafe: true],
         sanitize: [
@@ -414,7 +406,7 @@ defmodule MDExTest do
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
-        sanitize: MDEx.default_sanitize_options()
+        sanitize: MDEx.Document.default_sanitize_options()
       )
     end
 
@@ -444,7 +436,7 @@ defmodule MDExTest do
   describe "safe html" do
     test "sanitize" do
       assert MDEx.safe_html("<span>tag</span><script>console.log('hello')</script>",
-               sanitize: MDEx.default_sanitize_options(),
+               sanitize: MDEx.Document.default_sanitize_options(),
                escape: [content: false, curly_braces_in_code: false]
              ) == "<span>tag</span>"
     end

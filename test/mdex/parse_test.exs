@@ -28,7 +28,8 @@ defmodule MDEx.ParseTest do
       render: Keyword.get(opts, :render, [])
     ]
 
-    assert MDEx.parse_document(document, opts) == {:ok, expected}
+    assert {:ok, document} = MDEx.parse_document(document, opts)
+    assert document.nodes == expected.nodes
   end
 
   test "front matter" do

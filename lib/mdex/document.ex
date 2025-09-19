@@ -2,7 +2,9 @@
 
 defmodule MDEx.Document do
   @moduledoc """
-  Tree representation of a Markdown document.
+  Document is the core structure to store, manipulate, and render Markdown documents.
+
+  ## Tree
 
   ```elixir
   %MDEx.Document{
@@ -26,7 +28,7 @@ defmodule MDEx.Document do
 
   In these examples we will be using the [~MD](https://hexdocs.pm/mdex/MDEx.Sigil.html#sigil_MD/2) sigil.
 
-  ## Tree Traversal
+  ### Tree Traversal
 
   **Understanding tree traversal is fundamental to working with MDEx documents**, as it affects how all 
   `Enum` functions, `Access` operations, and other protocols behave.
@@ -65,7 +67,14 @@ defmodule MDEx.Document do
   %MDEx.Text{literal: " text"}
   ```
 
-  ## Enumerable
+  ### Traverse and Update
+
+  You can also use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
+  to traverse each node of the AST and either update the nodes or do some calculation with an accumulator.
+
+  ## Protocols
+
+  ### Enumerable
 
   The `Enumerable` protocol allows us to call `Enum` functions to iterate over and manipulate the document tree.
   All enumeration follows the depth-first traversal order described above.
@@ -130,7 +139,7 @@ defmodule MDEx.Document do
   ["MDEx.Document", "MDEx.Heading", "MDEx.Text", "MDEx.Paragraph", "MDEx.Code", "MDEx.Paragraph", "MDEx.Code"]
   ```
 
-  ## Collectable
+  ### Collectable
 
   The `Collectable` protocol allows you to build documents by collecting nodes or merging multiple documents together.
   This is particularly useful for programmatically constructing documents from various sources.
@@ -205,22 +214,22 @@ defmodule MDEx.Document do
   "<h1>Title</h1>\\n<p>Some text</p>\\n<ul>\\n<li>Item 1 - WIP</li>\\n</ul>"
   ```
 
-  ## Access
+  ### Access
 
   The `Access` behaviour gives you the ability to fetch and update nodes using different types of keys.
   Access operations also follow the depth-first traversal order when searching through nodes.
 
-  ### Access by Index
+  #### Access by Index
 
   You can access nodes by their position in the depth-first traversal using integer indices:
 
   ```elixir
   iex> doc = ~MD[# Hello]
-  iex> doc[0]  # First node (the document itself)
+  iex> doc[0]
   %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}]}
-  iex> doc[1]  # Second node (the heading)
+  iex> doc[1]
   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}
-  iex> doc[2]  # Third node (the text)
+  iex> doc[2]
   %MDEx.Text{literal: "Hello"}
   ```
 
@@ -232,7 +241,7 @@ defmodule MDEx.Document do
   %MDEx.Text{literal: "world"}
   ```
 
-  ### Access by Node Type
+  #### Access by Node Type
 
   Starting with a simple Markdown document, let's fetch only the text node by matching the `MDEx.Text` node:
 
@@ -312,7 +321,7 @@ defmodule MDEx.Document do
   }
   ```
 
-  ## String.Chars
+  ### String.Chars
 
   Calling `Kernel.to_string/1` will format it as CommonMark text:
 
@@ -328,10 +337,112 @@ defmodule MDEx.Document do
   "# Hello"
   ```
 
-  ## Traverse and Update
+  ## Pipeline and Plugins
 
-  You can also use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
-  to traverse each node of the AST and either update the nodes or do some calculation with an accumulator.
+  MDEx.Document is a Req-like API to transform Markdown documents through a series of steps in a pipeline.
+
+  Its main use case it to enable plugins, for example:
+
+      markdown = \"\"\"
+      # Project Diagram
+
+      \`\`\`mermaid
+      graph TD
+          A[Enter Chart Definition] --> B(Preview)
+          B --> C{decide}
+          C --> D[Keep]
+          C --> E[Edit Definition]
+          E --> B
+          D --> F[Save Image and Code]
+          F --> B
+      \`\`\`
+      \"\"\"
+
+      MDEx.new(markdown: markdown)
+      |> MDExMermaid.attach(mermaid_version: "11")
+      |> MDEx.to_html!()
+
+  To understand how it works, let's write that Mermaid plugin.
+
+  ### Writing Plugins
+
+  Let's start with a simple plugin as example to render Mermaid diagrams.
+
+  In order to render Mermaid diagrams, we need to inject a `<script>` into the document,
+  as outlined in their [docs](https://mermaid.js.org/intro/#installation):
+
+      <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+      </script>
+
+  Note that the package version is specified in the URL, so we'll add an option
+  `:mermaid_version` to the plugin to let users specify the version they want to use.
+
+  By default, we'll use the latest version:
+
+      MDEx.new() |> MDExMermaid.attach()
+
+  But users can override it:
+
+      MDEx.new() |> MDExMermaid.attach(mermaid_version: "11")
+
+  Let's get into the actual code, with comments to explain each part:
+
+      defmodule MDExMermaid do
+        alias MDEx.Document
+
+        @latest_version "11"
+
+        def attach(document, options \\ []) do
+          document
+          # register option with prefix `:mermaid_` to avoid conflicts with other plugins
+          |> Document.register_options([:mermaid_version])
+          #  merge all options given by users
+          |> Document.put_options(options)
+          # actual steps to manipulate the document
+          # see respective Document functions for more info
+          |> Document.append_steps(enable_unsafe: &enable_unsafe/1)
+          |> Document.append_steps(inject_script: &inject_script/1)
+          |> Document.append_steps(update_code_blocks: &update_code_blocks/1)
+        end
+
+        # to render raw html and <script> tags
+        defp enable_unsafe(document) do
+          Document.put_render_options(document, unsafe: true)
+        end
+
+        defp inject_script(document) do
+          version = Document.get_option(document, :mermaid_version, @latest_version)
+
+          script_node =
+            %MDEx.HtmlBlock{
+              literal: \"\"\"
+              <script type="module">
+                import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@\#\{version\}/dist/mermaid.esm.min.mjs';
+                mermaid.initialize({ startOnLoad: true });
+              </script>
+              \"\"\"
+            }
+
+          Document.put_node_in_document_root(document, script_node)
+        end
+
+        defp update_code_blocks(document) do
+          selector = fn
+            %MDEx.CodeBlock{info: "mermaid"} -> true
+            _ -> false
+          end
+
+          Document.update_nodes(
+            document,
+            selector,
+            &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">\#\{&1.literal}</pre>", nodes: &1.nodes}
+          )
+        end
+      end
+
+  Now we can `attach/1` that plugin into any MDEx document to render Mermaid diagrams.
 
   ## Practical Examples
 
@@ -457,10 +568,572 @@ defmodule MDEx.Document do
   ```
   """
 
+  @behaviour Access
+  alias __MODULE__
+  alias MDEx.Native
+  alias Autumn
+
+  @built_in_options [
+    :extension,
+    :parse,
+    :render,
+    :syntax_highlight,
+    :sanitize
+  ]
+
+  @doc false
+  def built_in_options, do: @built_in_options
+
+  @extension_options_schema [
+    strikethrough: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [strikethrough extension](https://github.github.com/gfm/#strikethrough-extension-) from the GFM spec."
+    ],
+    tagfilter: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [tagfilter extension](https://github.github.com/gfm/#disallowed-raw-html-extension-) from the GFM spec."
+    ],
+    table: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [table extension](https://github.github.com/gfm/#tables-extension-) from the GFM spec."
+    ],
+    autolink: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [autolink extension](https://github.github.com/gfm/#autolinks-extension-) from the GFM spec."
+    ],
+    tasklist: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [task list extension](https://github.github.com/gfm/#task-list-items-extension-) from the GFM spec."
+    ],
+    superscript: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the superscript Comrak extension."
+    ],
+    header_ids: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Enables the header IDs Comrak extension."
+    ],
+    footnotes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the footnotes extension per cmark-gfm"
+    ],
+    description_lists: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the description lists extension."
+    ],
+    front_matter_delimiter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Enables the front matter extension."
+    ],
+    multiline_block_quotes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the multiline block quotes extension."
+    ],
+    alerts: [
+      type: :boolean,
+      default: false,
+      doc: "Enables GitHub style alerts."
+    ],
+    math_dollars: [
+      type: :boolean,
+      default: false,
+      doc: "Enables math using dollar syntax."
+    ],
+    math_code: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the [math code extension](https://github.github.com/gfm/#math-code) from the GFM spec."
+    ],
+    shortcodes: [
+      type: :boolean,
+      default: false,
+      doc: "Phrases wrapped inside of ':' blocks will be replaced with emojis."
+    ],
+    wikilinks_title_after_pipe: [
+      type: :boolean,
+      default: false,
+      doc: "Enables wikilinks using title after pipe syntax."
+    ],
+    wikilinks_title_before_pipe: [
+      type: :boolean,
+      default: false,
+      doc: "Enables wikilinks using title before pipe syntax."
+    ],
+    underline: [
+      type: :boolean,
+      default: false,
+      doc: "Enables underlines using double underscores."
+    ],
+    subscript: [
+      type: :boolean,
+      default: false,
+      doc: "Enables subscript text using single tildes."
+    ],
+    spoiler: [
+      type: :boolean,
+      default: false,
+      doc: "Enables spoilers using double vertical bars."
+    ],
+    greentext: [
+      type: :boolean,
+      default: false,
+      doc: "Requires at least one space after a > character to generate a blockquote, and restarts blockquote nesting across unique lines of input."
+    ],
+    image_url_rewriter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: """
+        Wraps embedded image URLs using a string template.
+
+        Example:
+
+        Given this image `![alt text](http://unsafe.com/image.png)` and this rewriter:
+
+          image_url_rewriter: "https://example.com?url={@url}"
+
+        Renders `<p><img src="https://example.com?url=http://unsafe.com/image.png" alt="alt text" /></p>`
+
+        Notes:
+
+        - Assign `@url` is always passed to the template.
+        - Function callback is not supported, only string templates.
+          Transform the Document AST for more complex cases.
+      """
+    ],
+    link_url_rewriter: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: """
+        Wraps link URLs using a string template.
+
+        Example:
+
+        Given this link `[my link](http://unsafe.example.com/bad)` and this rewriter:
+
+          link_url_rewriter: "https://safe.example.com/norefer?url={@url}"
+
+        Renders `<p><a href="https://safe.example.com/norefer?url=http://unsafe.example.com/bad">my link</a></p>`
+
+        Notes:
+
+        - Assign `@url` is always passed to the template.
+        - Function callback is not supported, only string templates.
+          Transform the Document AST for more complex cases.
+      """
+    ],
+    cjk_friendly_emphasis: [
+      type: :boolean,
+      default: false,
+      doc: "Recognizes many emphasis that appear in CJK contexts but are not recognized by plain CommonMark."
+    ]
+  ]
+
+  @parse_options_schema [
+    smart: [
+      type: :boolean,
+      default: false,
+      doc: "Punctuation (quotes, full-stops and hyphens) are converted into 'smart' punctuation."
+    ],
+    default_info_string: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "The default info string for fenced code blocks."
+    ],
+    relaxed_tasklist_matching: [
+      type: :boolean,
+      default: false,
+      doc: "Whether or not a simple `x` or `X` is used for tasklist or any other symbol is allowed."
+    ],
+    relaxed_autolinks: [
+      type: :boolean,
+      default: true,
+      doc:
+        "Relax parsing of autolinks, allow links to be detected inside brackets and allow all url schemes. It is intended to allow a very specific type of autolink detection, such as `[this http://and.com that]` or `{http://foo.com}`, on a best can basis."
+    ]
+  ]
+
+  @render_options_schema [
+    hardbreaks: [
+      type: :boolean,
+      default: false,
+      doc: "[Soft line breaks](http://spec.commonmark.org/0.27/#soft-line-breaks) in the input translate into hard line breaks in the output."
+    ],
+    github_pre_lang: [
+      type: :boolean,
+      default: false,
+      doc: "GitHub-style `<pre lang=\"xyz\">` is used for fenced code blocks with info tags."
+    ],
+    full_info_string: [
+      type: :boolean,
+      default: false,
+      doc: "Enable full info strings for code blocks."
+    ],
+    width: [
+      type: :integer,
+      default: 0,
+      doc: "The wrap column when outputting CommonMark."
+    ],
+    unsafe: [
+      type: :boolean,
+      default: false,
+      doc: "Allow rendering of raw HTML and potentially dangerous links."
+    ],
+    escape: [
+      type: :boolean,
+      default: false,
+      doc: "Escape raw HTML instead of clobbering it."
+    ],
+    list_style: [
+      type: {:in, [:dash, :plus, :star]},
+      default: :dash,
+      doc: """
+      Set the type of [bullet list marker](https://spec.commonmark.org/0.30/#bullet-list-marker) to use.
+      Either one of `:dash`, `:plus`, or `:star`.
+      """
+    ],
+    sourcepos: [
+      type: :boolean,
+      default: false,
+      doc: "Include source position attributes in HTML and XML output."
+    ],
+    escaped_char_spans: [
+      type: :boolean,
+      default: false,
+      doc: "Wrap escaped characters in a `<span>` to allow any post-processing to recognize them."
+    ],
+    ignore_setext: [
+      type: :boolean,
+      default: false,
+      doc: "Ignore setext headings in input."
+    ],
+    ignore_empty_links: [
+      type: :boolean,
+      default: false,
+      doc: "Ignore empty links in input."
+    ],
+    gfm_quirks: [
+      type: :boolean,
+      default: false,
+      doc: "Enables GFM quirks in HTML output which break CommonMark compatibility."
+    ],
+    prefer_fenced: [
+      type: :boolean,
+      default: false,
+      doc: "Prefer fenced code blocks when outputting CommonMark."
+    ],
+    figure_with_caption: [
+      type: :boolean,
+      default: false,
+      doc: "Render the image as a figure element with the title as its caption."
+    ],
+    tasklist_classes: [
+      type: :boolean,
+      default: false,
+      doc: "Add classes to the output of the tasklist extension. This allows tasklists to be styled."
+    ],
+    ol_width: [
+      type: :integer,
+      default: 1,
+      doc: "Render ordered list with a minimum marker width. Having a width lower than 3 doesn't do anything."
+    ],
+    experimental_minimize_commonmark: [
+      type: :boolean,
+      default: false,
+      doc: """
+      Minimise escapes used in CommonMark output (`-t commonmark`) by removing each individually and seeing if the resulting document roundtrips.
+      Brute-force and expensive, but produces nicer output.
+      Note that the result may not in fact be minimal.
+      """
+    ]
+  ]
+
+  @syntax_highlight_options_schema [
+    formatter: [
+      type: {:custom, Autumn, :formatter_type, []},
+      type_spec: quote(do: Autumn.formatter()),
+      type_doc: "`t:Autumn.formatter/0`",
+      default: {:html_inline, theme: "onedark"},
+      doc: "Syntax highlight code blocks using this formatter. See the type doc for more info."
+    ]
+  ]
+
+  @sanitize_options_schema [
+    tags: [
+      type: {:list, :string},
+      default:
+        ~w(a abbr acronym area article aside b bdi bdo blockquote br caption center cite code col colgroup data dd del details dfn div dl dt em figcaption figure footer h1 h2 h3 h4 h5 h6 header hgroup hr i img ins kbd li map mark nav ol p pre q rp rt rtc ruby s samp small span strike strong sub summary sup table tbody td th thead time tr tt u ul var wbr),
+      doc: "Sets the tags that are allowed."
+    ],
+    add_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted tags without overwriting old ones."
+    ],
+    rm_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted tags."
+    ],
+    clean_content_tags: [
+      type: {:list, :string},
+      default: ~w(script style),
+      doc: "Sets the tags whose contents will be completely removed from the output."
+    ],
+    add_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional blacklisted clean-content tags without overwriting old ones."
+    ],
+    rm_clean_content_tags: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-blacklisted clean-content tags."
+    ],
+    tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{
+        "a" => ~w(href hreflang),
+        "bdo" => ~w(dir),
+        "blockquote" => ~w(cite),
+        "code" => ~w(class translate tabindex),
+        "col" => ~w(align char charoff span),
+        "colgroup" => ~w(align char charoff span),
+        "del" => ~w(cite datetime),
+        "hr" => ~w(align size width),
+        "img" => ~w(align alt height src width),
+        "ins" => ~w(cite datetime),
+        "ol" => ~w(start),
+        "pre" => ~w(class style),
+        "q" => ~w(cite),
+        "span" => ~w(class style data-line),
+        "table" => ~w(align char charoff summary),
+        "tbody" => ~w(align char charoff),
+        "td" => ~w(align char charoff colspan headers rowspan),
+        "tfoot" => ~w(align char charoff),
+        "th" => ~w(align char charoff colspan headers rowspan scope),
+        "thead" => ~w(align char charoff),
+        "tr" => ~w(align char charoff)
+      },
+      doc: "Sets the HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attributes without overwriting old ones."
+    ],
+    rm_tag_attributes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attributes."
+    ],
+    tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are allowed on specific tags."
+    ],
+    add_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Add additional whitelisted tag-specific attribute values without overwriting old ones."
+    ],
+    rm_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, {:list, :string}}},
+      default: %{},
+      doc: "Remove already-whitelisted tag-specific attribute values."
+    ],
+    set_tag_attribute_values: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Sets the values of HTML attributes that are to be set on specific tags."
+    ],
+    set_tag_attribute_value: [
+      type: {:map, :string, {:map, :string, :string}},
+      default: %{},
+      doc: "Add an attribute value to set on a specific element."
+    ],
+    rm_set_tag_attribute_value: [
+      type: {:map, :string, :string},
+      default: %{},
+      doc: "Remove existing tag-specific attribute values to be set."
+    ],
+    generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Sets the prefix of attributes that are allowed on any tag."
+    ],
+    add_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attribute prefix without overwriting old ones."
+    ],
+    rm_generic_attribute_prefixes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attribute prefixes."
+    ],
+    generic_attributes: [
+      type: {:list, :string},
+      default: ~w(lang title),
+      doc: "Sets the attributes that are allowed on any tag."
+    ],
+    add_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted attributes without overwriting old ones."
+    ],
+    rm_generic_attributes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_schemes: [
+      type: {:list, :string},
+      default: ~w(bitcoin ftp ftps geo http https im irc ircs magnet mailto mms mx news nntp openpgp4fpr sip sms smsto ssh tel url webcal wtai xmpp),
+      doc: "Sets the URL schemes permitted on href and src attributes."
+    ],
+    add_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Add additional whitelisted URL schemes without overwriting old ones."
+    ],
+    rm_url_schemes: [
+      type: {:list, :string},
+      default: [],
+      doc: "Remove already-whitelisted attributes."
+    ],
+    url_relative: [
+      type: {:or, [{:in, [:deny, :passthrough]}, {:tuple, [:atom, :string]}, {:tuple, [:atom, {:tuple, [:string, :string]}]}]},
+      default: :passthrough,
+      doc: "Configures the behavior for relative URLs: pass-through, resolve-with-base, or deny."
+    ],
+    link_rel: [
+      type: {:or, [:string, nil]},
+      default: "noopener noreferrer",
+      doc: "Configures a `rel` attribute that will be added on links."
+    ],
+    allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Sets the CSS classes that are allowed on specific tags."
+    ],
+    add_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Add additional whitelisted classes without overwriting old ones."
+    ],
+    rm_allowed_classes: [
+      type: {:map, :string, {:list, :string}},
+      default: %{},
+      doc: "Remove already-whitelisted attributes."
+    ],
+    strip_comments: [
+      type: :boolean,
+      default: true,
+      doc: "Configures the handling of HTML comments."
+    ],
+    id_prefix: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Prefixes all `id` attribute values with a given string. Note that the tag and attribute themselves must still be whitelisted."
+    ]
+  ]
+
+  @options_schema [
+    extension: [
+      type: :keyword_list,
+      type_spec: quote(do: extension_options()),
+      default: [],
+      doc:
+        "Enable extensions. See comrak's [ExtensionOptions](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html) for more info and examples.",
+      keys: @extension_options_schema
+    ],
+    parse: [
+      type: :keyword_list,
+      type_spec: quote(do: parse_options()),
+      default: [],
+      doc:
+        "Configure parsing behavior. See comrak's [ParseOptions](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html) for more info and examples.",
+      keys: @parse_options_schema
+    ],
+    render: [
+      type: :keyword_list,
+      type_spec: quote(do: render_options()),
+      default: [],
+      doc:
+        "Configure rendering behavior. See comrak's [RenderOptions](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html) for more info and examples.",
+      keys: @render_options_schema
+    ],
+    syntax_highlight: [
+      type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil]},
+      type_spec: quote(do: syntax_highlight_options() | nil),
+      default: [formatter: {:html_inline, theme: "onedark"}],
+      doc: """
+        Apply syntax highlighting to code blocks.
+
+        Examples:
+
+            syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
+
+            syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
+
+        See [Autumn](https://hexdocs.pm/autumn) for more info and examples.
+      """
+    ],
+    sanitize: [
+      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
+      type_spec: quote(do: sanitize_options() | nil),
+      default: nil,
+      doc: """
+      Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
+
+      It's disabled by default but you can enable its [conservative set of default options](https://docs.rs/ammonia/latest/ammonia/fn.clean.html) as:
+
+          [sanitize: MDEx.Document.default_sanitize_options()]
+
+      Or customize one of the options. For example, to disallow `<a>` tags:
+
+          [sanitize: [rm_tags: ["a"]]]
+
+      In the example above it will append `rm_tags: ["a"]` into the default set of options, essentially the same as:
+
+          sanitize = Keyword.put(MDEx.Document.default_sanitize_options(), :rm_tags, ["a"])
+          [sanitize: sanitize]
+
+      See the [Safety](#module-safety) section for more info.
+      """
+    ]
+  ]
+
   @typedoc """
   Tree root of a Markdown document, including all children nodes.
   """
-  @type t :: %__MODULE__{nodes: [md_node()]}
+  @type t :: %__MODULE__{
+          nodes: [md_node()],
+          options: options(),
+          registered_options: MapSet.t(),
+          halted: boolean(),
+          steps: [step()],
+          private: %{}
+        }
+
+  defstruct nodes: [],
+            options: [],
+            registered_options: MapSet.new(@built_in_options),
+            halted: false,
+            steps: [],
+            current_steps: [],
+            private: %{}
 
   @typedoc """
   Fragment of a Markdown document, a single node. May contain children nodes.
@@ -509,6 +1182,20 @@ defmodule MDEx.Document do
           | MDEx.Alert.t()
 
   @typedoc """
+  Step in a pipeline.
+
+  It's a function that receives a `t:MDEx.Document.t/0` struct and must return either one of the following:
+
+    - a `t:MDEx.Document.t/0` struct
+    - a tuple with a `t:MDEx.Document.t/0` struct and an `t:Exception.t/0` as `{document, exception}`
+    - a tuple with a module, function and arguments which will be invoked with `apply/3`
+  """
+  @type step() ::
+          (t() -> t())
+          | (t() -> {t(), Exception.t()})
+          | (t() -> {module(), atom(), [term()]})
+
+  @typedoc """
   Selector used to match nodes in the document.
 
   Valid selectors can be the module or struct, an atom representing the node name, or a function that receives a node and returns a boolean.
@@ -517,9 +1204,781 @@ defmodule MDEx.Document do
   """
   @type selector :: md_node() | module() | atom() | (md_node() -> boolean())
 
-  defstruct nodes: []
+  @doc """
+  Returns all default options.
 
-  @behaviour Access
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_options() :: options()
+  def default_options, do: NimbleOptions.validate!([], @options_schema)
+
+  @doc """
+  Returns the default `:extension` options.
+
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @extension_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_extension_options() :: extension_options()
+  def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
+
+  @doc """
+  Returns the default `:parse` options.
+
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @parse_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_parse_options() :: parse_options()
+  def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
+
+  @doc """
+  Returns the default `:render` options.
+
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @render_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_render_options() :: render_options()
+  def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
+
+  @doc """
+  Returns the default `:syntax_highlight` options.
+
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @syntax_highlight_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_syntax_highlight_options() :: syntax_highlight_options()
+  def default_syntax_highlight_options, do: NimbleOptions.validate!([], @syntax_highlight_options_schema)
+
+  @doc """
+  Returns the default `:sanitize` options.
+
+  ```elixir
+  #{inspect(NimbleOptions.validate!([], @sanitize_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  ```
+  """
+  @spec default_sanitize_options() :: sanitize_options()
+  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+
+  @doc false
+  def sanitize_options_schema, do: @sanitize_options_schema
+
+  @doc """
+  Registers a list of valid options that can be used by steps in the document pipeline.
+
+  ## Examples
+
+      iex> document = MDEx.new()
+      iex> document = MDEx.Document.register_options(document, [:mermaid_version])
+      iex> document = MDEx.Document.put_options(document, mermaid_version: "11")
+      iex> document.options[:mermaid_version]
+      "11"
+
+      iex> MDEx.new(rendr: [unsafe: true])
+      ** (ArgumentError) unknown option :rendr
+
+  """
+  @spec register_options(t(), [atom()]) :: t()
+  def register_options(%MDEx.Document{} = document, options) when is_list(options) do
+    update_in(document.registered_options, &MapSet.union(&1, MapSet.new(options)))
+  end
+
+  @doc """
+  Merges options into the document options.
+
+  This function handles both built-in options (`:extension`, `:parse`, `:render`, `:syntax_highlight`, and `:sanitize`)
+  and user-defined options that have been registered with `register_options/2`.
+
+  ## Examples
+
+      iex> document = MDEx.Document.register_options(MDEx.new(), [:custom_option])
+      iex> document = MDEx.Document.put_options(document, [
+      ...>   extension: [table: true],
+      ...>   custom_option: "value"
+      ...> ])
+      iex> MDEx.Document.get_option(document, :extension)[:table]
+      true
+      iex> MDEx.Document.get_option(document, :custom_option)
+      "value"
+
+  Built-in options are validated against their respective schemas:
+
+      iex> try do
+      ...>   MDEx.Document.put_options(MDEx.new(), [extension: [invalid: true]])
+      ...> rescue
+      ...>   NimbleOptions.ValidationError -> :error
+      ...> end
+      :error
+
+  """
+  @spec put_options(t(), keyword()) :: t()
+  def put_options(%MDEx.Document{} = document, [] = _options) do
+    document
+  end
+
+  def put_options(%MDEx.Document{} = document, options) when is_list(options) do
+    Enum.reduce(options, document, fn
+      {name, options}, acc when name in @built_in_options ->
+        put_built_in_options(acc, [{name, options}])
+
+      {name, value}, acc ->
+        put_user_options(acc, [{name, value}])
+    end)
+  end
+
+  @doc false
+  def put_built_in_options(document, options) when is_list(options) do
+    options = Keyword.take(options, @built_in_options)
+
+    Enum.reduce(options, document, fn
+      {:extension, options}, acc ->
+        put_extension_options(acc, options)
+
+      {:render, options}, acc ->
+        put_render_options(acc, options)
+
+      {:parse, options}, acc ->
+        put_parse_options(acc, options)
+
+      {:syntax_highlight, options}, acc ->
+        put_syntax_highlight_options(acc, options)
+
+      {:sanitize, options}, acc ->
+        put_sanitize_options(acc, options)
+    end)
+  end
+
+  @doc false
+  def put_user_options(document, options) when is_list(options) do
+    options = Keyword.take(options, Keyword.keys(options) -- MDEx.Document.built_in_options())
+    validate_user_options(options, document.registered_options)
+    %{document | options: Keyword.merge(document.options, options)}
+  end
+
+  defp validate_user_options([{name, _value} | rest], registered) do
+    if name in registered do
+      validate_user_options(rest, registered)
+    else
+      case did_you_mean(Atom.to_string(name), registered) do
+        {similar, score} when score > 0.8 ->
+          raise ArgumentError, "unknown option #{inspect(name)}. Did you mean :#{similar}?"
+
+        _ ->
+          raise ArgumentError, "unknown option #{inspect(name)}"
+      end
+    end
+  end
+
+  defp validate_user_options([], _registered) do
+    true
+  end
+
+  defp did_you_mean(option, registered) do
+    registered
+    |> Enum.map(&to_string/1)
+    |> Enum.reduce({nil, 0}, &max_similar(&1, option, &2))
+  end
+
+  defp max_similar(option, registered, {_, current} = best) do
+    score = String.jaro_distance(option, registered)
+    if score < current, do: best, else: {option, score}
+  end
+
+  @doc """
+  Updates the document's `:extension` options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_extension_options(MDEx.new(), table: true)
+      iex> MDEx.Document.get_option(document, :extension)[:table]
+      true
+
+  """
+  @spec put_extension_options(t(), extension_options()) :: t()
+  def put_extension_options(%MDEx.Document{} = document, options) when is_list(options) do
+    NimbleOptions.validate!(options, @extension_options_schema)
+
+    %{
+      document
+      | options:
+          update_in(document.options, [:extension], fn extension ->
+            Keyword.merge(extension || [], options)
+          end)
+    }
+  end
+
+  @doc """
+  Updates the document's `:render` options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_render_options(MDEx.new(), escape: true)
+      iex> MDEx.Document.get_option(document, :render)[:escape]
+      true
+
+  """
+  @spec put_render_options(t(), render_options()) :: t()
+  def put_render_options(%MDEx.Document{} = document, options) when is_list(options) do
+    {unsafe_, options} = Keyword.pop(options, :unsafe_, false)
+    options = Keyword.put_new(options, :unsafe, unsafe_)
+
+    NimbleOptions.validate!(options, @render_options_schema)
+
+    %{
+      document
+      | options:
+          update_in(document.options, [:render], fn render ->
+            Keyword.merge(render || [], options)
+          end)
+    }
+  end
+
+  @doc """
+  Updates the document's `:parse` options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_parse_options(MDEx.new(), smart: true)
+      iex> MDEx.Document.get_option(document, :parse)[:smart]
+      true
+
+  """
+  @spec put_parse_options(t(), parse_options()) :: t()
+  def put_parse_options(%MDEx.Document{} = document, options) when is_list(options) do
+    NimbleOptions.validate!(options, @parse_options_schema)
+
+    %{
+      document
+      | options:
+          update_in(document.options, [:parse], fn parse ->
+            Keyword.merge(parse || [], options)
+          end)
+    }
+  end
+
+  @doc """
+  Updates the document's `:syntax_highlight` options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_syntax_highlight_options(MDEx.new(), formatter: :html_linked)
+      iex> MDEx.Document.get_option(document, :syntax_highlight)[:formatter]
+      :html_linked
+
+  """
+  @spec put_syntax_highlight_options(t(), syntax_highlight_options()) :: t()
+  def put_syntax_highlight_options(%MDEx.Document{} = document, nil = _options) do
+    %{
+      document
+      | options:
+          update_in(document.options, [:syntax_highlight], fn _syntax_highlight ->
+            nil
+          end)
+    }
+  end
+
+  def put_syntax_highlight_options(%MDEx.Document{} = document, options) when is_list(options) do
+    NimbleOptions.validate!(options, @syntax_highlight_options_schema)
+
+    %{
+      document
+      | options:
+          update_in(document.options, [:syntax_highlight], fn syntax_highlight ->
+            Keyword.merge(syntax_highlight || [], options)
+          end)
+    }
+  end
+
+  @doc """
+  Updates the document's `:sanitize` options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_sanitize_options(MDEx.new(), add_tags: ["MyComponent"])
+      iex> MDEx.Document.get_option(document, :sanitize)[:add_tags]
+      ["MyComponent"]
+
+  """
+  @spec put_sanitize_options(t(), sanitize_options()) :: t()
+  def put_sanitize_options(%MDEx.Document{} = document, nil = _options) do
+    %{
+      document
+      | options:
+          update_in(document.options, [:sanitize], fn _syntax_highlight ->
+            nil
+          end)
+    }
+  end
+
+  def put_sanitize_options(%MDEx.Document{} = document, options) when is_list(options) do
+    NimbleOptions.validate!(options, @sanitize_options_schema)
+
+    %{
+      document
+      | options:
+          update_in(document.options, [:sanitize], fn sanitize ->
+            Keyword.merge(sanitize || [], options)
+          end)
+    }
+  end
+
+  def put_sanitize_options(%MDEx.Document{} = document, true = _options) do
+    IO.warn("""
+    sanitize: true is deprecated. Pass :sanitize options instead, for example:
+
+      sanitize: MDEx.default_sanitize_options()
+
+    MDEx.default_sanitize_options() is the same behavior as [sanitize: true]
+
+    """)
+
+    put_sanitize_options(document, default_sanitize_options())
+  end
+
+  def put_sanitize_options(%MDEx.Document{} = document, false = _options) do
+    IO.warn("""
+    sanitize: false is deprecated. Pass :sanitize options instead, for example:
+
+      sanitize: nil
+
+    """)
+
+    put_sanitize_options(document, nil)
+  end
+
+  @doc """
+  Retrieves an option value from the document.
+
+  ## Examples
+
+      iex> document = MDEx.new(render: [escape: true])
+      iex> MDEx.Document.get_option(document, :render)[:escape]
+      true
+  """
+  @spec get_option(t(), atom(), term()) :: term()
+  def get_option(%MDEx.Document{} = document, key, default \\ nil) when is_atom(key) do
+    Keyword.get(document.options, key, default)
+  end
+
+  @doc """
+  Retrieves one of the `t:sanitize_options/0` options from the document.
+
+  ## Examples
+
+      iex> document =
+      ...>   MDEx.new()
+      ...>   |> MDEx.Document.put_sanitize_options(add_tags: ["x-component"])
+      iex> MDEx.Document.get_sanitize_option(document, :add_tags)
+      ["x-component"]
+  """
+  @spec get_sanitize_option(t(), atom(), term()) :: term()
+  def get_sanitize_option(%MDEx.Document{} = document, key, default \\ nil) when is_atom(key) do
+    document
+    |> get_option(:sanitize, [])
+    |> Keyword.get(key, default)
+  end
+
+  @doc """
+  Returns `true` if the document has the `:sanitize` option set, otherwise `false`.
+  """
+  @spec is_sanitize_enabled(t()) :: boolean()
+  def is_sanitize_enabled(%MDEx.Document{} = document) do
+    case get_option(document, :sanitize) do
+      nil -> false
+      _ -> true
+    end
+  end
+
+  @doc """
+  Retrieves a private value from the document.
+
+  ## Examples
+
+      iex> document = MDEx.new() |> MDEx.Document.put_private(:count, 2)
+      iex> MDEx.Document.get_private(document, :count)
+      2
+  """
+  @spec get_private(t(), atom(), default) :: term() | default when default: var
+  def get_private(%MDEx.Document{} = document, key, default \\ nil) when is_atom(key) do
+    Map.get(document.private, key, default)
+  end
+
+  @doc """
+  Updates a value in the document's private storage using a function.
+
+  ## Examples
+
+      iex> document = MDEx.new() |> MDEx.Document.put_private(:count, 1)
+      iex> document = MDEx.Document.update_private(document, :count, 0, &(&1 + 1))
+      iex> MDEx.Document.get_private(document, :count)
+      2
+  """
+  @spec update_private(t(), key :: atom(), default :: term(), (term() -> term())) :: t()
+  def update_private(%MDEx.Document{} = document, key, default, fun) when is_atom(key) and is_function(fun, 1) do
+    update_in(document.private, &Map.update(&1, key, default, fun))
+  end
+
+  @doc """
+  Stores a value in the document's private storage.
+
+  ## Examples
+
+      iex> document = MDEx.Document.put_private(MDEx.new(), :mermaid_version, "11")
+      iex> MDEx.Document.get_private(document, :mermaid_version)
+      "11"
+  """
+  @spec put_private(t(), atom(), term()) :: t()
+  def put_private(%MDEx.Document{} = document, key, value) when is_atom(key) do
+    put_in(document.private[key], value)
+  end
+
+  @doc """
+  Appends steps to the end of the existing document's step list.
+
+  ## Examples
+
+      iex> document = MDEx.new()
+      iex> document = MDEx.Document.append_steps(
+      ...>   document,
+      ...>   enable_tables: fn doc -> MDEx.Document.put_extension_options(doc, table: true) end
+      ...> )
+      iex> document
+      ...> |> MDEx.Document.run()
+      ...> |> MDEx.Document.get_option(:extension)
+      ...> |> Keyword.get(:table)
+      true
+
+  """
+  @spec append_steps(t(), keyword(step())) :: t()
+  def append_steps(%MDEx.Document{} = document, steps) do
+    %{
+      document
+      | steps: document.steps ++ steps,
+        current_steps: document.current_steps ++ Keyword.keys(steps)
+    }
+  end
+
+  @doc """
+  Prepends steps to the beginning of the existing document's step list.
+  """
+  @spec prepend_steps(t(), keyword(step())) :: t()
+  def prepend_steps(%MDEx.Document{} = document, steps) do
+    %{
+      document
+      | steps: steps ++ document.steps,
+        current_steps: Keyword.keys(steps) ++ document.current_steps
+    }
+  end
+
+  @doc """
+  Halts the document pipeline execution.
+
+  This function is used to stop the pipeline from processing any further steps. Once a pipeline
+  is halted, no more steps will be executed. This is useful for plugins that need to stop
+  processing when certain conditions are met or when an error occurs.
+
+  ## Examples
+
+      iex> document = MDEx.Document.halt(MDEx.new())
+      iex> document.halted
+      true
+
+  """
+  @spec halt(t()) :: t()
+  def halt(%MDEx.Document{} = document) do
+    put_in(document.halted, true)
+  end
+
+  @doc """
+  Halts the document pipeline execution with an exception.
+  """
+  @spec halt(t(), Exception.t()) :: {t(), Exception.t()}
+  def halt(%MDEx.Document{} = document, %_{__exception__: true} = exception) do
+    {put_in(document.halted, true), exception}
+  end
+
+  @doc """
+  Executes the document pipeline steps in order.
+
+  This function is usually not called directly; prefer calling one of the `to_*` functions in `MDEx` module.
+
+  ## Examples
+
+      iex> document =
+      ...>   MDEx.new()
+      ...>   |> MDEx.Document.append_steps(add_heading: fn doc ->
+      ...>     heading = %MDEx.Heading{nodes: [%MDEx.Text{literal: "Intro"}], level: 1, setext: false}
+      ...>     MDEx.Document.put_node_in_document_root(doc, heading, :top)
+      ...>   end)
+      iex> document = MDEx.Document.run(document)
+      iex> Enum.map(document.nodes, & &1.__struct__)
+      [MDEx.Heading]
+  """
+  @spec run(t()) :: t()
+  def run(%MDEx.Document{} = document) do
+    do_run(document)
+  end
+
+  defp do_run(%{current_steps: [step | rest]} = document) do
+    step = Keyword.fetch!(document.steps, step)
+
+    # TODO: run_error
+    case run_step(step, document) do
+      {%MDEx.Document{halted: true} = document, exception} ->
+        {document, exception}
+
+      %MDEx.Document{halted: true} = document ->
+        document
+
+      %MDEx.Document{} = document ->
+        do_run(%{document | current_steps: rest})
+    end
+  end
+
+  defp do_run(%{current_steps: []} = document) do
+    document
+  end
+
+  defp run_step(step, state) when is_function(step, 1) do
+    step.(state)
+  end
+
+  defp run_step({mod, fun, args}, state) when is_atom(mod) and is_atom(fun) and is_list(args) do
+    apply(mod, fun, [state | args])
+  end
+
+  @doc """
+  Parse `markdown` into `document`.
+
+  ## Examples
+
+      iex> doc = MDEx.new(render: [hardbreaks: true])
+      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "Hello\\nworld")
+      iex> MDEx.to_html!(doc)
+      "<p>Hello<br />\\nworld</p>"
+  """
+  @spec parse_markdown(t(), String.t()) :: {:ok, t()} | {:error, MDEx.DecodeError.t() | term()}
+  def parse_markdown(%Document{} = document, markdown) when is_binary(markdown) do
+    case Native.parse_document(markdown, rust_options!(document.options)) do
+      {:ok, %{nodes: nodes}} -> {:ok, %{document | nodes: nodes}}
+      error -> error
+    end
+  end
+
+  @doc """
+  Same as `parse_markdown/2` but raises if parsing fails.
+  """
+  @spec parse_markdown!(t(), String.t()) :: t()
+  def parse_markdown!(%Document{} = document, markdown) when is_binary(markdown) do
+    case parse_markdown(document, markdown) do
+      {:ok, document} -> document
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Inserts `node` into the document root at the specified `position`.
+
+    - By default, the node is inserted at the top of the document.
+    - Node must be a valid fragment node like a `MDEx.Heading`, `MDEx.HtmlBlock`, etc.
+
+  ## Examples
+
+      iex> document =
+      ...>   MDEx.new(markdown: "# Doc")
+      ...>   |> MDEx.Document.append_steps(append_node: fn document ->
+      ...>     html_block = %MDEx.HtmlBlock{literal: "<p>Hello</p>"}
+      ...>     MDEx.Document.put_node_in_document_root(document, html_block, :bottom)
+      ...>   end)
+      iex> MDEx.to_html(document, render: [unsafe: true])
+      {:ok, "<h1>Doc</h1>\\n<p>Hello</p>"}
+
+  """
+  @spec put_node_in_document_root(t(), MDEx.Document.md_node(), position :: :top | :bottom) :: t()
+  def put_node_in_document_root(document, node, position \\ :top)
+
+  def put_node_in_document_root(%MDEx.Document{} = document, node, :top = _position) do
+    case is_fragment(node) do
+      true ->
+        nodes = [node | document.nodes]
+        %{document | nodes: nodes}
+
+      false ->
+        document
+    end
+  end
+
+  def put_node_in_document_root(%MDEx.Document{} = document, node, :bottom = _position) do
+    case is_fragment(node) do
+      true ->
+        nodes = document.nodes ++ [node]
+        %{document | nodes: nodes}
+
+      false ->
+        raise """
+        expected a Document node, for example a %MDEx.Heading{}
+
+        Got:
+
+          #{inspect(node)}
+
+        """
+    end
+  end
+
+  @doc """
+  Updates all nodes in the document that match `selector`.
+
+  ## Example
+
+      iex> markdown = \"""
+      ...> # Hello
+      ...> ## World
+      ...> \"""
+      iex> document =
+      ...>   MDEx.new(markdown: markdown)
+      ...>   |> MDEx.Document.update_nodes(MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
+      iex> document.nodes
+      [
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "HELLO"}], level: 1, setext: false},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "WORLD"}], level: 2, setext: false}
+      ]
+
+  """
+  @spec update_nodes(t(), MDEx.Document.selector(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: t()
+  def update_nodes(%MDEx.Document{} = document, selector, fun) when is_function(fun, 1) do
+    # document = maybe_resolve_document(document)
+
+    MDEx.Document.Traversal.traverse_and_update(document, fn node ->
+      if match_selector?(node, selector) do
+        fun.(node)
+      else
+        node
+      end
+    end)
+  end
+
+  defp match_selector?(node, selector) when is_struct(selector), do: node == selector
+  defp match_selector?(%mod{} = _node, selector) when is_atom(selector), do: mod == MDEx.Document.Access.modulefy!(selector)
+  defp match_selector?(node, selector) when is_function(selector, 1), do: selector.(node)
+
+  @typedoc """
+  List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("~~strikethrough~~", extension: [strikethrough: true])
+      #=> "<p><del>strikethrough</del></p>"
+
+  """
+  @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
+
+  @typedoc """
+  List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("\"Hello\" -- world...", parse: [smart: true])
+      #=> "<p>“Hello” – world…</p>"
+
+  """
+  @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
+
+  @typedoc """
+  List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html).
+
+  ## Example
+
+      MDEx.to_html!("<script>alert('xss')</script>", render: [unsafe: true])
+      #=> "<script>alert('xss')</script>"
+
+  """
+  @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
+
+  @typedoc """
+  Syntax Highlight code blocks using [autumn](https://hexdocs.pm/autumn).
+
+  ## Example
+
+      MDEx.to_html!(\"""
+      ...> ```elixir
+      ...> {:mdex, "~> 0.1"}
+      ...> ```
+      ...> \""", syntax_highlight: [formatter: {:html_inline, theme: "nord"}])
+      #=> <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+      #=> </span></code></pre>
+  """
+  @type syntax_highlight_options() :: [unquote(NimbleOptions.option_typespec(@syntax_highlight_options_schema))]
+
+  @typedoc """
+  List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html).
+
+  ## Example
+
+      iex> MDEx.to_html!("<h1>Title</h1><p>Content</p>", sanitize: [rm_tags: ["h1"]], render: [unsafe: true])
+      "Title<p>Content</p>"
+
+  """
+  @type sanitize_options() :: [unquote(NimbleOptions.option_typespec(@sanitize_options_schema))]
+
+  @typedoc """
+  Options to customize the parsing and rendering of Markdown documents.
+
+  ## Examples
+
+  - Enable the `table` extension:
+
+      ````elixir
+      MDEx.to_html!(\"""
+      | lang |
+      |------|
+      | elixir |
+      \""",
+      extension: [table: true]
+      )
+      ````
+
+  - Syntax highlight using inline style and the `github_light` theme:
+
+      ````elixir
+      MDEx.to_html!(\"""
+      ## Code Example
+
+      ```elixir
+      Atom.to_string(:elixir)
+      ```
+      \""",
+      syntax_highlight: [
+        formatter: {:html_inline, theme: "github_light"}
+      ])
+      ````
+
+  - Sanitize HTML output, in this example disallow `<a>` tags:
+
+      ````elixir
+      MDEx.to_html!(\"""
+      ## Links won't be displayed
+
+      <a href="https://example.com">Example</a>
+      ```
+      \""",
+      sanitize: [
+        rm_tags: ["a"],
+      ])
+      ````
+
+  ## Options
+
+  #{NimbleOptions.docs(@options_schema)}
+  """
+  @type options() :: [unquote(NimbleOptions.option_typespec(@options_schema))]
+
+  @doc false
+  def options_schema, do: @options_schema
 
   @doc false
   def is_fragment([fragment | _]), do: is_fragment(fragment)
@@ -572,13 +2031,127 @@ defmodule MDEx.Document do
 
   def is_fragment(_), do: false
 
+  @doc """
+  Wraps nodes in a `MDEx.Document`.
+
+  * Passing an existing document returns it unchanged.
+  * Passing a node or list of nodes builds a new document with default options.
+
+  ## Examples
+
+      iex> document = MDEx.Document.wrap(MDEx.new(markdown: "# Title"))
+      iex> document.nodes
+      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false}]
+
+      iex> document = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
+      iex> document.nodes
+      [%MDEx.Text{literal: "Hello"}]
+  """
+  @spec wrap(t() | md_node() | [md_node()]) :: t()
   def wrap(%MDEx.Document{} = document), do: document
-  def wrap(nodes), do: %MDEx.Document{nodes: List.wrap(nodes)}
+
+  def wrap(nodes) do
+    %{MDEx.new() | nodes: List.wrap(nodes)}
+  end
+
+  @doc false
+  @spec rust_options!(Keyword.t()) :: map()
+  def rust_options!([] = _options) do
+    rust_options!(default_options())
+  end
+
+  def rust_options!(options) do
+    {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
+    render = Keyword.put_new(render, :unsafe_, unsafe)
+
+    syntax_highlight =
+      case options[:syntax_highlight] do
+        nil ->
+          nil
+
+        options ->
+          options
+          |> Autumn.validate_options!()
+          |> Autumn.rust_options!()
+      end
+
+    sanitize =
+      case options[:sanitize] do
+        nil -> nil
+        opts -> adapt_sanitize_options(opts)
+      end
+
+    %{
+      extension: Map.new(options[:extension]),
+      parse: Map.new(options[:parse]),
+      render: Map.new(render),
+      syntax_highlight: syntax_highlight,
+      sanitize: sanitize
+    }
+  end
+
+  @doc false
+  def adapt_sanitize_options(nil = _options), do: nil
+
+  def adapt_sanitize_options(options) do
+    {:custom,
+     %{
+       link_rel: options[:link_rel],
+       tags: %{
+         set: options[:tags],
+         add: options[:add_tags],
+         rm: options[:rm_tags]
+       },
+       clean_content_tags: %{
+         set: options[:clean_content_tags],
+         add: options[:add_clean_content_tags],
+         rm: options[:rm_clean_content_tags]
+       },
+       tag_attributes: %{
+         set: options[:tag_attributes],
+         add: options[:add_tag_attributes],
+         rm: options[:rm_tag_attributes]
+       },
+       tag_attribute_values: %{
+         set: options[:tag_attribute_values],
+         add: options[:add_tag_attribute_values],
+         rm: options[:rm_tag_attribute_values]
+       },
+       set_tag_attribute_values: %{
+         set: options[:set_tag_attribute_values],
+         add: options[:set_tag_attribute_value],
+         rm: options[:rm_set_tag_attribute_value]
+       },
+       generic_attribute_prefixes: %{
+         set: options[:generic_attribute_prefixes],
+         add: options[:add_generic_attribute_prefixes],
+         rm: options[:rm_generic_attribute_prefixes]
+       },
+       generic_attributes: %{
+         set: options[:generic_attributes],
+         add: options[:add_generic_attributes],
+         rm: options[:rm_generic_attributes]
+       },
+       url_schemes: %{
+         set: options[:url_schemes],
+         add: options[:add_url_schemes],
+         rm: options[:rm_url_schemes]
+       },
+       url_relative: options[:url_relative],
+       allowed_classes: %{
+         set: options[:allowed_classes],
+         add: options[:add_allowed_classes],
+         rm: options[:rm_allowed_classes]
+       },
+       strip_comments: options[:strip_comments],
+       id_prefix: options[:id_prefix]
+     }}
+  end
 
   @doc """
   Callback implementation for `Access.fetch/2`.
 
-  See the [Access](#module-access) section for examples.
+  See the [Access](#module-access) section for more info.
   """
   @spec fetch(t(), selector()) :: {:ok, [md_node()]} | :error
   def fetch(document, selector), do: MDEx.Document.Access.fetch(document, selector)
@@ -586,14 +2159,14 @@ defmodule MDEx.Document do
   @doc """
   Callback implementation for `Access.get_and_update/3`.
 
-  See the [Access](#module-access) section for examples.
+  See the [Access](#module-access) section for more info.
   """
   def get_and_update(%MDEx.Document{} = document, selector, fun), do: MDEx.Document.Access.get_and_update(document, selector, fun)
 
   @doc """
   Callback implementation for `Access.fetch/2`.
 
-  See the [Access](#module-access) section for examples.
+  See the [Access](#module-access) section for more info.
   """
   def pop(%MDEx.Document{} = document, key, default \\ nil), do: MDEx.Document.Access.pop(document, key, default)
 
@@ -1310,13 +2883,19 @@ defimpl String.Chars,
     MDEx.Alert
   ] do
   def to_string(node) do
-    Kernel.to_string(%MDEx.Document{nodes: [node]})
+    MDEx.to_markdown!(%MDEx.Document{nodes: [node]})
+  end
+end
+
+defimpl Jason.Encoder, for: MDEx.Document do
+  def encode(%MDEx.Document{} = document, opts) do
+    map = %{"nodes" => document.nodes, "node_type" => inspect(MDEx.Document)}
+    Jason.Encode.map(map, opts)
   end
 end
 
 defimpl Jason.Encoder,
   for: [
-    MDEx.Document,
     MDEx.FrontMatter,
     MDEx.BlockQuote,
     MDEx.List,

@@ -1,14 +1,62 @@
 # Changelog
 
+## Unreleased
+
+**BREAKING CHANGES**
+
+This version introduces breaking changes to the public API. Please follow the upgrade guide below to migrate your code.
+
+#### Upgrade Guide
+
+1. Replace `%MDEx.Pipe{}` with `%MDEx.Document{}`
+
+The `MDEx.Document` module now provides an unified API to create, manipulate, and render Markdown documents.
+
+```diff
+- %MDEx.Pipe{} = pipe = MDEx.new()
+- MDEx.Pipe.run(pipe)
++ %MDEx.Document{} = document = MDEx.new()
++ MDEx.Document.run(document)
+```
+
+2. Move types from `MDEx` to `MDEx.Document`
+
+```diff
+- @spec my_function(MDEx.options()) :: any()
++ @spec my_function(MDEx.Document.options()) :: any()
+```
+
+3. Replace the `:features` option with explicit `:syntax_highlight` and `:sanitize` options
+
+```diff
+- MDEx.new(features: [syntax_highlight_theme: "github_light", sanitize: true])
++ MDEx.new(
++   syntax_highlight: [formatter: {:html_inline, theme: "github_light"}],
++   sanitize: MDEx.Document.default_sanitize_options()
++ )
+```
+
+### Added
+  - [Document] Add `MDEx.Document.default_options/0` to get all default options
+  - [Document] Add `MDEx.Document.parse_markdown/2` to replace `MDEx.Document` with new Markdown content
+  - [Document] Add extra fields in `%MDEx.Document{}` to store options, private data, and pipeline state. Use functions in `MDEx.Document` to manipulate these fields.
+
+### Changed
+  - [Deps] Require `autumnus >= 0.5.4`
+  - **BREAKING** Remove `MDEx.Pipe` in favour of unifying all functionality in `MDEx.Document`
+  - **BREAKING** Return `%MDEx.Document{}` in `MDEx.new/1` instead of `%MDEx.Pipe{}`
+  - **BREAKING** Move type definitions from `MDEx` to `MDEx.Document` (`extension_options`, `parse_options`, `render_options`, `syntax_highlight_options`, `sanitize_options`, `options`)
+  - **BREAKING** Remove the `:features` option and support only explicit `:syntax_highlight` / `:sanitize` entries
+  - **DEPRECATED** Rename `:document` to `:markdown` in `MDEx.new/1`
+  - **DEPRECATED** Soft-removed `:document` option from `MDEx.to_*/2` functions
+  - **DEPRECATED** Move `MDEx.default_extension_options/0`, `MDEx.default_parse_options/0`, `MDEx.default_render_options/0`, `MDEx.default_syntax_highlight_options/0`, and `MDEx.default_sanitize_options/0` to `MDEx.Document`
+
 ## 0.8.6 (2025-09-19)
 
 ### Changed
   - [Deps] Require `autumnus >= 0.5.3`
 
 ### Fixed
-  - Syntax Highlight options parsing
-
-## 0.8.5 (2025-09-16)
 
 ### Added
   - [Document] Pretty print the `MDEx.Document` AST

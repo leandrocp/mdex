@@ -525,8 +525,8 @@ defmodule MDEx.DeltaIntegrationTest do
              ]
     end
 
-    test "converts Pipe struct" do
-      input = MDEx.new(document: "*italic*")
+    test "converts Document returned by new/1" do
+      input = MDEx.new(markdown: "*italic*")
 
       {:ok, result} = MDEx.to_delta(input)
 
