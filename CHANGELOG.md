@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+  - [Deps] Require `autumnus >= 0.5.3`
+
+### Fixed
+  - Syntax Highlight options parsing
+
 ## 0.8.5 (2025-09-16)
 
 ### Added

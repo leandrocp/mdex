@@ -1658,7 +1658,7 @@ defmodule MDEx do
 
           opts
           |> Map.new()
-          |> Map.put(:formatter, {formatter, Map.put(formatter_opts, :theme, theme)})
+          |> Map.put(:formatter, {formatter, Map.put(Map.new(formatter_opts), :theme, theme)})
       end
 
     %{
