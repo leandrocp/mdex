@@ -470,7 +470,8 @@ defmodule MDEx.DocumentTest do
                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rs"}], level: 1, setext: false},
                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                 ]
-              }, 2} =
+              },
+              2} =
                MDEx.traverse_and_update(document, 0, fn
                  %MDEx.Code{literal: "elixir"} = node, acc ->
                    node = %{node | literal: "ex"}
@@ -500,7 +501,8 @@ defmodule MDEx.DocumentTest do
                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rust"}], level: 1, setext: false},
                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                 ]
-              }, :halted} =
+              },
+              :halted} =
                MDEx.traverse_and_update(document, :cont, fn
                  node, :halted ->
                    {node, :halted}
@@ -1124,13 +1126,13 @@ defmodule MDEx.DocumentTest do
 
   test "register_options" do
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [])
-    assert MapSet.to_list(opts) == [:extension, :parse, :render, :sanitize, :syntax_highlight]
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :syntax_highlight]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
-    assert MapSet.to_list(opts) == [:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
-    assert MapSet.to_list(opts) == [:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]))
   end
 
   describe "get_option" do
