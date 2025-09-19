@@ -1,850 +1,538 @@
 defmodule MDEx.TreeTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
-  describe "append_node/2 - basic operations" do
-    test "handles empty document" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{nodes: []},
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
-        )
+  alias MDEx.Code
+  alias MDEx.CodeBlock
+  alias MDEx.Document
+  alias MDEx.Heading
+  alias MDEx.Paragraph
+  alias MDEx.Strong
+  alias MDEx.Text
+  alias MDEx.Tree
 
-      assert %MDEx.Document{
-               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}]
-             } = result
+  describe "append" do
+    test "block into document" do
+      assert Tree.append(
+               %Document{},
+               [%Paragraph{nodes: [%Text{literal: "foo"}]}]
+             ) ==
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]}
 
-      assert MDEx.to_markdown!(result) == "Hello"
-    end
-  end
-
-  describe "append_node/2 - list item handling" do
-    test "appends list item to existing list" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "code"}]},
-              %MDEx.Paragraph{
-                nodes: [
-                  %MDEx.List{
-                    nodes: [
-                      %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]}
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "code"}]},
-                 %MDEx.Paragraph{
-                   nodes: [
-                     %MDEx.List{
-                       nodes: [
-                         %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
-                         %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
-                       ]
-                     }
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "`code`\n\n- item1\n- item2"
+      assert Tree.append(
+               %Document{},
+               [%Heading{level: 1, nodes: [%Text{literal: "foo"}]}]
+             ) ==
+               %Document{nodes: [%Heading{nodes: [%Text{literal: "foo"}], level: 1, setext: false}]}
     end
 
-    test "creates new list when no list exists" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "code"}]}
-            ]
-          },
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item"}]}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "code"}]},
-                 %MDEx.List{
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item"}]}]}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "`code`\n\n- item"
-    end
-
-    test "wraps task item in task list" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{nodes: []},
-          %MDEx.TaskItem{checked: false, nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Todo"}]}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.List{
-                   nodes: [%MDEx.TaskItem{checked: false, nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Todo"}]}]}]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "- [ ] Todo"
-    end
-  end
-
-  describe "append_node/2 - list merging" do
-    test "merges list with same list_type" do
-      bullet_list = %MDEx.List{
-        list_type: :bullet,
-        nodes: [
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet2"}]}], list_type: :bullet},
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet3"}]}], list_type: :bullet}
-        ]
-      }
-
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
-              %MDEx.List{
-                list_type: :bullet,
-                nodes: [
-                  %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet1"}]}], list_type: :bullet}
-                ]
-              }
-            ]
-          },
-          bullet_list
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
-                 %MDEx.List{
-                   list_type: :bullet,
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet1"}]}], list_type: :bullet},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet2"}]}], list_type: :bullet},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet3"}]}], list_type: :bullet}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "intro\n\n- bullet1\n- bullet2\n- bullet3"
-    end
-
-    test "creates new list when list_type differs" do
-      ordered_list = %MDEx.List{
-        list_type: :ordered,
-        nodes: [
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered1"}]}], list_type: :ordered},
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered2"}]}], list_type: :ordered}
-        ]
-      }
-
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
-              %MDEx.List{
-                list_type: :bullet,
-                nodes: [
-                  %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet1"}]}], list_type: :bullet}
-                ]
-              }
-            ]
-          },
-          ordered_list
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
-                 %MDEx.List{
-                   list_type: :bullet,
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet1"}]}], list_type: :bullet}
-                   ]
-                 },
-                 %MDEx.List{
-                   list_type: :ordered,
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered1"}]}], list_type: :ordered},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered2"}]}], list_type: :ordered}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "intro\n\n- bullet1\n\n<!-- end list -->\n\n1. ordered1\n2. ordered2"
-    end
-  end
-
-  describe "append_node/2 - block/inline handling" do
-    test "cannot append block node to inline container" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
-            ]
-          },
-          %MDEx.CodeBlock{literal: "println!(\"test\");", info: "rust"}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]},
-                 %MDEx.CodeBlock{literal: "println!(\"test\");", info: "rust"}
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "Hello\n\n``` rust\nprintln!(\"test\");\n```"
-    end
-
-    test "can append inline node to inline container" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
-            ]
-          },
-          %MDEx.Code{literal: "test", num_backticks: 1}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}, %MDEx.Code{literal: "test", num_backticks: 1}]}
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "Hello`test`"
-    end
-  end
-
-  describe "append_node/2 - complex nesting" do
-    test "appends to deepest compatible container" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.BlockQuote{
-                nodes: [
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Quote"}]}
-                ]
-              }
-            ]
-          },
-          %MDEx.Text{literal: " continues"}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.BlockQuote{
-                   nodes: [
-                     %MDEx.Paragraph{
-                       nodes: [
-                         %MDEx.Text{literal: "Quote"},
-                         %MDEx.Text{literal: " continues"}
-                       ]
-                     }
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "> Quote continues"
-    end
-
-    test "creates sibling when cannot nest deeper" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.BlockQuote{
-                nodes: [
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Quote"}]}
-                ]
-              }
-            ]
-          },
-          %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Title"}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.BlockQuote{
-                   nodes: [
-                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Quote"}]},
-                     %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Title"}]}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "> Quote\n> \n> # Title"
-    end
-  end
-
-  describe "append_nodes/2 - basic operations" do
-    test "handles empty document with multiple nodes" do
-      result =
-        MDEx.Tree.append_nodes(
-          %MDEx.Document{nodes: []},
-          [
-            %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]},
-            %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "World"}]}
-          ]
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "World"}]}
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "Hello\n\nWorld"
-    end
-
-    test "collect list items into existing list" do
-      list_items = [
-        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]},
-        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item3"}]}]}
-      ]
-
-      result =
-        MDEx.Tree.append_nodes(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.List{
-                nodes: [
-                  %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]}
-                ]
-              }
-            ]
-          },
-          list_items
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.List{
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item3"}]}]}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "- item1\n- item2\n- item3"
-    end
-
-    test "collect orphaned list items into new list" do
-      list_items = [
-        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
-        %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
-      ]
-
-      result =
-        MDEx.Tree.append_nodes(
-          %MDEx.Document{
-            nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]}]
-          },
-          list_items
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "intro"}]},
-                 %MDEx.List{
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item1"}]}]},
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item2"}]}]}
-                   ]
-                 }
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "intro\n\n- item1\n- item2"
-    end
-  end
-
-  describe "append_node/2 - edge cases and constraints" do
-    test "rejects document within document" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{nodes: []},
-          %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "nested"}]}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [%MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "nested"}]}]}]
-             } = result
-    end
-
-    test "allows front matter in document" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{nodes: []},
-          %MDEx.FrontMatter{literal: "title: test"}
-        )
-
-      assert %MDEx.Document{
-               nodes: [%MDEx.FrontMatter{literal: "title: test"}]
-             } = result
-    end
-
-    test "appends block nodes to block containers" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [%MDEx.BlockQuote{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "existing"}]}]}]
-          },
-          %MDEx.CodeBlock{literal: "block", info: ""}
-        )
-
-      # The tree appends the code block inside the block quote since it can contain block nodes
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.BlockQuote{
-                   nodes: [
-                     %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "existing"}]},
-                     %MDEx.CodeBlock{literal: "block", info: ""}
-                   ]
-                 }
-               ]
-             } = result
-    end
-
-    test "list accepts different list type items by nesting in existing item" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.List{
-                list_type: :bullet,
-                nodes: [
-                  %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet"}]}], list_type: :bullet}
-                ]
-              }
-            ]
-          },
-          %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered"}]}], list_type: :ordered}
-        )
-
-      # The tree tries to append to the deepest compatible container
-      # Since the ordered item can't go in the bullet list, it goes in the bullet list item
-      assert %MDEx.Document{
-               nodes: [
+    test "blocks into document" do
+      assert Tree.append(
+               %Document{},
+               [
+                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "foo"}], level: 1, setext: false},
                  %MDEx.List{
                    nodes: [
                      %MDEx.ListItem{
-                       nodes: [
-                         %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet"}]},
-                         %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered"}]}]}
-                       ]
+                       nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                       list_type: :bullet,
+                       marker_offset: 0,
+                       padding: 2,
+                       start: 1,
+                       delimiter: :period,
+                       bullet_char: "-",
+                       tight: false,
+                       is_task_list: false
                      }
                    ],
-                   list_type: :bullet
-                 }
-               ]
-             } = result
-    end
-
-    test "merges lists of same type" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.List{
-                list_type: :bullet,
-                nodes: [
-                  %MDEx.ListItem{
-                    nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "parent"}]}],
-                    list_type: :bullet
-                  }
-                ]
-              }
-            ]
-          },
-          %MDEx.List{
-            list_type: :bullet,
-            nodes: [
-              %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "nested"}]}], list_type: :bullet}
-            ]
-          }
-        )
-
-      # Lists of the same type get merged at the list level
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.List{
                    list_type: :bullet,
-                   nodes: [
-                     %MDEx.ListItem{
-                       nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "parent"}]}]
-                     },
-                     %MDEx.ListItem{
-                       nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "nested"}]}]
-                     }
-                   ]
+                   marker_offset: 0,
+                   padding: 2,
+                   start: 1,
+                   delimiter: :period,
+                   bullet_char: "-",
+                   tight: true,
+                   is_task_list: false
                  }
                ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "- parent\n- nested"
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "foo"}], level: 1, setext: false},
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: true,
+                     is_task_list: false
+                   }
+                 ]
+               }
     end
 
-    test "list item rejects nested list of different type" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.List{
-                list_type: :bullet,
-                nodes: [
-                  %MDEx.ListItem{
-                    nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet"}]}],
-                    list_type: :bullet
-                  }
-                ]
-              }
-            ]
-          },
-          %MDEx.List{
-            list_type: :ordered,
-            nodes: [
-              %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered"}]}], list_type: :ordered}
-            ]
-          }
-        )
+    test "mixed into document" do
+      assert Tree.append(
+               %Document{},
+               [
+                 %Paragraph{nodes: [%Text{literal: "foo"}]},
+                 %Strong{nodes: [%Text{literal: " bar"}]},
+                 %CodeBlock{literal: "puts"},
+                 %Code{literal: "puts"}
+               ]
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "foo"}, %MDEx.Strong{nodes: [%MDEx.Text{literal: " bar"}]}]
+                   },
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "",
+                     literal: "puts"
+                   },
+                   %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "puts"}]}
+                 ]
+               }
+    end
 
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.List{
+    test "paragraph into paragraph" do
+      assert Tree.append(
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]},
+               [%Paragraph{nodes: [%Text{literal: "bar"}]}]
+             ) ==
+               %Document{
+                 nodes: [
+                   %Paragraph{nodes: [%Text{literal: "foo"}]},
+                   %Paragraph{nodes: [%Text{literal: "bar"}]}
+                 ]
+               }
+    end
+
+    test "heading into paragraph" do
+      assert Tree.append(
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]},
+               [%Heading{level: 1, nodes: [%Text{literal: "bar"}]}]
+             ) ==
+               %Document{
+                 nodes: [
+                   %Paragraph{nodes: [%Text{literal: "foo"}]},
+                   %Heading{nodes: [%Text{literal: "bar"}], level: 1, setext: false}
+                 ]
+               }
+    end
+
+    test "text into block" do
+      assert Tree.append(
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]},
+               [%Text{literal: " bar"}]
+             ) ==
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo bar"}]}]}
+
+      assert Tree.append(
+               %Document{nodes: [%Heading{nodes: [%Text{literal: "foo"}], level: 1, setext: false}]},
+               [%Text{literal: " bar"}]
+             ) ==
+               %Document{nodes: [%Heading{nodes: [%Text{literal: "foo bar"}], level: 1, setext: false}]}
+    end
+
+    test "multiple text into block" do
+      assert Tree.append(
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]},
+               [%Text{literal: " bar"}, %Text{literal: " baz"}]
+             ) ==
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo bar baz"}]}]}
+
+      assert Tree.append(
+               %Document{nodes: [%Heading{nodes: [%Text{literal: "foo"}], level: 1, setext: false}]},
+               [%Text{literal: " bar"}, %Text{literal: " baz"}]
+             ) ==
+               %Document{nodes: [%Heading{nodes: [%Text{literal: "foo bar baz"}], level: 1, setext: false}]}
+    end
+
+    test "text into text" do
+      assert Tree.append(
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo"}]}]},
+               [%Text{literal: " bar"}]
+             ) ==
+               %Document{nodes: [%Paragraph{nodes: [%Text{literal: "foo bar"}]}]}
+    end
+
+    test "list item into list" do
+      assert Tree.append(
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: true,
+                     is_task_list: false
+                   }
+                 ]
+               },
+               [
+                 %MDEx.ListItem{
+                   nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
                    list_type: :bullet,
-                   nodes: [
-                     %MDEx.ListItem{
-                       nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bullet"}]}],
-                       list_type: :bullet
-                     }
-                   ]
-                 },
-                 %MDEx.List{
-                   list_type: :ordered,
-                   nodes: [
-                     %MDEx.ListItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ordered"}]}], list_type: :ordered}
-                   ]
+                   marker_offset: 0,
+                   padding: 2,
+                   start: 1,
+                   delimiter: :period,
+                   bullet_char: "-",
+                   tight: false,
+                   is_task_list: false
                  }
                ]
-             } = result
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       },
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: true,
+                     is_task_list: false
+                   }
+                 ]
+               }
     end
 
-    test "wraps description item in description list" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{nodes: []},
-          %MDEx.DescriptionItem{
-            nodes: [
-              %MDEx.DescriptionTerm{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "term"}]}]}
-            ]
-          }
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.DescriptionList{
-                   nodes: [
-                     %MDEx.DescriptionItem{
-                       nodes: [
-                         %MDEx.DescriptionTerm{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "term"}]}]}
-                       ]
-                     }
-                   ]
+    test "task item into list with existing list item" do
+      assert Tree.append(
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 1"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: true,
+                     is_task_list: true
+                   }
+                 ]
+               },
+               [
+                 %MDEx.TaskItem{
+                   nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 2"}]}],
+                   checked: false,
+                   marker: ""
                  }
                ]
-             } = result
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 1"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       },
+                       %MDEx.TaskItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 2"}]}],
+                         checked: false,
+                         marker: ""
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: true,
+                     is_task_list: true
+                   }
+                 ]
+               }
     end
 
-    test "description list rejects non-description items at list level" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.DescriptionList{
-                nodes: [
-                  %MDEx.DescriptionItem{
-                    nodes: [
-                      %MDEx.DescriptionTerm{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "term1"}]}]}
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "sibling"}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.DescriptionList{
-                   nodes: [
-                     %MDEx.DescriptionItem{
-                       nodes: [
-                         %MDEx.DescriptionTerm{
-                           nodes: [
-                             %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "term1"}]},
-                             %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "sibling"}]}
-                           ]
-                         }
-                       ]
-                     }
-                   ]
+    test "list item into non-list create list" do
+      assert Tree.append(
+               %MDEx.Document{},
+               [
+                 %MDEx.ListItem{
+                   nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                   list_type: :bullet,
+                   marker_offset: 0,
+                   padding: 2,
+                   start: 1,
+                   delimiter: :period,
+                   bullet_char: "-",
+                   tight: false,
+                   is_task_list: false
                  }
                ]
-             } = result
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.ListItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                         list_type: :bullet,
+                         marker_offset: 0,
+                         padding: 2,
+                         start: 1,
+                         delimiter: :period,
+                         bullet_char: "-",
+                         tight: false,
+                         is_task_list: false
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: false,
+                     is_task_list: false
+                   }
+                 ]
+               }
     end
 
-    test "wraps table row in table with correct dimensions" do
-      row = %MDEx.TableRow{
-        nodes: [
-          %MDEx.TableCell{nodes: [%MDEx.Text{literal: "A"}]},
-          %MDEx.TableCell{nodes: [%MDEx.Text{literal: "B"}]},
-          %MDEx.TableCell{nodes: [%MDEx.Text{literal: "C"}]}
-        ]
-      }
-
-      result = MDEx.Tree.append_node(%MDEx.Document{nodes: []}, row)
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Table{
-                   nodes: [^row],
-                   num_columns: 3,
-                   num_rows: 1
+    test "task item into non-list create list" do
+      assert Tree.append(
+               %MDEx.Document{},
+               [
+                 %MDEx.TaskItem{
+                   nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                   checked: false,
+                   marker: ""
                  }
                ]
-             } = result
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.List{
+                     nodes: [
+                       %MDEx.TaskItem{
+                         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                         checked: false,
+                         marker: ""
+                       }
+                     ],
+                     list_type: :bullet,
+                     marker_offset: 0,
+                     padding: 2,
+                     start: 1,
+                     delimiter: :period,
+                     bullet_char: "-",
+                     tight: false,
+                     is_task_list: true
+                   }
+                 ]
+               }
     end
 
-    test "table only accepts table rows" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Table{
-                nodes: [
-                  %MDEx.TableRow{
-                    nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "cell"}]}]
-                  }
-                ],
-                num_columns: 1,
-                num_rows: 1
-              }
-            ]
-          },
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "not allowed"}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Table{
-                   nodes: [
-                     %MDEx.TableRow{
-                       nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "cell"}]}]
-                     }
-                   ],
-                   num_columns: 1,
-                   num_rows: 1
-                 },
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "not allowed"}]}
-               ]
-             } = result
+    test "text into code" do
+      assert Tree.append(
+               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "puts"}]}]},
+               [%MDEx.Text{literal: "('Hello')"}]
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [
+                       %MDEx.Code{num_backticks: 1, literal: "puts('Hello')"}
+                     ]
+                   }
+                 ]
+               }
     end
 
-    test "table cell accepts inline nodes" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Table{
-                nodes: [
-                  %MDEx.TableRow{
-                    nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "cell1"}]}]
-                  }
-                ],
-                num_columns: 1,
-                num_rows: 1
-              }
-            ]
-          },
-          %MDEx.Text{literal: "appended"}
-        )
+    test "code into code" do
+      assert Tree.append(
+               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "puts"}]}]},
+               [%MDEx.Code{num_backticks: 1, literal: " 'Hello'"}]
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [
+                       %MDEx.Code{num_backticks: 1, literal: "puts 'Hello'"}
+                     ]
+                   }
+                 ]
+               }
+    end
 
-      # The tree appends the text to the deepest compatible container (the table cell)
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Table{
-                   nodes: [
-                     %MDEx.TableRow{
-                       nodes: [
-                         %MDEx.TableCell{
-                           nodes: [
-                             %MDEx.Text{literal: "cell1"},
-                             %MDEx.Text{literal: "appended"}
-                           ]
-                         }
-                       ]
-                     }
-                   ],
-                   num_columns: 1,
-                   num_rows: 1
+    test "codeblock into codeblock with same attributes" do
+      assert Tree.append(
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "elixir",
+                     literal: "@foo\n"
+                   }
+                 ]
+               },
+               [
+                 %MDEx.CodeBlock{
+                   nodes: [],
+                   fenced: true,
+                   fence_char: "`",
+                   fence_length: 3,
+                   fence_offset: 0,
+                   info: "elixir",
+                   literal: "@bar"
                  }
                ]
-             } = result
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "elixir",
+                     literal: "@foo\n@bar"
+                   }
+                 ]
+               }
     end
 
-    test "table cell only accepts inline nodes" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [
-              %MDEx.Table{
-                nodes: [
-                  %MDEx.TableRow{
-                    nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "cell"}]}]
-                  }
-                ],
-                num_columns: 1,
-                num_rows: 1
-              }
-            ]
-          },
-          %MDEx.Code{literal: "inline", num_backticks: 1}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Table{
-                   nodes: [
-                     %MDEx.TableRow{
-                       nodes: [
-                         %MDEx.TableCell{
-                           nodes: [
-                             %MDEx.Text{literal: "cell"},
-                             %MDEx.Code{literal: "inline", num_backticks: 1}
-                           ]
-                         }
-                       ]
-                     }
-                   ],
-                   num_columns: 1,
-                   num_rows: 1
+    test "codeblock into codeblock with different attributes" do
+      assert Tree.append(
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "elixir",
+                     literal: "@foo"
+                   }
+                 ]
+               },
+               [
+                 %MDEx.CodeBlock{
+                   nodes: [],
+                   fenced: true,
+                   fence_char: "`",
+                   fence_length: 3,
+                   fence_offset: 0,
+                   info: "rust",
+                   literal: "const FOO: i32 = 10;"
                  }
                ]
-             } = result
-    end
-
-    test "paragraph rejects block nodes" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "text"}]}]
-          },
-          %MDEx.CodeBlock{literal: "block", info: ""}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "text"}]},
-                 %MDEx.CodeBlock{literal: "block", info: ""}
-               ]
-             } = result
-    end
-
-    test "heading only accepts inline nodes" do
-      result =
-        MDEx.Tree.append_node(
-          %MDEx.Document{
-            nodes: [%MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Title"}]}]
-          },
-          %MDEx.Emph{nodes: [%MDEx.Text{literal: "emphasis"}]}
-        )
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Heading{
-                   level: 1,
-                   nodes: [
-                     %MDEx.Text{literal: "Title"},
-                     %MDEx.Emph{nodes: [%MDEx.Text{literal: "emphasis"}]}
-                   ]
-                 }
-               ]
-             } = result
-    end
-  end
-
-  describe "merge/2" do
-    test "merges two documents" do
-      doc1 = %MDEx.Document{
-        nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}
-        ]
-      }
-
-      doc2 = %MDEx.Document{
-        nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "World"}]}
-        ]
-      }
-
-      result = MDEx.Tree.merge(doc1, doc2)
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "World"}]}
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "Hello\n\nWorld"
-    end
-
-    test "merges empty document with non-empty document" do
-      doc1 = %MDEx.Document{nodes: []}
-
-      doc2 = %MDEx.Document{
-        nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Content"}]}
-        ]
-      }
-
-      result = MDEx.Tree.merge(doc1, doc2)
-
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Content"}]}
-               ]
-             } = result
-
-      assert MDEx.to_markdown!(result) == "Content"
+             ) ==
+               %MDEx.Document{
+                 nodes: [
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "elixir",
+                     literal: "@foo"
+                   },
+                   %MDEx.CodeBlock{
+                     nodes: [],
+                     fenced: true,
+                     fence_char: "`",
+                     fence_length: 3,
+                     fence_offset: 0,
+                     info: "rust",
+                     literal: "const FOO: i32 = 10;"
+                   }
+                 ]
+               }
     end
   end
 end

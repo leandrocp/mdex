@@ -35,7 +35,10 @@ defmodule MDEx do
 
   alias MDEx.Native
   alias MDEx.Document
+  alias MDEx.Paragraph
+  alias MDEx.Text
   alias MDEx.DecodeError
+  alias MDEx.Tree
   alias MDEx.InvalidInputError
 
   import MDEx.Document, only: [is_fragment: 1]
@@ -270,6 +273,68 @@ defmodule MDEx do
     case parse_fragment(markdown, options) do
       {:ok, fragment} -> fragment
       _ -> raise %InvalidInputError{found: markdown}
+    end
+  end
+
+  @doc false
+  # Parses `markdown` fragments into Document nodes.
+  #
+  # ## Examples
+  #
+  #     iex> MDEx.parse_fragments("Hello ")
+  #     {[%MDEx.Text{literal: "Hello"}], %{rest: " ", delimiter: ""}}
+  #
+  #     iex> MDEx.parse_fragments("Hello\\n\\nWorld ")
+  #     {[%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Hello"}]}, %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "World"}]}], %{rest: " ", delimiter: ""}}
+  #
+  #     iex> MDEx.parse_fragments("# Hello")
+  #     {[%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}], %{rest: "", delimiter: ""}}
+  #
+  #     iex> MDEx.parse_fragments("# Hello `World")
+  #     {[%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.Code{num_backticks: 1, literal: "World"}], level: 1, setext: false}], %{rest: "", delimiter: "`"}}
+  #
+  # """
+  @spec parse_fragments(String.t(), keyword()) :: {Document.md_node() | nil, map()}
+  def parse_fragments(markdown, options \\ []) when is_binary(markdown) and is_list(options) do
+    {buffer, options} = Keyword.pop(options, :buffer, "")
+    {buffer_text, options} = Keyword.pop(options, :buffer_text, Tree.default_buffer_text(buffer))
+    starts_with_hard_line_break = String.starts_with?(buffer_text, "\n\n")
+    {completed, delimiter, new_buffer} = MDEx.FragmentParser.complete(markdown, prefix: buffer)
+    leading_ws = leading_whitespace(markdown)
+    text_prefix = Tree.build_fragment_prefix(buffer_text, starts_with_hard_line_break, leading_ws)
+
+    nodes =
+      case {starts_with_hard_line_break, completed, parse_document(completed, options)} do
+        {_, "", _} ->
+          [%Text{literal: ""}]
+
+        {true, _, {:ok, %Document{nodes: [%Paragraph{nodes: [%Text{} | _]}] = nodes}}} ->
+          nodes
+
+        {_, _, {:ok, %Document{nodes: [%Paragraph{nodes: [%Text{literal: literal}]}]}}} ->
+          [%Text{literal: literal}]
+
+        {_, _, {:ok, %Document{nodes: [%Paragraph{nodes: nodes}]}}} ->
+          nodes
+
+        {_, _, {:ok, %Document{nodes: nodes}}} ->
+          nodes
+
+        _ ->
+          nil
+      end
+
+    {Tree.prepend_text_prefix(nodes, text_prefix), delimiter, new_buffer}
+  end
+
+  defp leading_whitespace(binary) do
+    trimmed = String.trim_leading(binary)
+    diff = byte_size(binary) - byte_size(trimmed)
+
+    if diff > 0 do
+      :binary.part(binary, 0, diff)
+    else
+      ""
     end
   end
 

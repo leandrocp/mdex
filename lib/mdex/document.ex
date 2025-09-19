@@ -1,5 +1,3 @@
-# based on https://github.com/wojtekmach/easyhtml
-
 defmodule MDEx.Document do
   @moduledoc """
   Document is the core structure to store, manipulate, and render Markdown documents.
@@ -374,6 +372,16 @@ defmodule MDEx.Document do
   ```elixir
   Application.put_env(:mdex, :inspect_format, :struct)
   ```
+
+  ## Streaming
+
+  Collect incomplete chunks of Markdown to build a Document incrementally.
+
+  > #### Experimental {: .warning}
+  >
+  > This API is experimental, it may not handle all edge cases and may change in future releases.
+
+
 
   ## Pipeline and Plugins
 
@@ -1675,6 +1683,21 @@ defmodule MDEx.Document do
   end
 
   @doc """
+  Deletes a value from the document's private storage.
+
+  ## Examples
+
+      iex> document = MDEx.new() |> MDEx.Document.put_private(:count, 2)
+      iex> document = MDEx.Document.delete_private(document, :count)
+      iex> MDEx.Document.get_private(document, :count)
+      nil
+  """
+  @spec delete_private(t(), atom()) :: t()
+  def delete_private(%MDEx.Document{} = document, key) when is_atom(key) do
+    update_in(document.private, &Map.delete(&1, key))
+  end
+
+  @doc """
   Appends steps to the end of the existing document's step list.
 
   ## Examples
@@ -2070,26 +2093,35 @@ defmodule MDEx.Document do
   def is_fragment(_), do: false
 
   @doc """
-  Wraps nodes in a `MDEx.Document`.
-
-  * Passing an existing document returns it unchanged.
-  * Passing a node or list of nodes builds a new document with default options.
+  Wraps `nodes` in a `MDEx.Document` struct.
 
   ## Examples
 
-      iex> document = MDEx.Document.wrap(MDEx.new(markdown: "# Title"))
-      iex> document.nodes
-      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false}]
+      iex> MDEx.Document.wrap(%MDEx.Document{nodes: [%MDEx.Text{literal: "hello"}]})
+      %MDEx.Document{nodes: [%MDEx.Text{literal: "hello"}]}
 
-      iex> document = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
-      iex> document.nodes
-      [%MDEx.Text{literal: "Hello"}]
+      iex> MDEx.Document.wrap([%MDEx.Text{literal: "hello"}])
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Text{literal: "hello"}]
+          }
+        ]
+      }
+
+      iex> MDEx.Document.wrap([])
+      %MDEx.Document{nodes: []}
+
   """
   @spec wrap(t() | md_node() | [md_node()]) :: t()
+  def wrap(document_or_nodes)
+
   def wrap(%MDEx.Document{} = document), do: document
 
   def wrap(nodes) do
-    %{MDEx.new() | nodes: List.wrap(nodes)}
+    nodes
+    |> List.wrap()
+    |> Enum.into(%MDEx.Document{})
   end
 
   @doc false
@@ -2210,33 +2242,45 @@ defmodule MDEx.Document do
 
   defimpl Collectable do
     def into(%MDEx.Document{} = document) do
-      state = {document, MapSet.new()}
+      collector = fn
+        # FIXME
+        document, {:cont, %MDEx.Document{}} ->
+          document
 
-      fun = fn
-        {doc, processed_nodes}, {:cont, %MDEx.Document{} = other_doc} ->
-          merged = MDEx.Tree.merge(doc, other_doc)
-          new_processed = Enum.reduce(other_doc, processed_nodes, fn node, acc -> MapSet.put(acc, node) end)
-          {merged, new_processed}
+        document, {:cont, chunk} when is_list(chunk) ->
+          append(document, IO.chardata_to_string(chunk))
 
-        {doc, processed_nodes}, {:cont, node} when is_struct(node) ->
-          if MapSet.member?(processed_nodes, node) do
-            {doc, processed_nodes}
-          else
-            {MDEx.Tree.append_node(doc, node), processed_nodes}
-          end
+        document, {:cont, chunk} when is_binary(chunk) ->
+          append(document, chunk)
 
-        {doc, _processed_nodes}, :done ->
-          doc
+        document, {:cont, chunk} when is_struct(chunk) ->
+          document
+          |> MDEx.Tree.append(chunk)
+          |> MDEx.Document.delete_private(:mdex_fragment_buffer)
 
-        _state, :halt ->
+        # |> MDEx.Document.delete_private(:mdex_fragment_delimiter)
+        # |> MDEx.Document.delete_private(:mdex_fragment_rest)
+
+        document, :done ->
+          document
+
+        _document, :halt ->
           :ok
-
-        _state, {:cont, other} ->
-          raise ArgumentError,
-                "collecting into MDEx.Document requires a MDEx node, got: #{inspect(other)}"
       end
 
-      {state, fun}
+      {document, collector}
+    end
+
+    def append(document, chunk) when is_binary(chunk) do
+      # prefix = MDEx.Document.get_private(document, :mdex_fragment_prefix, "")
+      # options = Keyword.put(document.options, :prefix, prefix)
+      # {nodes, %{delimiter: delimiter, prefix: prefix, suffix: suffix}} = MDEx.parse_fragments(chunk, options) 
+
+      document
+      |> MDEx.Tree.append(chunk)
+
+      # |> MDEx.Document.put_private(:mdex_fragment_delimiter, delimiter)
+      # |> MDEx.Document.put_private(:mdex_fragment_rest, suffix)
     end
   end
 end
@@ -2921,7 +2965,9 @@ defimpl String.Chars,
     MDEx.Alert
   ] do
   def to_string(node) do
-    MDEx.to_markdown!(%MDEx.Document{nodes: [node]})
+    node
+    |> MDEx.Document.wrap()
+    |> MDEx.to_markdown!()
   end
 end
 

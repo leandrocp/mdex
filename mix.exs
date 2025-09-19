@@ -161,6 +161,7 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:autumn, ">= 0.5.4"},
       {:jason, "~> 1.0"},
+      {:nimble_parsec, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:makeup_elixir, "~> 1.0.1 or ~> 1.1", only: :docs},
       {:makeup_eex, "~> 2.0", only: :docs},

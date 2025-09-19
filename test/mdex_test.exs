@@ -791,4 +791,126 @@ defmodule MDExTest do
       )
     end
   end
+
+  describe "parse_fragments" do
+    test "# text" do
+      assert {
+               [%MDEx.Heading{nodes: [%MDEx.Text{literal: "text"}], level: 1, setext: false}],
+               "",
+               ""
+             } = MDEx.parse_fragments("# text")
+    end
+
+    test "# text " do
+      assert {
+               [%MDEx.Heading{nodes: [%MDEx.Text{literal: "text"}], level: 1, setext: false}],
+               "",
+               " "
+             } = MDEx.parse_fragments("# text ")
+    end
+
+    test "text with buffer" do
+      assert {
+               [%MDEx.Text{literal: " text"}],
+               "",
+               ""
+             } = MDEx.parse_fragments("text", buffer: " ")
+    end
+
+    test "text with prefix and buffer" do
+      assert {
+               [%MDEx.Text{literal: "  text"}],
+               "",
+               ""
+             } = MDEx.parse_fragments(" text", buffer: " ")
+    end
+
+    test "text starting with hard line break buffer" do
+      assert {
+               [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "text"}]}],
+               "",
+               ""
+             } = MDEx.parse_fragments("text", buffer: "\n\n")
+    end
+
+    test "`code" do
+      assert {
+               [%MDEx.Code{num_backticks: 1, literal: "code"}],
+               "`",
+               ""
+             } = MDEx.parse_fragments("`code")
+    end
+
+    test "[1] )` with buffer" do
+      assert {
+               [%MDEx.Code{num_backticks: 1, literal: " [1] )"}],
+               "",
+               ""
+             } = MDEx.parse_fragments("[1] )`", buffer: "` ")
+    end
+
+    test "# head `code`\n    " do
+      assert {
+               [
+                 %MDEx.Heading{
+                   level: 1,
+                   nodes: [
+                     %MDEx.Text{literal: "head "},
+                     %MDEx.Code{num_backticks: 1, literal: "code"}
+                   ],
+                   setext: false
+                 }
+               ],
+               "",
+               "\n    "
+             } = MDEx.parse_fragments("# head `code`\n    ")
+    end
+
+    test "# head\n\ntext" do
+      assert {
+               [
+                 %MDEx.Heading{
+                   level: 1,
+                   nodes: [%MDEx.Text{literal: "head"}],
+                   setext: false
+                 },
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "text"}]}
+               ],
+               "",
+               ""
+             } = MDEx.parse_fragments("# head\n\ntext")
+    end
+
+    test "- item " do
+      assert {
+               [
+                 %MDEx.List{
+                   bullet_char: "-",
+                   delimiter: :period,
+                   is_task_list: false,
+                   list_type: :bullet,
+                   marker_offset: 0,
+                   nodes: [
+                     %MDEx.ListItem{
+                       nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item"}]}],
+                       list_type: :bullet,
+                       marker_offset: 0,
+                       padding: 2,
+                       start: 1,
+                       delimiter: :period,
+                       bullet_char: "-",
+                       tight: false,
+                       is_task_list: false
+                     }
+                   ],
+                   padding: 2,
+                   start: 1,
+                   tight: true
+                 }
+               ],
+               "",
+               " "
+             } = MDEx.parse_fragments("- item ")
+    end
+  end
 end

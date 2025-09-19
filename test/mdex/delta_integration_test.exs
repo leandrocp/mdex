@@ -542,7 +542,8 @@ defmodule MDEx.DeltaIntegrationTest do
       {:ok, result} = MDEx.to_delta(input)
 
       assert result == [
-               %{"insert" => "Fragment text"}
+               %{"insert" => "Fragment text"},
+               %{"insert" => "\n"}
              ]
     end
 
@@ -558,7 +559,8 @@ defmodule MDEx.DeltaIntegrationTest do
       assert result == [
                %{"insert" => "First "},
                %{"insert" => "bold", "attributes" => %{"bold" => true}},
-               %{"insert" => " text"}
+               %{"insert" => " text"},
+               %{"insert" => "\n"}
              ]
     end
 
