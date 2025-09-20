@@ -86,7 +86,11 @@ iex> ~MD[# Hello :smile:]HTML
 ```elixir
 iex> import MDEx.Sigil
 iex> ~MD[# Hello :smile:]
-%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.ShortCode{code: "smile", emoji: "😄"}], level: 1, setext: false}]}
+# #MDEx.Document(3 nodes)<
+# ├── 1 [heading] level: 1, setext: false
+# │   ├── 2 [text] literal: "Hello "
+# │   └── 3 [short_code] code: "smile", emoji: "😄"
+# >
 ```
 
 ## Foundation

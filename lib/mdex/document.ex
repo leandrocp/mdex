@@ -337,6 +337,44 @@ defmodule MDEx.Document do
   "# Hello"
   ```
 
+  ### Inspect
+
+  The `Inspect` protocol provides two display formats for documents:
+
+  **Tree format (default)**: Shows the document structure as a visual tree, making it easy to understand the hierarchy and relationships between nodes.
+
+  ```elixir
+  iex> ~MD[# Hello :smile:]
+  #MDEx.Document(3 nodes)<
+  └── 1 [heading] level: 1, setext: false
+      ├── 2 [text] literal: "Hello "
+      └── 3 [short_code] code: "smile", emoji: "😄"
+  >
+  ```
+
+  **Struct format**: Shows the raw struct representation, useful for debugging and testing. To enable this format:
+
+  ```elixir
+  iex> Application.put_env(:mdex, :inspect_format, :struct)
+  iex> ~MD[# Hello :smile:]
+  %MDEx.Document{
+    nodes: [
+      %MDEx.Heading{
+        nodes: [%MDEx.Text{literal: "Hello "}, %MDEx.ShortCode{code: "smile", emoji: "😄"}],
+        level: 1,
+        setext: false
+      }
+    ],
+    # ... other fields
+  }
+  ```
+
+  The struct format is particularly useful in tests where you need to see exact differences between expected and actual values. You can set this in your `test/test_helper.exs`:
+
+  ```elixir
+  Application.put_env(:mdex, :inspect_format, :struct)
+  ```
+
   ## Pipeline and Plugins
 
   MDEx.Document is a Req-like API to transform Markdown documents through a series of steps in a pipeline.
@@ -2951,7 +2989,22 @@ end
 defimpl Inspect, for: MDEx.Document do
   import Inspect.Algebra
 
-  def inspect(%MDEx.Document{nodes: nodes}, _opts) do
+  def inspect(%MDEx.Document{} = document, opts) do
+    format = Application.get_env(:mdex, :inspect_format, :tree)
+
+    case format do
+      :struct ->
+        document
+        |> Map.from_struct()
+        |> Map.put(:__struct__, MDEx.Document)
+        |> Inspect.Map.inspect(opts)
+
+      _ ->
+        inspect_tree(document, opts)
+    end
+  end
+
+  defp inspect_tree(%MDEx.Document{nodes: nodes}, _opts) do
     node_count = Enum.count(%MDEx.Document{nodes: nodes}) - 1
     header = concat(["#MDEx.Document(", to_string(node_count), " nodes)<"])
 
@@ -2959,15 +3012,22 @@ defimpl Inspect, for: MDEx.Document do
       concat([header, ">"])
     else
       {tree_lines, _} = build_tree_lines(nodes, [], 1)
-      tree_content = Enum.join(tree_lines, "\n")
 
-      concat([
-        header,
-        line(),
-        tree_content,
-        line(),
-        ">"
-      ])
+      tree_content =
+        tree_lines
+        |> Enum.map(&string/1)
+        |> Enum.intersperse(line())
+        |> concat()
+
+      force_unfit(
+        concat([
+          header,
+          line(),
+          tree_content,
+          line(),
+          ">"
+        ])
+      )
     end
   end
 

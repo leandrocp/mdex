@@ -40,6 +40,7 @@ The `MDEx.Document` module now provides an unified API to create, manipulate, an
   - [Document] Add `MDEx.Document.default_options/0` to get all default options
   - [Document] Add `MDEx.Document.parse_markdown/2` to replace `MDEx.Document` with new Markdown content
   - [Document] Add extra fields in `%MDEx.Document{}` to store options, private data, and pipeline state. Use functions in `MDEx.Document` to manipulate these fields.
+  - [Document] Add config `Application.put_env(:mdex, :inspect_format, :struct)` to enable inspecting the raw `%MDEx.Document{}` struct
 
 ### Changed
   - [Deps] Require `autumnus >= 0.5.4`
