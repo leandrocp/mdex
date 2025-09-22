@@ -19,4 +19,3 @@ defmodule MDEx.InspectTreeTest do
     end
   end
 end
-
