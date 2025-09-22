@@ -2990,14 +2990,23 @@ defimpl Inspect, for: MDEx.Document do
   import Inspect.Algebra
 
   def inspect(%MDEx.Document{} = document, opts) do
-    format = Application.get_env(:mdex, :inspect_format, :tree)
-
-    case format do
+    case Application.get_env(:mdex, :inspect_format, :tree) do
       :struct ->
-        document
-        |> Map.from_struct()
-        |> Map.put(:__struct__, MDEx.Document)
-        |> Inspect.Map.inspect(opts)
+        infos =
+          for %{field: field} = map <- MDEx.Document.__info__(:struct),
+              field != :__exception__,
+              do: map
+
+        if function_exported?(Inspect.Map, :inspect, 4) do
+          apply(Inspect.Map, :inspect, [document, inspect(document.__struct__), infos, opts])
+        else
+          apply(Inspect.Map, :inspect_as_struct, [
+            document,
+            inspect(document.__struct__),
+            infos,
+            opts
+          ])
+        end
 
       _ ->
         inspect_tree(document, opts)
