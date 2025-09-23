@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 (2025-09-22)
 
 **BREAKING CHANGES**
 
@@ -18,6 +18,8 @@ The `MDEx.Document` module now provides an unified API to create, manipulate, an
 + %MDEx.Document{} = document = MDEx.new()
 + MDEx.Document.run(document)
 ```
+
+See examples https://github.com/leandrocp/mdex_gfm/pull/7/files and https://github.com/leandrocp/mdex_mermaid/pull/13/files
 
 2. Move types from `MDEx` to `MDEx.Document`
 
