@@ -157,33 +157,29 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 
 ## Benchmark
 
-A [simple script](benchmark.exs) is available to compare existing libs:
+A [benchmark](benchmark.exs) is available to compare existing libs:
 
 ```
 Name              ips        average  deviation         median         99th %
-cmark          7.17 K       0.139 ms     ±4.20%       0.138 ms       0.165 ms
-mdex           2.71 K        0.37 ms     ±7.95%        0.36 ms        0.45 ms
-md            0.196 K        5.11 ms     ±2.51%        5.08 ms        5.55 ms
-earmark      0.0372 K       26.91 ms     ±2.09%       26.77 ms       30.25 ms
+mdex          4546.79        0.22 ms     ±6.19%        0.22 ms        0.27 ms
+md             475.87        2.10 ms     ±3.35%        2.09 ms        2.27 ms
+earmark        142.21        7.03 ms     ±2.84%        6.98 ms        7.68 ms
 
 Comparison:
-cmark          7.17 K
-mdex           2.71 K - 2.65x slower +0.23 ms
-md            0.196 K - 36.69x slower +4.98 ms
-earmark      0.0372 K - 193.04x slower +26.77 ms
+mdex          4546.79
+md             475.87 - 9.55x slower +1.88 ms
+earmark        142.21 - 31.97x slower +6.81 ms
+
+Memory usage statistics:
+
+Comparison:
+mdex           0.152 MB
+md              6.37 MB - 41.86x memory usage +6.21 MB
+earmark         4.34 MB - 28.51x memory usage +4.18 MB
 ```
 
 The most performance gain is using the `~MD` sigil to compile the Markdown instead of parsing it at runtime,
-prefer using it when possible:
-
-```
-Comparison:
-mdex_sigil_MD    176948.46 K
-cmark                31.47 K - 5622.76x slower +31.77 μs
-mdex_to_html/1        7.32 K - 24184.36x slower +136.67 μs
-md                    2.05 K - 86176.93x slower +487.01 μs
-earmark               0.21 K - 855844.67x slower +4836.68 μs
-```
+prefer using it when possible.
 
 To finish, a friendly reminder that all libs have their own strengths and trade-offs so use the one that better suits your needs.
 
