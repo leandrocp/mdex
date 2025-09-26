@@ -470,7 +470,8 @@ defmodule MDEx.DocumentTest do
                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rs"}], level: 1, setext: false},
                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                 ]
-              }, 2} =
+              },
+              2} =
                MDEx.traverse_and_update(document, 0, fn
                  %MDEx.Code{literal: "elixir"} = node, acc ->
                    node = %{node | literal: "ex"}
@@ -500,7 +501,8 @@ defmodule MDEx.DocumentTest do
                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rust"}], level: 1, setext: false},
                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
                 ]
-              }, :halted} =
+              },
+              :halted} =
                MDEx.traverse_and_update(document, :cont, fn
                  node, :halted ->
                    {node, :halted}
