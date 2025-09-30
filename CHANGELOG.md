@@ -8,6 +8,8 @@
 
 ### Changed
 - [Deps] Update `comrak` to v0.42.0
+- [Deps] Update `autumnus` to v0.7.4
+- [Deps] Update `autumn` to v0.5.5
 
 ## 0.9.0 (2025-09-22)
 
