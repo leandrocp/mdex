@@ -324,6 +324,6 @@ fn do_safe_html(
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-pub fn text_to_anchor(env: Env<'_>, text: String) -> String {
+pub fn text_to_anchor(env: Env<'_>, text: &str) -> String {
     Anchorizer::new().anchorize(text)
 }
