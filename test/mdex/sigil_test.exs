@@ -8,58 +8,35 @@ defmodule MDEx.SigilTest do
   end
 
   describe "sigil_MD with assigns" do
-    test "markdown to document" do
-      assert %MDEx.Document{
-               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = <%= @lang %>"}]}]
-             } = ~MD|`lang = <%= @lang %>`|
+    test "to html" do
+      assigns = %{lang: "Elixir"}
+      assert ~MD|# <%= @lang %>|HTML == "<h1>Elixir</h1>"
     end
 
-    test "markdown to html" do
-      assigns = %{lang: ":elixir"}
-      assert ~MD|lang = <%= @lang %>|HTML == "<p>lang = :elixir</p>"
+    test "to md" do
+      assigns = %{lang: "Elixir"}
+      assert ~MD|# <%= @lang %>|MD == "# Elixir"
     end
 
     # test "markdown to heex" do
     #   assigns = %{lang: ":elixir"}
     #   assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX
     # end
-
-    test "markdown to json" do
-      assert_json(
-        ~MD|`lang = <%= @lang %>`|JSON,
-        %{
-          "node_type" => "MDEx.Document",
-          "nodes" => [
-            %{
-              "node_type" => "MDEx.Paragraph",
-              "nodes" => [
-                %{
-                  "node_type" => "MDEx.Code",
-                  "num_backticks" => 1,
-                  "literal" => "lang = <%= @lang %>"
-                }
-              ]
-            }
-          ]
-        }
-      )
-    end
-
-    test "markdown to xml" do
-      assert ~MD|`lang = <%= @lang %>`|XML ==
-               "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n<document xmlns=\"http://commonmark.org/xml/1.0\">\n  <paragraph>\n    <code xml:space=\"preserve\">lang = &lt;%= @lang %&gt;</code>\n  </paragraph>\n</document>"
-    end
   end
 
   describe "sigil_MD without assigns" do
     test "markdown to document" do
       assert %MDEx.Document{
-               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "lang = :elixir"}]}]
-             } = ~MD|`lang = :elixir`|
+               nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "<%= @lang %>"}], level: 1, setext: false}]
+             } = ~MD|# <%= @lang %>|
+    end
+
+    test "to markdown" do
+      assert ~MD|# <%= @lang %>|MD == "# <%= @lang %>"
     end
 
     test "markdown to html" do
-      assert ~MD|`lang = :elixir`|HTML == "<p><code>lang = :elixir</code></p>"
+      assert ~MD|# <%= @lang %>|HTML == "<h1><%= @lang %></h1>"
     end
 
     test "markdown to json" do

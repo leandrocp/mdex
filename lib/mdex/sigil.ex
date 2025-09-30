@@ -63,14 +63,18 @@ defmodule MDEx.Sigil do
       iex> ~MD|and to XML as well|XML
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\\n<document xmlns=\"http://commonmark.org/xml/1.0\">\\n  <paragraph>\\n    <text xml:space=\"preserve\">and to XML as well</text>\\n  </paragraph>\\n</document>"
 
-  Assigns in the context can be referenced in the Markdown content using `<%= ... %>` syntax, which is evaluated at runtime:
-
-      `~MD` also accepts an `assigns` map to pass variables to the document:
+  Assigns in the context can be referenced in the Markdown content using `<%= ... %>` syntax, which is evaluated at runtime. `~MD`
+  accepts an `assigns` map to pass variables to the document when rendering HTML or Markdown:
 
       iex> import MDEx.Sigil
       iex> assigns = %{lang: "Elixir"}
       iex> ~MD|Running <%= @lang %>|HTML
       "<p>Running Elixir</p>"
+
+      iex> import MDEx.Sigil
+      iex> assigns = %{lang: "Elixir"}
+      iex> ~MD|Running <%= @lang %>|MD
+      "Running Elixir"
 
   ## Modifiers
 
@@ -83,7 +87,7 @@ defmodule MDEx.Sigil do
 
     * `XML` - converts Markdown or `MDEx.Document` to XML
 
-    * `MD` - converts `MDEx.Document` to Markdown
+    * `MD` - converts `MDEx.Document` to Markdown and can interpolate assigns in Markdown strings
 
     * `DELTA` - converts Markdown or `MDEx.Document` to Quill Delta format
 
@@ -98,7 +102,7 @@ defmodule MDEx.Sigil do
 
   ## Assigns and Expressions
 
-  Only the `HTML` modifier support assigns, any other modifier will render the assign unmodified.
+  Only the `HTML` and `MD` modifiers support assigns, any other modifier will render the assign unmodified.
   That's particularly important when generating a `MDEx.Document` which does represent the Markdown AST because it must respect
   the Markdown content and also be able to convert back to a Markdown string.
 
@@ -135,7 +139,11 @@ defmodule MDEx.Sigil do
       iex> ~MD|`lang = <%= @lang %>`|HTML
       "<p><code>lang = :elixir</code></p>"
 
-  Note that only the `HTML` modifier support assigns.
+      iex> assigns = %{lang: ":elixir"}
+      iex> ~MD|`lang = <%= @lang %>`|MD
+      "`lang = :elixir`"
+
+  Note that only the `HTML` and `MD` modifiers support assigns.
 
   ## Examples
 
@@ -199,14 +207,18 @@ defmodule MDEx.Sigil do
         |> Macro.escape()
 
       ~c"HTML" ->
-        expr
-        |> MDEx.to_html!(@opts)
-        |> EEx.compile_string(
-          engine: EEx.SmartEngine,
-          file: __CALLER__.file,
-          line: __CALLER__.line + 1,
-          indentation: 0
-        )
+        if Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
+          expr
+          |> MDEx.to_html!(@opts)
+          |> EEx.compile_string(
+            engine: EEx.SmartEngine,
+            file: __CALLER__.file,
+            line: __CALLER__.line + 1,
+            indentation: 0
+          )
+        else
+          MDEx.to_html!(expr, @opts)
+        end
 
       # ~c"HEEX" ->
       #   if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
@@ -226,9 +238,21 @@ defmodule MDEx.Sigil do
       #   )
 
       ~c"MD" ->
-        expr
-        |> MDEx.to_markdown!(@opts)
-        |> Macro.escape()
+        cond do
+          is_binary(expr) && Macro.Env.has_var?(__CALLER__, {:assigns, nil}) ->
+            EEx.compile_string(expr,
+              engine: EEx.SmartEngine,
+              file: __CALLER__.file,
+              line: __CALLER__.line + 1,
+              indentation: 0
+            )
+
+          is_binary(expr) ->
+            expr
+
+          :else ->
+            MDEx.to_markdown!(expr, @opts)
+        end
 
       ~c"JSON" ->
         expr
