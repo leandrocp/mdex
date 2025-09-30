@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 - 2025-09-30
 
 ### Added
 - [Sigil] Support assigns in `MD` sigil modifier
