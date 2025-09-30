@@ -791,4 +791,82 @@ defmodule MDExTest do
       )
     end
   end
+
+  describe "to_xml" do
+    test "converts document to xml" do
+      assert {:ok, xml} = MDEx.to_xml("# Hello")
+
+      assert xml =~ ~s(<document xmlns="http://commonmark.org/xml/1.0">)
+      assert xml =~ ~s(<heading level="1">)
+      assert xml =~ ~s(<text xml:space="preserve">Hello</text>)
+    end
+
+    test "converts document to xml!" do
+      assert xml = MDEx.to_xml!("# Hello")
+
+      assert xml =~ ~s(<document xmlns="http://commonmark.org/xml/1.0">)
+    end
+
+    test "converts fragment to xml" do
+      frag = %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "test"}]}
+
+      assert {:ok, xml} = MDEx.to_xml(frag)
+
+      assert xml =~ ~s(<paragraph>)
+    end
+
+    test "raises on invalid document" do
+      assert_raise MDEx.DecodeError, fn ->
+        MDEx.to_xml!(%MDEx.Document{nodes: nil})
+      end
+    end
+
+    test "returns error on erlang error" do
+      assert {:error, %MDEx.DecodeError{}} = MDEx.to_xml(%MDEx.Document{nodes: nil})
+    end
+  end
+
+  describe "to_json" do
+    test "converts fragment to json" do
+      frag = %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "test"}]}
+
+      assert {:ok, json} = MDEx.to_json(frag)
+
+      assert %{
+               "node_type" => "MDEx.Document",
+               "nodes" => [
+                 %{
+                   "node_type" => "MDEx.Paragraph",
+                   "nodes" => [%{"literal" => "test", "node_type" => "MDEx.Text"}]
+                 }
+               ]
+             } = Jason.decode!(json)
+    end
+  end
+
+  describe "anchorize" do
+    test "converts text to anchor" do
+      assert MDEx.anchorize("Hello World") == "hello-world"
+    end
+  end
+
+  describe "parse_document error handling" do
+    test "returns error on invalid json" do
+      assert {:error, %MDEx.DecodeError{}} = MDEx.parse_document({:json, "invalid"})
+    end
+
+    test "raises on invalid json with bang version" do
+      assert_raise MDEx.DecodeError, fn ->
+        MDEx.parse_document!({:json, "invalid"})
+      end
+    end
+  end
+
+  describe "new with invalid markdown option" do
+    test "raises on non-binary markdown" do
+      assert_raise ArgumentError, fn ->
+        MDEx.new(markdown: :invalid)
+      end
+    end
+  end
 end
