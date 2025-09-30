@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+  - [Sigil] Support assigns in the `MD` modifier.
+  - [Docs] Document assigns support in `HTML` and `MD` modifiers with a Markdown example.
+
 ## 0.9.0 (2025-09-22)
 
 **BREAKING CHANGES**
