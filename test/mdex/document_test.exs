@@ -1149,4 +1149,48 @@ defmodule MDEx.DocumentTest do
       refute Document.get_option(MDEx.new(), :foo)
     end
   end
+
+  describe "private storage" do
+    test "get_private" do
+      document = Document.put_private(%Document{}, :foo, :bar)
+      assert Document.get_private(document, :foo) == :bar
+    end
+
+    test "get_private with default" do
+      assert Document.get_private(%Document{}, :foo, :default) == :default
+    end
+
+    test "update_private" do
+      document =
+        %Document{}
+        |> Document.put_private(:counter, 0)
+        |> Document.update_private(:counter, 0, &(&1 + 1))
+
+      assert Document.get_private(document, :counter) == 1
+    end
+  end
+
+  describe "pipeline management" do
+    test "append_steps" do
+      document =
+        MDEx.new()
+        |> Document.append_steps(step1: fn doc -> doc end)
+
+      assert :step1 in document.current_steps
+      assert Keyword.has_key?(document.steps, :step1)
+    end
+
+    test "halt" do
+      document = Document.halt(MDEx.new())
+
+      assert document.halted
+    end
+
+    test "halt with exception" do
+      {document, exception} = Document.halt(MDEx.new(), %RuntimeError{message: "test"})
+
+      assert document.halted
+      assert exception.message == "test"
+    end
+  end
 end
