@@ -3,11 +3,11 @@
 ## Unreleased
 
 ### Added
-  - [Sigil] Support assigns in the `MD` modifier.
-  - [Docs] Document assigns support in `HTML` and `MD` modifiers with a Markdown example.
+- [Sigil] Support assigns in `MD` sigil modifier
+- [Docs] Document assigns support in `HTML` and `MD` modifiers
 
-### Changes
-  - [Deps] Update `comrak` to v0.42.0
+### Changed
+- [Deps] Update `comrak` to v0.42.0
 
 ## 0.9.0 (2025-09-22)
 
