@@ -4,7 +4,23 @@ defmodule MDExTest do
   alias MDEx.Heading
   alias MDEx.Text
   import ExUnit.CaptureIO
-  # doctest MDEx, except: [to_json: 1, to_json: 2, rendered_to_html: 1]
+
+  doctest MDEx,
+    import: true,
+    except: [
+      :moduledoc,
+      to_json: 1,
+      to_json: 2,
+      to_json!: 1,
+      to_json!: 2,
+      parse_document: 1,
+      parse_document: 2,
+      parse_document!: 1,
+      parse_document!: 2,
+      traverse_and_update: 2,
+      traverse_and_update: 3,
+      source: 0
+    ]
 
   defp assert_output(input, expected, opts \\ []) do
     assert {:ok, html} = MDEx.to_html(input, opts)
@@ -107,8 +123,20 @@ defmodule MDExTest do
 
   describe "new" do
     test "with options" do
-      assert %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "new"}], level: 1, setext: false}], options: options} =
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [
+                     %MDEx.Text{literal: "new"}
+                   ],
+                   level: 1,
+                   setext: false
+                 }
+               ],
+               options: options
+             } =
                MDEx.new(markdown: "# new", render: [escape: true])
+               |> MDEx.Document.run()
 
       assert get_in(options, [:render, :escape])
     end

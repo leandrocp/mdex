@@ -174,7 +174,8 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let mut buffer = vec![];
     let options = Options::default();
     let plugins = ComrakPlugins::default();
-    comrak::format_html_with_plugins(comrak_ast, &options, &mut buffer, &plugins).unwrap();
+    HTMLFormatter::format_document_with_plugins(comrak_ast, &options, &mut buffer, &plugins)
+        .unwrap();
     let unsafe_html = String::from_utf8(buffer).unwrap();
     let html = do_safe_html(unsafe_html, &None, false, true);
     Ok((ok(), html).encode(env))
@@ -209,7 +210,8 @@ fn document_to_html_with_options<'a>(
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     }
 
-    comrak::format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins).unwrap();
+    HTMLFormatter::format_document_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
+        .unwrap();
     let unsafe_html = String::from_utf8(buffer).unwrap();
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))

@@ -1,34 +1,40 @@
 defmodule MDEx.Sigil do
-  @opts [
-    extension: [
-      strikethrough: true,
-      table: true,
-      autolink: false,
-      tasklist: true,
-      superscript: true,
-      footnotes: true,
-      description_lists: true,
-      # need both multiline block quotes and alerts to enable github/gitlab multiline alerts
-      multiline_block_quotes: true,
-      alerts: true,
-      math_dollars: true,
-      math_code: true,
-      shortcodes: true,
-      underline: true,
-      spoiler: true
-    ],
-    parse: [
-      relaxed_tasklist_matching: true,
-      relaxed_autolinks: true
-    ],
-    render: [
-      unsafe: true,
-      escape: false,
-      # github_pre_lang and full_info_string are required to enable code block decorators
-      github_pre_lang: true,
-      full_info_string: true
-    ]
-  ]
+  @opts Keyword.merge(
+          MDEx.Document.default_options(),
+          [
+            extension: [
+              strikethrough: true,
+              table: true,
+              autolink: false,
+              tasklist: true,
+              superscript: true,
+              footnotes: true,
+              description_lists: true,
+              # need both multiline block quotes and alerts to enable github/gitlab multiline alerts
+              multiline_block_quotes: true,
+              alerts: true,
+              math_dollars: true,
+              math_code: true,
+              shortcodes: true,
+              underline: true,
+              spoiler: true
+            ],
+            parse: [
+              relaxed_tasklist_matching: true,
+              relaxed_autolinks: true
+            ],
+            render: [
+              unsafe: true,
+              escape: false,
+              # github_pre_lang and full_info_string are required to enable code block decorators
+              github_pre_lang: true,
+              full_info_string: true
+            ]
+          ],
+          fn _key, v1, v2 ->
+            if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
+          end
+        )
 
   @moduledoc """
   Sigils for parsing and formatting Markdown between different formats.

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- [Document] Add `MDEx.Document.put_markdown/3` to append or prepend markdown chunks to document buffer
+
+### Changed
+- [Document] Introduce buffering to accumulate markdown chunks before parsing
+
 ## 0.9.1 - 2025-09-30
 
 ### Added

@@ -1166,6 +1166,7 @@ defmodule MDEx.Document do
         }
 
   defstruct nodes: [],
+            buffer: [],
             options: [],
             registered_options: MapSet.new(@built_in_options),
             halted: false,
@@ -1317,7 +1318,7 @@ defmodule MDEx.Document do
       "11"
 
       iex> MDEx.new(rendr: [unsafe: true])
-      ** (ArgumentError) unknown option :rendr
+      ** (ArgumentError) unknown option :rendr. Did you mean :render?
 
   """
   @spec register_options(t(), [atom()]) :: t()
@@ -1740,11 +1741,33 @@ defmodule MDEx.Document do
   end
 
   @doc """
-  Executes the document pipeline steps in order.
+  Executes the document pipeline.
 
-  This function is usually not called directly; prefer calling one of the `to_*` functions in `MDEx` module.
+  This function performs two main operations:
+
+  1. **Processes buffered markdown**: If there are any markdown chunks in the buffer (added via `put_markdown/3` for example),
+     they are parsed and added to the document. If the document already has nodes, they are combined with the buffer.
+
+  2. **Executes pipeline steps**: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
+     executed in order. Steps can transform the document or halt the pipeline.
+
+  See `MDEx.new/1` for more info.
 
   ## Examples
+
+  Processing buffered markdown:
+
+      iex> document =
+      ...>   MDEx.new(markdown: "# First\\n")
+      ...>   |> MDEx.Document.put_markdown("# Second")
+      ...>   |> MDEx.Document.run()
+      iex> document.nodes
+      [
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+      ]
+
+  Executing pipeline steps:
 
       iex> document =
       ...>   MDEx.new()
@@ -1752,13 +1775,35 @@ defmodule MDEx.Document do
       ...>     heading = %MDEx.Heading{nodes: [%MDEx.Text{literal: "Intro"}], level: 1, setext: false}
       ...>     MDEx.Document.put_node_in_document_root(doc, heading, :top)
       ...>   end)
-      iex> document = MDEx.Document.run(document)
-      iex> Enum.map(document.nodes, & &1.__struct__)
-      [MDEx.Heading]
+      ...>   |> MDEx.Document.run()
+      iex> document.nodes
+      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Intro"}], level: 1, setext: false}]
+
   """
   @spec run(t()) :: t()
   def run(%MDEx.Document{} = document) do
-    do_run(document)
+    case {document.nodes, document.buffer} do
+      {[], []} ->
+        document
+
+      {[], buffer} ->
+        buffer = buffer |> Enum.reverse() |> IO.chardata_to_string()
+        parse_markdown!(document, buffer)
+
+      {_nodes, []} ->
+        document
+
+      {_nodes, buffer} ->
+        markdown = MDEx.to_markdown!(%{document | buffer: []}) <> "\n"
+
+        buffer =
+          (buffer ++ [markdown])
+          |> Enum.reverse()
+          |> IO.chardata_to_string()
+
+        parse_markdown!(document, buffer)
+    end
+    |> do_run()
   end
 
   defp do_run(%{current_steps: [step | rest]} = document) do
@@ -1790,19 +1835,29 @@ defmodule MDEx.Document do
   end
 
   @doc """
-  Parse `markdown` into `document`.
+  Parses `markdown` and immediately replaces all nodes in the `document`.
+
+  This function parses the markdown string right away and replaces the document's `:nodes` field
+  with the parsed result. Any existing nodes in the document will be discarded.
+
+  If you want to buffer markdown chunks that will be parsed later when `run/1` is called,
+  use `put_markdown/3` instead.
 
   ## Examples
 
-      iex> doc = MDEx.new(render: [hardbreaks: true])
-      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "Hello\\nworld")
-      iex> MDEx.to_html!(doc)
-      "<p>Hello<br />\\nworld</p>"
+      iex> doc = MDEx.new()
+      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "# First")
+      iex> doc.nodes
+      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false}]
+      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "# Second")
+      iex> doc.nodes
+      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}]
+
   """
   @spec parse_markdown(t(), String.t()) :: {:ok, t()} | {:error, MDEx.DecodeError.t() | term()}
   def parse_markdown(%Document{} = document, markdown) when is_binary(markdown) do
     case Native.parse_document(markdown, rust_options!(document.options)) do
-      {:ok, %{nodes: nodes}} -> {:ok, %{document | nodes: nodes}}
+      {:ok, %{nodes: nodes}} -> {:ok, %{document | nodes: nodes, buffer: []}}
       error -> error
     end
   end
@@ -1869,6 +1924,51 @@ defmodule MDEx.Document do
   end
 
   @doc """
+  Adds Markdown chunks into the `document` buffer.
+
+  Unlike `parse_markdown/2` which parses and replaces nodes immediately, this function
+  buffers markdown chunks that will be parsed later when `run/1` is called. The buffered
+  chunks are combined with existing nodes (if any) during the `run/1` execution.
+
+  ## Examples
+
+      iex> document =
+      ...>   MDEx.new(markdown: "# First\\n")
+      ...>   |> MDEx.Document.put_markdown("# Second")
+      ...>   |> MDEx.Document.run()
+      iex> document.nodes
+      [
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+      ]
+
+      iex> document =
+      ...>   MDEx.new(markdown: "# Last")
+      ...>   |> MDEx.Document.put_markdown("# First\\n", :top)
+      ...>   |> MDEx.Document.run()
+      iex> document.nodes
+      [
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Last"}], level: 1, setext: false}
+      ]
+
+  """
+  @spec put_markdown(t(), String.t() | [String.t()], position :: :top | :bottom) :: t()
+  def put_markdown(document, chunk, position \\ :bottom)
+
+  def put_markdown(%MDEx.Document{} = document, chunk, _position) when chunk in [nil, ""] do
+    document
+  end
+
+  def put_markdown(%MDEx.Document{} = document, chunk, :top = _position) when is_binary(chunk) or is_list(chunk) do
+    %{document | buffer: document.buffer ++ List.wrap(chunk)}
+  end
+
+  def put_markdown(%MDEx.Document{} = document, chunk, :bottom = _position) when is_binary(chunk) or is_list(chunk) do
+    %{document | buffer: [chunk | document.buffer]}
+  end
+
+  @doc """
   Updates all nodes in the document that match `selector`.
 
   ## Example
@@ -1879,6 +1979,7 @@ defmodule MDEx.Document do
       ...> \"""
       iex> document =
       ...>   MDEx.new(markdown: markdown)
+      ...>   |> MDEx.Document.run()
       ...>   |> MDEx.Document.update_nodes(MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
       iex> document.nodes
       [
@@ -2077,7 +2178,7 @@ defmodule MDEx.Document do
 
   ## Examples
 
-      iex> document = MDEx.Document.wrap(MDEx.new(markdown: "# Title"))
+      iex> document = MDEx.Document.wrap(MDEx.new(markdown: "# Title") |> MDEx.Document.run())
       iex> document.nodes
       [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false}]
 

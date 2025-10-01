@@ -182,12 +182,9 @@ defmodule MDEx do
   def parse_document(source, options \\ [])
 
   def parse_document(markdown, options) when is_binary(markdown) do
-    document =
-      options
-      |> Keyword.put_new(:markdown, markdown)
-      |> MDEx.new()
-
-    {:ok, document}
+    options
+    |> MDEx.new()
+    |> MDEx.Document.parse_markdown(markdown)
   end
 
   def parse_document({:json, json}, options) when is_binary(json) do
@@ -305,23 +302,18 @@ defmodule MDEx do
           | {:error, MDEx.InvalidInputError.t()}
   def to_html(source, options \\ [])
 
-  def to_html(source, options) when is_binary(source) and is_list(options) do
-    {_deprecated_document, options} = pop_deprecated_document_option(options)
-    # intentionally don't pass :markdown to MDEx.new() to avoid unnecessary parsing
-    document = MDEx.new() |> MDEx.Document.put_options(options)
+  def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
+    {document, options} = Keyword.pop(options, :document, nil)
+    markdown = document || markdown || ""
+    options = Document.put_options(MDEx.new(), options).options
 
-    source
-    |> Native.markdown_to_html_with_options(Document.rust_options!(document.options))
+    markdown
+    |> Native.markdown_to_html_with_options(Document.rust_options!(options))
     |> maybe_trim()
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    {deprecated_document, options} = pop_deprecated_document_option(options)
-    document = prepare_document_for_conversion(document, options, deprecated_document)
-
-    document
-    |> Native.document_to_html_with_options(Document.rust_options!(document.options))
-    |> maybe_trim()
+    run_pipeline(document, options, &Native.document_to_html_with_options/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -401,23 +393,18 @@ defmodule MDEx do
           | {:error, MDEx.InvalidInputError.t()}
   def to_xml(source, options \\ [])
 
-  def to_xml(source, options) when is_binary(source) and is_list(options) do
-    {_deprecated_document, options} = pop_deprecated_document_option(options)
-    # intentionally don't pass :markdown to MDEx.new() to avoid unnecessary parsing
-    document = MDEx.new() |> MDEx.Document.put_options(options)
+  def to_xml(markdown, options) when is_binary(markdown) and is_list(options) do
+    {document, options} = Keyword.pop(options, :document, nil)
+    markdown = document || markdown || ""
+    options = Document.put_options(MDEx.new(), options).options
 
-    source
-    |> Native.markdown_to_xml_with_options(Document.rust_options!(document.options))
+    markdown
+    |> Native.markdown_to_xml_with_options(Document.rust_options!(options))
     |> maybe_trim()
   end
 
   def to_xml(%Document{} = document, options) when is_list(options) do
-    {deprecated_document, options} = pop_deprecated_document_option(options)
-    document = prepare_document_for_conversion(document, options, deprecated_document)
-
-    document
-    |> Native.document_to_xml_with_options(Document.rust_options!(document.options))
-    |> maybe_trim()
+    run_pipeline(document, options, &Native.document_to_xml_with_options/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -474,7 +461,7 @@ defmodule MDEx do
   def to_json(source, options \\ [])
 
   def to_json(source, options) when is_binary(source) do
-    {_deprecated_document, options} = pop_deprecated_document_option(options)
+    {_document_opt, options} = pop_deprecated_document_option(options)
 
     with {:ok, document} <- parse_document(source, options),
          {:ok, json} <- Jason.encode(document) do
@@ -483,15 +470,20 @@ defmodule MDEx do
   end
 
   def to_json(%Document{} = document, options) do
-    {deprecated_document, options} = pop_deprecated_document_option(options)
+    {document_opt, options} = pop_deprecated_document_option(options)
 
     document
-    |> prepare_document_for_conversion(options, deprecated_document)
-    |> Jason.encode()
-    |> case do
-      {:ok, json} -> {:ok, json}
-      {:error, error} -> {:error, %DecodeError{document: document, error: error}}
-    end
+    |> Document.put_options(options)
+    |> maybe_apply_document_option(document_opt)
+    |> Document.run()
+    |> then(fn document ->
+      document
+      |> Jason.encode()
+      |> case do
+        {:ok, json} -> {:ok, json}
+        {:error, error} -> {:error, %DecodeError{document: document, error: error}}
+      end
+    end)
   end
 
   def to_json(source, options) do
@@ -643,7 +635,7 @@ defmodule MDEx do
   end
 
   def to_delta(%Document{} = document, options) when is_list(options) do
-    {deprecated_document, options} = pop_deprecated_document_option(options)
+    {document_opt, options} = pop_deprecated_document_option(options)
 
     validated_options =
       options
@@ -653,15 +645,20 @@ defmodule MDEx do
     document_options = Keyword.drop(options, [:custom_converters])
 
     document
-    |> prepare_document_for_conversion(document_options, deprecated_document)
-    |> MDEx.DeltaConverter.convert(validated_options)
-    |> case do
-      {:ok, ops} ->
-        {:ok, ops}
+    |> Document.put_options(document_options)
+    |> maybe_apply_document_option(document_opt)
+    |> Document.run()
+    |> then(fn document ->
+      document
+      |> MDEx.DeltaConverter.convert(validated_options)
+      |> case do
+        {:ok, ops} ->
+          {:ok, ops}
 
-      {:error, reason} ->
-        {:error, %DecodeError{document: document, error: reason}}
-    end
+        {:error, reason} ->
+          {:error, %DecodeError{document: document, error: reason}}
+      end
+    end)
   end
 
   def to_delta(source, options) do
@@ -698,13 +695,7 @@ defmodule MDEx do
   """
   @spec to_markdown(Document.t(), MDEx.Document.options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_markdown(%Document{} = document, options \\ []) do
-    {deprecated_document, options} = pop_deprecated_document_option(options)
-
-    document
-    |> prepare_document_for_conversion(options, deprecated_document)
-    |> Native.document_to_commonmark()
-    # |> maybe_wrap_error()
-    |> maybe_trim()
+    run_pipeline(document, options, fn doc, _opts -> Native.document_to_commonmark(doc) end)
   end
 
   @doc """
@@ -796,13 +787,13 @@ defmodule MDEx do
       ...>   %MDEx.Code{literal: "rust"} = node, acc -> {%{node | literal: "rs"}, acc + 1}
       ...>   node, acc -> {node, acc}
       ...> end)
-     {%MDEx.Document{
-        nodes: [
-          %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-          %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ex"}]},
-          %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rs"}]}
-        ]
-      }, 2}
+      {%MDEx.Document{
+         nodes: [
+           %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
+           %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ex"}]},
+           %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rs"}]}
+         ]
+       }, 2}
 
   Also works with fragments.
 
@@ -813,6 +804,20 @@ defmodule MDEx do
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
+
+  defp run_pipeline(document, options, converter) do
+    {document_opt, options} = pop_deprecated_document_option(options)
+
+    document
+    |> Document.put_options(options)
+    |> maybe_apply_document_option(document_opt)
+    |> Document.run()
+    |> then(fn document ->
+      document
+      |> converter.(Document.rust_options!(document.options))
+      |> maybe_trim()
+    end)
+  end
 
   @doc """
   Utility function to sanitize and escape HTML.
@@ -899,21 +904,23 @@ defmodule MDEx do
     end
   end
 
+  @document Document.put_options(%MDEx.Document{}, MDEx.Document.default_options())
+
   @doc """
   Builds a new `MDEx.Document` instance.
 
   `MDEx.Document` is the core data structure used across MDEx. It holds the full CommonMark AST and
   exposes rich `Access`, `Enumerable`, and pipeline APIs so you can traverse, manipulate, and enrich
-  Markdown before turning it into HTML/JSON/XML/CommonMark/Delta. `MDEx.new/1` is the entry point for
-  building those trees:
+  Markdown before turning it into HTML/JSON/XML/Markdown/Delta.
 
-  * Supply `:markdown` to parse raw Markdown right away (the default).
+  * Pass `:markdown` to include Markdown into the buffer or call `MDEx.Document.put_markdown/2` to add more later.
   * Pass any built-in options (`:extension`, `:parse`, `:render`, `:syntax_highlight`, `:sanitize`) to
     shape how the document will be parsed and rendered.
   * Chain pipeline helpers such as `MDEx.Document.append_steps/2`, `MDEx.Document.update_nodes/3`, or your own plugin
     modules to programmatically modify the AST.
 
-  Once you finish manipulating the document, call one of the `MDEx.to_*` functions to output the final result to a format.
+  Once you finish manipulating the document, call one of the `MDEx.to_*` functions to output the final result to a format
+  or `MDEx.Document.run/1` to finalize the document and get the updated AST.
 
   ## Options
 
@@ -939,24 +946,35 @@ defmodule MDEx do
       ...>   snippet = %MDEx.HtmlBlock{literal: "<section>Injected</section>"}
       ...>   MDEx.Document.put_node_in_document_root(doc, snippet, :bottom)
       ...> end)
-      ..> |> MDEx.to_html!(render: [unsafe: true])
+      ...> |> MDEx.to_html!(render: [unsafe: true])
       "<h1>Intro</h1>\\n<section>Injected</section>"
+
+  Using `MDEx.Document.run/1` to process buffered markdown and get the AST:
+
+      iex> doc = MDEx.new(markdown: "# First\\n")
+      ...> |> MDEx.Document.put_markdown("# Second")
+      ...> |> MDEx.Document.run()
+      iex> doc.nodes
+      [
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+      ]
 
   """
   @spec new(keyword()) :: Document.t()
   def new(options \\ []) do
     # TODO: remove :document in v1.0
-    {deprecated_document_opt, options} = Keyword.pop(options, :document, nil)
+    {document, options} = Keyword.pop(options, :document, nil)
     {markdown, options} = Keyword.pop(options, :markdown, nil)
-    markdown = deprecated_document_opt || markdown || ""
+    markdown = document || markdown || ""
 
     unless is_binary(markdown) do
       raise ArgumentError, ":markdown option must be a binary, got: #{inspect(markdown)}"
     end
 
-    %Document{options: Document.default_options()}
+    @document
     |> Document.put_options(options)
-    |> Document.parse_markdown!(markdown)
+    |> Document.put_markdown(markdown)
   end
 
   @doc """
@@ -991,25 +1009,16 @@ defmodule MDEx do
 
   # TODO: remove in v1.0
   defp pop_deprecated_document_option(options) do
-    {deprecated_document, options_without} = Keyword.pop(options, :document)
+    {document, options} = Keyword.pop(options, :document)
 
-    if not is_nil(deprecated_document) do
-      IO.warn(
-        "option :document is deprecated. Use MDEx.new(markdown: ...) or call MDEx.Document.parse_markdown!/2 before invoking MDEx.to_* functions."
-      )
+    if !is_nil(document) do
+      IO.warn("option :document is deprecated, use :markdown instead")
     end
 
-    {deprecated_document, options_without}
+    {document, options}
   end
 
-  defp prepare_document_for_conversion(document, options, deprecated_document) do
-    document
-    |> ensure_document_options()
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(deprecated_document)
-    |> Document.run()
-  end
-
+  # TODO: remove in v1.0
   defp maybe_apply_document_option(document, nil), do: document
 
   defp maybe_apply_document_option(document, markdown) when is_binary(markdown) do
@@ -1023,10 +1032,4 @@ defmodule MDEx do
   defp maybe_apply_document_option(_document, other) do
     raise ArgumentError, "option :document must be a binary or %MDEx.Document{}, got: #{inspect(other)}"
   end
-
-  defp ensure_document_options(%Document{options: []} = document) do
-    Document.put_options(document, Document.default_options())
-  end
-
-  defp ensure_document_options(%Document{} = document), do: document
 end
