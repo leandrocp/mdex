@@ -2,7 +2,8 @@ defmodule MDEx.DocumentTest do
   use ExUnit.Case, async: true
   import MDEx.Sigil
   alias MDEx.Document
-  # doctest MDEx.Document, import: true
+
+  doctest MDEx.Document, import: true, except: [:moduledoc]
 
   @document ~MD"""
   # Languages
@@ -1020,7 +1021,7 @@ defmodule MDEx.DocumentTest do
 
   describe "put_node_in_document_root" do
     setup do
-      document = MDEx.new(markdown: "# Test")
+      document = MDEx.new(markdown: "# Test") |> Document.run()
       [document: document]
     end
 
@@ -1057,6 +1058,7 @@ defmodule MDEx.DocumentTest do
           ## Done
           """
         )
+        |> Document.run()
 
       selector = fn
         %MDEx.CodeBlock{info: "mermaid"} -> true
@@ -1191,6 +1193,186 @@ defmodule MDEx.DocumentTest do
 
       assert document.halted
       assert exception.message == "test"
+    end
+  end
+
+  describe "run" do
+    test "with no steps" do
+      assert %MDEx.Document{halted: false} = Document.run(MDEx.new())
+    end
+
+    test "with single function step" do
+      assert %MDEx.Document{private: %{title: "Test"}} =
+               MDEx.new()
+               |> Document.append_steps(add_title: fn doc -> Document.put_private(doc, :title, "Test") end)
+               |> Document.run()
+    end
+
+    test "with multiple function steps" do
+      assert %MDEx.Document{private: %{counter: 4}} =
+               MDEx.new()
+               |> Document.append_steps(
+                 step1: fn doc -> Document.put_private(doc, :counter, 1) end,
+                 step2: fn doc -> Document.update_private(doc, :counter, 0, &(&1 + 1)) end,
+                 step3: fn doc -> Document.update_private(doc, :counter, 0, &(&1 * 2)) end
+               )
+               |> Document.run()
+    end
+
+    test "with MFA step" do
+      defmodule TestMFA do
+        def add_meta(doc, key, value), do: MDEx.Document.put_private(doc, key, value)
+      end
+
+      assert %MDEx.Document{private: %{author: "Jane"}} =
+               MDEx.new()
+               |> Document.append_steps(add: {TestMFA, :add_meta, [:author, "Jane"]})
+               |> Document.run()
+    end
+
+    test "halts when step returns halted document" do
+      assert %MDEx.Document{halted: true, private: %{before: true}} =
+               MDEx.new()
+               |> Document.append_steps(
+                 before: fn doc -> Document.put_private(doc, :before, true) end,
+                 halt: fn doc -> Document.halt(doc) end,
+                 after: fn doc -> Document.put_private(doc, :after, true) end
+               )
+               |> Document.run()
+    end
+
+    test "halts with exception" do
+      assert {%MDEx.Document{halted: true}, %RuntimeError{message: "error"}} =
+               MDEx.new()
+               |> Document.append_steps(
+                 error: fn doc -> Document.halt(doc, %RuntimeError{message: "error"}) end,
+                 skip: fn doc -> Document.put_private(doc, :skipped, true) end
+               )
+               |> Document.run()
+    end
+
+    test "modifies document nodes" do
+      assert %MDEx.Document{nodes: [%MDEx.Heading{}, %MDEx.Paragraph{}]} =
+               MDEx.new(markdown: "# Test")
+               |> Document.append_steps(
+                 add: fn doc ->
+                   %{doc | nodes: doc.nodes ++ [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "new"}]}]}
+                 end
+               )
+               |> Document.run()
+    end
+
+    test "preserves state across steps" do
+      assert %MDEx.Document{private: %{count: 3, valid: true}} =
+               MDEx.new(markdown: "# Title")
+               |> Document.append_steps(
+                 count: fn doc -> Document.put_private(doc, :count, Enum.count(doc)) end,
+                 validate: fn doc -> Document.put_private(doc, :valid, Document.get_private(doc, :count) > 0) end
+               )
+               |> Document.run()
+    end
+
+    test "executes prepended steps first" do
+      assert %MDEx.Document{private: %{order: [1, 2]}} =
+               MDEx.new()
+               |> Document.append_steps(second: fn doc -> Document.update_private(doc, :order, [], &(&1 ++ [2])) end)
+               |> Document.prepend_steps(first: fn doc -> Document.put_private(doc, :order, [1]) end)
+               |> Document.run()
+    end
+
+    test "with empty current_steps" do
+      assert %MDEx.Document{private: %{}} =
+               %MDEx.Document{steps: [test: fn doc -> Document.put_private(doc, :run, true) end], current_steps: []}
+               |> Document.run()
+    end
+
+    test "with empty nodes and empty buffer" do
+      assert %MDEx.Document{nodes: []} =
+               %MDEx.Document{nodes: [], buffer: []}
+               |> Document.run()
+    end
+
+    test "with empty nodes and buffer content" do
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Title"}],
+                   level: 1,
+                   setext: false
+                 }
+               ]
+             } =
+               %MDEx.Document{nodes: [], buffer: ["# Title"]}
+               |> Document.run()
+    end
+
+    test "with nodes and empty buffer" do
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Existing"}],
+                   level: 1,
+                   setext: false
+                 }
+               ]
+             } =
+               MDEx.new(markdown: "# Existing")
+               |> Document.run()
+    end
+
+    test "with nodes and buffer content" do
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "First"}],
+                   level: 1,
+                   setext: false
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Second"}],
+                   level: 1,
+                   setext: false
+                 }
+               ]
+             } =
+               MDEx.new(markdown: "# First\n")
+               |> Document.put_markdown("# Second")
+               |> Document.run()
+    end
+
+    test "with nodes already parsed and buffer content" do
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "First"}],
+                   level: 1,
+                   setext: false
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Second"}],
+                   level: 1,
+                   setext: false
+                 }
+               ]
+             } =
+               MDEx.new(markdown: "# First")
+               |> Document.run()
+               |> Document.put_markdown("# Second")
+               |> Document.run()
+    end
+
+    test "default options" do
+      assert %MDEx.Document{options: options} = MDEx.new() |> Document.run()
+
+      refute options[:sanitize]
+      assert [formatter: {:html_inline, _}] = options[:syntax_highlight]
+    end
+
+    test "preserves custom options" do
+      assert %MDEx.Document{options: options} = MDEx.new(extension: [table: true]) |> Document.run()
+
+      assert options[:extension][:table]
+      refute options[:extension][:strikethrough]
     end
   end
 end

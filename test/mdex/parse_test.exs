@@ -20,7 +20,7 @@ defmodule MDEx.ParseTest do
     greentext: true
   ]
 
-  def assert_parse_document(document, expected, opts \\ []) do
+  def assert_parse_markdown(markdown, expected, opts \\ []) do
     extension = Keyword.get(opts, :extension, [])
 
     opts = [
@@ -28,12 +28,12 @@ defmodule MDEx.ParseTest do
       render: Keyword.get(opts, :render, [])
     ]
 
-    assert {:ok, document} = MDEx.parse_document(document, opts)
+    assert {:ok, document} = MDEx.parse_document(markdown, opts)
     assert document.nodes == expected.nodes
   end
 
   test "front matter" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       ---
       title: MDEx
@@ -44,7 +44,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "block quote" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       > MDEx
       """,
@@ -54,7 +54,7 @@ defmodule MDEx.ParseTest do
 
   describe "list" do
     test "bullet" do
-      assert_parse_document(
+      assert_parse_markdown(
         """
         * foo
         * bar
@@ -98,7 +98,7 @@ defmodule MDEx.ParseTest do
     end
 
     test "mixed" do
-      assert_parse_document(
+      assert_parse_markdown(
         """
         - foo
         - bar
@@ -164,7 +164,7 @@ defmodule MDEx.ParseTest do
     end
 
     test "ordered" do
-      assert_parse_document(
+      assert_parse_markdown(
         """
         - foo
         - bar
@@ -220,7 +220,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "description list" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       MDEx
 
@@ -246,7 +246,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "code block" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       ```elixir
       String.trim(" MDEx ")
@@ -269,7 +269,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "html block" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       <h1>MDEx</h1>
       """,
@@ -278,7 +278,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "heading" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       # level_1
       ###### level_6
@@ -293,7 +293,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "thematic break" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       ***
       ---
@@ -303,7 +303,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "footnote" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       footnote[^1]
 
@@ -319,7 +319,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "table" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       | foo | bar |
       | --- | --- |
@@ -347,7 +347,7 @@ defmodule MDEx.ParseTest do
       }
     )
 
-    assert_parse_document(
+    assert_parse_markdown(
       """
       | abc | defghi |
       :-: | -----------:
@@ -377,7 +377,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "task item" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       * [x] Done
       * [ ] Not done
@@ -405,7 +405,7 @@ defmodule MDEx.ParseTest do
 
   @tag :skip
   test "breaks" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       foo
       bar
@@ -413,7 +413,7 @@ defmodule MDEx.ParseTest do
       %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}, %MDEx.SoftBreak{}, %MDEx.Text{literal: "bar"}]}]}
     )
 
-    assert_parse_document(
+    assert_parse_markdown(
       """
       foo
       bar
@@ -424,7 +424,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "code" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       `String.trim(" MDEx ")`
       """,
@@ -433,7 +433,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "html inline" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       <a><bab><c2c>
       """,
@@ -444,7 +444,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "emph, strong, strikethrough, superscript" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       *emph*
       **strong**
@@ -471,7 +471,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "link" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       [foo]: /url "title"
 
@@ -482,7 +482,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "image" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       ![foo](/url "title")
       """,
@@ -491,7 +491,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "shortcode" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       :smile:
       """,
@@ -500,7 +500,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "math" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       $1 + 2$ and $$x = y$$
 
@@ -522,7 +522,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "multiline block quote" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       >>>
       A paragraph.
@@ -578,7 +578,7 @@ defmodule MDEx.ParseTest do
 
   describe "wiki links" do
     test "title before pipe" do
-      assert_parse_document(
+      assert_parse_markdown(
         """
         [[repo|https://github.com/leandrocp/mdex]]
         """,
@@ -590,7 +590,7 @@ defmodule MDEx.ParseTest do
     end
 
     test "title after pipe" do
-      assert_parse_document(
+      assert_parse_markdown(
         """
         [[https://github.com/leandrocp/mdex|repo]]
         """,
@@ -603,7 +603,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "spoiler" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       Darth Vader is ||Luke's father||
       """,
@@ -614,7 +614,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "greentext" do
-    assert_parse_document(
+    assert_parse_markdown(
       """
       > one
       > > two
@@ -635,7 +635,7 @@ defmodule MDEx.ParseTest do
   end
 
   test "subscript" do
-    assert_parse_document(
+    assert_parse_markdown(
       "H~2~O",
       %MDEx.Document{
         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "H"}, %MDEx.Subscript{nodes: [%MDEx.Text{literal: "2"}]}, %MDEx.Text{literal: "O"}]}]
