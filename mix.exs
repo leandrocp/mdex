@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.9.2-dev"
+  @version "0.9.2"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -170,6 +170,7 @@ defmodule MDEx.MixProject do
 
   defp aliases do
     [
+      setup: ["deps.get", "compile"],
       "deps.vendorize": ["cmd cp -rv ../autumn/native/autumn native/comrak_nif/vendor"],
       "gen.checksum": "rustler_precompiled.download MDEx.Native --all --print",
       "gen.samples": "mdex.generate_samples",

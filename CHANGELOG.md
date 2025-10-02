@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.2 - 2025-10-02
 
 ### Added
 - [Document] Add `MDEx.Document.put_markdown/3` to append or prepend markdown chunks to document buffer
@@ -8,9 +8,9 @@
 ### Changed
 - [Document] Introduce buffering to accumulate markdown chunks before parsing
 - Fixed pipeline execution when `:markdown` is passed in `MDEx.new/1`
+- **DEPRECATED** `MDEx.Document.parse_markdown/2` and `MDEx.Document.parse_markdown!/2` in favor of `MDEx.parse_document/2` or `MDEx.Document.put_markdown/1`
 
 ### Deprecated
-- [Document] Deprecate `MDEx.Document.parse_markdown/2` and `MDEx.Document.parse_markdown!/2` in favor of `MDEx.parse_document/2` or `MDEx.Document.put_markdown/1`
 
 ## 0.9.1 - 2025-09-30
 
