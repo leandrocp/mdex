@@ -189,7 +189,7 @@ defmodule MDEx do
 
   def parse_document({:markdown, markdown}, options) when is_binary(markdown) and is_list(options) do
     options = Keyword.put(options, :markdown, markdown)
-    {:ok, MDEx.new(options) |> MDEx.Document.run()}
+    {:ok, MDEx.new(options) |> Document.run()}
   end
 
   def parse_document({:json, json}, options) when is_binary(json) and is_list(options) do
@@ -690,8 +690,6 @@ defmodule MDEx do
   @doc """
   Convert `MDEx.Document` to Markdown using default options.
 
-  Use `to_markdown/2` to pass custom options.
-
   ## Example
 
       iex> MDEx.to_markdown(%MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 3, setext: false}]})
@@ -923,6 +921,7 @@ defmodule MDEx do
     shape how the document will be parsed and rendered.
   * Chain pipeline helpers such as `MDEx.Document.append_steps/2`, `MDEx.Document.update_nodes/3`, or your own plugin
     modules to programmatically modify the AST.
+  * Set `streaming: true` to buffer complete or incomplete Markdown fragments.
 
   Once you finish manipulating the document, call one of the `MDEx.to_*` functions to output the final result to a format
   or `MDEx.Document.run/1` to finalize the document and get the updated AST.
@@ -964,6 +963,13 @@ defmodule MDEx do
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
       ]
+
+  Enabling streaming to render partial input as it arrives:
+
+      iex> MDEx.new(streaming: true, extension: [strikethrough: true])
+      ...> |> MDEx.Document.put_markdown("~~deprec")
+      ...> |> MDEx.to_html!()
+      "<p><del>deprec</del></p>"
 
   """
   @spec new(keyword()) :: Document.t()
