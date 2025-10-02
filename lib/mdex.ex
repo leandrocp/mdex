@@ -101,6 +101,8 @@ defmodule MDEx do
 
   Source can be either a Markdown string or a tagged JSON string.
 
+  This function is essentially a shortcut for `MDEx.new(markdown: source) |> MDEx.Document.run()`
+
   ## Examples
 
   * Parse Markdown with default options:
@@ -178,16 +180,19 @@ defmodule MDEx do
 
   """
   @spec parse_document(markdown :: String.t() | {:json, String.t()}, MDEx.Document.options()) :: {:ok, Document.t()} | {:error, any()}
-  # TODO: support :xml
+  # TODO: support :xml :json :delta
   def parse_document(source, options \\ [])
 
-  def parse_document(markdown, options) when is_binary(markdown) do
-    options
-    |> MDEx.new()
-    |> MDEx.Document.parse_markdown(markdown)
+  def parse_document(source, options) when is_binary(source) and is_list(options) do
+    parse_document({:markdown, source}, options)
   end
 
-  def parse_document({:json, json}, options) when is_binary(json) do
+  def parse_document({:markdown, markdown}, options) when is_binary(markdown) and is_list(options) do
+    options = Keyword.put(options, :markdown, markdown)
+    {:ok, MDEx.new(options) |> MDEx.Document.run()}
+  end
+
+  def parse_document({:json, json}, options) when is_binary(json) and is_list(options) do
     case Jason.decode(json, keys: :atoms!) do
       {:ok, decoded} ->
         document = %{MDEx.new(options) | nodes: json_to_node(decoded).nodes}
@@ -1019,14 +1024,16 @@ defmodule MDEx do
   end
 
   # TODO: remove in v1.0
-  defp maybe_apply_document_option(document, nil), do: document
-
-  defp maybe_apply_document_option(document, markdown) when is_binary(markdown) do
-    Document.parse_markdown!(document, markdown)
+  defp maybe_apply_document_option(document, markdown) when markdown in [nil, ""] do
+    document
   end
 
-  defp maybe_apply_document_option(document, %Document{} = replacement) do
-    %{document | nodes: replacement.nodes}
+  defp maybe_apply_document_option(document, markdown) when is_binary(markdown) do
+    Document.put_markdown(document, markdown)
+  end
+
+  defp maybe_apply_document_option(document, %Document{} = new_document) do
+    %{document | nodes: new_document.nodes}
   end
 
   defp maybe_apply_document_option(_document, other) do

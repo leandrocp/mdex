@@ -891,16 +891,6 @@ defmodule MDEx.DocumentTest do
     assert MDEx.Document.Access.modulefy!(:code_block) == MDEx.CodeBlock
   end
 
-  describe "parse_markdown" do
-    test "with default options" do
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1, setext: false}
-               ]
-             } = MDEx.Document.parse_markdown!(MDEx.new(), "# Hello")
-    end
-  end
-
   describe "wrap" do
     test "document" do
       document = MDEx.new(markdown: "# Heading")
@@ -1090,7 +1080,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "all nested nodes" do
-      document = """
+      markdown = """
       # foo
       bar
       ## baz
@@ -1100,8 +1090,8 @@ defmodule MDEx.DocumentTest do
       expected = "<h1>FOO</h1>\n<p>BAR</p>\n<h2>BAZ</h2>\n<p>FOO</p>"
 
       document =
-        MDEx.new(render: [hardbreaks: true])
-        |> Document.parse_markdown!(document)
+        MDEx.new(markdown: markdown, render: [hardbreaks: true])
+        |> Document.run()
 
       assert document
              |> Document.append_steps(upcase: fn document -> upcase(document, :text) end)
