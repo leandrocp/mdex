@@ -1788,7 +1788,7 @@ defmodule MDEx.Document do
 
       {[], buffer} ->
         buffer = buffer |> Enum.reverse() |> IO.chardata_to_string()
-        parse_markdown!(document, buffer)
+        flush_buffer(document, buffer)
 
       {_nodes, []} ->
         document
@@ -1801,9 +1801,20 @@ defmodule MDEx.Document do
           |> Enum.reverse()
           |> IO.chardata_to_string()
 
-        parse_markdown!(document, buffer)
+        flush_buffer(document, buffer)
     end
     |> do_run()
+  end
+
+  defp flush_buffer(document, buffer) do
+    case Native.parse_document(buffer, rust_options!(document.options)) do
+      {:ok, %{nodes: nodes}} -> %{document | nodes: nodes, buffer: []}
+      {:error, error} -> halt(document, error)
+    end
+  end
+
+  defp do_run({%MDEx.Document{} = document, exception}) do
+    {document, exception}
   end
 
   defp do_run(%{current_steps: [step | rest]} = document) do
@@ -1834,42 +1845,18 @@ defmodule MDEx.Document do
     apply(mod, fun, [state | args])
   end
 
-  @doc """
-  Parses `markdown` and immediately replaces all nodes in the `document`.
-
-  This function parses the markdown string right away and replaces the document's `:nodes` field
-  with the parsed result. Any existing nodes in the document will be discarded.
-
-  If you want to buffer markdown chunks that will be parsed later when `run/1` is called,
-  use `put_markdown/3` instead.
-
-  ## Examples
-
-      iex> doc = MDEx.new()
-      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "# First")
-      iex> doc.nodes
-      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false}]
-      iex> {:ok, doc} = MDEx.Document.parse_markdown(doc, "# Second")
-      iex> doc.nodes
-      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}]
-
-  """
-  @spec parse_markdown(t(), String.t()) :: {:ok, t()} | {:error, MDEx.DecodeError.t() | term()}
+  @deprecated "Use MDEx.parse_document/2 or MDEx.Document.put_markdown/1 instead"
   def parse_markdown(%Document{} = document, markdown) when is_binary(markdown) do
-    case Native.parse_document(markdown, rust_options!(document.options)) do
-      {:ok, %{nodes: nodes}} -> {:ok, %{document | nodes: nodes, buffer: []}}
-      error -> error
-    end
+    document
+    |> put_markdown(markdown)
+    |> run()
   end
 
-  @doc """
-  Same as `parse_markdown/2` but raises if parsing fails.
-  """
-  @spec parse_markdown!(t(), String.t()) :: t()
+  @deprecated "Use MDEx.parse_document/2 or MDEx.Document.put_markdown/1 instead"
   def parse_markdown!(%Document{} = document, markdown) when is_binary(markdown) do
     case parse_markdown(document, markdown) do
-      {:ok, document} -> document
-      {:error, error} -> raise error
+      {%Document{}, exception} -> raise exception
+      %Document{} = document -> document
     end
   end
 
@@ -1924,11 +1911,7 @@ defmodule MDEx.Document do
   end
 
   @doc """
-  Adds Markdown chunks into the `document` buffer.
-
-  Unlike `parse_markdown/2` which parses and replaces nodes immediately, this function
-  buffers markdown chunks that will be parsed later when `run/1` is called. The buffered
-  chunks are combined with existing nodes (if any) during the `run/1` execution.
+  Adds `markdown` chunks into the `document` buffer.
 
   ## Examples
 
@@ -1954,18 +1937,18 @@ defmodule MDEx.Document do
 
   """
   @spec put_markdown(t(), String.t() | [String.t()], position :: :top | :bottom) :: t()
-  def put_markdown(document, chunk, position \\ :bottom)
+  def put_markdown(document, markdown, position \\ :bottom)
 
-  def put_markdown(%MDEx.Document{} = document, chunk, _position) when chunk in [nil, ""] do
+  def put_markdown(%MDEx.Document{} = document, markdown, _position) when markdown in [nil, ""] do
     document
   end
 
-  def put_markdown(%MDEx.Document{} = document, chunk, :top = _position) when is_binary(chunk) or is_list(chunk) do
-    %{document | buffer: document.buffer ++ List.wrap(chunk)}
+  def put_markdown(%MDEx.Document{} = document, markdown, :top = _position) when is_binary(markdown) or is_list(markdown) do
+    %{document | buffer: document.buffer ++ List.wrap(markdown)}
   end
 
-  def put_markdown(%MDEx.Document{} = document, chunk, :bottom = _position) when is_binary(chunk) or is_list(chunk) do
-    %{document | buffer: [chunk | document.buffer]}
+  def put_markdown(%MDEx.Document{} = document, markdown, :bottom = _position) when is_binary(markdown) or is_list(markdown) do
+    %{document | buffer: [markdown | document.buffer]}
   end
 
   @doc """

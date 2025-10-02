@@ -403,7 +403,6 @@ defmodule MDEx.ParseTest do
     )
   end
 
-  @tag :skip
   test "breaks" do
     assert_parse_markdown(
       """
@@ -418,7 +417,7 @@ defmodule MDEx.ParseTest do
       foo
       bar
       """,
-      :fixme,
+      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}, %MDEx.SoftBreak{}, %MDEx.Text{literal: "bar"}]}]},
       render: [hardbreaks: true]
     )
   end
