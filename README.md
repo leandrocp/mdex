@@ -37,6 +37,7 @@
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
 - Discord and GitLab Flavored-ish Markdown
 - Wiki-style links
+- [Streaming](https://hexdocs.pm/mdex/MDEx.Document.html#module-streaming) incomplete fragments
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
@@ -86,11 +87,18 @@ iex> ~MD[# Hello :smile:]HTML
 ```elixir
 iex> import MDEx.Sigil
 iex> ~MD[# Hello :smile:]
-# #MDEx.Document(3 nodes)<
-# ├── 1 [heading] level: 1, setext: false
-# │   ├── 2 [text] literal: "Hello "
-# │   └── 3 [short_code] code: "smile", emoji: "😄"
-# >
+#MDEx.Document(3 nodes)<
+├── 1 [heading] level: 1, setext: false
+│   ├── 2 [text] literal: "Hello "
+│   └── 3 [short_code] code: "smile", emoji: "😄"
+>
+```
+
+```elixir
+iex> MDEx.new(streaming: true)
+...> |> MDEx.Document.put_markdown("**Install")
+...> |> MDEx.to_html!()
+"<p><strong>Install</strong></p>"
 ```
 
 ## Foundation
@@ -136,6 +144,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |Extensible|✅|✅|✅|❌|
 |Syntax Highlighting|✅|❌|❌|❌|
 |Code Block Decorators|✅|❌|❌|❌|
+|Streaming (fragments)|✅|❌|❌|❌|
 |AST|✅|✅|✅|❌|
 |AST to Markdown|✅|⚠️²|❌|❌|
 |To HTML|✅|✅|✅|✅|
