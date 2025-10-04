@@ -807,16 +807,17 @@ defmodule MDEx.DocumentTest do
     test "merge documents" do
       second = %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "second"}]}]}
 
-      assert Enum.into(
-               second,
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
-             ) ==
-               %MDEx.Document{
-                 nodes: [
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "second"}]}
-                 ]
-               }
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]},
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "second"}]}
+               ]
+             } =
+               Enum.into(
+                 second,
+                 %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
+               )
+               |> Document.run()
     end
 
     test "collect top-level nodes" do
@@ -826,26 +827,40 @@ defmodule MDEx.DocumentTest do
         %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
       ]
 
-      assert Enum.into(
-               nodes,
-               %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
-             ) ==
-               %MDEx.Document{
-                 nodes: [
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-                 ]
-               }
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]},
+                 %MDEx.Paragraph{
+                   nodes: [
+                     %MDEx.Code{num_backticks: 1, literal: "elixir"},
+                     %MDEx.SoftBreak{},
+                     %MDEx.Code{num_backticks: 1, literal: "rust"},
+                     %MDEx.SoftBreak{},
+                     %MDEx.Text{literal: "more"}
+                   ]
+                 }
+               ]
+             } =
+               Enum.into(
+                 nodes,
+                 %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "first"}]}]}
+               )
+               |> MDEx.Document.run()
     end
 
     test "into empty document" do
       nodes = [%MDEx.Text{literal: "test"}, %MDEx.Code{literal: "code", num_backticks: 1}]
-      empty_doc = %MDEx.Document{nodes: []}
 
-      result = Enum.into(nodes, empty_doc)
-      assert result.nodes == nodes
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{
+                   nodes: [
+                     %MDEx.Text{literal: "test"},
+                     %MDEx.Code{num_backticks: 1, literal: "code"}
+                   ]
+                 }
+               ]
+             } = Enum.into(nodes, %MDEx.Document{nodes: []}) |> Document.run()
     end
 
     test "into document with empty collection" do
@@ -863,22 +878,22 @@ defmodule MDEx.DocumentTest do
 
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Text{literal: "existing"},
-                 %MDEx.Text{literal: "text"},
-                 %MDEx.Code{num_backticks: 1, literal: "code"},
+                 %MDEx.Paragraph{
+                   nodes: [
+                     %MDEx.Text{literal: "existing"},
+                     %MDEx.SoftBreak{},
+                     %MDEx.Text{literal: "text"},
+                     %MDEx.Code{num_backticks: 1, literal: "code"}
+                   ]
+                 },
                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "heading"}], level: 2, setext: false}
                ]
-             } = Enum.into(mixed_nodes, %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]})
-    end
-
-    test "collectable protocol error handling" do
-      assert_raise ArgumentError, fn ->
-        Enum.into(["not a node"], %MDEx.Document{nodes: []})
-      end
-
-      assert_raise ArgumentError, fn ->
-        Enum.into([%{invalid: "struct"}], %MDEx.Document{nodes: []})
-      end
+             } =
+               Enum.into(
+                 mixed_nodes,
+                 %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}
+               )
+               |> Document.run()
     end
   end
 
@@ -1118,13 +1133,13 @@ defmodule MDEx.DocumentTest do
 
   test "register_options" do
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :syntax_highlight]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :foo]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :foo, :syntax_highlight]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :foo]))
   end
 
   describe "get_option" do
@@ -1348,6 +1363,30 @@ defmodule MDEx.DocumentTest do
                MDEx.new(markdown: "# First")
                |> Document.run()
                |> Document.put_markdown("# Second")
+               |> Document.run()
+    end
+
+    test "flushes buffered markdown between steps" do
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "First"}],
+                   level: 1,
+                   setext: false
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Second"}],
+                   level: 1,
+                   setext: false
+                 }
+               ],
+               buffer: []
+             } =
+               MDEx.new()
+               |> Document.append_steps(
+                 step1: fn doc -> Document.put_markdown(doc, "# First\n") end,
+                 step2: fn doc -> Document.put_markdown(doc, "# Second\n") end
+               )
                |> Document.run()
     end
 

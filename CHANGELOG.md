@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- [Document] Initial (experimental) streaming support. Disabled by default, can be enabled with option `streaming: true`.
+- [Options] Added `:streaming` option to enable fragments streaming.
+
+### Fixed
+- [Document] Flush buffered markdown between pipeline steps
+
 ## 0.9.2 - 2025-10-02
 
 ### Added

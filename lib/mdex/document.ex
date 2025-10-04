@@ -39,7 +39,7 @@ defmodule MDEx.Document do
   2. Then each child node is visited recursively
   3. Children are processed in the order they appear in the `:nodes` list
 
-  This traversal order affects all `Enum` functions, including `Enum.at/2`, `Enum.map/2`, `Enum.find/2`, etc.
+  This traversal order affects all `Enum` functions, including `Enum.at/2`, `Enum.map/2`, `Enum.find/2`, and friends.
 
   ```elixir
   iex> doc = ~MD[# Hello]
@@ -71,6 +71,35 @@ defmodule MDEx.Document do
 
   You can also use the low-level `MDEx.traverse_and_update/2` and `MDEx.traverse_and_update/3` APIs
   to traverse each node of the AST and either update the nodes or do some calculation with an accumulator.
+
+  ## Streaming
+
+  > #### Experimental {: .warning}
+  >
+  > Streaming is still experimental and subject to change in future releases.
+  >
+  > It's **disabled by default** until the API is stabilized. Enable it with the option `streaming: true`.
+
+  Streaming ties together `MDEx.new(streaming: true)`, `MDEx.Document.put_markdown/3`, and `MDEx.Document.run/1` or `MDEx.to_*`
+  so you can feed complete or incomplete Markdown fragments into the Document which will be completed on demand to render valid output.
+
+  Typical usage:
+
+    1. Start with `MDEx.new(streaming: true)` — the document enables streaming and buffers fragments.
+    2. Call `MDEx.Document.put_markdown/3` as fragments arrive — the text is buffered and parsing/rendering is deferred.
+    3. Call `MDEx.Document.run/1` or any `MDEx.to_*` — buffered fragments are parsed completing nodes to ensure valid output.
+
+  This is ideal for AI or chat apps where Markdown comes in bursts but must stay renderable.
+
+  For example, feeding `**Fol` produces a temporary `MDEx.Strong` node then adding `low**` replaces it with the final content on the next run.
+
+      iex> doc = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("**Fol")
+      iex> MDEx.to_html!(doc)
+      "<p><strong>Fol</strong></p>"
+      iex> doc |> MDEx.Document.put_markdown("low**") |> MDEx.to_html!()
+      "<p><strong>Follow</strong></p>"
+
+  You can find a demo application in `examples/streaming.exs`.
 
   ## Protocols
 
@@ -616,11 +645,9 @@ defmodule MDEx.Document do
     :parse,
     :render,
     :syntax_highlight,
-    :sanitize
+    :sanitize,
+    :streaming
   ]
-
-  @doc false
-  def built_in_options, do: @built_in_options
 
   @extension_options_schema [
     strikethrough: [
@@ -1150,6 +1177,11 @@ defmodule MDEx.Document do
 
       See the [Safety](#module-safety) section for more info.
       """
+    ],
+    streaming: [
+      type: :boolean,
+      default: false,
+      doc: "Enables streaming (experimental)."
     ]
   ]
 
@@ -1388,12 +1420,15 @@ defmodule MDEx.Document do
 
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
+
+      {:streaming, value}, acc ->
+        %{acc | options: Keyword.put(acc.options || [], :streaming, value)}
     end)
   end
 
   @doc false
   def put_user_options(document, options) when is_list(options) do
-    options = Keyword.take(options, Keyword.keys(options) -- MDEx.Document.built_in_options())
+    options = Keyword.take(options, Keyword.keys(options) -- @built_in_options)
     validate_user_options(options, document.registered_options)
     %{document | options: Keyword.merge(document.options, options)}
   end
@@ -1743,12 +1778,14 @@ defmodule MDEx.Document do
   @doc """
   Executes the document pipeline.
 
-  This function performs two main operations:
+  This function performs some main operations:
 
-  1. **Processes buffered markdown**: If there are any markdown chunks in the buffer (added via `put_markdown/3` for example),
+  1. Processes buffered markdown: If there are any markdown chunks in the buffer (added via `put_markdown/3` for example),
      they are parsed and added to the document. If the document already has nodes, they are combined with the buffer.
 
-  2. **Executes pipeline steps**: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
+  2. Completes any buffered fragments: If streaming is enabled, it completes any buffered fragments to ensure valid Markdown.
+
+  3. Executes pipeline steps: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
      executed in order. Steps can transform the document or halt the pipeline.
 
   See `MDEx.new/1` for more info.
@@ -1779,50 +1816,34 @@ defmodule MDEx.Document do
       iex> document.nodes
       [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Intro"}], level: 1, setext: false}]
 
+  Streaming:
+
+      iex> document =
+      ...>   MDEx.new(streaming: true, markdown: "```elixir\\n")
+      ...>   |> MDEx.Document.put_markdown("IO.inspect(:mdex)")
+      ...>   |> MDEx.Document.run()
+      iex> document.nodes
+      [
+        %MDEx.CodeBlock{
+          info: "elixir",
+          literal: "IO.inspect(:mdex)\\n"
+        }
+      ]
+
   """
   @spec run(t()) :: t()
   def run(%MDEx.Document{} = document) do
-    case {document.nodes, document.buffer} do
-      {[], []} ->
-        document
-
-      {[], buffer} ->
-        buffer = buffer |> Enum.reverse() |> IO.chardata_to_string()
-        flush_buffer(document, buffer)
-
-      {_nodes, []} ->
-        document
-
-      {_nodes, buffer} ->
-        markdown = MDEx.to_markdown!(%{document | buffer: []}) <> "\n"
-
-        buffer =
-          (buffer ++ [markdown])
-          |> Enum.reverse()
-          |> IO.chardata_to_string()
-
-        flush_buffer(document, buffer)
-    end
+    document
+    |> process_buffer()
     |> do_run()
-  end
-
-  defp flush_buffer(document, buffer) do
-    case Native.parse_document(buffer, rust_options!(document.options)) do
-      {:ok, %{nodes: nodes}} -> %{document | nodes: nodes, buffer: []}
-      {:error, error} -> halt(document, error)
-    end
-  end
-
-  defp do_run({%MDEx.Document{} = document, exception}) do
-    {document, exception}
   end
 
   defp do_run(%{current_steps: [step | rest]} = document) do
     step = Keyword.fetch!(document.steps, step)
 
     # TODO: run_error
-    case run_step(step, document) do
-      {%MDEx.Document{halted: true} = document, exception} ->
+    case run_step(step, document) |> process_buffer() do
+      {%MDEx.Document{} = document, exception} ->
         {document, exception}
 
       %MDEx.Document{halted: true} = document ->
@@ -1833,8 +1854,12 @@ defmodule MDEx.Document do
     end
   end
 
+  defp do_run({%MDEx.Document{} = document, exception}) do
+    {document, exception}
+  end
+
   defp do_run(%{current_steps: []} = document) do
-    document
+    process_buffer(document)
   end
 
   defp run_step(step, state) when is_function(step, 1) do
@@ -1843,6 +1868,64 @@ defmodule MDEx.Document do
 
   defp run_step({mod, fun, args}, state) when is_atom(mod) and is_atom(fun) and is_list(args) do
     apply(mod, fun, [state | args])
+  end
+
+  defp process_buffer({%MDEx.Document{}, _} = halted), do: halted
+
+  defp process_buffer(%MDEx.Document{halted: true} = halted), do: halted
+
+  defp process_buffer(%{buffer: []} = document), do: document
+
+  defp process_buffer(%{nodes: []} = document) do
+    buffer = buffer_to_binary(document.buffer)
+    flush_buffer(document, buffer)
+  end
+
+  defp process_buffer(%{nodes: [_ | _]} = document) do
+    case render_existing_nodes(document) do
+      {:ok, existing_markdown} ->
+        buffer = merge_with_existing(document, existing_markdown)
+        flush_buffer(document, buffer)
+
+      {:error, halted} ->
+        halted
+    end
+  end
+
+  defp process_buffer(document), do: document
+
+  defp flush_buffer(document, buffer) do
+    buffer =
+      if Document.get_option(document, :streaming) do
+        MDEx.FragmentParser.complete(buffer)
+      else
+        buffer
+      end
+
+    case Native.parse_document(buffer, rust_options!(document.options)) do
+      {:ok, %{nodes: nodes}} -> %{document | nodes: nodes, buffer: []}
+      {:error, error} -> halt(document, error)
+    end
+  end
+
+  defp render_existing_nodes(document) do
+    document = %{document | buffer: [], current_steps: [], steps: []}
+
+    case Native.document_to_commonmark_with_options(document, rust_options!(document.options)) do
+      {:ok, markdown} -> {:ok, markdown}
+      {:error, error} -> {:error, halt(document, error)}
+    end
+  end
+
+  defp buffer_to_binary(buffer) do
+    buffer
+    |> Enum.reverse()
+    |> IO.iodata_to_binary()
+  end
+
+  defp merge_with_existing(%{nodes: nodes, buffer: buffer}, existing_markdown) do
+    last_node = List.last(nodes)
+    MDEx.FragmentParser.merge_stream_buffer(existing_markdown, buffer, last_node)
   end
 
   @deprecated "Use MDEx.parse_document/2 or MDEx.Document.put_markdown/1 instead"
@@ -1934,6 +2017,10 @@ defmodule MDEx.Document do
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "Last"}], level: 1, setext: false}
       ]
+
+      iex> document = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("`let x =")
+      iex> MDEx.to_html!(document)
+      "<p><code>let x =</code></p>"
 
   """
   @spec put_markdown(t(), String.t() | [String.t()], position :: :top | :bottom) :: t()
@@ -2294,33 +2381,51 @@ defmodule MDEx.Document do
 
   defimpl Collectable do
     def into(%MDEx.Document{} = document) do
-      state = {document, MapSet.new()}
+      append_block = fn doc, chunk ->
+        markdown =
+          chunk
+          |> MDEx.Document.wrap()
+          |> MDEx.to_markdown!()
 
-      fun = fn
-        {doc, processed_nodes}, {:cont, %MDEx.Document{} = other_doc} ->
-          merged = MDEx.Tree.merge(doc, other_doc)
-          new_processed = Enum.reduce(other_doc, processed_nodes, fn node, acc -> MapSet.put(acc, node) end)
-          {merged, new_processed}
-
-        {doc, processed_nodes}, {:cont, node} when is_struct(node) ->
-          if MapSet.member?(processed_nodes, node) do
-            {doc, processed_nodes}
-          else
-            {MDEx.Tree.append_node(doc, node), processed_nodes}
-          end
-
-        {doc, _processed_nodes}, :done ->
-          doc
-
-        _state, :halt ->
-          :ok
-
-        _state, {:cont, other} ->
-          raise ArgumentError,
-                "collecting into MDEx.Document requires a MDEx node, got: #{inspect(other)}"
+        payload = if MDEx.Tree.is_block_node?(chunk), do: ["\n", markdown], else: markdown
+        MDEx.Document.put_markdown(doc, payload)
       end
 
-      {state, fun}
+      collector = fn
+        {doc, mode}, {:cont, %MDEx.Document{}} ->
+          {doc, mode}
+
+        {doc, _mode}, {:cont, chunk} when is_binary(chunk) or is_list(chunk) ->
+          {MDEx.Document.put_markdown(doc, chunk), :default}
+
+        {doc, :skip_inline}, {:cont, chunk} ->
+          cond do
+            MDEx.Tree.is_block_node?(chunk) ->
+              {append_block.(doc, chunk), :skip_inline}
+
+            true ->
+              {doc, :skip_inline}
+          end
+
+        {doc, _mode}, {:cont, chunk} when is_struct(chunk, MDEx.Text) ->
+          {MDEx.Document.put_markdown(doc, chunk.literal), :default}
+
+        {doc, _mode}, {:cont, chunk} when is_struct(chunk) ->
+          mode = if MDEx.Tree.is_block_node?(chunk), do: :skip_inline, else: :default
+          {append_block.(doc, chunk), mode}
+
+        {doc, _mode}, :done ->
+          doc
+
+        _acc, :halt ->
+          :ok
+      end
+
+      {{document, :default},
+       fn
+         {doc, mode}, {:cont, chunk} -> collector.({doc, mode}, {:cont, chunk})
+         {doc, mode}, other -> collector.({doc, mode}, other)
+       end}
     end
   end
 end
