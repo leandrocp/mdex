@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.3 - 2025-10-04
 
 ### Added
 - [Document] Initial (experimental) streaming support. Disabled by default, can be enabled with option `streaming: true`.
