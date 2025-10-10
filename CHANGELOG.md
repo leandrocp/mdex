@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Changed
+- Add usage-rules.md for LLMs
 - Update `autumn` to v0.5.6
 - Update `autumnus` to v0.7.5
 - Update `comrak` to v0.43.0
