@@ -63,6 +63,7 @@ defmodule MDEx.MixProject do
         README.md
         LICENSE.md
         CHANGELOG.md
+        usage-rules.md
         checksum-Elixir.MDEx.Native.exs
       ]
     ]
