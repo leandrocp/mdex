@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+- Update `autumn` to v0.5.6
+- Update `autumnus` to v0.7.5
+- Update `comrak` to v0.43.0
+- Update `rustler` to v0.37.0
+
 ## 0.9.3 - 2025-10-04
 
 ### Added

@@ -13,15 +13,15 @@ crate-type = ["cdylib"]
 [dependencies]
 ammonia = "4.1"
 anyhow = "1.0"
-autumnus = { version = "0.7", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
+autumnus = { version = "0.7.5", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { path = "../../../autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { git = "https://github.com/leandrocp/autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
-comrak = { version = "0.42", features = ["shortcodes"] }
+comrak = { version = "0.43", features = ["shortcodes"] }
 lazy_static = "1.5"
 log = "0.4"
-lol_html = "2.6"
+lol_html = "2.7"
 phf = { version = "0.13", features = ["macros"] }
-rustler = "0.36"
+rustler = "0.37"
 serde = "1.0"
 shlex = "1.3.0"
 typed-arena = "2.0"
