@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.4 - 2025-10-10
 
 ### Changed
 - Add usage-rules.md for LLMs
