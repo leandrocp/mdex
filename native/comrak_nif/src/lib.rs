@@ -14,7 +14,7 @@ use comrak::{Anchorizer, Arena, ComrakPlugins, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
-use std::io::{self, Write};
+use std::fmt::Write;
 use types::{atoms::ok, document::*, options::*};
 
 rustler::init!("Elixir.MDEx.Native");
@@ -28,11 +28,12 @@ create_formatter!(HTMLFormatter, {
     },
 });
 
-pub fn write_context<T>(context: &mut Context<T>, buffer: &[u8]) -> io::Result<()> {
+pub fn write_context<T>(context: &mut Context<T>, buffer: &[u8]) -> std::fmt::Result {
+    let s = std::str::from_utf8(buffer).map_err(|_| std::fmt::Error)?;
     if context.options.render.escape {
-        context.escape(buffer)
+        context.escape(s)
     } else {
-        context.write_all(buffer)
+        context.write_str(s)
     }
 }
 
@@ -76,11 +77,11 @@ fn markdown_to_html_with_options<'a>(
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     }
 
-    let mut buffer = vec![];
+    let mut buffer = String::new();
 
     HTMLFormatter::format_document_with_plugins(root, &comrak_options, &mut buffer, &plugins)
         .unwrap();
-    let unsafe_html = String::from_utf8(buffer).unwrap();
+    let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
 }
@@ -98,7 +99,7 @@ fn markdown_to_xml_with_options<'a>(
     };
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let mut plugins = ComrakPlugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
@@ -114,7 +115,7 @@ fn markdown_to_xml_with_options<'a>(
     }
 
     comrak::format_xml_with_plugins(root, &comrak_options, &mut buffer, &plugins).unwrap();
-    let xml = String::from_utf8(buffer).unwrap();
+    let xml = buffer;
     Ok((ok(), xml).encode(env))
 }
 
@@ -123,11 +124,11 @@ fn document_to_commonmark(env: Env<'_>, ex_document: ExDocument) -> NifResult<Te
     let arena = Arena::new();
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let plugins = ComrakPlugins::default();
     comrak::format_commonmark_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
         .unwrap();
-    let commonmark = String::from_utf8(buffer).unwrap();
+    let commonmark = buffer;
     Ok((ok(), commonmark).encode(env))
 }
 
@@ -145,7 +146,7 @@ fn document_to_commonmark_with_options<'a>(
         parse: options.parse.into(),
         render: options.render.into(),
     };
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let mut plugins = ComrakPlugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
@@ -162,7 +163,7 @@ fn document_to_commonmark_with_options<'a>(
 
     comrak::format_commonmark_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
         .unwrap();
-    let document = String::from_utf8(buffer).unwrap();
+    let document = buffer;
     Ok((ok(), document).encode(env))
 }
 
@@ -171,12 +172,12 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let arena = Arena::new();
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let options = Options::default();
     let plugins = ComrakPlugins::default();
     HTMLFormatter::format_document_with_plugins(comrak_ast, &options, &mut buffer, &plugins)
         .unwrap();
-    let unsafe_html = String::from_utf8(buffer).unwrap();
+    let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &None, false, true);
     Ok((ok(), html).encode(env))
 }
@@ -195,7 +196,7 @@ fn document_to_html_with_options<'a>(
         parse: options.parse.into(),
         render: options.render.into(),
     };
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let mut plugins = ComrakPlugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
@@ -212,7 +213,7 @@ fn document_to_html_with_options<'a>(
 
     HTMLFormatter::format_document_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
         .unwrap();
-    let unsafe_html = String::from_utf8(buffer).unwrap();
+    let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
 }
@@ -222,11 +223,11 @@ fn document_to_xml(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>>
     let arena = Arena::new();
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let plugins = ComrakPlugins::default();
     comrak::format_xml_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
         .unwrap();
-    let xml = String::from_utf8(buffer).unwrap();
+    let xml = buffer;
     Ok((ok(), xml).encode(env))
 }
 
@@ -244,7 +245,7 @@ fn document_to_xml_with_options<'a>(
         parse: options.parse.into(),
         render: options.render.into(),
     };
-    let mut buffer = vec![];
+    let mut buffer = String::new();
     let mut plugins = ComrakPlugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
@@ -260,7 +261,7 @@ fn document_to_xml_with_options<'a>(
     }
 
     comrak::format_xml_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins).unwrap();
-    let xml = String::from_utf8(buffer).unwrap();
+    let xml = buffer;
     Ok((ok(), xml).encode(env))
 }
 

@@ -10,8 +10,26 @@ use autumnus::languages::Language;
 use autumnus::FormatterOption;
 use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
-use std::io::{self, Write};
+use std::fmt::Write;
+use std::io;
 use std::sync::Mutex;
+
+struct FmtToIoAdapter<'a, W: Write + ?Sized>(&'a mut W);
+
+impl<'a, W: Write + ?Sized> io::Write for FmtToIoAdapter<'a, W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let s =
+            std::str::from_utf8(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        self.0
+            .write_str(s)
+            .map_err(|_| io::Error::other("write error"))?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
 
 pub struct AutumnusAdapter<'a> {
     formatter: FormatterOption<'a>,
@@ -102,7 +120,7 @@ impl<'a> AutumnusAdapter<'a> {
         lang: Option<Language>,
         source: Option<&'a str>,
         custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<HtmlInlineBuilder<'a>, io::Error> {
+    ) -> Result<HtmlInlineBuilder<'a>, std::fmt::Error> {
         let mut builder = HtmlInlineBuilder::default();
 
         let custom_theme = custom_attrs.and_then(|attrs| Self::resolve_theme(attrs).ok().flatten());
@@ -182,7 +200,7 @@ impl<'a> AutumnusAdapter<'a> {
         lang: Option<Language>,
         source: Option<&'a str>,
         custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<HtmlLinkedBuilder<'a>, io::Error> {
+    ) -> Result<HtmlLinkedBuilder<'a>, std::fmt::Error> {
         let mut builder = HtmlLinkedBuilder::default();
 
         if let FormatterOption::HtmlLinked {
@@ -240,7 +258,7 @@ impl<'a> AutumnusAdapter<'a> {
         lang: Option<Language>,
         source: Option<&'a str>,
         custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<TerminalBuilder<'a>, io::Error> {
+    ) -> Result<TerminalBuilder<'a>, std::fmt::Error> {
         let mut builder = TerminalBuilder::default();
 
         let custom_theme = custom_attrs.and_then(|attrs| Self::resolve_theme(attrs).ok().flatten());
@@ -285,7 +303,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         &self,
         output: &mut dyn Write,
         attributes: HashMap<String, String>,
-    ) -> io::Result<()> {
+    ) -> std::fmt::Result {
         let custom_attrs = Self::get_custom_attrs(&attributes);
         let lang = attributes.get("lang").map(|l| Language::guess(l, ""));
 
@@ -304,10 +322,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     None,
                     custom_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.open_pre_tag(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .open_pre_tag(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::HtmlLinked { .. } => {
                 let builder = self.configure_html_linked_builder(
@@ -316,10 +335,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     None,
                     custom_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.open_pre_tag(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .open_pre_tag(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::Terminal { .. } => Ok(()),
         }
@@ -329,7 +349,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         &self,
         output: &mut dyn Write,
         attributes: HashMap<String, String>,
-    ) -> io::Result<()> {
+    ) -> std::fmt::Result {
         let custom_attrs = Self::get_custom_attrs(&attributes);
         let lang = Self::get_language(&attributes);
 
@@ -353,10 +373,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     None,
                     stored_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.open_code_tag(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .open_code_tag(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::HtmlLinked { .. } => {
                 let builder = self.configure_html_linked_builder(
@@ -365,10 +386,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     None,
                     stored_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.open_code_tag(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .open_code_tag(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::Terminal { .. } => Ok(()),
         }
@@ -379,7 +401,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         output: &mut dyn Write,
         lang: Option<&str>,
         source: &str,
-    ) -> io::Result<()> {
+    ) -> std::fmt::Result {
         let stored_attrs = self.stored_attrs.lock().unwrap().clone();
         let stored_lang = *self.stored_lang.lock().unwrap();
 
@@ -399,10 +421,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     Some(source),
                     stored_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.highlights(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .highlights(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::HtmlLinked { .. } => {
                 let builder = self.configure_html_linked_builder(
@@ -411,10 +434,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     Some(source),
                     stored_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.highlights(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .highlights(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
             FormatterOption::Terminal { .. } => {
                 let builder = self.configure_terminal_builder(
@@ -423,10 +447,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     Some(source),
                     stored_attrs.as_ref(),
                 )?;
-                let formatter = builder.build().map_err(|e| {
-                    io::Error::new(io::ErrorKind::InvalidInput, format!("Build error: {e}"))
-                })?;
-                formatter.highlights(output)
+                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
+                let mut adapter = FmtToIoAdapter(output);
+                formatter
+                    .highlights(&mut adapter)
+                    .map_err(|_| std::fmt::Error)
             }
         }
     }
@@ -458,11 +483,11 @@ mod tests {
             },
         };
 
-        let mut html = vec![];
+        let mut html = String::new();
         format_html_with_plugins(root, &options, &mut html, &plugins)
             .expect("Failed to format HTML with plugins");
 
-        String::from_utf8(html).expect("Invalid UTF-8 output")
+        html
     }
 
     fn default_options() -> Options<'static> {
