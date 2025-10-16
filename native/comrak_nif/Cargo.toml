@@ -16,7 +16,7 @@ anyhow = "1.0"
 autumnus = { version = "0.7.5", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { path = "../../../autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { git = "https://github.com/leandrocp/autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
-comrak = { version = "0.43", features = ["shortcodes"] }
+comrak = { version = "0.44", features = ["shortcodes"] }
 lazy_static = "1.5"
 log = "0.4"
 lol_html = "2.7"

@@ -318,6 +318,21 @@ defmodule MDEx.ParseTest do
     )
   end
 
+  test "inline footnote" do
+    assert_parse_markdown(
+      """
+      footnote^[inline content]
+      """,
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "__inline_1", ref_num: 1, ix: 1}]},
+          %MDEx.FootnoteDefinition{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "inline content"}]}], name: "__inline_1", total_references: 1}
+        ]
+      },
+      extension: [inline_footnotes: true]
+    )
+  end
+
   test "table" do
     assert_parse_markdown(
       """
