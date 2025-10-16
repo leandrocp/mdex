@@ -1,0 +1,17 @@
+name: NIF Release
+
+on:
+  push:
+    branches: [main]
+    paths: ["native/**", ".github/workflows/release.yml"]
+    tags: ["*"]
+  pull_request:
+    paths: [".github/workflows/release.yml"]
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: leandrocp/github-actions/.github/workflows/nif_release.yml@main
+    with:
+      project-name: comrak_nif
+      project-dir: native/comrak_nif

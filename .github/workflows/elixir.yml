@@ -2,110 +2,12 @@ name: Elixir CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ main ]
   pull_request:
-    branches: ["main"]
-
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
   test:
-    name: test (OTP ${{matrix.otp}} | Elixir ${{matrix.elixir}})
-
-    env:
-      MIX_ENV: test
-      MDEX_BUILD: 1
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - elixir: "1.15.0"
-            otp: "24"
-
-          - elixir: "1.18"
-            otp: "27"
-
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
-
-      - name: Cache mix deps
-        uses: actions/cache@v4
-        id: cache-deps
-        with:
-          path: |
-            deps
-            _build
-          key: mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
-
-      - run: mix deps.get
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-
-      - run: mix test
-
-  quality:
-    name: quality (OTP ${{matrix.otp}} | Elixir ${{matrix.elixir}})
-
-    env:
-      MIX_ENV: dev
-      MDEX_BUILD: 1
-
-    strategy:
-      matrix:
-        include:
-          - elixir: "1.18"
-            otp: "27"
-
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
-
-      - name: Cache mix deps
-        uses: actions/cache@v4
-        id: cache-deps
-        with:
-          path: |
-            deps
-            _build
-          key: mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            mix-${{ env.MIX_ENV }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
-
-      - run: mix deps.get
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-
-      - run: mix compile --warnings-as-errors
-
-      - run: mix format --check-formatted
-
-      - run: mix deps.unlock --check-unused
+    uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
+  lint:
+    uses: leandrocp/github-actions/.github/workflows/elixir-lint.yml@main
