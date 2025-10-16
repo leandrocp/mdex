@@ -690,6 +690,11 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables the footnotes extension per cmark-gfm"
     ],
+    inline_footnotes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables inline footnotes with ^[footnote content] syntax"
+    ],
     description_lists: [
       type: :boolean,
       default: false,
