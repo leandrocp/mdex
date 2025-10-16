@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- Update `comrak` to v0.44.0
+- Add extension option `:inline_footnotes`
+
 ## 0.9.4 - 2025-10-10
 
 ### Changed
