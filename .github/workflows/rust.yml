@@ -9,26 +9,14 @@ on:
   pull_request:
     paths:
       - "native/**"
+  workflow_dispatch:
 
 jobs:
-  lint-rust:
-    name: Lint Rust
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        manifest:
-          - native/comrak_nif/Cargo.toml
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            native/comrak_nif
-
-      - name: run rustfmt
-        run: cargo fmt --manifest-path=${{ matrix.manifest }} --all -- --check
-
-      - name: run clippy
-        run: cargo clippy --manifest-path=${{ matrix.manifest }} -- -Dwarnings
+  test:
+    uses: leandrocp/github-actions/.github/workflows/rust-test.yml@main
+    with:
+      manifest-path: 'native/comrak_nif/Cargo.toml'
+  lint:
+    uses: leandrocp/github-actions/.github/workflows/rust-lint.yml@main
+    with:
+      manifest-path: 'native/comrak_nif/Cargo.toml'
