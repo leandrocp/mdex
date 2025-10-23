@@ -2081,7 +2081,7 @@ defmodule MDEx.Document do
   defp match_selector?(node, selector) when is_function(selector, 1), do: selector.(node)
 
   @typedoc """
-  List of [comrak extension options](https://docs.rs/comrak/latest/comrak/struct.ExtensionOptions.html).
+  List of [comrak extension options](https://docs.rs/comrak/latest/comrak/options/struct.Extension.html).
 
   ## Example
 
@@ -2092,7 +2092,7 @@ defmodule MDEx.Document do
   @type extension_options() :: [unquote(NimbleOptions.option_typespec(@extension_options_schema))]
 
   @typedoc """
-  List of [comrak parse options](https://docs.rs/comrak/latest/comrak/struct.ParseOptions.html).
+  List of [comrak parse options](https://docs.rs/comrak/latest/comrak/options/struct.Parse.html).
 
   ## Example
 
@@ -2103,7 +2103,7 @@ defmodule MDEx.Document do
   @type parse_options() :: [unquote(NimbleOptions.option_typespec(@parse_options_schema))]
 
   @typedoc """
-  List of [comrak render options](https://docs.rs/comrak/latest/comrak/struct.RenderOptions.html).
+  List of [comrak render options](https://docs.rs/comrak/latest/comrak/options/struct.Render.html).
 
   ## Example
 
