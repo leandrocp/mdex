@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 [dependencies]
 ammonia = "4.1"
 anyhow = "1.0"
-autumnus = { version = "0.7.5", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
+autumnus = { version = "0.7.6", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { path = "../../../autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { git = "https://github.com/leandrocp/autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 comrak = { version = "0.44", features = ["shortcodes"] }
