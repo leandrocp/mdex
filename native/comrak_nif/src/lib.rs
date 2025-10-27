@@ -9,8 +9,9 @@ mod types;
 
 use autumnus_adapter::AutumnusAdapter;
 use comrak::html::{ChildRendering, Context};
+use comrak::options::Plugins;
 use comrak::{create_formatter, nodes::NodeValue};
-use comrak::{Anchorizer, Arena, ComrakPlugins, Options};
+use comrak::{Anchorizer, Arena, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
@@ -63,7 +64,7 @@ fn markdown_to_html_with_options<'a>(
     };
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
-    let mut plugins = ComrakPlugins::default();
+    let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
         options
@@ -100,7 +101,7 @@ fn markdown_to_xml_with_options<'a>(
     let arena = Arena::new();
     let root = comrak::parse_document(&arena, md, &comrak_options);
     let mut buffer = String::new();
-    let mut plugins = ComrakPlugins::default();
+    let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
         options
@@ -125,7 +126,7 @@ fn document_to_commonmark(env: Env<'_>, ex_document: ExDocument) -> NifResult<Te
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
     let mut buffer = String::new();
-    let plugins = ComrakPlugins::default();
+    let plugins = Plugins::default();
     comrak::format_commonmark_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
         .unwrap();
     let commonmark = buffer;
@@ -147,7 +148,7 @@ fn document_to_commonmark_with_options<'a>(
         render: options.render.into(),
     };
     let mut buffer = String::new();
-    let mut plugins = ComrakPlugins::default();
+    let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
         options
@@ -174,7 +175,7 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
     let mut buffer = String::new();
     let options = Options::default();
-    let plugins = ComrakPlugins::default();
+    let plugins = Plugins::default();
     HTMLFormatter::format_document_with_plugins(comrak_ast, &options, &mut buffer, &plugins)
         .unwrap();
     let unsafe_html = buffer;
@@ -197,7 +198,7 @@ fn document_to_html_with_options<'a>(
         render: options.render.into(),
     };
     let mut buffer = String::new();
-    let mut plugins = ComrakPlugins::default();
+    let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
         options
@@ -224,7 +225,7 @@ fn document_to_xml(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>>
     let ex_node = NewNode::Document(ex_document);
     let comrak_ast = ex_document_to_comrak_ast(&arena, ex_node);
     let mut buffer = String::new();
-    let plugins = ComrakPlugins::default();
+    let plugins = Plugins::default();
     comrak::format_xml_with_plugins(comrak_ast, &Options::default(), &mut buffer, &plugins)
         .unwrap();
     let xml = buffer;
@@ -246,7 +247,7 @@ fn document_to_xml_with_options<'a>(
         render: options.render.into(),
     };
     let mut buffer = String::new();
-    let mut plugins = ComrakPlugins::default();
+    let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
     let autumnus_adapter = AutumnusAdapter::new(
         options

@@ -12,7 +12,7 @@ use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::io;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 struct FmtToIoAdapter<'a, W: Write + ?Sized>(&'a mut W);
 
@@ -33,7 +33,7 @@ impl<'a, W: Write + ?Sized> io::Write for FmtToIoAdapter<'a, W> {
 
 pub struct AutumnusAdapter<'a> {
     formatter: FormatterOption<'a>,
-    stored_attrs: Mutex<Option<HashMap<String, String>>>,
+    stored_attrs: Mutex<Option<Arc<HashMap<String, String>>>>,
     stored_lang: Mutex<Option<Language>>,
 }
 
@@ -280,15 +280,17 @@ impl<'a> AutumnusAdapter<'a> {
         Ok(builder)
     }
 
-    fn get_custom_attrs(attributes: &HashMap<String, String>) -> Option<HashMap<String, String>> {
+    fn get_custom_attrs(
+        attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>,
+    ) -> Option<HashMap<String, String>> {
         attributes
             .get("data-meta")
-            .and_then(|info| Self::parse_custom_attributes(info))
+            .and_then(|info| Self::parse_custom_attributes(info.as_ref()))
     }
 
-    fn get_language(attributes: &HashMap<String, String>) -> Language {
+    fn get_language(attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>) -> Language {
         if let Some(lang) = attributes.get("lang") {
-            Language::guess(lang, "")
+            Language::guess(lang.as_ref(), "")
         } else if let Some(class) = attributes.get("class") {
             let language = class.strip_prefix("language-").unwrap_or("plaintext");
             Language::guess(language, "")
@@ -299,20 +301,22 @@ impl<'a> AutumnusAdapter<'a> {
 }
 
 impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
-    fn write_pre_tag(
+    fn write_pre_tag<'s>(
         &self,
         output: &mut dyn Write,
-        attributes: HashMap<String, String>,
+        attributes: HashMap<&'static str, std::borrow::Cow<'s, str>>,
     ) -> std::fmt::Result {
         let custom_attrs = Self::get_custom_attrs(&attributes);
         let lang = attributes.get("lang").map(|l| Language::guess(l, ""));
 
-        if let Some(attrs) = &custom_attrs {
-            *self.stored_attrs.lock().unwrap() = Some(attrs.clone());
+        if let Some(attrs) = custom_attrs {
+            *self.stored_attrs.lock().unwrap() = Some(Arc::new(attrs));
         }
         if let Some(language) = lang {
             *self.stored_lang.lock().unwrap() = Some(language);
         }
+
+        let stored_attrs = self.stored_attrs.lock().unwrap().clone();
 
         match &self.formatter {
             FormatterOption::HtmlInline { .. } => {
@@ -320,7 +324,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     lang,
                     None,
-                    custom_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -333,7 +337,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     lang,
                     None,
-                    custom_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -345,16 +349,16 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         }
     }
 
-    fn write_code_tag(
+    fn write_code_tag<'s>(
         &self,
         output: &mut dyn Write,
-        attributes: HashMap<String, String>,
+        attributes: HashMap<&'static str, std::borrow::Cow<'s, str>>,
     ) -> std::fmt::Result {
         let custom_attrs = Self::get_custom_attrs(&attributes);
         let lang = Self::get_language(&attributes);
 
-        if let Some(attrs) = &custom_attrs {
-            *self.stored_attrs.lock().unwrap() = Some(attrs.clone());
+        if let Some(attrs) = custom_attrs {
+            *self.stored_attrs.lock().unwrap() = Some(Arc::new(attrs));
         }
         if !attributes.is_empty() {
             *self.stored_lang.lock().unwrap() = Some(lang);
@@ -371,7 +375,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     effective_lang,
                     None,
-                    stored_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -384,7 +388,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     effective_lang,
                     None,
-                    stored_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -419,7 +423,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     Some(language),
                     Some(source),
-                    stored_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -432,7 +436,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     Some(language),
                     Some(source),
-                    stored_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -445,7 +449,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
                     &self.formatter,
                     Some(language),
                     Some(source),
-                    stored_attrs.as_ref(),
+                    stored_attrs.as_deref(),
                 )?;
                 let formatter = builder.build().map_err(|_| std::fmt::Error)?;
                 let mut adapter = FmtToIoAdapter(output);
@@ -469,15 +473,16 @@ mod tests {
     use autumnus::formatter::html_linked::HighlightLines as HtmlLinkedHighlightLines;
     use autumnus::formatter::HtmlElement;
     use autumnus::{themes, FormatterOption};
-    use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins, Options};
+    use comrak::options::Plugins;
+    use comrak::{format_html_with_plugins, parse_document, Arena, Options};
 
     fn run_test(markdown: &str, formatter: FormatterOption<'static>, options: Options) -> String {
         let arena = Arena::new();
         let root = parse_document(&arena, markdown, &options);
         let adapter = AutumnusAdapter::new(formatter);
 
-        let plugins = ComrakPlugins {
-            render: comrak::RenderPlugins {
+        let plugins = Plugins {
+            render: comrak::options::RenderPlugins {
                 codefence_syntax_highlighter: Some(&adapter),
                 ..Default::default()
             },

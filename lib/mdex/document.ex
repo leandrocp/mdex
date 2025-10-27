@@ -830,6 +830,16 @@ defmodule MDEx.Document do
       default: true,
       doc:
         "Relax parsing of autolinks, allow links to be detected inside brackets and allow all url schemes. It is intended to allow a very specific type of autolink detection, such as `[this http://and.com that]` or `{http://foo.com}`, on a best can basis."
+    ],
+    ignore_setext: [
+      type: :boolean,
+      default: false,
+      doc: "Ignore setext headings in input."
+    ],
+    tasklist_in_table: [
+      type: :boolean,
+      default: false,
+      doc: "Parse a tasklist item if it's the only content of a table cell."
     ]
   ]
 
@@ -881,11 +891,6 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Wrap escaped characters in a `<span>` to allow any post-processing to recognize them."
-    ],
-    ignore_setext: [
-      type: :boolean,
-      default: false,
-      doc: "Ignore setext headings in input."
     ],
     ignore_empty_links: [
       type: :boolean,
@@ -2276,7 +2281,7 @@ defmodule MDEx.Document do
 
   def rust_options!(options) do
     {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
-    render = Keyword.put_new(render, :unsafe_, unsafe)
+    render = Keyword.put_new(render, :unsafe, unsafe)
 
     syntax_highlight =
       case options[:syntax_highlight] do

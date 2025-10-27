@@ -3,8 +3,10 @@
 ## Unreleased
 
 ### Changed
-- Update `comrak` to v0.44.0
+- **BREAKING** Move `:ignore_setext` from render to parse options
+- Update `comrak` to v0.45.0
 - Add extension option `:inline_footnotes`
+- Add parse option `:tasklist_in_table` for tasklist items in table cells
 
 ## 0.9.4 - 2025-10-10
 

@@ -170,21 +170,26 @@ A [benchmark](benchmark.exs) is available to compare existing libs:
 
 ```
 Name              ips        average  deviation         median         99th %
-mdex          4546.79        0.22 ms     ±6.19%        0.22 ms        0.27 ms
-md             475.87        2.10 ms     ±3.35%        2.09 ms        2.27 ms
-earmark        142.21        7.03 ms     ±2.84%        6.98 ms        7.68 ms
+mdex          8983.16       0.111 ms     ±6.52%       0.110 ms       0.144 ms
+md             461.00        2.17 ms     ±2.64%        2.16 ms        2.35 ms
+earmark        110.47        9.05 ms     ±3.17%        9.02 ms       10.01 ms
 
 Comparison:
-mdex          4546.79
-md             475.87 - 9.55x slower +1.88 ms
-earmark        142.21 - 31.97x slower +6.81 ms
+mdex          8983.16
+md             461.00 - 19.49x slower +2.06 ms
+earmark        110.47 - 81.32x slower +8.94 ms
 
 Memory usage statistics:
 
+Name            average  deviation         median         99th %
+mdex         0.00184 MB     ±0.00%     0.00184 MB     0.00184 MB
+md              6.45 MB     ±0.00%        6.45 MB        6.45 MB
+earmark         5.09 MB     ±0.00%        5.09 MB        5.09 MB
+
 Comparison:
-mdex           0.152 MB
-md              6.37 MB - 41.86x memory usage +6.21 MB
-earmark         4.34 MB - 28.51x memory usage +4.18 MB
+mdex         0.00184 MB
+md              6.45 MB - 3506.37x memory usage +6.45 MB
+earmark         5.09 MB - 2770.15x memory usage +5.09 MB
 ```
 
 The most performance gain is using the `~MD` sigil to compile the Markdown instead of parsing it at runtime,
