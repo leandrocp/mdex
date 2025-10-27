@@ -1,7 +1,7 @@
 mod sanitize;
 
 use autumnus::elixir::ExFormatterOption;
-use comrak::{ExtensionOptions, ListStyleType, ParseOptions, RenderOptions};
+use comrak::options::{Extension, ListStyleType, Parse, Render};
 pub use sanitize::*;
 use std::sync::Arc;
 
@@ -29,14 +29,15 @@ pub struct ExExtensionOptions {
     pub subscript: bool,
     pub spoiler: bool,
     pub greentext: bool,
+    pub subtext: bool,
     pub image_url_rewriter: Option<String>,
     pub link_url_rewriter: Option<String>,
     pub cjk_friendly_emphasis: bool,
 }
 
-impl From<ExExtensionOptions> for ExtensionOptions<'_> {
+impl From<ExExtensionOptions> for Extension<'_> {
     fn from(options: ExExtensionOptions) -> Self {
-        ExtensionOptions {
+        Extension {
             strikethrough: options.strikethrough,
             tagfilter: options.tagfilter,
             table: options.table,
@@ -59,6 +60,7 @@ impl From<ExExtensionOptions> for ExtensionOptions<'_> {
             subscript: options.subscript,
             spoiler: options.spoiler,
             greentext: options.greentext,
+            subtext: options.subtext,
             image_url_rewriter: match options.image_url_rewriter {
                 None => None,
                 Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),
@@ -78,15 +80,19 @@ pub struct ExParseOptions {
     pub default_info_string: Option<String>,
     pub relaxed_tasklist_matching: bool,
     pub relaxed_autolinks: bool,
+    pub ignore_setext: bool,
+    pub tasklist_in_table: bool,
 }
 
-impl From<ExParseOptions> for ParseOptions<'_> {
+impl From<ExParseOptions> for Parse<'_> {
     fn from(options: ExParseOptions) -> Self {
-        ParseOptions {
+        Parse {
             smart: options.smart,
             default_info_string: options.default_info_string,
             relaxed_tasklist_matching: options.relaxed_tasklist_matching,
             relaxed_autolinks: options.relaxed_autolinks,
+            ignore_setext: options.ignore_setext,
+            tasklist_in_table: options.tasklist_in_table,
             broken_link_callback: None,
         }
     }
@@ -116,12 +122,11 @@ pub struct ExRenderOptions {
     pub github_pre_lang: bool,
     pub full_info_string: bool,
     pub width: usize,
-    pub unsafe_: bool,
+    pub r#unsafe: bool,
     pub escape: bool,
     pub list_style: ExListStyleType,
     pub sourcepos: bool,
     pub escaped_char_spans: bool,
-    pub ignore_setext: bool,
     pub ignore_empty_links: bool,
     pub gfm_quirks: bool,
     pub prefer_fenced: bool,
@@ -131,19 +136,18 @@ pub struct ExRenderOptions {
     pub experimental_minimize_commonmark: bool,
 }
 
-impl From<ExRenderOptions> for RenderOptions {
+impl From<ExRenderOptions> for Render {
     fn from(options: ExRenderOptions) -> Self {
-        RenderOptions {
+        Render {
             hardbreaks: options.hardbreaks,
             github_pre_lang: options.github_pre_lang,
             full_info_string: options.full_info_string,
             width: options.width,
-            unsafe_: options.unsafe_,
+            r#unsafe: options.r#unsafe,
             escape: options.escape,
             list_style: ListStyleType::from(options.list_style),
             sourcepos: options.sourcepos,
             escaped_char_spans: options.escaped_char_spans,
-            ignore_setext: options.ignore_setext,
             ignore_empty_links: options.ignore_empty_links,
             gfm_quirks: options.gfm_quirks,
             prefer_fenced: options.prefer_fenced,

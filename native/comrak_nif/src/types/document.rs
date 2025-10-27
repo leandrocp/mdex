@@ -59,6 +59,7 @@ pub enum NewNode {
     Underline(ExUnderline),
     Subscript(ExSubscript),
     SpoileredText(ExSpoileredText),
+    Subtext(ExSubtext),
     EscapedTag(ExEscapedTag),
     Alert(ExAlert),
 }
@@ -106,6 +107,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Underline(n) => n.into(),
             NewNode::Subscript(n) => n.into(),
             NewNode::SpoileredText(n) => n.into(),
+            NewNode::Subtext(n) => n.into(),
             NewNode::EscapedTag(n) => n.into(),
             NewNode::Alert(n) => n.into(),
         }
@@ -298,14 +300,14 @@ pub struct ExCodeBlock {
 
 impl From<ExCodeBlock> for NodeValue {
     fn from(node: ExCodeBlock) -> Self {
-        NodeValue::CodeBlock(comrak::nodes::NodeCodeBlock {
+        NodeValue::CodeBlock(Box::new(comrak::nodes::NodeCodeBlock {
             fenced: node.fenced,
             fence_char: string_to_char(node.fence_char),
             fence_length: node.fence_length,
             fence_offset: node.fence_offset,
             info: node.info,
             literal: node.literal,
-        })
+        }))
     }
 }
 
@@ -420,7 +422,7 @@ pub struct ExTable {
 
 impl From<ExTable> for NodeValue {
     fn from(node: ExTable) -> Self {
-        NodeValue::Table(comrak::nodes::NodeTable {
+        NodeValue::Table(Box::new(comrak::nodes::NodeTable {
             alignments: node
                 .alignments
                 .into_iter()
@@ -434,7 +436,7 @@ impl From<ExTable> for NodeValue {
             num_columns: node.num_columns,
             num_rows: node.num_rows,
             num_nonempty_cells: node.num_nonempty_cells,
-        })
+        }))
     }
 }
 
@@ -471,7 +473,7 @@ pub struct ExText {
 
 impl From<ExText> for NodeValue {
     fn from(node: ExText) -> Self {
-        NodeValue::Text(node.literal)
+        NodeValue::Text(node.literal.into())
     }
 }
 
@@ -607,10 +609,10 @@ pub struct ExLink {
 
 impl From<ExLink> for NodeValue {
     fn from(node: ExLink) -> Self {
-        NodeValue::Link(comrak::nodes::NodeLink {
+        NodeValue::Link(Box::new(comrak::nodes::NodeLink {
             url: node.url,
             title: node.title,
-        })
+        }))
     }
 }
 
@@ -624,10 +626,10 @@ pub struct ExImage {
 
 impl From<ExImage> for NodeValue {
     fn from(node: ExImage) -> Self {
-        NodeValue::Image(comrak::nodes::NodeLink {
+        NodeValue::Image(Box::new(comrak::nodes::NodeLink {
             url: node.url,
             title: node.title,
-        })
+        }))
     }
 }
 #[derive(Clone, Debug, NifStruct, PartialEq)]
@@ -639,10 +641,10 @@ pub struct ExShortCode {
 
 impl From<ExShortCode> for NodeValue {
     fn from(node: ExShortCode) -> Self {
-        NodeValue::ShortCode(comrak::nodes::NodeShortCode {
+        NodeValue::ShortCode(Box::new(comrak::nodes::NodeShortCode {
             code: node.code.to_string(),
             emoji: node.emoji.to_string(),
-        })
+        }))
     }
 }
 
@@ -743,6 +745,18 @@ impl From<ExSpoileredText> for NodeValue {
 }
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.Subtext"]
+pub struct ExSubtext {
+    pub nodes: Vec<NewNode>,
+}
+
+impl From<ExSubtext> for NodeValue {
+    fn from(_node: ExSubtext) -> Self {
+        NodeValue::Subtext
+    }
+}
+
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.EscapedTag"]
 pub struct ExEscapedTag {
     pub nodes: Vec<NewNode>,
@@ -778,7 +792,7 @@ pub struct ExAlert {
 
 impl From<ExAlert> for NodeValue {
     fn from(node: ExAlert) -> Self {
-        NodeValue::Alert(comrak::nodes::NodeAlert {
+        NodeValue::Alert(Box::new(comrak::nodes::NodeAlert {
             alert_type: match node.alert_type {
                 ExAlertType::Note => comrak::nodes::AlertType::Note,
                 ExAlertType::Tip => comrak::nodes::AlertType::Tip,
@@ -790,7 +804,7 @@ impl From<ExAlert> for NodeValue {
             multiline: node.multiline,
             fence_length: node.fence_length,
             fence_offset: node.fence_offset,
-        })
+        }))
     }
 }
 
@@ -843,9 +857,9 @@ pub fn ex_document_to_comrak_ast<'a>(
 
 pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
     let children: Vec<NewNode> = node.children().map(comrak_ast_to_ex_document).collect();
-    let node_data = node.data.borrow();
+    let node_data = node.data();
 
-    match node_data.value {
+    match &node_data.value {
         NodeValue::Document => NewNode::Document(ExDocument { nodes: children }),
 
         NodeValue::FrontMatter(ref literal) => NewNode::FrontMatter(ExFrontMatter {
@@ -909,7 +923,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             NewNode::DescriptionDetails(ExDescriptionDetails { nodes: children })
         }
 
-        NodeValue::CodeBlock(ref attrs) => NewNode::CodeBlock(ExCodeBlock {
+        NodeValue::CodeBlock(attrs) => NewNode::CodeBlock(ExCodeBlock {
             nodes: children,
             fenced: attrs.fenced,
             fence_char: char_to_string(attrs.fence_char).unwrap_or_default(),
@@ -951,7 +965,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             })
         }
 
-        NodeValue::Table(ref attrs) => NewNode::Table(ExTable {
+        NodeValue::Table(attrs) => NewNode::Table(ExTable {
             nodes: children,
             alignments: attrs
                 .alignments
@@ -970,7 +984,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::TableRow(header) => NewNode::TableRow(ExTableRow {
             nodes: children,
-            header,
+            header: *header,
         }),
 
         NodeValue::TableCell => NewNode::TableCell(ExTableCell { nodes: children }),
@@ -1010,19 +1024,19 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::Superscript => NewNode::Superscript(ExSuperscript { nodes: children }),
 
-        NodeValue::Link(ref attrs) => NewNode::Link(ExLink {
+        NodeValue::Link(attrs) => NewNode::Link(ExLink {
             nodes: children,
             url: attrs.url.to_string(),
             title: attrs.title.to_string(),
         }),
 
-        NodeValue::Image(ref attrs) => NewNode::Image(ExImage {
+        NodeValue::Image(attrs) => NewNode::Image(ExImage {
             nodes: children,
             url: attrs.url.to_string(),
             title: attrs.title.to_string(),
         }),
 
-        NodeValue::ShortCode(ref attrs) => NewNode::ShortCode(ExShortCode {
+        NodeValue::ShortCode(attrs) => NewNode::ShortCode(ExShortCode {
             code: attrs.code.to_string(),
             emoji: attrs.emoji.to_string(),
         }),
@@ -1054,12 +1068,14 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::SpoileredText => NewNode::SpoileredText(ExSpoileredText { nodes: children }),
 
+        NodeValue::Subtext => NewNode::Subtext(ExSubtext { nodes: children }),
+
         NodeValue::EscapedTag(ref literal) => NewNode::EscapedTag(ExEscapedTag {
             nodes: children,
             literal: literal.to_string(),
         }),
 
-        NodeValue::Alert(ref attrs) => NewNode::Alert(ExAlert {
+        NodeValue::Alert(attrs) => NewNode::Alert(ExAlert {
             nodes: children,
             alert_type: match attrs.alert_type {
                 comrak::nodes::AlertType::Note => ExAlertType::Note,
