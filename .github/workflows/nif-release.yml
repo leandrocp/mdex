@@ -11,7 +11,7 @@ on:
 
 jobs:
   release:
-    uses: leandrocp/github-actions/.github/workflows/nif_release.yml@main
+    uses: leandrocp/github-actions/.github/workflows/nif-release.yml@main
     with:
       project-name: comrak_nif
       project-dir: native/comrak_nif
