@@ -3,8 +3,12 @@
 ## Unreleased
 
 ### Changed
-- Update `comrak` to v0.44.0
+- **BREAKING** Move `:ignore_setext` from render to parse options
+- Overall performance optimizations in parsing and syntax highlighting
+- Update `comrak` to v0.46.0
 - Add extension option `:inline_footnotes`
+- Add extension option `:subtext` for Discord-style subtext
+- Add parse option `:tasklist_in_table` for tasklist items in table cells
 
 ## 0.9.4 - 2025-10-10
 

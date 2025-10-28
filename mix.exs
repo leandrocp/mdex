@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.9.5-dev"
+  @version "0.10.0-dev"
   @dev? String.ends_with?(@version, "-dev")
   @force_build? System.get_env("MDEX_BUILD") in ["1", "true"]
 
@@ -123,6 +123,7 @@ defmodule MDEx.MixProject do
           MDEx.Strikethrough,
           MDEx.Strong,
           MDEx.Subscript,
+          MDEx.Subtext,
           MDEx.Superscript,
           MDEx.Table,
           MDEx.TableCell,
@@ -163,10 +164,7 @@ defmodule MDEx.MixProject do
       {:nimble_parsec, "~> 1.0"},
       {:autumn, ">= 0.5.4"},
       {:jason, "~> 1.0"},
-      {:ex_doc, ">= 0.0.0", only: :docs},
-      {:makeup_elixir, "~> 1.0.1 or ~> 1.1", only: :docs},
-      {:makeup_eex, "~> 2.0", only: :docs},
-      {:makeup_syntect, "~> 0.1", only: :docs}
+      {:ex_doc, ">= 0.0.0", only: :docs}
     ]
   end
 
