@@ -94,9 +94,9 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
 name = "autumnus"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e09585911fb39b0060c4141cc4ca81344d3bd6f33f078acc918822333d0ef8f"
+checksum = "3499b9c5040c71f6c9d248bee9e65d647c17e7431b013fee2cc42943905ec043"
 dependencies = [
  "anyhow",
  "cc",
