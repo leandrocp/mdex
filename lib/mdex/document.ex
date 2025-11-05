@@ -2589,9 +2589,10 @@ defmodule MDEx.CodeBlock do
           fence_length: non_neg_integer(),
           fence_offset: non_neg_integer(),
           info: String.t(),
-          literal: String.t()
+          literal: String.t(),
+          closed: boolean()
         }
-  defstruct nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "", literal: ""
+  defstruct nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "", literal: "", closed: true
   use MDEx.Document.Access
 end
 
@@ -2629,8 +2630,8 @@ defmodule MDEx.Heading do
   Spec: https://github.github.com/gfm/#atx-headings and https://github.github.com/gfm/#setext-headings
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean()}
-  defstruct nodes: [], level: 1, setext: false
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean(), closed: boolean()}
+  defstruct nodes: [], level: 1, setext: false, closed: true
   use MDEx.Document.Access
 end
 
