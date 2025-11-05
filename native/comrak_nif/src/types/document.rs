@@ -296,6 +296,7 @@ pub struct ExCodeBlock {
     pub fence_offset: usize,
     pub info: String,
     pub literal: String,
+    pub closed: bool,
 }
 
 impl From<ExCodeBlock> for NodeValue {
@@ -307,6 +308,7 @@ impl From<ExCodeBlock> for NodeValue {
             fence_offset: node.fence_offset,
             info: node.info,
             literal: node.literal,
+            closed: node.closed,
         }))
     }
 }
@@ -346,6 +348,7 @@ pub struct ExHeading {
     pub nodes: Vec<NewNode>,
     pub level: u8,
     pub setext: bool,
+    pub closed: bool,
 }
 
 impl From<ExHeading> for NodeValue {
@@ -353,6 +356,7 @@ impl From<ExHeading> for NodeValue {
         NodeValue::Heading(comrak::nodes::NodeHeading {
             level: node.level,
             setext: node.setext,
+            closed: node.closed,
         })
     }
 }
@@ -931,6 +935,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             fence_offset: attrs.fence_offset,
             info: attrs.info.to_string(),
             literal: attrs.literal.to_string(),
+            closed: attrs.closed,
         }),
 
         NodeValue::HtmlBlock(ref attrs) => NewNode::HtmlBlock(ExHtmlBlock {
@@ -945,6 +950,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             nodes: children,
             level: attrs.level,
             setext: attrs.setext,
+            closed: attrs.closed,
         }),
 
         NodeValue::ThematicBreak => NewNode::ThematicBreak(ExThematicBreak {}),
