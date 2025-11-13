@@ -18,6 +18,7 @@
 - Add parse option `:tasklist_in_table` for tasklist items in table cells
 - Add parse option `:leave_footnote_definitions` to keep footnotes inline
 - Add parse option `:escaped_char_spans` for tracking escaped characters with source positions
+- Update `autumnus` to v0.7.8
 
 ## 0.9.4 - 2025-10-10
 
