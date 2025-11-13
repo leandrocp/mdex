@@ -106,6 +106,7 @@ defmodule MDEx.MixProject do
           MDEx.FootnoteReference,
           MDEx.FrontMatter,
           MDEx.Heading,
+          MDEx.Highlight,
           MDEx.HtmlBlock,
           MDEx.HtmlInline,
           MDEx.Image,

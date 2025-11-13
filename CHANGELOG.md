@@ -4,11 +4,20 @@
 
 ### Changed
 - **BREAKING** Move `:ignore_setext` from render to parse options
+- **BREAKING** Update `comrak` to v0.48.0 with breaking changes:
+  - Added `closed` field to `MDEx.CodeBlock` (indicates if code block was explicitly closed)
+  - Added `closed` field to `MDEx.Heading` (indicates if ATX heading had closing hashes)
+  - Added `texts` field to `MDEx.FootnoteReference` (stores original text elements with positions)
+  - Changed `MDEx.Table` `num_rows` calculation: now includes the header row in the count
+  - NUL byte handling changed: no longer translated to replacement character during parsing
+  - No virtual newline appended at EOF when missing
 - Overall performance optimizations in parsing and syntax highlighting
-- Update `comrak` to v0.46.0
+- Add extension option `:highlight` for ==highlighted text== (renders as `<mark>` tags)
 - Add extension option `:inline_footnotes`
 - Add extension option `:subtext` for Discord-style subtext
 - Add parse option `:tasklist_in_table` for tasklist items in table cells
+- Add parse option `:leave_footnote_definitions` to keep footnotes inline
+- Add parse option `:escaped_char_spans` for tracking escaped characters with source positions
 
 ## 0.9.4 - 2025-10-10
 

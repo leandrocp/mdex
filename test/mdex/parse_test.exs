@@ -311,7 +311,9 @@ defmodule MDEx.ParseTest do
       """,
       %MDEx.Document{
         nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "1", ref_num: 1, ix: 1}]},
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "1", ref_num: 1, ix: 1, texts: [{"^", 1}, {"1", 1}]}]
+          },
           %MDEx.FootnoteDefinition{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ref"}]}], name: "1", total_references: 1}
         ]
       }
@@ -325,7 +327,7 @@ defmodule MDEx.ParseTest do
       """,
       %MDEx.Document{
         nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "__inline_1", ref_num: 1, ix: 1}]},
+          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "__inline_1", ref_num: 1, ix: 1, texts: []}]},
           %MDEx.FootnoteDefinition{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "inline content"}]}], name: "__inline_1", total_references: 1}
         ]
       },
@@ -355,8 +357,8 @@ defmodule MDEx.ParseTest do
             ],
             alignments: [:none, :none],
             num_columns: 2,
-            num_rows: 1,
-            num_nonempty_cells: 2
+            num_rows: 2,
+            num_nonempty_cells: 4
           }
         ]
       }
@@ -383,8 +385,8 @@ defmodule MDEx.ParseTest do
             ],
             alignments: [:center, :right],
             num_columns: 2,
-            num_rows: 1,
-            num_nonempty_cells: 2
+            num_rows: 2,
+            num_nonempty_cells: 4
           }
         ]
       }

@@ -765,6 +765,11 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables Discord-style subtext using curly braces with hyphens: {-text-}."
     ],
+    highlight: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the highlight extension using double equals ==highlighted text== (wraps text in <mark> tags)."
+    ],
     image_url_rewriter: [
       type: {:or, [:string, nil]},
       default: nil,
@@ -845,6 +850,16 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Parse a tasklist item if it's the only content of a table cell."
+    ],
+    leave_footnote_definitions: [
+      type: :boolean,
+      default: false,
+      doc: "Leave footnote definitions inline instead of moving them to the end of the document."
+    ],
+    escaped_char_spans: [
+      type: :boolean,
+      default: false,
+      doc: "Track escaped characters with their source positions."
     ]
   ]
 
@@ -2589,9 +2604,10 @@ defmodule MDEx.CodeBlock do
           fence_length: non_neg_integer(),
           fence_offset: non_neg_integer(),
           info: String.t(),
-          literal: String.t()
+          literal: String.t(),
+          closed: boolean()
         }
-  defstruct nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "", literal: ""
+  defstruct nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "", literal: "", closed: true
   use MDEx.Document.Access
 end
 
@@ -2629,8 +2645,8 @@ defmodule MDEx.Heading do
   Spec: https://github.github.com/gfm/#atx-headings and https://github.github.com/gfm/#setext-headings
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean()}
-  defstruct nodes: [], level: 1, setext: false
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean(), closed: boolean()}
+  defstruct nodes: [], level: 1, setext: false, closed: false
   use MDEx.Document.Access
 end
 
@@ -2661,8 +2677,8 @@ defmodule MDEx.FootnoteReference do
   The reference to a footnote.
   """
 
-  @type t :: %__MODULE__{name: String.t(), ref_num: non_neg_integer(), ix: non_neg_integer()}
-  defstruct name: "", ref_num: nil, ix: nil
+  @type t :: %__MODULE__{name: String.t(), ref_num: non_neg_integer(), ix: non_neg_integer(), texts: [{String.t(), non_neg_integer()}]}
+  defstruct name: "", ref_num: nil, ix: nil, texts: []
   use MDEx.Document.Access
 end
 
@@ -2819,6 +2835,18 @@ defmodule MDEx.Strikethrough do
   Strikethrough.
 
   Spec: https://github.github.com/gfm/#strikethrough-extension-
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: []
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.Highlight do
+  @moduledoc """
+  Highlight (mark) text.
+
+  Uses double equals syntax: `==highlighted text==`
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
