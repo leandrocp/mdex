@@ -859,7 +859,7 @@ defmodule MDEx.Document do
     escaped_char_spans: [
       type: :boolean,
       default: false,
-      doc: "Track escaped characters with their source positions."
+      doc: "Wrap escaped characters in a <span> to allow any post-processing to recognize them."
     ]
   ]
 
