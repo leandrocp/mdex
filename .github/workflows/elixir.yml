@@ -6,9 +6,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  MDEX_BUILD: 1
-
 jobs:
   test:
     uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
