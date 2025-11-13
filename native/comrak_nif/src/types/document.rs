@@ -1,7 +1,5 @@
-use comrak::{
-    nodes::{AstNode, NodeValue},
-    Arena,
-};
+use comrak::nodes::{AstNode, NodeValue};
+use typed_arena::Arena as TypedArena;
 
 mod atoms {
     rustler::atoms! {
@@ -48,6 +46,7 @@ pub enum NewNode {
     Emph(ExEmph),
     Strong(ExStrong),
     Strikethrough(ExStrikethrough),
+    Highlight(ExHighlight),
     Superscript(ExSuperscript),
     Link(ExLink),
     Image(ExImage),
@@ -96,6 +95,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Emph(n) => n.into(),
             NewNode::Strong(n) => n.into(),
             NewNode::Strikethrough(n) => n.into(),
+            NewNode::Highlight(n) => n.into(),
             NewNode::Superscript(n) => n.into(),
             NewNode::Link(n) => n.into(),
             NewNode::Image(n) => n.into(),
@@ -296,6 +296,7 @@ pub struct ExCodeBlock {
     pub fence_offset: usize,
     pub info: String,
     pub literal: String,
+    pub closed: bool,
 }
 
 impl From<ExCodeBlock> for NodeValue {
@@ -307,6 +308,7 @@ impl From<ExCodeBlock> for NodeValue {
             fence_offset: node.fence_offset,
             info: node.info,
             literal: node.literal,
+            closed: node.closed,
         }))
     }
 }
@@ -346,6 +348,7 @@ pub struct ExHeading {
     pub nodes: Vec<NewNode>,
     pub level: u8,
     pub setext: bool,
+    pub closed: bool,
 }
 
 impl From<ExHeading> for NodeValue {
@@ -353,6 +356,7 @@ impl From<ExHeading> for NodeValue {
         NodeValue::Heading(comrak::nodes::NodeHeading {
             level: node.level,
             setext: node.setext,
+            closed: node.closed,
         })
     }
 }
@@ -390,15 +394,17 @@ pub struct ExFootnoteReference {
     pub name: String,
     pub ref_num: u32,
     pub ix: u32,
+    pub texts: Vec<(String, usize)>,
 }
 
 impl From<ExFootnoteReference> for NodeValue {
     fn from(node: ExFootnoteReference) -> Self {
-        NodeValue::FootnoteReference(comrak::nodes::NodeFootnoteReference {
+        NodeValue::FootnoteReference(Box::new(comrak::nodes::NodeFootnoteReference {
             name: node.name.to_string(),
             ref_num: node.ref_num,
             ix: node.ix,
-        })
+            texts: node.texts,
+        }))
     }
 }
 
@@ -584,6 +590,18 @@ pub struct ExStrikethrough {
 impl From<ExStrikethrough> for NodeValue {
     fn from(_node: ExStrikethrough) -> Self {
         NodeValue::Strikethrough
+    }
+}
+
+#[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.Highlight"]
+pub struct ExHighlight {
+    pub nodes: Vec<NewNode>,
+}
+
+impl From<ExHighlight> for NodeValue {
+    fn from(_node: ExHighlight) -> Self {
+        NodeValue::Highlight
     }
 }
 
@@ -809,7 +827,7 @@ impl From<ExAlert> for NodeValue {
 }
 
 pub fn ex_document_to_comrak_ast<'a>(
-    arena: &'a Arena<AstNode<'a>>,
+    arena: &'a TypedArena<AstNode<'a>>,
     new_node: NewNode,
 ) -> &'a AstNode<'a> {
     let node_value = NodeValue::from(new_node.clone());
@@ -837,6 +855,7 @@ pub fn ex_document_to_comrak_ast<'a>(
     | NewNode::Link(ExLink { nodes, .. })
     | NewNode::Image(ExImage { nodes, .. })
     | NewNode::Strikethrough(ExStrikethrough { nodes })
+    | NewNode::Highlight(ExHighlight { nodes })
     | NewNode::Superscript(ExSuperscript { nodes })
     | NewNode::MultilineBlockQuote(ExMultilineBlockQuote { nodes, .. })
     | NewNode::WikiLink(ExWikiLink { nodes, .. })
@@ -931,6 +950,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             fence_offset: attrs.fence_offset,
             info: attrs.info.to_string(),
             literal: attrs.literal.to_string(),
+            closed: attrs.closed,
         }),
 
         NodeValue::HtmlBlock(ref attrs) => NewNode::HtmlBlock(ExHtmlBlock {
@@ -945,6 +965,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             nodes: children,
             level: attrs.level,
             setext: attrs.setext,
+            closed: attrs.closed,
         }),
 
         NodeValue::ThematicBreak => NewNode::ThematicBreak(ExThematicBreak {}),
@@ -962,6 +983,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
                 name: attrs.name.to_string(),
                 ref_num: attrs.ref_num,
                 ix: attrs.ix,
+                texts: attrs.texts.clone(),
             })
         }
 
@@ -1021,6 +1043,8 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
         NodeValue::Strong => NewNode::Strong(ExStrong { nodes: children }),
 
         NodeValue::Strikethrough => NewNode::Strikethrough(ExStrikethrough { nodes: children }),
+
+        NodeValue::Highlight => NewNode::Highlight(ExHighlight { nodes: children }),
 
         NodeValue::Superscript => NewNode::Superscript(ExSuperscript { nodes: children }),
 

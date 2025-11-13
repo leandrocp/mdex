@@ -244,10 +244,10 @@ defmodule MDEx do
   ## Examples
 
       iex> MDEx.parse_fragment("# Elixir")
-      {:ok, %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 1, setext: false}}
+      {:ok, %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 1, setext: false, closed: false}}
 
       iex> MDEx.parse_fragment("<h1>Elixir</h1>")
-      {:ok, %MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>Elixir</h1>\\n"}}
+      {:ok, %MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>Elixir</h1>"}}
 
   """
   @spec parse_fragment(String.t(), MDEx.Document.options()) :: {:ok, Document.md_node()} | nil

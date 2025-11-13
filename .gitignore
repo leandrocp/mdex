@@ -39,3 +39,4 @@ checksum-*.exs
 /examples/*.html
 
 mise.toml
+/.claude/settings.local.json

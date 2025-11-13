@@ -760,8 +760,8 @@ defmodule MDEx.StreamingTest do
                ],
                alignments: [:none, :none],
                num_columns: 2,
-               num_rows: 0,
-               num_nonempty_cells: 0
+               num_rows: 1,
+               num_nonempty_cells: 2
              }
            ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
   end
@@ -793,8 +793,8 @@ defmodule MDEx.StreamingTest do
                ],
                alignments: [:none, :none],
                num_columns: 2,
-               num_rows: 1,
-               num_nonempty_cells: 1
+               num_rows: 2,
+               num_nonempty_cells: 4
              }
            ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
   end

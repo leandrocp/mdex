@@ -30,6 +30,7 @@ pub struct ExExtensionOptions {
     pub spoiler: bool,
     pub greentext: bool,
     pub subtext: bool,
+    pub highlight: bool,
     pub image_url_rewriter: Option<String>,
     pub link_url_rewriter: Option<String>,
     pub cjk_friendly_emphasis: bool,
@@ -61,6 +62,7 @@ impl From<ExExtensionOptions> for Extension<'_> {
             spoiler: options.spoiler,
             greentext: options.greentext,
             subtext: options.subtext,
+            highlight: options.highlight,
             image_url_rewriter: match options.image_url_rewriter {
                 None => None,
                 Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),
@@ -82,6 +84,8 @@ pub struct ExParseOptions {
     pub relaxed_autolinks: bool,
     pub ignore_setext: bool,
     pub tasklist_in_table: bool,
+    pub leave_footnote_definitions: bool,
+    pub escaped_char_spans: bool,
 }
 
 impl From<ExParseOptions> for Parse<'_> {
@@ -93,6 +97,8 @@ impl From<ExParseOptions> for Parse<'_> {
             relaxed_autolinks: options.relaxed_autolinks,
             ignore_setext: options.ignore_setext,
             tasklist_in_table: options.tasklist_in_table,
+            leave_footnote_definitions: options.leave_footnote_definitions,
+            escaped_char_spans: options.escaped_char_spans,
             broken_link_callback: None,
         }
     }
