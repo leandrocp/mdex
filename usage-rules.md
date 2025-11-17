@@ -10,6 +10,99 @@ MDEx is a fast and extensible Markdown parser for Elixir. It provides multiple o
 4. **Chain Operations** - Compose transformations instead of nesting
 5. **Leverage Protocols** - Use Access, Enumerable, and Collectable for tree operations
 
+## Decision Guide: When to Use What
+
+### Choose Your Approach
+
+**Use `~MD[...]HTML` sigil when:**
+- ✅ Content is static or known at compile-time
+- ✅ Working with templates that have EEx assigns
+- ✅ Performance is critical (compile-time = zero runtime parsing cost)
+- ✅ Content won't change based on runtime data
+- ✅ You're rendering in templates or views
+
+**Use `MDEx.to_html!/2` when:**
+- ✅ Content comes from user input or database
+- ✅ Markdown is dynamic and changes at runtime
+- ✅ You need quick one-off conversions
+- ✅ Working with external data sources
+- ✅ Simple use case without manipulation
+
+**Use Document API (`MDEx.new/1` + pipeline) when:**
+- ✅ You need to transform or manipulate the AST
+- ✅ Building custom plugins
+- ✅ Applying multiple transformations
+- ✅ Need to inspect or modify nodes programmatically
+- ✅ Working with streaming content
+- ✅ Require complex preprocessing or postprocessing
+
+**Use `MDEx.parse_document!/2` when:**
+- ✅ You only need the AST (not HTML output)
+- ✅ Building custom renderers
+- ✅ Extracting structured data (TOC, metadata, etc.)
+- ✅ Analyzing document structure
+- ✅ Converting to non-HTML formats
+
+### Output Format Selection
+
+**HTML (`to_html!/2`)** - Most common, for web rendering
+**JSON (`to_json!/2`)** - API responses, data interchange
+**XML (`to_xml!/2`)** - Legacy systems, XML workflows
+**Markdown (`to_markdown!/2`)** - Normalize or reformat Markdown
+**Delta (`to_delta!/2`)** - Rich text editors (Quill)
+
+### Streaming vs Non-Streaming
+
+**Use streaming (`streaming: true`) when:**
+- ✅ Content arrives in chunks (AI responses, SSE)
+- ✅ LiveView with incremental updates
+- ✅ Real-time collaborative editing
+- ✅ Progressive rendering is needed
+
+**Use non-streaming (default) when:**
+- ✅ You have complete Markdown upfront
+- ✅ Single-shot conversions
+- ✅ Static content rendering
+- ✅ Batch processing
+
+### Troubleshooting Quick Reference
+
+**Problem: HTML is being escaped**
+```elixir
+# Solution: Enable unsafe mode (be careful!)
+MDEx.to_html!(markdown, render: [unsafe: true])
+```
+
+**Problem: Syntax highlighting not working**
+```elixir
+# Solution: Ensure formatter is configured
+syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
+```
+
+**Problem: Code decorators not working**
+```elixir
+# Solution: Enable both required render options
+render: [github_pre_lang: true, full_info_string: true]
+```
+
+**Problem: Streaming not accumulating content**
+```elixir
+# Solution: Use Enum.into/2, not put_markdown/2
+document = Enum.into(["chunk"], document)
+```
+
+**Problem: Table/strikethrough not rendering**
+```elixir
+# Solution: Enable GFM extensions
+extension: [table: true, strikethrough: true]
+```
+
+**Problem: Can't use inline node as document root**
+```elixir
+# Solution: Wrap it in a block container
+doc = MDEx.Document.wrap(inline_node)
+```
+
 ## Basic Usage
 
 ### Simple Conversions
@@ -99,7 +192,7 @@ doc[0]             # Get first node (depth-first traversal)
 
 # Enumerate over all nodes
 Enum.count(doc)
-Enum.map(doc, fn %node{} -> inspect(node) end)
+Enum.map(doc, fn node -> inspect(node) end)
 
 # Update nodes
 update_in(doc, [:document, Access.key!(:nodes), Access.all(), :code], fn code_node ->
@@ -288,28 +381,70 @@ let x: i32 = 42;
 
 ## Streaming
 
-MDEx supports streaming for real-time Markdown processing (e.g., AI chat applications):
+MDEx supports streaming for real-time Markdown processing (e.g., AI chat applications). Streaming automatically completes incomplete fragments to ensure valid output at each render.
+
+### Basic Streaming with put_markdown
 
 ```elixir
-# Enable streaming
+# Create a streaming document
 doc = MDEx.new(streaming: true)
-|> MDEx.Document.put_markdown("**Fol")
-|> MDEx.to_html!()
+
+# Add initial chunk
+doc = MDEx.Document.put_markdown(doc, "**Fol")
+MDEx.to_html!(doc)
 #=> "<p><strong>Fol</strong></p>"  (temporary completion)
 
-# Add more content
-doc
-|> MDEx.Document.put_markdown("low**")
-|> MDEx.to_html!()
+# Add more content (overwrites previous markdown)
+doc = MDEx.Document.put_markdown(doc, "**Follow**")
+MDEx.to_html!(doc)
 #=> "<p><strong>Follow</strong></p>"  (final output)
 ```
 
-Streaming automatically completes incomplete fragments to ensure valid output at each render.
+### Incremental Updates with Collectable Protocol
+
+**Preferred for LiveView and incremental streaming** - Use the Collectable protocol to append chunks:
+
+```elixir
+# Initialize streaming document
+document = MDEx.new(streaming: true)
+
+# Collect chunks incrementally (accumulates content)
+document = Enum.into(["**Hel"], document)
+MDEx.to_html!(document)
+#=> "<p><strong>Hel</strong></p>"
+
+document = Enum.into(["lo**\n\n"], document)
+MDEx.to_html!(document)
+#=> "<p><strong>Hello</strong></p>"
+
+document = Enum.into(["Next ", "paragraph"], document)
+MDEx.to_html!(document)
+#=> "<p><strong>Hello</strong></p>\n<p>Next paragraph</p>"
+```
+
+### LiveView Integration Pattern
+
+```elixir
+# In your LiveView mount
+def mount(_params, _session, socket) do
+  {:ok, assign(socket, :document, MDEx.new(streaming: true))}
+end
+
+# Handle streaming chunks
+def handle_info({:chunk, chunk}, socket) do
+  # Accumulate chunk using Collectable protocol
+  document = Enum.into([chunk], socket.assigns.document)
+  html = MDEx.to_html!(document)
+
+  {:noreply, assign(socket, document: document, html: html)}
+end
+```
 
 **Use Cases**:
 - AI/LLM chat responses arriving in chunks
 - Real-time collaborative editing
 - Progressive content loading
+- Streaming API responses
 
 See the [Streaming Example](https://github.com/leandrocp/mdex/blob/main/examples/streaming.exs) for a complete LiveView demo.
 
@@ -329,7 +464,7 @@ MDEx.to_html!("<div>Custom HTML</div>", render: [unsafe: true])
 # Sanitize HTML after rendering
 MDEx.to_html!("<script>bad</script><p>Good</p>",
   render: [unsafe: true],
-  sanitize: MDEx.Document.default_sanitize_options()
+  sanitize: MDEx.default_sanitize_options()
 )
 #=> "<p>Good</p>"  (script removed)
 
@@ -409,7 +544,7 @@ MDEx is built on top of these high-quality Rust libraries:
   - Cleans untrusted HTML to prevent XSS attacks
 
 - **[autumnus](https://crates.io/crates/autumnus)** - Syntax highlighting powered by Tree-sitter and Neovim themes
-  - [Documentation](https://docs.rs/ammonia/latest/autumnus/)
+  - [Documentation](https://docs.rs/autumnus/latest/autumnus/)
   - [Available Themes](https://docs.rs/autumnus/latest/autumnus/#themes-available)
   - High-quality code highlighting for 100+ languages
 
@@ -446,6 +581,7 @@ MDEx is built on top of these high-quality Rust libraries:
 
 - [mdex_gfm](https://hex.pm/packages/mdex_gfm) - GitHub Flavored Markdown preset
 - [mdex_mermaid](https://hex.pm/packages/mdex_mermaid) - Mermaid diagram rendering
+- [mdex_katex](https://hex.pm/packages/mdex_katex) - Render math formulas using KaTeX
 
 ## Performance Tips
 
@@ -459,8 +595,54 @@ MDEx is built on top of these high-quality Rust libraries:
 ## Common Gotchas
 
 1. **Info String Order** - Language must come first: `elixir theme=dark` (not `theme=dark elixir`)
-2. **Streaming Requires Flag** - Set `streaming: true` explicitly
+
+2. **Streaming Requires Flag** - Set `streaming: true` explicitly when creating documents
+
 3. **Unsafe HTML** - Raw HTML requires both `render: [unsafe: true]` and optionally sanitization
+   ```elixir
+   # Wrong: HTML is escaped by default
+   MDEx.to_html!("<div>Custom</div>")
+   #=> "&lt;div&gt;Custom&lt;/div&gt;"
+
+   # Right: Enable unsafe mode
+   MDEx.to_html!("<div>Custom</div>", render: [unsafe: true])
+   #=> "<p><div>Custom</div></p>"
+   ```
+
 4. **Code Decorators** - Need both `github_pre_lang: true` and `full_info_string: true`
+   ```elixir
+   render: [github_pre_lang: true, full_info_string: true]
+   ```
+
 5. **Extension Conflicts** - Some extensions may interact unexpectedly, test combinations
-6. **Fragment Nodes** - Not all nodes can be used as document root (use `wrap/1`)
+   - Example: `underline: true` requires specific parse options to work correctly
+   - Some Discord-specific features (`greentext`, `multiline_block_quotes`) may conflict with standard Markdown
+
+6. **Fragment Nodes** - Not all nodes can be used as document root
+   ```elixir
+   # Wrong: Inline nodes like Text can't be document root
+   doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "Hello"}]}
+   MDEx.to_html!(doc)  # May error or produce unexpected output
+
+   # Right: Wrap inline nodes in a block container
+   text_node = %MDEx.Text{literal: "Hello"}
+   doc = MDEx.Document.wrap(text_node)  # Wraps in Paragraph
+   MDEx.to_html!(doc)
+   #=> "<p>Hello</p>"
+
+   # Block nodes work as-is
+   doc = %MDEx.Document{nodes: [%MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Title"}]}]}
+   MDEx.to_html!(doc)
+   #=> "<h1>Title</h1>"
+   ```
+
+7. **Streaming Position** - `put_markdown/2` replaces content, use `Enum.into/2` for accumulation
+   ```elixir
+   # Wrong for incremental updates
+   doc = MDEx.Document.put_markdown(doc, "chunk1")
+   doc = MDEx.Document.put_markdown(doc, "chunk2")  # Overwrites chunk1!
+
+   # Right: Use Collectable protocol
+   doc = Enum.into(["chunk1"], doc)
+   doc = Enum.into(["chunk2"], doc)  # Accumulates
+   ```
