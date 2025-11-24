@@ -17,7 +17,8 @@ defmodule MDEx.Sigil do
               math_code: true,
               shortcodes: true,
               underline: true,
-              spoiler: true
+              spoiler: true,
+              phoenix_heex: true
             ],
             parse: [
               relaxed_tasklist_matching: true,
@@ -226,22 +227,26 @@ defmodule MDEx.Sigil do
           MDEx.to_html!(expr, @opts)
         end
 
-      # ~c"HEEX" ->
-      #   if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
-      #     raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
-      #   end
-      #
-      #   expr
-      #   |> MDEx.to_html!(@opts)
-      #   |> EEx.compile_string(
-      #     engine: Phoenix.LiveView.TagEngine,
-      #     file: __CALLER__.file,
-      #     line: __CALLER__.line + 1,
-      #     caller: __CALLER__,
-      #     indentation: 0,
-      #     source: expr,
-      #     tag_handler: Phoenix.LiveView.HTMLEngine
-      #   )
+      ~c"HEEX" ->
+        if Code.ensure_loaded?(Phoenix.LiveView) do
+          if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
+            raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
+          end
+
+          expr
+          |> MDEx.to_html!(@opts)
+          |> EEx.compile_string(
+            engine: Phoenix.LiveView.TagEngine,
+            file: __CALLER__.file,
+            line: __CALLER__.line + 1,
+            caller: __CALLER__,
+            indentation: 0,
+            source: expr,
+            tag_handler: Phoenix.LiveView.HTMLEngine
+          )
+        else
+          IO.warn("Phoenix LiveView is required to use the HEEX modifier with ~MD sigil")
+        end
 
       ~c"MD" ->
         cond do
