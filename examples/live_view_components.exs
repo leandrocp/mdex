@@ -9,132 +9,46 @@ defmodule MarkdownLive do
   import MDEx.Sigil
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, count: 0)}
+    {:ok, assign(socket, message: "Have a nice day", count: 0)}
   end
 
   def render(assigns) do
     ~MD"""
-    # Markdown Live :fire:
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
-    ## Setup
+    <div class="prose lg:prose-xl max-w-2xl mx-auto p-8">
 
-    All you need to do is:
+    # Demo
 
-    1. Install MDEx:
+    Hello from MDEx :wave:
 
-    ```elixir
-    def deps do
-      [
-        # Not yet released but soon!
-        {:mdex, "~> 0.11"}
-      ]
-    end
-    ```
+    **Markdown** and **HEEx** together!
 
-    2. Render Markdown with HEEx support:
+    Today is _{Calendar.strftime(DateTime.utc_now(), "%B %d, %Y")}_
 
-    ```elixir
-    import MDEx.Sigil
-    ~MD[# Today is {DateTime.utc_now()}]HEEX
-    ```
+    ---
 
-    ## Demo
+    <div class="flex items-center gap-4 p-6 bg-white/10 rounded-xl my-6 not-prose">
+      <button phx-click="dec" class="w-10 h-10 rounded-full bg-red-500 text-white text-xl font-bold">-</button>
+      <span class="text-3xl font-bold">{@count}</span>
+      <button phx-click="inc" class="w-10 h-10 rounded-full bg-green-500 text-white text-xl font-bold">+</button>
+    </div>
 
-    Today is **{DateTime.utc_now()}**
+    <%= @message %>
+    <ReqEmbed.embed url="https://www.youtube.com/watch?v=XfELJU1mRMg" class="aspect-video rounded-xl my-6" />
 
-    <span>{@count}</span>
-    <button phx-click="inc">+</button>
-
-    <ReqEmbed.embed url="https://www.youtube.com/watch?v=XfELJU1mRMg" class="aspect-video" />
+    ---
 
     Built with:
-
     - <.link href="https://crates.io/crates/comrak">comrak</.link>
-    - <.link href="https://hex.pm/packages/mdex">mdex</.link>
+    - <.link href="https://hex.pm/packages/mdex">MDEx</.link>
 
-    _And more..._
-
-    <style type="text/css">
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        background-color: #f9fafb;
-        padding: 2em;
-        max-width: 900px;
-        margin: 0 auto;
-      }
-
-      h1, h2, h3 {
-        font-weight: 600;
-        line-height: 1.2;
-        margin-top: 1.5em;
-        margin-bottom: 0.5em;
-      }
-
-      h1 {
-        font-size: 2.5em;
-        color: #1a202c;
-        padding-bottom: 0.3em;
-      }
-
-      h2 {
-        font-size: 1.8em;
-        color: #2d3748;
-        margin-top: 1.8em;
-      }
-
-      p {
-        margin-bottom: 1em;
-        font-size: 1.05em;
-      }
-
-      pre {
-        padding: 1.5em;
-        border-radius: 8px;
-        overflow-x: auto;
-        margin: 1.5em 0;
-        font-family: 'Monaco', 'Courier New', monospace;
-        font-size: 0.95em;
-        line-height: 1.5;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      code {
-        font-family: 'Monaco', 'Courier New', monospace;
-        padding: 0.2em 0.4em;
-        border-radius: 3px;
-        font-size: 0.9em;
-      }
-
-      pre code {
-        background-color: transparent;
-        color: inherit;
-        padding: 0;
-      }
-
-      button {
-        padding: 0.2em 0.8em;
-        cursor: pointer;
-      }
-
-      ul {
-        margin: 1.5em 0;
-        padding-left: 1.5em;
-      }
-
-      li {
-        margin-bottom: 0.5em;
-        font-size: 1.05em;
-      }
-    }
-    </style>
+    </div>
     """HEEX
   end
 
-  def handle_event("inc", _params, socket) do
-    {:noreply, assign(socket, count: socket.assigns.count + 1)}
-  end
+  def handle_event("inc", _, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
+  def handle_event("dec", _, socket), do: {:noreply, update(socket, :count, &(&1 - 1))}
 end
 
-PhoenixPlayground.start(live: MarkdownLive, open_browser: true)
+PhoenixPlayground.start(live: MarkdownLive, open_browser: true, port: 4040)
