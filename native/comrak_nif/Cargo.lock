@@ -301,6 +301,7 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 [[package]]
 name = "comrak"
 version = "0.48.0"
+source = "git+https://github.com/kivikakk/comrak#4d3fd1b8ff7181569eaaefd496b5a97bdc053b78"
 dependencies = [
  "bon",
  "caseless",

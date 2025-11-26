@@ -17,8 +17,7 @@ autumnus = { version = "0.7.8", features = ["all-languages", "nif_version_2_15",
 # autumnus = { path = "../../../autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # autumnus = { git = "https://github.com/leandrocp/autumnus", features = ["all-languages", "nif_version_2_15", "elixir-nif"] }
 # comrak = { version = "0.48", features = ["shortcodes"] }
-comrak = { path = "/Users/leandro/code/leandrocp/comrak", features = ["shortcodes", "phoenix_heex"] }
-# comrak = { git = "https://github.com/kivikakk/comrak" , features = ["shortcodes", "phoenix_heex"] }
+comrak = { git = "https://github.com/kivikakk/comrak" , features = ["shortcodes", "phoenix_heex"] }
 lazy_static = "1.5"
 log = "0.4"
 lol_html = "2.7"
