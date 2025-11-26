@@ -1,9 +1,16 @@
+# Phoenix LiveView HEEx
+
+```elixir
 Mix.install([
   {:phoenix_playground, "~> 0.1"},
   {:req_embed, "~> 0.3"},
-  {:mdex, path: ".."}
+  {:mdex, "~> 0.11"}
 ])
+```
 
+## Example
+
+```elixir
 defmodule MarkdownLive do
   use Phoenix.LiveView
   import MDEx.Sigil
@@ -50,5 +57,8 @@ defmodule MarkdownLive do
   def handle_event("inc", _, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
   def handle_event("dec", _, socket), do: {:noreply, update(socket, :count, &(&1 - 1))}
 end
+```
 
-PhoenixPlayground.start(live: MarkdownLive, open_browser: true, port: 4040)
+```elixir
+PhoenixPlayground.start(live: MarkdownLive, open_browser: true)
+```

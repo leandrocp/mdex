@@ -820,7 +820,7 @@ defmodule MDEx.Document do
     phoenix_heex: [
       type: :boolean,
       default: false,
-      doc: "Enables parsing of Phoenix HEEx templates."
+      doc: "Enables Phoenix HEEx components and expressions."
     ]
   ]
 

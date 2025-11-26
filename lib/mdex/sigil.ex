@@ -42,7 +42,7 @@ defmodule MDEx.Sigil do
 
   ## Examples
 
-  Defaults to parsing a Markdown string into a `MDEx.Document` struct:
+  With no modifier, `~MD` defaults to converting a Markdown string into a `MDEx.Document` struct:
 
       iex> import MDEx.Sigil
       iex> ~MD|# Hello from `~MD` sigil|
@@ -83,12 +83,30 @@ defmodule MDEx.Sigil do
       iex> ~MD|Running <%= @lang %>|MD
       "Running Elixir"
 
+  The `HEEX` modifier can render component and Elixir expressions:
+
+      iex> import MDEx.Sigil
+      iex> assigns = %{lang: "Elixir"}
+      iex> rendered = ~MD|Learn <Phoenix.Component.link href="https://elixir-lang.org">{@lang}</Phoenix.Component.link>|HEEX
+      %Phoenix.LiveView.Rendered{...}
+      iex> rendered |> Phoenix.HTML.Safe.to_iodata() |> IO.iodata_to_binary()
+      "<p>Learn <a href="https://elixir-lang.org">Elixir</a></p>"
+
   ## Modifiers
 
     * `HTML` - converts Markdown or `MDEx.Document` to HTML
 
-    Use [EEx.SmartEngine](https://hexdocs.pm/eex/EEx.SmartEngine.html) to the document into HTML. It does support `assigns` but only the old `<%= ... %>` syntax,
+    Use [EEx.SmartEngine](https://hexdocs.pm/eex/EEx.SmartEngine.html) to convert the document into HTML. It does support `assigns` but only the old `<%= ... %>` syntax,
     and it doesn't support components. It's useful if you want to generate static HTML from Markdown or don't need components or don't want to define an `assigns` variable (it's optional).
+
+    Prefer using the `HEEX` modifier if you need full Phoenix LiveView support with components and expressions.
+
+    * `HEEX` - converts Markdown to [Phoenix HEEx](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html) for LiveView templates
+
+    Enables LiveView components, `phx-*` bindings, and Elixir expressions inside Markdown.
+    Requires Phoenix LiveView and an `assigns` variable in scope.
+
+    See [Phoenix LiveView HEEx example](https://hexdocs.pm/mdex/phoenix_live_view_heex.html) for a demo.
 
     * `JSON` - converts Markdown or `MDEx.Document` to JSON
 
@@ -109,18 +127,15 @@ defmodule MDEx.Sigil do
 
   ## Assigns and Expressions
 
-  Only the `HTML` and `MD` modifiers support assigns, any other modifier will render the assign unmodified.
-  That's particularly important when generating a `MDEx.Document` which does represent the Markdown AST because it must respect
-  the Markdown content and also be able to convert back to a Markdown string.
+  The `HTML` and `HEEX` modifiers evaluate assigns and expressions at runtime.
+  Other modifiers preserve them as literal text in the output.
 
   > #### Expressions inside code blocks are preserved {: .warning}
-  > Expressions as `<%= ... %>` or `{ ... }` inside code blocks are escaped and not evaluated, ie: they are preserved as is:
+  > Expressions like `<%= ... %>` or `{ ... }` inside code blocks are escaped, not evaluated:
   > ```elixir
   > assigns = %{title: "Hello"}
-  > ~MD\"""
-  `{@title}`
-  > \"""HTML
-  > "<p><code>&lbrace;@title&rbrace;</code></p>"
+  > ~MD"`{@title}`"HTML
+  > #=> "<p><code>&lbrace;@title&rbrace;</code></p>"
   > ```
 
   ## Options
