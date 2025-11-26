@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- [Sigil] **Minor breaking change** Returns `%MDEx.HeexInline{}` instead of `%MDEx.Text{}` for Elixir expressions in the AST
+
+### Added
+- [Sigil] `HEEX` modifier for Phoenix LiveView components and Elixir expressions in Markdown
+
+### Fixed
+- Preserve HTML entities in output
+
 ## 0.10.0 - 2025-11-13
 
 ### Changed
