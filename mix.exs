@@ -84,6 +84,7 @@ defmodule MDEx.MixProject do
         "examples/mermaid.livemd",
         "examples/highlight_words.livemd",
         "examples/liquid.livemd",
+        "examples/phoenix_live_view_heex.livemd",
         {"guides/plugins.md", title: "Plugins"},
         {"guides/compilation.md", title: "Compilation"},
         {"guides/safety.md", title: "Safety"},
@@ -133,7 +134,9 @@ defmodule MDEx.MixProject do
           MDEx.Text,
           MDEx.ThematicBreak,
           MDEx.Underline,
-          MDEx.WikiLink
+          MDEx.WikiLink,
+          MDEx.HeexBlock,
+          MDEx.HeexInline
         ]
       ],
       groups_for_extras: [
@@ -165,6 +168,7 @@ defmodule MDEx.MixProject do
       {:nimble_parsec, "~> 1.0"},
       {:autumn, ">= 0.5.4"},
       {:jason, "~> 1.0"},
+      {:phoenix_live_view, "~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
   end

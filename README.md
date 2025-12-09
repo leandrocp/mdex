@@ -29,6 +29,7 @@
 - Formats:
   - Markdown (CommonMark)
   - HTML
+  - [Phoenix HEEx](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html)
   - JSON
   - XML
   - [Quill Delta](https://quilljs.com/docs/delta/)
@@ -37,12 +38,13 @@
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
 - Discord and GitLab Flavored-ish Markdown
 - Wiki-style links
+- Phoenix HEEx components and expressions
 - [Streaming](https://hexdocs.pm/mdex/MDEx.Document.html#module-streaming) incomplete fragments
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 - HTML sanitization
-- [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, JSON, XML, and Quill Delta
+- [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, HEEx, JSON, XML, and Quill Delta
 
 ## Examples
 
@@ -55,7 +57,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.8"}
+    {:mdex, "~> 0.10"}
   ]
 end
 ```
@@ -82,6 +84,13 @@ iex> MDEx.new(markdown: "# Hello :smile:", extension: [shortcodes: true]) |> MDE
 iex> import MDEx.Sigil
 iex> ~MD[# Hello :smile:]HTML
 "<h1>Hello 😄</h1>"
+```
+
+```elixir
+iex> import MDEx.Sigil
+iex> assigns = %{project: "MDEx"}
+iex> ~MD[# {@project}]HEEX
+%Phoenix.LiveView.Rendered{...}
 ```
 
 ```elixir
@@ -145,6 +154,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |Syntax Highlighting|✅|❌|❌|❌|
 |Code Block Decorators|✅|❌|❌|❌|
 |Streaming (fragments)|✅|❌|❌|❌|
+|Phoenix HEEx components|✅|❌|❌|❌|
 |AST|✅|✅|✅|❌|
 |AST to Markdown|✅|⚠️²|❌|❌|
 |To HTML|✅|✅|✅|✅|

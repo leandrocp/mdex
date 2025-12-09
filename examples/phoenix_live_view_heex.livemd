@@ -1,0 +1,64 @@
+# Phoenix LiveView HEEx
+
+```elixir
+Mix.install([
+  {:phoenix_playground, "~> 0.1"},
+  {:req_embed, "~> 0.3"},
+  {:mdex, "~> 0.11"}
+])
+```
+
+## Example
+
+```elixir
+defmodule MarkdownLive do
+  use Phoenix.LiveView
+  import MDEx.Sigil
+
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket, message: "Have a nice day", count: 0)}
+  end
+
+  def render(assigns) do
+    ~MD"""
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+    <div class="prose lg:prose-xl max-w-2xl mx-auto p-8">
+
+    # Demo
+
+    Hello from MDEx :wave:
+
+    **Markdown** and **HEEx** together!
+
+    Today is _{Calendar.strftime(DateTime.utc_now(), "%B %d, %Y")}_
+
+    ---
+
+    <div class="flex items-center gap-4 p-6 bg-white/10 rounded-xl my-6 not-prose">
+      <button phx-click="dec" class="w-10 h-10 rounded-full bg-red-500 text-white text-xl font-bold">-</button>
+      <span class="text-3xl font-bold">{@count}</span>
+      <button phx-click="inc" class="w-10 h-10 rounded-full bg-green-500 text-white text-xl font-bold">+</button>
+    </div>
+
+    <%= @message %>
+    <ReqEmbed.embed url="https://www.youtube.com/watch?v=XfELJU1mRMg" class="aspect-video rounded-xl my-6" />
+
+    ---
+
+    Built with:
+    - <.link href="https://crates.io/crates/comrak">comrak</.link>
+    - <.link href="https://hex.pm/packages/mdex">MDEx</.link>
+
+    </div>
+    """HEEX
+  end
+
+  def handle_event("inc", _, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
+  def handle_event("dec", _, socket), do: {:noreply, update(socket, :count, &(&1 - 1))}
+end
+```
+
+```elixir
+PhoenixPlayground.start(live: MarkdownLive, open_browser: true)
+```

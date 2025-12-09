@@ -318,6 +318,12 @@ defmodule MDExTest do
       assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true]) == "<h1>test</h1>"
     end
 
+    # https://github.com/leandrocp/mdex/issues/263
+    test "preserve html entities with unsafe render" do
+      assert MDEx.to_html!("<b>test</b> &lt;b&gt;test2&lt;/b&gt;", render: [unsafe: true]) ==
+               "<p><b>test</b> &lt;b&gt;test2&lt;/b&gt;</p>"
+    end
+
     test "sanitize unsafe raw html" do
       sanitize_options = MDEx.Document.default_sanitize_options()
 

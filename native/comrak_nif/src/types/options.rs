@@ -34,6 +34,7 @@ pub struct ExExtensionOptions {
     pub image_url_rewriter: Option<String>,
     pub link_url_rewriter: Option<String>,
     pub cjk_friendly_emphasis: bool,
+    pub phoenix_heex: bool,
 }
 
 impl From<ExExtensionOptions> for Extension<'_> {
@@ -72,6 +73,7 @@ impl From<ExExtensionOptions> for Extension<'_> {
                 Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),
             },
             cjk_friendly_emphasis: options.cjk_friendly_emphasis,
+            phoenix_heex: options.phoenix_heex,
         }
     }
 }

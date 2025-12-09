@@ -27,7 +27,7 @@ defmodule MDEx.SigilTest do
   describe "sigil_MD without assigns" do
     test "markdown to document" do
       assert %MDEx.Document{
-               nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "<%= @lang %>"}], level: 1, setext: false}]
+               nodes: [%MDEx.Heading{nodes: [%MDEx.HeexInline{literal: "<%= @lang %>"}], level: 1, setext: false}]
              } = ~MD|# <%= @lang %>|
     end
 

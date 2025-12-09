@@ -1,4 +1,6 @@
-use comrak::nodes::{AstNode, NodeValue};
+use comrak::nodes::{
+    AstNode, HeexNode, LineColumn, NodeHeexBlock, NodeTaskItem, NodeValue, Sourcepos,
+};
 use typed_arena::Arena as TypedArena;
 
 mod atoms {
@@ -61,6 +63,8 @@ pub enum NewNode {
     Subtext(ExSubtext),
     EscapedTag(ExEscapedTag),
     Alert(ExAlert),
+    HeexBlock(ExHeexBlock),
+    HeexInline(ExHeexInline),
 }
 
 impl From<NewNode> for NodeValue {
@@ -110,6 +114,8 @@ impl From<NewNode> for NodeValue {
             NewNode::Subtext(n) => n.into(),
             NewNode::EscapedTag(n) => n.into(),
             NewNode::Alert(n) => n.into(),
+            NewNode::HeexBlock(n) => n.into(),
+            NewNode::HeexInline(n) => n.into(),
         }
     }
 }
@@ -493,7 +499,13 @@ pub struct ExTaskItem {
 
 impl From<ExTaskItem> for NodeValue {
     fn from(node: ExTaskItem) -> Self {
-        NodeValue::TaskItem(node.marker.chars().next())
+        NodeValue::TaskItem(NodeTaskItem {
+            symbol: node.marker.chars().next(),
+            symbol_sourcepos: Sourcepos {
+                start: LineColumn::default(),
+                end: LineColumn::default(),
+            },
+        })
     }
 }
 
@@ -542,6 +554,42 @@ pub struct ExHtmlInline {
 impl From<ExHtmlInline> for NodeValue {
     fn from(node: ExHtmlInline) -> Self {
         NodeValue::HtmlInline(node.literal.to_string())
+    }
+}
+
+#[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.HeexBlock"]
+pub struct ExHeexBlock {
+    pub nodes: Vec<NewNode>,
+    pub literal: String,
+    pub node: String,
+}
+
+impl From<ExHeexBlock> for NodeValue {
+    fn from(node: ExHeexBlock) -> Self {
+        let heex_node = match node.node.as_str() {
+            "directive" => HeexNode::Directive,
+            "comment" => HeexNode::Comment,
+            "multiline_comment" => HeexNode::MultilineComment,
+            "expression" => HeexNode::Expression,
+            tag => HeexNode::Tag(tag.to_string()),
+        };
+        NodeValue::HeexBlock(Box::new(NodeHeexBlock {
+            literal: node.literal,
+            node: heex_node,
+        }))
+    }
+}
+
+#[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.HeexInline"]
+pub struct ExHeexInline {
+    pub literal: String,
+}
+
+impl From<ExHeexInline> for NodeValue {
+    fn from(node: ExHeexInline) -> Self {
+        NodeValue::HeexInline(node.literal)
     }
 }
 
@@ -1017,8 +1065,8 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::TaskItem(marker) => NewNode::TaskItem(ExTaskItem {
             nodes: children,
-            checked: marker.is_some(),
-            marker: marker.map_or_else(String::new, |c| c.to_string()),
+            checked: marker.symbol.is_some(),
+            marker: marker.symbol.map_or_else(String::new, |c| c.to_string()),
         }),
 
         NodeValue::SoftBreak => NewNode::SoftBreak(ExSoftBreak {}),
@@ -1112,6 +1160,22 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             multiline: attrs.multiline,
             fence_length: attrs.fence_length,
             fence_offset: attrs.fence_offset,
+        }),
+
+        NodeValue::HeexBlock(ref attrs) => NewNode::HeexBlock(ExHeexBlock {
+            nodes: children,
+            literal: attrs.literal.to_string(),
+            node: match &attrs.node {
+                HeexNode::Directive => "directive".to_string(),
+                HeexNode::Comment => "comment".to_string(),
+                HeexNode::MultilineComment => "multiline_comment".to_string(),
+                HeexNode::Expression => "expression".to_string(),
+                HeexNode::Tag(tag) => tag.clone(),
+            },
+        }),
+
+        NodeValue::HeexInline(ref literal) => NewNode::HeexInline(ExHeexInline {
+            literal: literal.to_string(),
         }),
     }
 }

@@ -8,35 +8,15 @@ mod autumnus_adapter;
 mod types;
 
 use autumnus_adapter::AutumnusAdapter;
-use comrak::html::{ChildRendering, Context};
+use comrak::format_html_with_plugins;
 use comrak::options::Plugins;
-use comrak::{create_formatter, nodes::NodeValue};
 use comrak::{Anchorizer, Arena, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
 use rustler::{Encoder, Env, NifResult, Term};
-use std::fmt::Write;
 use types::{atoms::ok, document::*, options::*};
 
 rustler::init!("Elixir.MDEx.Native");
-
-create_formatter!(HTMLFormatter, {
-    NodeValue::Text(ref literal) => |context, node, entering| {
-        if entering {
-            write_context(context, literal.as_bytes())?;
-        }
-        return Ok(ChildRendering::HTML);
-    },
-});
-
-pub fn write_context<T>(context: &mut Context<T>, buffer: &[u8]) -> std::fmt::Result {
-    let s = std::str::from_utf8(buffer).map_err(|_| std::fmt::Error)?;
-    if context.options.render.escape {
-        context.escape(s)
-    } else {
-        context.write_str(s)
-    }
-}
 
 #[rustler::nif(schedule = "DirtyCpu")]
 fn parse_document<'a>(env: Env<'a>, md: &str, options: ExOptions) -> NifResult<Term<'a>> {
@@ -80,8 +60,7 @@ fn markdown_to_html_with_options<'a>(
 
     let mut buffer = String::new();
 
-    HTMLFormatter::format_document_with_plugins(root, &comrak_options, &mut buffer, &plugins)
-        .unwrap();
+    format_html_with_plugins(root, &comrak_options, &mut buffer, &plugins).unwrap();
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))
@@ -176,8 +155,7 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
     let mut buffer = String::new();
     let options = Options::default();
     let plugins = Plugins::default();
-    HTMLFormatter::format_document_with_plugins(comrak_ast, &options, &mut buffer, &plugins)
-        .unwrap();
+    format_html_with_plugins(comrak_ast, &options, &mut buffer, &plugins).unwrap();
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &None, false, true);
     Ok((ok(), html).encode(env))
@@ -212,8 +190,7 @@ fn document_to_html_with_options<'a>(
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
     }
 
-    HTMLFormatter::format_document_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
-        .unwrap();
+    format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins).unwrap();
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
     Ok((ok(), html).encode(env))

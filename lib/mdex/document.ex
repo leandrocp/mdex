@@ -816,6 +816,11 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Recognizes many emphasis that appear in CJK contexts but are not recognized by plain CommonMark."
+    ],
+    phoenix_heex: [
+      type: :boolean,
+      default: false,
+      doc: "Enables Phoenix HEEx components and expressions."
     ]
   ]
 
@@ -1281,6 +1286,8 @@ defmodule MDEx.Document do
           | MDEx.SpoileredText.t()
           | MDEx.EscapedTag.t()
           | MDEx.Alert.t()
+          | MDEx.HeexBlock.t()
+          | MDEx.HeexInline.t()
 
   @typedoc """
   Step in a pipeline.
@@ -3008,6 +3015,34 @@ defmodule MDEx.Alert do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.HeexBlock do
+  @moduledoc """
+  Phoenix LiveView HEEx block-level element.
+
+  Used for HEEx components, directives, comments, and expressions in Markdown.
+  """
+
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          literal: String.t(),
+          node: String.t()
+        }
+  defstruct nodes: [], literal: "", node: ""
+
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.HeexInline do
+  @moduledoc """
+  Phoenix LiveView HEEx inline element.
+
+  Used for inline HEEx expressions in Markdown.
+  """
+
+  @type t :: %__MODULE__{literal: String.t()}
+  defstruct literal: ""
+end
+
 defimpl Enumerable,
   for: [
     MDEx.Document,
@@ -3039,7 +3074,8 @@ defimpl Enumerable,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.EscapedTag,
-    MDEx.Alert
+    MDEx.Alert,
+    MDEx.HeexBlock
   ] do
   def count(_), do: {:error, __MODULE__}
   def member?(_, _), do: {:error, __MODULE__}
@@ -3091,7 +3127,8 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
-    MDEx.Escaped
+    MDEx.Escaped,
+    MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}
   def member?(_, _), do: {:error, __MODULE__}
@@ -3150,7 +3187,9 @@ defimpl String.Chars,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.EscapedTag,
-    MDEx.Alert
+    MDEx.Alert,
+    MDEx.HeexBlock,
+    MDEx.HeexInline
   ] do
   def to_string(node) do
     MDEx.to_markdown!(%MDEx.Document{nodes: [node]})
@@ -3206,7 +3245,9 @@ defimpl Jason.Encoder,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.EscapedTag,
-    MDEx.Alert
+    MDEx.Alert,
+    MDEx.HeexBlock,
+    MDEx.HeexInline
   ] do
   def encode(%type{} = node, opts) do
     map =
