@@ -1,4 +1,6 @@
-use comrak::nodes::{AstNode, HeexNode, NodeHeexBlock, NodeValue};
+use comrak::nodes::{
+    AstNode, HeexNode, LineColumn, NodeHeexBlock, NodeTaskItem, NodeValue, Sourcepos,
+};
 use typed_arena::Arena as TypedArena;
 
 mod atoms {
@@ -497,7 +499,13 @@ pub struct ExTaskItem {
 
 impl From<ExTaskItem> for NodeValue {
     fn from(node: ExTaskItem) -> Self {
-        NodeValue::TaskItem(node.marker.chars().next())
+        NodeValue::TaskItem(NodeTaskItem {
+            symbol: node.marker.chars().next(),
+            symbol_sourcepos: Sourcepos {
+                start: LineColumn::default(),
+                end: LineColumn::default(),
+            },
+        })
     }
 }
 
@@ -1057,8 +1065,8 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::TaskItem(marker) => NewNode::TaskItem(ExTaskItem {
             nodes: children,
-            checked: marker.is_some(),
-            marker: marker.map_or_else(String::new, |c| c.to_string()),
+            checked: marker.symbol.is_some(),
+            marker: marker.symbol.map_or_else(String::new, |c| c.to_string()),
         }),
 
         NodeValue::SoftBreak => NewNode::SoftBreak(ExSoftBreak {}),
