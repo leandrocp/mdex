@@ -46,10 +46,6 @@
 - HTML sanitization
 - [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, HEEx, JSON, XML, and Quill Delta
 
-## Examples
-
-Livebook examples are available at [Pages / Examples](https://hexdocs.pm/mdex/gfm.html)
-
 ## Installation
 
 Add `:mdex` dependency:
@@ -110,6 +106,10 @@ iex> MDEx.new(streaming: true)
 "<p><strong>Install</strong></p>"
 ```
 
+## Examples
+
+Livebook examples are available at [Pages / Examples](https://hexdocs.pm/mdex/gfm.html)
+
 ## Foundation
 
 The library is built on top of:
@@ -134,6 +134,20 @@ The library is built on top of:
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
+
+## Sponsors
+
+💜 **Support MDEx Development**
+
+If you or your company find MDEx useful, please consider sponsoring its development.
+
+➡️ **[GitHub Sponsors](https://github.com/sponsors/leandrocp)**
+
+Your support helps maintain and improve MDEx for the entire Elixir community!
+
+**Current and previous sponsors**
+
+<a href="https://dockyard.com" target="_blank"><img src="assets/images/dockyard_logo.svg" width="200" alt="DockYard" /></a>
 
 ## Motivation
 
