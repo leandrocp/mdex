@@ -16,7 +16,9 @@ jobs:
     uses: leandrocp/github-actions/.github/workflows/rust-test.yml@main
     with:
       manifest-path: 'native/comrak_nif/Cargo.toml'
+      msrv: '1.91'
   lint:
     uses: leandrocp/github-actions/.github/workflows/rust-lint.yml@main
     with:
       manifest-path: 'native/comrak_nif/Cargo.toml'
+      msrv: '1.91'

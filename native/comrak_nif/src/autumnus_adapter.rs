@@ -1,13 +1,8 @@
 use anyhow::{Context, Result};
-use autumnus::formatter::html_inline::{
-    HighlightLines as HtmlInlineHighlightLines, HighlightLinesStyle,
-};
-use autumnus::formatter::html_linked::HighlightLines as HtmlLinkedHighlightLines;
-use autumnus::formatter::{
-    Formatter, HtmlFormatter, HtmlInlineBuilder, HtmlLinkedBuilder, TerminalBuilder,
-};
+use autumnus::elixir::ExFormatterOption;
+use autumnus::html;
 use autumnus::languages::Language;
-use autumnus::FormatterOption;
+use autumnus::themes;
 use comrak::adapters::SyntaxHighlighterAdapter;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -32,7 +27,7 @@ impl<'a, W: Write + ?Sized> io::Write for FmtToIoAdapter<'a, W> {
 }
 
 pub struct AutumnusAdapter<'a> {
-    formatter: FormatterOption<'a>,
+    formatter_config: ExFormatterOption<'a>,
     stored_attrs: Mutex<Option<Arc<HashMap<String, String>>>>,
     stored_lang: Mutex<Option<Language>>,
 }
@@ -40,14 +35,7 @@ pub struct AutumnusAdapter<'a> {
 impl Default for AutumnusAdapter<'_> {
     fn default() -> Self {
         Self {
-            formatter: FormatterOption::HtmlInline {
-                theme: None,
-                pre_class: None,
-                italic: false,
-                include_highlights: false,
-                highlight_lines: None,
-                header: None,
-            },
+            formatter_config: ExFormatterOption::default(),
             stored_attrs: Mutex::new(None),
             stored_lang: Mutex::new(None),
         }
@@ -55,9 +43,9 @@ impl Default for AutumnusAdapter<'_> {
 }
 
 impl<'a> AutumnusAdapter<'a> {
-    pub fn new(formatter: FormatterOption<'a>) -> Self {
+    pub fn new(formatter_config: ExFormatterOption<'a>) -> Self {
         Self {
-            formatter,
+            formatter_config,
             stored_attrs: Mutex::new(None),
             stored_lang: Mutex::new(None),
         }
@@ -86,198 +74,172 @@ impl<'a> AutumnusAdapter<'a> {
         }
     }
 
-    fn parse_highlight_lines(&self, lines_str: &str) -> Vec<std::ops::RangeInclusive<usize>> {
-        lines_str
-            .split(',')
-            .filter_map(|part| {
-                let part = part.trim();
-                if let Some((start, end)) = part.split_once('-') {
-                    match (start.trim().parse::<usize>(), end.trim().parse::<usize>()) {
-                        (Ok(start_num), Ok(end_num)) => Some(start_num..=end_num),
-                        _ => None,
+    fn resolve_theme(theme_name: &str) -> Result<themes::Theme> {
+        themes::get(theme_name).with_context(|| format!("Invalid theme: {theme_name}"))
+    }
+
+    fn get_theme_from_formatter(&self) -> Option<themes::Theme> {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline { theme, .. } => theme.as_ref().and_then(|t| match t {
+                autumnus::elixir::ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
+                autumnus::elixir::ThemeOrString::String(name) => themes::get(name).ok(),
+            }),
+            ExFormatterOption::Terminal { theme } => theme.as_ref().and_then(|t| match t {
+                autumnus::elixir::ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
+                autumnus::elixir::ThemeOrString::String(name) => themes::get(name).ok(),
+            }),
+            _ => None,
+        }
+    }
+
+    fn get_pre_class(&self) -> Option<&str> {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline { pre_class, .. } => *pre_class,
+            ExFormatterOption::HtmlLinked { pre_class, .. } => *pre_class,
+            ExFormatterOption::HtmlMultiThemes { pre_class, .. } => *pre_class,
+            _ => None,
+        }
+    }
+
+    fn get_italic_enabled(&self) -> bool {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline { italic, .. } => *italic,
+            ExFormatterOption::HtmlMultiThemes { italic, .. } => *italic,
+            _ => false,
+        }
+    }
+
+    fn apply_italic_flag(
+        &self,
+        style: Arc<autumnus::highlight::Style>,
+    ) -> autumnus::highlight::Style {
+        if self.get_italic_enabled() {
+            (*style).clone()
+        } else {
+            autumnus::highlight::Style {
+                fg: style.fg.clone(),
+                bg: style.bg.clone(),
+                bold: style.bold,
+                italic: false,
+                underline: style.underline,
+                strikethrough: style.strikethrough,
+            }
+        }
+    }
+
+    fn should_include_highlights(&self) -> bool {
+        let stored_attrs = self
+            .stored_attrs
+            .lock()
+            .expect("stored_attrs mutex poisoned");
+        if let Some(attrs) = stored_attrs.as_ref() {
+            if attrs.contains_key("include_highlights") {
+                return true;
+            }
+        }
+
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline {
+                include_highlights, ..
+            } => *include_highlights,
+            ExFormatterOption::HtmlMultiThemes {
+                include_highlights, ..
+            } => *include_highlights,
+            _ => false,
+        }
+    }
+
+    fn get_decorator_theme(&self) -> Option<themes::Theme> {
+        let stored_attrs = self
+            .stored_attrs
+            .lock()
+            .expect("stored_attrs mutex poisoned");
+        if let Some(attrs) = stored_attrs.as_ref() {
+            if let Some(theme_name) = attrs.get("theme") {
+                return themes::get(theme_name).ok();
+            }
+        }
+        None
+    }
+
+    fn get_decorator_pre_class(&self) -> Option<String> {
+        let stored_attrs = self
+            .stored_attrs
+            .lock()
+            .expect("stored_attrs mutex poisoned");
+        if let Some(attrs) = stored_attrs.as_ref() {
+            if let Some(pre_class) = attrs.get("pre_class") {
+                return Some(pre_class.clone());
+            }
+        }
+        None
+    }
+
+    fn parse_highlight_lines(line_spec: &str) -> Vec<usize> {
+        let mut lines = Vec::new();
+        for part in line_spec.split(',') {
+            let part = part.trim();
+            if let Some((start, end)) = part.split_once('-') {
+                if let (Ok(s), Ok(e)) = (start.trim().parse::<usize>(), end.trim().parse::<usize>())
+                {
+                    for line in s..=e {
+                        lines.push(line);
                     }
-                } else {
-                    part.parse::<usize>().ok().map(|n| n..=n)
                 }
-            })
-            .collect()
-    }
-
-    fn resolve_theme(
-        attrs: &HashMap<String, String>,
-    ) -> Result<Option<&'static autumnus::themes::Theme>> {
-        match attrs.get("theme") {
-            Some(theme_name) => autumnus::themes::get(theme_name)
-                .map(Some)
-                .with_context(|| format!("Invalid theme: {theme_name}")),
-            None => Ok(None),
+            } else if let Ok(line) = part.parse::<usize>() {
+                lines.push(line);
+            }
         }
+        lines
     }
 
-    fn configure_html_inline_builder(
+    fn get_highlight_lines_config(
         &self,
-        base_config: &FormatterOption<'a>,
-        lang: Option<Language>,
-        source: Option<&'a str>,
-        custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<HtmlInlineBuilder<'a>, std::fmt::Error> {
-        let mut builder = HtmlInlineBuilder::default();
-
-        let custom_theme = custom_attrs.and_then(|attrs| Self::resolve_theme(attrs).ok().flatten());
-
-        if let FormatterOption::HtmlInline {
-            theme,
-            pre_class,
-            italic,
-            include_highlights,
-            highlight_lines,
-            header,
-        } = base_config
-        {
-            builder.italic(*italic);
-            builder.include_highlights(*include_highlights);
-
-            if let Some(theme) = custom_theme.or(*theme) {
-                builder.theme(Some(theme));
-            }
-
-            if let Some(pre_class) = pre_class {
-                builder.pre_class(Some(pre_class));
-            }
-
-            if let Some(highlight_lines) = highlight_lines {
-                builder.highlight_lines(Some(highlight_lines.clone()));
-            }
-
-            if let Some(header) = header {
-                builder.header(Some(header.clone()));
-            }
-        }
-
-        if let Some(attrs) = custom_attrs {
-            if let Some(pre_class) = attrs.get("pre_class") {
-                builder.pre_class(Some(pre_class));
-            }
-
-            if let Some(include_highlights_str) = attrs.get("include_highlights") {
-                if include_highlights_str == "true" {
-                    builder.include_highlights(true);
-                }
-            }
-
-            if let Some(highlight_lines_str) = attrs.get("highlight_lines") {
-                let lines = self.parse_highlight_lines(highlight_lines_str);
-                let style = match attrs.get("highlight_lines_style") {
-                    Some(style) if style == "theme" => Some(HighlightLinesStyle::Theme),
-                    Some(custom_style) => Some(HighlightLinesStyle::Style(custom_style.clone())),
-                    None => Some(HighlightLinesStyle::Theme),
-                };
-                let class = attrs.get("highlight_lines_class").cloned();
-
-                let highlight_lines = HtmlInlineHighlightLines {
-                    lines,
-                    style,
-                    class,
-                };
-                builder.highlight_lines(Some(highlight_lines));
+        theme: &Option<themes::Theme>,
+    ) -> Option<(Vec<usize>, Option<String>, Option<String>)> {
+        let stored_attrs = self
+            .stored_attrs
+            .lock()
+            .expect("stored_attrs mutex poisoned");
+        if let Some(attrs) = stored_attrs.as_ref() {
+            if let Some(lines_spec) = attrs.get("highlight_lines") {
+                let lines = Self::parse_highlight_lines(lines_spec);
+                let is_linked =
+                    matches!(self.formatter_config, ExFormatterOption::HtmlLinked { .. });
+                let class = attrs.get("highlight_lines_class").cloned().or_else(|| {
+                    if is_linked {
+                        Some("highlighted".to_string())
+                    } else {
+                        None
+                    }
+                });
+                let style = attrs
+                    .get("highlight_lines_style")
+                    .and_then(|s| {
+                        if s == "theme" {
+                            theme.as_ref().and_then(|t| {
+                                t.get_style("highlighted").map(|style| style.css(true, " "))
+                            })
+                        } else {
+                            Some(s.clone())
+                        }
+                    })
+                    .or_else(|| {
+                        if is_linked {
+                            None
+                        } else {
+                            theme.as_ref().map(|t| {
+                                let is_light = t.appearance == "light"
+                                    || t.name.to_lowercase().contains("light");
+                                let highlight_bg = if is_light { "#e7eaf0" } else { "#3b4252" };
+                                format!("background-color: {};", highlight_bg)
+                            })
+                        }
+                    });
+                return Some((lines, style, class));
             }
         }
-
-        if let Some(lang) = lang {
-            builder.lang(lang);
-        }
-
-        if let Some(source) = source {
-            builder.source(source);
-        }
-
-        Ok(builder)
-    }
-
-    fn configure_html_linked_builder(
-        &self,
-        base_config: &FormatterOption<'a>,
-        lang: Option<Language>,
-        source: Option<&'a str>,
-        custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<HtmlLinkedBuilder<'a>, std::fmt::Error> {
-        let mut builder = HtmlLinkedBuilder::default();
-
-        if let FormatterOption::HtmlLinked {
-            pre_class,
-            highlight_lines,
-            header,
-        } = base_config
-        {
-            if let Some(pre_class) = pre_class {
-                builder.pre_class(Some(pre_class));
-            }
-
-            if let Some(highlight_lines) = highlight_lines {
-                builder.highlight_lines(Some(highlight_lines.clone()));
-            }
-
-            if let Some(header) = header {
-                builder.header(Some(header.clone()));
-            }
-        }
-
-        if let Some(attrs) = custom_attrs {
-            if let Some(pre_class) = attrs.get("pre_class") {
-                builder.pre_class(Some(pre_class));
-            }
-
-            if let Some(highlight_lines_str) = attrs.get("highlight_lines") {
-                let lines = self.parse_highlight_lines(highlight_lines_str);
-                let mut highlight_lines = HtmlLinkedHighlightLines {
-                    lines,
-                    ..Default::default()
-                };
-
-                if let Some(class_str) = attrs.get("highlight_lines_class") {
-                    highlight_lines.class = class_str.clone();
-                }
-                builder.highlight_lines(Some(highlight_lines));
-            }
-        }
-
-        if let Some(lang) = lang {
-            builder.lang(lang);
-        }
-
-        if let Some(source) = source {
-            builder.source(source);
-        }
-
-        Ok(builder)
-    }
-
-    fn configure_terminal_builder(
-        &self,
-        base_config: &FormatterOption<'a>,
-        lang: Option<Language>,
-        source: Option<&'a str>,
-        custom_attrs: Option<&'a HashMap<String, String>>,
-    ) -> Result<TerminalBuilder<'a>, std::fmt::Error> {
-        let mut builder = TerminalBuilder::default();
-
-        let custom_theme = custom_attrs.and_then(|attrs| Self::resolve_theme(attrs).ok().flatten());
-
-        if let FormatterOption::Terminal { theme } = base_config {
-            if let Some(theme) = custom_theme.or(*theme) {
-                builder.theme(Some(theme));
-            }
-        }
-
-        if let Some(lang) = lang {
-            builder.lang(lang);
-        }
-
-        if let Some(source) = source {
-            builder.source(source);
-        }
-
-        Ok(builder)
+        None
     }
 
     fn get_custom_attrs(
@@ -290,12 +252,12 @@ impl<'a> AutumnusAdapter<'a> {
 
     fn get_language(attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>) -> Language {
         if let Some(lang) = attributes.get("lang") {
-            Language::guess(lang.as_ref(), "")
+            Language::guess(Some(lang.as_ref()), "")
         } else if let Some(class) = attributes.get("class") {
             let language = class.strip_prefix("language-").unwrap_or("plaintext");
-            Language::guess(language, "")
+            Language::guess(Some(language), "")
         } else {
-            Language::guess("plaintext", "")
+            Language::guess(Some("plaintext"), "")
         }
     }
 }
@@ -307,7 +269,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         attributes: HashMap<&'static str, std::borrow::Cow<'s, str>>,
     ) -> std::fmt::Result {
         let custom_attrs = Self::get_custom_attrs(&attributes);
-        let lang = attributes.get("lang").map(|l| Language::guess(l, ""));
+        let lang = attributes.get("lang").map(|l| Language::guess(Some(l), ""));
 
         if let Some(attrs) = custom_attrs {
             *self
@@ -319,41 +281,16 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
             *self.stored_lang.lock().expect("stored_lang mutex poisoned") = Some(language);
         }
 
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned")
-            .clone();
+        let theme = self
+            .get_decorator_theme()
+            .or_else(|| self.get_theme_from_formatter());
+        let pre_class = self
+            .get_decorator_pre_class()
+            .or_else(|| self.get_pre_class().map(|s| s.to_string()));
 
-        match &self.formatter {
-            FormatterOption::HtmlInline { .. } => {
-                let builder = self.configure_html_inline_builder(
-                    &self.formatter,
-                    lang,
-                    None,
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .open_pre_tag(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
-            }
-            FormatterOption::HtmlLinked { .. } => {
-                let builder = self.configure_html_linked_builder(
-                    &self.formatter,
-                    lang,
-                    None,
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .open_pre_tag(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
-            }
-            FormatterOption::Terminal { .. } => Ok(()),
-        }
+        let mut adapter = FmtToIoAdapter(output);
+        html::open_pre_tag(&mut adapter, pre_class.as_deref(), theme.as_ref())
+            .map_err(|_| std::fmt::Error)
     }
 
     fn write_code_tag<'s>(
@@ -374,44 +311,11 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
             *self.stored_lang.lock().expect("stored_lang mutex poisoned") = Some(lang);
         }
 
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned")
-            .clone();
         let stored_lang = *self.stored_lang.lock().expect("stored_lang mutex poisoned");
+        let effective_lang = stored_lang.unwrap_or(lang);
 
-        let effective_lang = stored_lang.or(Some(lang));
-
-        match &self.formatter {
-            FormatterOption::HtmlInline { .. } => {
-                let builder = self.configure_html_inline_builder(
-                    &self.formatter,
-                    effective_lang,
-                    None,
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .open_code_tag(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
-            }
-            FormatterOption::HtmlLinked { .. } => {
-                let builder = self.configure_html_linked_builder(
-                    &self.formatter,
-                    effective_lang,
-                    None,
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .open_code_tag(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
-            }
-            FormatterOption::Terminal { .. } => Ok(()),
-        }
+        let mut adapter = FmtToIoAdapter(output);
+        html::open_code_tag(&mut adapter, &effective_lang).map_err(|_| std::fmt::Error)
     }
 
     fn write_highlighted(
@@ -420,62 +324,86 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         lang: Option<&str>,
         source: &str,
     ) -> std::fmt::Result {
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned")
-            .clone();
         let stored_lang = *self.stored_lang.lock().expect("stored_lang mutex poisoned");
 
         let language = if let Some(stored_lang) = stored_lang {
             stored_lang
         } else if let Some(lang_str) = lang {
-            Language::guess(lang_str, source)
+            Language::guess(Some(lang_str), source)
         } else {
-            Language::guess("plaintext", source)
+            Language::guess(Some("plaintext"), source)
         };
 
-        match &self.formatter {
-            FormatterOption::HtmlInline { .. } => {
-                let builder = self.configure_html_inline_builder(
-                    &self.formatter,
-                    Some(language),
-                    Some(source),
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .highlights(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
+        let theme = self
+            .get_decorator_theme()
+            .or_else(|| self.get_theme_from_formatter());
+        let is_linked = matches!(self.formatter_config, ExFormatterOption::HtmlLinked { .. });
+        let include_highlights = self.should_include_highlights();
+
+        let iter = html::highlight_iter_with_scopes(source, language, theme.clone())
+            .map_err(|_| std::fmt::Error)?;
+
+        let mut html_output = String::new();
+        let mut last_end = 0;
+
+        for (style, text, range, scope) in iter {
+            if range.start > last_end {
+                let gap = &source[last_end..range.start];
+                html_output.push_str(gap);
             }
-            FormatterOption::HtmlLinked { .. } => {
-                let builder = self.configure_html_linked_builder(
-                    &self.formatter,
-                    Some(language),
-                    Some(source),
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .highlights(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
+
+            if text.trim().is_empty() {
+                html_output.push_str(text);
+            } else {
+                let scope_attr = if include_highlights {
+                    Some(scope)
+                } else {
+                    None
+                };
+
+                let span = if is_linked {
+                    html::span_linked(text, scope)
+                } else {
+                    let adjusted_style = self.apply_italic_flag(style.clone());
+                    html::span_inline(text, &adjusted_style, scope_attr)
+                };
+                html_output.push_str(&span);
             }
-            FormatterOption::Terminal { .. } => {
-                let builder = self.configure_terminal_builder(
-                    &self.formatter,
-                    Some(language),
-                    Some(source),
-                    stored_attrs.as_deref(),
-                )?;
-                let formatter = builder.build().map_err(|_| std::fmt::Error)?;
-                let mut adapter = FmtToIoAdapter(output);
-                formatter
-                    .highlights(&mut adapter)
-                    .map_err(|_| std::fmt::Error)
-            }
+            last_end = range.end;
         }
+
+        if last_end < source.len() {
+            let remaining = &source[last_end..];
+            html_output.push_str(remaining);
+        }
+
+        let highlight_config = self.get_highlight_lines_config(&theme);
+
+        for (i, line) in html_output.lines().enumerate() {
+            let line_number = i + 1;
+            let mut class_name = String::from("line");
+            let mut style_attr = String::new();
+
+            if let Some((ref lines, ref style, ref class)) = highlight_config {
+                if lines.contains(&line_number) {
+                    if let Some(ref c) = class {
+                        class_name.push(' ');
+                        class_name.push_str(c);
+                    }
+                    if let Some(ref s) = style {
+                        style_attr = format!(" style=\"{}\"", s);
+                    }
+                }
+            }
+
+            write!(
+                output,
+                "<div class=\"{}\"{} data-line=\"{}\">{}\n</div>",
+                class_name, style_attr, line_number, line
+            )?;
+        }
+
+        Ok(())
     }
 }
 
@@ -485,16 +413,11 @@ mod tests {
     use pretty_assertions::assert_str_eq;
 
     use super::*;
-    use autumnus::formatter::html_inline::{
-        HighlightLines as HtmlInlineHighlightLines, HighlightLinesStyle,
-    };
-    use autumnus::formatter::html_linked::HighlightLines as HtmlLinkedHighlightLines;
-    use autumnus::formatter::HtmlElement;
-    use autumnus::{themes, FormatterOption};
+    use autumnus::elixir::{ExFormatterOption, ThemeOrString};
     use comrak::options::Plugins;
     use comrak::{format_html_with_plugins, parse_document, Arena, Options};
 
-    fn run_test(markdown: &str, formatter: FormatterOption<'static>, options: Options) -> String {
+    fn run_test(markdown: &str, formatter: ExFormatterOption<'static>, options: Options) -> String {
         let arena = Arena::new();
         let root = parse_document(&arena, markdown, &options);
         let adapter = AutumnusAdapter::new(formatter);
@@ -527,13 +450,12 @@ fn main() {
 ```
 "#;
 
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::default();
-        let output = run_test(markdown, FormatterOption::default(), Options::default());
+        let formatter = ExFormatterOption::default();
+        let output = run_test(markdown, ExFormatterOption::default(), Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
-</div><div class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
-</div><div class="line" data-line="3"><span >&rbrace;</span>
+        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
+</div><div class="line" data-line="2">    let message = &quot;Hello, world!&quot;;
+</div><div class="line" data-line="3">&rbrace;
 </div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
@@ -549,7 +471,7 @@ fn main() {
 ```
 "#;
 
-        let formatter = FormatterOption::HtmlInline {
+        let formatter = ExFormatterOption::HtmlInline {
             theme: None,
             pre_class: None,
             italic: false,
@@ -560,9 +482,9 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span >fn</span> <span >main</span><span >(</span><span >)</span> <span >&lbrace;</span>
-</div><div class="line" data-line="2">    <span >let</span> <span >message</span> <span >=</span> <span >&quot;Hello, world!&quot;</span><span >;</span>
-</div><div class="line" data-line="3"><span >&rbrace;</span>
+        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
+</div><div class="line" data-line="2">    let message = &quot;Hello, world!&quot;;
+</div><div class="line" data-line="3">&rbrace;
 </div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
@@ -580,32 +502,21 @@ fn main() {
 ```
 "#;
 
-        let theme = themes::get("nord").expect("Theme not found");
-        let highlight_lines = HtmlInlineHighlightLines {
-            lines: vec![1..=1, 3..=4],
-            style: Some(HighlightLinesStyle::Theme),
-            class: None,
-        };
-        let header = HtmlElement {
-            open_tag: "<div class=\"code-header\">Rust Code</div>".to_string(),
-            close_tag: "</div>".to_string(),
-        };
-
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: Some(ThemeOrString::String("nord")),
             pre_class: Some("custom-pre-class"),
             italic: true,
             include_highlights: true,
-            highlight_lines: Some(highlight_lines),
-            header: Some(header),
+            highlight_lines: None,
+            header: None,
         };
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" style="background-color: #3b4252;" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+        let expected = r#"<pre class="athl custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</div><div class="line" style="background-color: #3b4252;" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
-</div><div class="line" style="background-color: #3b4252;" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">sum</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">+</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
+</div><div class="line" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">sum</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">+</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
 </div><div class="line" data-line="5"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
 </div></code></pre>"#;
 
@@ -625,21 +536,13 @@ fn main() {
 ```
 "#;
 
-        let nord_theme = themes::get("nord").expect("Nord theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(nord_theme),
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: Some(ThemeOrString::String("nord")),
             pre_class: Some("default-pre-class"),
             italic: true,
             include_highlights: false,
-            highlight_lines: Some(HtmlInlineHighlightLines {
-                lines: vec![2..=2],
-                style: Some(HighlightLinesStyle::Theme),
-                class: Some("default-highlight".to_string()),
-            }),
-            header: Some(HtmlElement {
-                open_tag: "<div class=\"header\">Header</div>".to_string(),
-                close_tag: "</div>".to_string(),
-            }),
+            highlight_lines: None,
+            header: None,
         };
 
         let mut options = Options::default();
@@ -670,9 +573,8 @@ fn main() {
 ```
 "#;
 
-        let nord_theme = themes::get("nord").expect("Nord theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(nord_theme),
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: Some(ThemeOrString::String("nord")),
             pre_class: Some("default-class"),
             italic: false,
             include_highlights: true,
@@ -705,7 +607,7 @@ fn main() {
 ```
 "#;
 
-        let formatter = FormatterOption::HtmlLinked {
+        let formatter = ExFormatterOption::HtmlLinked {
             pre_class: None,
             highlight_lines: None,
             header: None,
@@ -733,27 +635,18 @@ fn main() {
 ```
 "#;
 
-        let highlight_lines = HtmlLinkedHighlightLines {
-            lines: vec![1..=1, 3..=4],
-            class: "highlighted-line".to_string(),
-        };
-        let header = HtmlElement {
-            open_tag: "<div class=\"linked-header\">Linked Code</div>".to_string(),
-            close_tag: "</div>".to_string(),
-        };
-
-        let formatter = FormatterOption::HtmlLinked {
+        let formatter = ExFormatterOption::HtmlLinked {
             pre_class: Some("custom-linked-class"),
-            highlight_lines: Some(highlight_lines),
-            header: Some(header),
+            highlight_lines: None,
+            header: None,
         };
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><div class="line highlighted-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+        let expected = r#"<pre class="athl custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
 </div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">a</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
-</div><div class="line highlighted-line" data-line="3">    <span class="keyword">let</span> <span class="variable">b</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
-</div><div class="line highlighted-line" data-line="4">    <span class="keyword">let</span> <span class="variable">sum</span> <span class="operator">=</span> <span class="variable">a</span> <span class="operator">+</span> <span class="variable">b</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="3">    <span class="keyword">let</span> <span class="variable">b</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
+</div><div class="line" data-line="4">    <span class="keyword">let</span> <span class="variable">sum</span> <span class="operator">=</span> <span class="variable">a</span> <span class="operator">+</span> <span class="variable">b</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="5"><span class="punctuation-bracket">&rbrace;</span>
 </div></code></pre>"#;
 
@@ -773,16 +666,10 @@ fn main() {
 ```
 "#;
 
-        let formatter = FormatterOption::HtmlLinked {
+        let formatter = ExFormatterOption::HtmlLinked {
             pre_class: Some("default-linked-pre"),
-            highlight_lines: Some(HtmlLinkedHighlightLines {
-                lines: vec![3..=3],
-                class: "default-highlight-line".to_string(),
-            }),
-            header: Some(HtmlElement {
-                open_tag: "<div class=\"linked-header\">Linked Header</div>".to_string(),
-                close_tag: "</div>".to_string(),
-            }),
+            highlight_lines: None,
+            header: None,
         };
 
         let mut options = Options::default();
@@ -812,9 +699,8 @@ fn main() {
 ```
 "#;
 
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: Some(ThemeOrString::String("nord")),
             pre_class: None,
             italic: false,
             include_highlights: false,
@@ -846,9 +732,8 @@ fn main() {
 ```
 "#;
 
-        let theme = themes::get("nord").expect("Theme not found");
-        let formatter = FormatterOption::HtmlInline {
-            theme: Some(theme),
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: Some(ThemeOrString::String("nord")),
             pre_class: None,
             italic: false,
             include_highlights: false,
