@@ -562,7 +562,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span>
+        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #d19a66;">@</span><span style="color: #d19a66;">lang </span><span style="color: #e06c75;">:elixir</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -593,7 +593,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span>
         </div><div class="line" data-line="2"><span data-highlight="keyword" style="color: #c678dd;">end</span>
         </div></code></pre>
         """,
@@ -612,7 +612,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
-        </div><div class="line" style="background-color: #282c34;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #e06c75;">:world</span>
+        </div><div class="line" style="background-color: #3b4252;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
         """,
@@ -633,8 +633,8 @@ defmodule MDExTest do
         """,
         ~S"""
         <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
-        </div><div class="line" style="background-color: #282c34;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
-        </div><div class="line" style="background-color: #282c34;" data-line="3">    <span style="color: #e06c75;">:world</span>
+        </div><div class="line" style="background-color: #3b4252;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line" style="background-color: #3b4252;" data-line="3">    <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="4">  <span style="color: #c678dd;">end</span>
         </div><div class="line" data-line="5"><span style="color: #c678dd;">end</span>
         </div></code></pre>
@@ -653,7 +653,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
         </div><div class="line" style="background-color: yellow; font-weight: bold;" data-line="2">  <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
@@ -687,8 +687,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #61afef;">hello</span> <span style="color: #c678dd;">do</span>
-        </div><div class="line focus-line" style="background-color: #282c34;" data-line="2">  <span style="color: #e06c75;">:world</span>
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
+        </div><div class="line focus-line" style="background-color: #3b4252;" data-line="2">  <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
         """,
@@ -708,8 +708,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #8be9fd;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
-        </div><div class="line hl" style="background-color: #44475a;" data-line="2">  <span data-highlight="keyword.function" style="color: #8be9fd;">def</span> <span data-highlight="function" style="color: #50fa7b;">hello</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
+        <pre class="athl my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #ff79c6;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
+        </div><div class="line hl" style="background-color: #44475a;" data-line="2">  <span data-highlight="keyword" style="color: #ff79c6;">def</span> <span data-highlight="variable" style="color: #f8f8f2;">hello</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
         </div><div class="line hl" style="background-color: #44475a;" data-line="3">    <span data-highlight="string.special.symbol" style="color: #bd93f9;">:world</span>
         </div><div class="line" data-line="4">  <span data-highlight="keyword" style="color: #ff79c6;">end</span>
         </div><div class="line" data-line="5"><span data-highlight="keyword" style="color: #ff79c6;">end</span>
@@ -729,7 +729,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="operator"><span class="constant">@<span class="function-call"><span class="constant">lang <span class="string-special-symbol">:elixir</span></span></span></span></span>
+        <pre class="athl custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="constant">@</span><span class="constant">lang </span><span class="string-special-symbol">:elixir</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true],
@@ -747,8 +747,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
-        </div><div class="line highlighted" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span><span class="punctuation-delimiter">,</span> <span class="string-special-symbol">do: </span><span class="string-special-symbol">:world</span>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line highlighted" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span><span class="punctuation-delimiter">,</span> <span class="string-special-symbol">do: </span><span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="3"><span class="keyword">end</span>
         </div></code></pre>
         """,
@@ -769,8 +769,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
-        </div><div class="line highlighted" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line highlighted" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line highlighted" data-line="3">    <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="4">  <span class="keyword">end</span>
         </div><div class="line" data-line="5"><span class="keyword">end</span>
@@ -791,7 +791,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line focus-line" data-line="2">  <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="3"><span class="keyword">end</span>
         </div></code></pre>
@@ -813,8 +813,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl my-code"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
-        </div><div class="line focus" data-line="2">  <span class="keyword-function">def</span> <span class="function">hello</span> <span class="keyword">do</span>
+        <pre class="athl my-code"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        </div><div class="line focus" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line focus" data-line="3">    <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="4">  <span class="keyword">end</span>
         </div><div class="line" data-line="5"><span class="keyword">end</span>

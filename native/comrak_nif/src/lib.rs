@@ -46,13 +46,8 @@ fn markdown_to_html_with_options<'a>(
     let root = comrak::parse_document(&arena, md, &comrak_options);
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter = AutumnusAdapter::new(
-        options
-            .syntax_highlight
-            .unwrap_or_default()
-            .formatter
-            .into(),
-    );
+    let autumnus_adapter =
+        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
@@ -82,13 +77,8 @@ fn markdown_to_xml_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter = AutumnusAdapter::new(
-        options
-            .syntax_highlight
-            .unwrap_or_default()
-            .formatter
-            .into(),
-    );
+    let autumnus_adapter =
+        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
@@ -129,13 +119,8 @@ fn document_to_commonmark_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter = AutumnusAdapter::new(
-        options
-            .syntax_highlight
-            .unwrap_or_default()
-            .formatter
-            .into(),
-    );
+    let autumnus_adapter =
+        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
@@ -178,13 +163,8 @@ fn document_to_html_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter = AutumnusAdapter::new(
-        options
-            .syntax_highlight
-            .unwrap_or_default()
-            .formatter
-            .into(),
-    );
+    let autumnus_adapter =
+        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
@@ -226,13 +206,8 @@ fn document_to_xml_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter = AutumnusAdapter::new(
-        options
-            .syntax_highlight
-            .unwrap_or_default()
-            .formatter
-            .into(),
-    );
+    let autumnus_adapter =
+        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
         plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);

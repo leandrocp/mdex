@@ -166,7 +166,8 @@ defmodule MDEx.MixProject do
       {:rustler_precompiled, "~> 0.7"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
-      {:autumn, ">= 0.5.4"},
+      # {:autumn, ">= 0.5.4"},
+      {:autumn, github: "leandrocp/autumn"},
       {:jason, "~> 1.0"},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
