@@ -4,9 +4,11 @@
 
 ### Changed
 - [Sigil] **Minor breaking change** Returns `%MDEx.HeexInline{}` instead of `%MDEx.Text{}` for Elixir expressions in the AST
+- [Deps] Update `autumn` to v0.6.0
 
 ### Added
 - [Sigil] `HEEX` modifier for Phoenix LiveView components and Elixir expressions in Markdown
+- [Syntax Highlighter] Support multi (light/dark) themes
 
 ### Fixed
 - Preserve HTML entities in output

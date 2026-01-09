@@ -168,21 +168,6 @@ defmodule MDExTest do
                )
     end
 
-    test "change theme name" do
-      assert_output(
-        ~S"""
-        ```elixir
-        {:mdex, "~> 0.1"}
-        ```
-        """,
-        ~S"""
-        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
-        </div></code></pre>
-        """,
-        syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
-      )
-    end
-
     test "can be disabled" do
       assert_output(
         ~S"""
@@ -225,8 +210,42 @@ defmodule MDExTest do
         """
       )
     end
+  end
 
-    test "without inline styles" do
+  describe "syntax highlighting - html_inline" do
+    test "default options" do
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        </div></code></pre>
+        """,
+        syntax_highlight: [formatter: :html_inline]
+      )
+    end
+
+    test "custom theme" do
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+        </div></code></pre>
+        """,
+        syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
+      )
+    end
+  end
+
+  describe "syntax highlighting - html_linked" do
+    test "default options" do
       assert_output(
         ~S"""
         ```elixir
@@ -239,6 +258,23 @@ defmodule MDExTest do
         """,
         syntax_highlight: [formatter: :html_linked]
       )
+    end
+  end
+
+  describe "syntax highlighting - html_multi_themes" do
+    test "with themes" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          {:mdex, "~> 0.1"}
+          ```
+          """,
+          syntax_highlight: [formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"]}]
+        )
+
+      assert html =~ ~s(--athl-light: #1f2328)
+      assert html =~ ~s(--athl-dark: #e6edf3)
     end
   end
 

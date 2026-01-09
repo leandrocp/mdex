@@ -127,7 +127,7 @@ pub struct ExDocument {
 }
 
 impl From<ExDocument> for NodeValue {
-    fn from(node: ExDocument) -> Self {
+    fn from(_node: ExDocument) -> Self {
         NodeValue::Document
     }
 }
@@ -151,7 +151,7 @@ pub struct ExBlockQuote {
 }
 
 impl From<ExBlockQuote> for NodeValue {
-    fn from(node: ExBlockQuote) -> Self {
+    fn from(_node: ExBlockQuote) -> Self {
         NodeValue::BlockQuote
     }
 }
@@ -244,7 +244,7 @@ pub struct ExDescriptionList {
 }
 
 impl From<ExDescriptionList> for NodeValue {
-    fn from(node: ExDescriptionList) -> Self {
+    fn from(_node: ExDescriptionList) -> Self {
         NodeValue::DescriptionList
     }
 }
@@ -275,7 +275,7 @@ pub struct ExDescriptionTerm {
 }
 
 impl From<ExDescriptionTerm> for NodeValue {
-    fn from(node: ExDescriptionTerm) -> Self {
+    fn from(_node: ExDescriptionTerm) -> Self {
         NodeValue::DescriptionTerm
     }
 }
@@ -287,7 +287,7 @@ pub struct ExDescriptionDetails {
 }
 
 impl From<ExDescriptionDetails> for NodeValue {
-    fn from(node: ExDescriptionDetails) -> Self {
+    fn from(_node: ExDescriptionDetails) -> Self {
         NodeValue::DescriptionDetails
     }
 }
@@ -343,7 +343,7 @@ pub struct ExParagraph {
 }
 
 impl From<ExParagraph> for NodeValue {
-    fn from(node: ExParagraph) -> Self {
+    fn from(_node: ExParagraph) -> Self {
         NodeValue::Paragraph
     }
 }
@@ -1181,11 +1181,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 }
 
 fn string_to_char(s: String) -> u8 {
-    if s.is_empty() {
-        return 0;
-    }
-
-    s.chars().next().unwrap_or(' ') as u8
+    s.bytes().next().unwrap_or(0)
 }
 
 fn char_to_string(c: u8) -> Result<String, &'static str> {
