@@ -14,6 +14,8 @@ Mix.install([
 
 ## Example
 
+By @PJUllrich
+
 ```elixir
 defmodule MDEx.Posts.Post do
   @enforce_keys [:id, :title, :date, :body]
@@ -38,7 +40,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, MDEx.Posts.Post, <<70, 79, 82, 49, 0, 0, 18, ...>>, {:build, 3}}
+{:module, MDEx.Posts.Post, <<70, 79, 82, 49, 0, 0, 19, ...>>, ...}
 ```
 
 ```elixir
@@ -83,7 +85,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, MDEx.Posts.Parser, <<70, 79, 82, 49, 0, 0, 11, ...>>, {:markdown_to_html!, 1}}
+{:module, MDEx.Posts.Parser, <<70, 79, 82, 49, 0, 0, 11, ...>>, ...}
 ```
 
 ```elixir
@@ -99,7 +101,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, MDEx.Posts.HTMLConverter, <<70, 79, 82, 49, 0, 0, 7, ...>>, {:convert, 4}}
+{:module, MDEx.Posts.HTMLConverter, <<70, 79, 82, 49, 0, 0, 7, ...>>, ...}
 ```
 
 ```elixir
@@ -134,7 +136,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, MDEx.Posts, <<70, 79, 82, 49, 0, 0, 21, ...>>, {:get_post_by_id!, 1}}
+{:module, MDEx.Posts, <<70, 79, 82, 49, 0, 0, 26, ...>>, ...}
 ```
 
 ```elixir
@@ -168,7 +170,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, MDEx.DemoLive, <<70, 79, 82, 49, 0, 0, 24, ...>>, {:render, 1}}
+{:module, MDEx.DemoLive, <<70, 79, 82, 49, 0, 0, 25, ...>>, ...}
 ```
 
 ```elixir
@@ -179,60 +181,42 @@ PhoenixPlayground.start(live: MDEx.DemoLive)
 
 ```
 
-19:29:52.699 [info] Running PhoenixPlayground.Endpoint with Bandit 1.7.0 at 127.0.0.1:4000 (http)
+16:37:47.791 [info] Running PhoenixPlayground.Endpoint with Bandit 1.10.1 at 127.0.0.1:4000 (http)
 
-19:29:52.704 [info] Access PhoenixPlayground.Endpoint at http://localhost:4000
-
-19:29:52.731 [info] CONNECTED TO Phoenix.LiveView.Socket in 16µs
-  Transport: :websocket
-  Serializer: Phoenix.Socket.V2.JSONSerializer
-  Parameters: %{"vsn" => "2.0.0"}
-
+16:37:47.791 [info] Access PhoenixPlayground.Endpoint at http://localhost:4000
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-{:ok, #PID<0.343.0>}
+{:ok, #PID<0.4689.0>}
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
 
-19:29:52.781 [debug] MOUNT PhoenixPlayground.Router.DelegateLive
-  Parameters: %{}
-  Session: %{}
+16:37:47.905 [info] GET /
 
-19:29:52.781 [debug] Replied in 115µs
-
-19:29:52.783 [debug] HANDLE PARAMS in PhoenixPlayground.Router.DelegateLive
-  Parameters: %{}
-
-19:29:52.783 [debug] Replied in 61µs
-
-19:29:52.801 [info] GET /
-
-19:29:52.805 [debug] Processing with PhoenixPlayground.Router.DelegateLive.index/2
+16:37:47.908 [debug] Processing with PhoenixPlayground.Router.DelegateLive.__live__/0
   Parameters: %{}
   Pipelines: [:browser]
 
-19:29:52.816 [info] Sent 200 in 15ms
+16:37:47.927 [info] Sent 200 in 21ms
 
-19:29:52.843 [info] CONNECTED TO Phoenix.LiveView.Socket in 18µs
+16:37:47.949 [info] CONNECTED TO Phoenix.LiveView.Socket in 11µs
   Transport: :websocket
   Serializer: Phoenix.Socket.V2.JSONSerializer
   Parameters: %{"vsn" => "2.0.0"}
 
-19:29:52.844 [debug] MOUNT PhoenixPlayground.Router.DelegateLive
+16:37:47.974 [debug] MOUNT PhoenixPlayground.Router.DelegateLive
   Parameters: %{}
   Session: %{}
 
-19:29:52.844 [debug] Replied in 101µs
+16:37:47.974 [debug] Replied in 109µs
 
-19:29:52.844 [debug] HANDLE PARAMS in PhoenixPlayground.Router.DelegateLive
+16:37:47.974 [debug] HANDLE PARAMS in PhoenixPlayground.Router.DelegateLive
   Parameters: %{}
 
-19:29:52.844 [debug] Replied in 21µs
-
+16:37:47.974 [debug] Replied in 58µs
 ```

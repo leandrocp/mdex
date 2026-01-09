@@ -2,9 +2,9 @@
 
 ```elixir
 Mix.install([
+  {:mdex, "~> 0.11"},
   {:phoenix_playground, "~> 0.1"},
-  {:req_embed, "~> 0.3"},
-  {:mdex, "~> 0.11"}
+  {:req_embed, "~> 0.3"}
 ])
 ```
 
