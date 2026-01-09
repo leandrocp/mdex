@@ -228,7 +228,7 @@ defmodule MDExTest do
       )
     end
 
-    test "custom theme" do
+    test "built-in theme" do
       assert_output(
         ~S"""
         ```elixir
@@ -240,6 +240,37 @@ defmodule MDExTest do
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
+      )
+    end
+
+    test "custom theme" do
+      theme = Autumn.Theme.get("github_light")
+
+      function_call_style =
+        %Autumn.Theme.Style{
+          fg: "#d1242f",
+          bg: "#e4b7be",
+          bold: true
+        }
+
+      custom_theme =
+        put_in(
+          theme,
+          [Access.key!(:highlights), Access.key!("function.call")],
+          function_call_style
+        )
+
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre class="athl" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #1f2328;">&lbrace;</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">&rbrace;</span>
+        </div></code></pre>
+        """,
+        syntax_highlight: [formatter: {:html_inline, theme: custom_theme}]
       )
     end
   end
