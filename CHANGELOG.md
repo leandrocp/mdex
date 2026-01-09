@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 - 2026-01-09
 
 ### Changed
 - [Sigil] **Minor breaking change** Returns `%MDEx.HeexInline{}` instead of `%MDEx.Text{}` for Elixir expressions in the AST
