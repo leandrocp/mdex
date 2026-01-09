@@ -28,6 +28,7 @@ mdex-*.tar
 /playground.html
 
 # The directory that rust will compile to for testing.
+/target/
 /native/comrak_nif/target/
 
 # The checksum files for precompiled NIFs

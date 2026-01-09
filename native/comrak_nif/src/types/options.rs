@@ -184,15 +184,15 @@ impl ExSanitizeOption {
 }
 
 #[derive(Debug, Default, NifMap)]
-pub struct ExSyntaxHighlightOptions<'a> {
-    pub formatter: ExFormatterOption<'a>,
+pub struct ExSyntaxHighlightOptions {
+    pub formatter: ExFormatterOption,
 }
 
 #[derive(Debug, Default, NifMap)]
-pub struct ExOptions<'a> {
+pub struct ExOptions {
     pub extension: ExExtensionOptions,
     pub parse: ExParseOptions,
     pub render: ExRenderOptions,
-    pub syntax_highlight: Option<ExSyntaxHighlightOptions<'a>>,
+    pub syntax_highlight: Option<ExSyntaxHighlightOptions>,
     pub sanitize: Option<ExSanitizeOption>,
 }

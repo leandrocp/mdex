@@ -1,13 +1,14 @@
-use anyhow::{Context, Result};
 use autumnus::elixir::ExFormatterOption;
+use autumnus::highlight::highlight_iter;
 use autumnus::html;
 use autumnus::languages::Language;
-use autumnus::themes;
+use autumnus::themes::{self, Appearance};
 use comrak::adapters::SyntaxHighlighterAdapter;
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::io;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 struct FmtToIoAdapter<'a, W: Write + ?Sized>(&'a mut W);
 
@@ -26,13 +27,21 @@ impl<'a, W: Write + ?Sized> io::Write for FmtToIoAdapter<'a, W> {
     }
 }
 
-pub struct AutumnusAdapter<'a> {
-    formatter_config: ExFormatterOption<'a>,
+struct MultiThemesConfig {
+    themes: HashMap<String, themes::Theme>,
+    default_theme: Option<String>,
+    css_variable_prefix: String,
+    italic: bool,
+    include_highlights: bool,
+}
+
+pub struct AutumnusAdapter {
+    formatter_config: ExFormatterOption,
     stored_attrs: Mutex<Option<Arc<HashMap<String, String>>>>,
     stored_lang: Mutex<Option<Language>>,
 }
 
-impl Default for AutumnusAdapter<'_> {
+impl Default for AutumnusAdapter {
     fn default() -> Self {
         Self {
             formatter_config: ExFormatterOption::default(),
@@ -42,8 +51,8 @@ impl Default for AutumnusAdapter<'_> {
     }
 }
 
-impl<'a> AutumnusAdapter<'a> {
-    pub fn new(formatter_config: ExFormatterOption<'a>) -> Self {
+impl AutumnusAdapter {
+    pub fn new(formatter_config: ExFormatterOption) -> Self {
         Self {
             formatter_config,
             stored_attrs: Mutex::new(None),
@@ -74,11 +83,7 @@ impl<'a> AutumnusAdapter<'a> {
         }
     }
 
-    fn resolve_theme(theme_name: &str) -> Result<themes::Theme> {
-        themes::get(theme_name).with_context(|| format!("Invalid theme: {theme_name}"))
-    }
-
-    fn get_theme_from_formatter(&self) -> Option<themes::Theme> {
+    fn theme_from_formatter(&self) -> Option<themes::Theme> {
         match &self.formatter_config {
             ExFormatterOption::HtmlInline { theme, .. } => theme.as_ref().and_then(|t| match t {
                 autumnus::elixir::ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
@@ -92,16 +97,44 @@ impl<'a> AutumnusAdapter<'a> {
         }
     }
 
-    fn get_pre_class(&self) -> Option<&str> {
+    fn multi_themes_config(&self) -> Option<MultiThemesConfig> {
         match &self.formatter_config {
-            ExFormatterOption::HtmlInline { pre_class, .. } => *pre_class,
-            ExFormatterOption::HtmlLinked { pre_class, .. } => *pre_class,
-            ExFormatterOption::HtmlMultiThemes { pre_class, .. } => *pre_class,
+            ExFormatterOption::HtmlMultiThemes {
+                themes,
+                default_theme,
+                css_variable_prefix,
+                italic,
+                include_highlights,
+                ..
+            } => {
+                let themes_map: HashMap<String, themes::Theme> = themes
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.clone().into()))
+                    .collect();
+                Some(MultiThemesConfig {
+                    themes: themes_map,
+                    default_theme: default_theme.clone(),
+                    css_variable_prefix: css_variable_prefix
+                        .clone()
+                        .unwrap_or_else(|| "--athl".to_string()),
+                    italic: *italic,
+                    include_highlights: *include_highlights,
+                })
+            }
             _ => None,
         }
     }
 
-    fn get_italic_enabled(&self) -> bool {
+    fn pre_class(&self) -> Option<&str> {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline { pre_class, .. } => pre_class.as_deref(),
+            ExFormatterOption::HtmlLinked { pre_class, .. } => pre_class.as_deref(),
+            ExFormatterOption::HtmlMultiThemes { pre_class, .. } => pre_class.as_deref(),
+            _ => None,
+        }
+    }
+
+    fn italic_enabled(&self) -> bool {
         match &self.formatter_config {
             ExFormatterOption::HtmlInline { italic, .. } => *italic,
             ExFormatterOption::HtmlMultiThemes { italic, .. } => *italic,
@@ -109,29 +142,8 @@ impl<'a> AutumnusAdapter<'a> {
         }
     }
 
-    fn apply_italic_flag(
-        &self,
-        style: Arc<autumnus::highlight::Style>,
-    ) -> autumnus::highlight::Style {
-        if self.get_italic_enabled() {
-            (*style).clone()
-        } else {
-            autumnus::highlight::Style {
-                fg: style.fg.clone(),
-                bg: style.bg.clone(),
-                bold: style.bold,
-                italic: false,
-                underline: style.underline,
-                strikethrough: style.strikethrough,
-            }
-        }
-    }
-
     fn should_include_highlights(&self) -> bool {
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned");
+        let stored_attrs = self.stored_attrs.lock();
         if let Some(attrs) = stored_attrs.as_ref() {
             if attrs.contains_key("include_highlights") {
                 return true;
@@ -149,11 +161,8 @@ impl<'a> AutumnusAdapter<'a> {
         }
     }
 
-    fn get_decorator_theme(&self) -> Option<themes::Theme> {
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned");
+    fn decorator_theme(&self) -> Option<themes::Theme> {
+        let stored_attrs = self.stored_attrs.lock();
         if let Some(attrs) = stored_attrs.as_ref() {
             if let Some(theme_name) = attrs.get("theme") {
                 return themes::get(theme_name).ok();
@@ -162,11 +171,8 @@ impl<'a> AutumnusAdapter<'a> {
         None
     }
 
-    fn get_decorator_pre_class(&self) -> Option<String> {
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned");
+    fn decorator_pre_class(&self) -> Option<String> {
+        let stored_attrs = self.stored_attrs.lock();
         if let Some(attrs) = stored_attrs.as_ref() {
             if let Some(pre_class) = attrs.get("pre_class") {
                 return Some(pre_class.clone());
@@ -193,14 +199,11 @@ impl<'a> AutumnusAdapter<'a> {
         lines
     }
 
-    fn get_highlight_lines_config(
+    fn highlight_lines_config(
         &self,
         theme: &Option<themes::Theme>,
     ) -> Option<(Vec<usize>, Option<String>, Option<String>)> {
-        let stored_attrs = self
-            .stored_attrs
-            .lock()
-            .expect("stored_attrs mutex poisoned");
+        let stored_attrs = self.stored_attrs.lock();
         if let Some(attrs) = stored_attrs.as_ref() {
             if let Some(lines_spec) = attrs.get("highlight_lines") {
                 let lines = Self::parse_highlight_lines(lines_spec);
@@ -229,7 +232,7 @@ impl<'a> AutumnusAdapter<'a> {
                             None
                         } else {
                             theme.as_ref().map(|t| {
-                                let is_light = t.appearance == "light"
+                                let is_light = matches!(t.appearance, Appearance::Light)
                                     || t.name.to_lowercase().contains("light");
                                 let highlight_bg = if is_light { "#e7eaf0" } else { "#3b4252" };
                                 format!("background-color: {};", highlight_bg)
@@ -242,7 +245,7 @@ impl<'a> AutumnusAdapter<'a> {
         None
     }
 
-    fn get_custom_attrs(
+    fn custom_attrs(
         attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>,
     ) -> Option<HashMap<String, String>> {
         attributes
@@ -250,7 +253,9 @@ impl<'a> AutumnusAdapter<'a> {
             .and_then(|info| Self::parse_custom_attributes(info.as_ref()))
     }
 
-    fn get_language(attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>) -> Language {
+    fn language_from_attrs(
+        attributes: &HashMap<&'static str, std::borrow::Cow<'_, str>>,
+    ) -> Language {
         if let Some(lang) = attributes.get("lang") {
             Language::guess(Some(lang.as_ref()), "")
         } else if let Some(class) = attributes.get("class") {
@@ -262,31 +267,28 @@ impl<'a> AutumnusAdapter<'a> {
     }
 }
 
-impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
+impl SyntaxHighlighterAdapter for AutumnusAdapter {
     fn write_pre_tag<'s>(
         &self,
         output: &mut dyn Write,
         attributes: HashMap<&'static str, std::borrow::Cow<'s, str>>,
     ) -> std::fmt::Result {
-        let custom_attrs = Self::get_custom_attrs(&attributes);
+        let custom_attrs = Self::custom_attrs(&attributes);
         let lang = attributes.get("lang").map(|l| Language::guess(Some(l), ""));
 
         if let Some(attrs) = custom_attrs {
-            *self
-                .stored_attrs
-                .lock()
-                .expect("stored_attrs mutex poisoned") = Some(Arc::new(attrs));
+            *self.stored_attrs.lock() = Some(Arc::new(attrs));
         }
         if let Some(language) = lang {
-            *self.stored_lang.lock().expect("stored_lang mutex poisoned") = Some(language);
+            *self.stored_lang.lock() = Some(language);
         }
 
         let theme = self
-            .get_decorator_theme()
-            .or_else(|| self.get_theme_from_formatter());
+            .decorator_theme()
+            .or_else(|| self.theme_from_formatter());
         let pre_class = self
-            .get_decorator_pre_class()
-            .or_else(|| self.get_pre_class().map(|s| s.to_string()));
+            .decorator_pre_class()
+            .or_else(|| self.pre_class().map(|s| s.to_string()));
 
         let mut adapter = FmtToIoAdapter(output);
         html::open_pre_tag(&mut adapter, pre_class.as_deref(), theme.as_ref())
@@ -298,20 +300,17 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         output: &mut dyn Write,
         attributes: HashMap<&'static str, std::borrow::Cow<'s, str>>,
     ) -> std::fmt::Result {
-        let custom_attrs = Self::get_custom_attrs(&attributes);
-        let lang = Self::get_language(&attributes);
+        let custom_attrs = Self::custom_attrs(&attributes);
+        let lang = Self::language_from_attrs(&attributes);
 
         if let Some(attrs) = custom_attrs {
-            *self
-                .stored_attrs
-                .lock()
-                .expect("stored_attrs mutex poisoned") = Some(Arc::new(attrs));
+            *self.stored_attrs.lock() = Some(Arc::new(attrs));
         }
         if !attributes.is_empty() {
-            *self.stored_lang.lock().expect("stored_lang mutex poisoned") = Some(lang);
+            *self.stored_lang.lock() = Some(lang);
         }
 
-        let stored_lang = *self.stored_lang.lock().expect("stored_lang mutex poisoned");
+        let stored_lang = *self.stored_lang.lock();
         let effective_lang = stored_lang.unwrap_or(lang);
 
         let mut adapter = FmtToIoAdapter(output);
@@ -324,7 +323,7 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         lang: Option<&str>,
         source: &str,
     ) -> std::fmt::Result {
-        let stored_lang = *self.stored_lang.lock().expect("stored_lang mutex poisoned");
+        let stored_lang = *self.stored_lang.lock();
 
         let language = if let Some(stored_lang) = stored_lang {
             stored_lang
@@ -335,49 +334,82 @@ impl SyntaxHighlighterAdapter for AutumnusAdapter<'_> {
         };
 
         let theme = self
-            .get_decorator_theme()
-            .or_else(|| self.get_theme_from_formatter());
+            .decorator_theme()
+            .or_else(|| self.theme_from_formatter());
         let is_linked = matches!(self.formatter_config, ExFormatterOption::HtmlLinked { .. });
+        let is_multi_themes = matches!(
+            self.formatter_config,
+            ExFormatterOption::HtmlMultiThemes { .. }
+        );
         let include_highlights = self.should_include_highlights();
+        let italic = self.italic_enabled();
 
-        let iter = html::highlight_iter_with_scopes(source, language, theme.clone())
-            .map_err(|_| std::fmt::Error)?;
+        let multi_themes_config = self.multi_themes_config();
 
         let mut html_output = String::new();
-        let mut last_end = 0;
+        let mut last_end = 0usize;
 
-        for (style, text, range, scope) in iter {
-            if range.start > last_end {
-                let gap = &source[last_end..range.start];
-                html_output.push_str(gap);
-            }
+        highlight_iter(
+            source,
+            language,
+            theme.clone(),
+            |text, range, scope, _style| {
+                if range.start > last_end {
+                    let gap = &source[last_end..range.start];
+                    html_output.push_str(gap);
+                }
 
-            if text.trim().is_empty() {
-                html_output.push_str(text);
-            } else {
-                let scope_attr = if include_highlights {
-                    Some(scope)
+                if text.trim().is_empty() {
+                    html_output.push_str(text);
                 } else {
-                    None
-                };
-
-                let span = if is_linked {
-                    html::span_linked(text, scope)
-                } else {
-                    let adjusted_style = self.apply_italic_flag(style.clone());
-                    html::span_inline(text, &adjusted_style, scope_attr)
-                };
-                html_output.push_str(&span);
-            }
-            last_end = range.end;
-        }
+                    let span = if is_linked {
+                        html::span_linked(text, scope)
+                    } else if is_multi_themes {
+                        if let Some(ref config) = multi_themes_config {
+                            html::span_multi_themes(
+                                text,
+                                scope,
+                                Some(language),
+                                &config.themes,
+                                config.default_theme.as_deref(),
+                                &config.css_variable_prefix,
+                                config.italic,
+                                config.include_highlights,
+                            )
+                        } else {
+                            html::span_inline(
+                                text,
+                                scope,
+                                Some(language),
+                                theme.as_ref(),
+                                italic,
+                                include_highlights,
+                            )
+                        }
+                    } else {
+                        html::span_inline(
+                            text,
+                            scope,
+                            Some(language),
+                            theme.as_ref(),
+                            italic,
+                            include_highlights,
+                        )
+                    };
+                    html_output.push_str(&span);
+                }
+                last_end = range.end;
+                Ok::<(), std::fmt::Error>(())
+            },
+        )
+        .map_err(|_| std::fmt::Error)?;
 
         if last_end < source.len() {
             let remaining = &source[last_end..];
             html_output.push_str(remaining);
         }
 
-        let highlight_config = self.get_highlight_lines_config(&theme);
+        let highlight_config = self.highlight_lines_config(&theme);
 
         for (i, line) in html_output.lines().enumerate() {
             let line_number = i + 1;
@@ -417,7 +449,7 @@ mod tests {
     use comrak::options::Plugins;
     use comrak::{format_html_with_plugins, parse_document, Arena, Options};
 
-    fn run_test(markdown: &str, formatter: ExFormatterOption<'static>, options: Options) -> String {
+    fn run_test(markdown: &str, formatter: ExFormatterOption, options: Options) -> String {
         let arena = Arena::new();
         let root = parse_document(&arena, markdown, &options);
         let adapter = AutumnusAdapter::new(formatter);
@@ -436,10 +468,6 @@ mod tests {
         html
     }
 
-    fn default_options() -> Options<'static> {
-        Options::default()
-    }
-
     #[test]
     fn test_default_formatter_option() {
         let markdown = r#"
@@ -450,7 +478,6 @@ fn main() {
 ```
 "#;
 
-        let formatter = ExFormatterOption::default();
         let output = run_test(markdown, ExFormatterOption::default(), Options::default());
 
         let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
@@ -503,8 +530,8 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlInline {
-            theme: Some(ThemeOrString::String("nord")),
-            pre_class: Some("custom-pre-class"),
+            theme: Some(ThemeOrString::String("nord".to_string())),
+            pre_class: Some("custom-pre-class".to_string()),
             italic: true,
             include_highlights: true,
             highlight_lines: None,
@@ -537,8 +564,8 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlInline {
-            theme: Some(ThemeOrString::String("nord")),
-            pre_class: Some("default-pre-class"),
+            theme: Some(ThemeOrString::String("nord".to_string())),
+            pre_class: Some("default-pre-class".to_string()),
             italic: true,
             include_highlights: false,
             highlight_lines: None,
@@ -574,8 +601,8 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlInline {
-            theme: Some(ThemeOrString::String("nord")),
-            pre_class: Some("default-class"),
+            theme: Some(ThemeOrString::String("nord".to_string())),
+            pre_class: Some("default-class".to_string()),
             italic: false,
             include_highlights: true,
             highlight_lines: None,
@@ -636,7 +663,7 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlLinked {
-            pre_class: Some("custom-linked-class"),
+            pre_class: Some("custom-linked-class".to_string()),
             highlight_lines: None,
             header: None,
         };
@@ -667,7 +694,7 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlLinked {
-            pre_class: Some("default-linked-pre"),
+            pre_class: Some("default-linked-pre".to_string()),
             highlight_lines: None,
             header: None,
         };
@@ -700,7 +727,7 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlInline {
-            theme: Some(ThemeOrString::String("nord")),
+            theme: Some(ThemeOrString::String("nord".to_string())),
             pre_class: None,
             italic: false,
             include_highlights: false,
@@ -733,7 +760,7 @@ fn main() {
 "#;
 
         let formatter = ExFormatterOption::HtmlInline {
-            theme: Some(ThemeOrString::String("nord")),
+            theme: Some(ThemeOrString::String("nord".to_string())),
             pre_class: None,
             italic: false,
             include_highlights: false,

@@ -1,0 +1,50 @@
+# Light Dark Theme
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.11"},
+  {:kino, "~> 0.18"}
+])
+```
+
+## Example
+
+````elixir
+options = [
+  render: [unsafe: true],
+  syntax_highlight: [
+    formatter: {
+      :html_multi_themes,
+      themes: [light: "github_light", dark: "github_dark"],
+      default_theme: "light-dark()"
+    }
+  ]
+]
+
+"""
+# Light/Dark Example
+
+_Change your OS system setting to see the colors change from light to dark and vice-versa._
+
+```elixir
+# elixir
+
+def fib(n), do: fib(n, 1, 1)
+
+def fib(0, _a, _b), do: []
+
+def fib(n, a, b) when n > 0 do
+  [a | fib(n - 1, b, a + b)]
+end
+```
+
+<style>
+  /* Enable light/dark mode based on system preference */
+  html {
+    color-scheme: light dark;
+  }
+</style>
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````

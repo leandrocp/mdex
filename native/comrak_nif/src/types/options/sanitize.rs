@@ -237,15 +237,17 @@ impl ExSanitizeCustomUrlRelative {
         match self {
             &ExSanitizeCustomUrlRelative::Deny => UrlRelative::Deny,
             &ExSanitizeCustomUrlRelative::Passthrough => UrlRelative::PassThrough,
-            ExSanitizeCustomUrlRelative::RewriteWithBase(base) => UrlRelative::RewriteWithBase(
-                Url::parse(base).expect(":rewrite_with_base base URL valid"),
-            ),
-            ExSanitizeCustomUrlRelative::RewriteWithRoot((root, path)) => {
-                UrlRelative::RewriteWithRoot {
-                    root: Url::parse(root).expect(":rewrite_with_root root URL valid"),
+            ExSanitizeCustomUrlRelative::RewriteWithBase(base) => match Url::parse(base) {
+                Ok(url) => UrlRelative::RewriteWithBase(url),
+                Err(_) => UrlRelative::Deny,
+            },
+            ExSanitizeCustomUrlRelative::RewriteWithRoot((root, path)) => match Url::parse(root) {
+                Ok(url) => UrlRelative::RewriteWithRoot {
+                    root: url,
                     path: path.to_string(),
-                }
-            }
+                },
+                Err(_) => UrlRelative::Deny,
+            },
         }
     }
 }
