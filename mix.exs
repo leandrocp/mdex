@@ -147,7 +147,8 @@ defmodule MDEx.MixProject do
           "examples/code_block_decorators.livemd",
           "examples/mermaid.livemd",
           "examples/highlight_words.livemd",
-          "examples/liquid.livemd"
+          "examples/liquid.livemd",
+          "examples/phoenix_live_view_heex.livemd"
         ],
         Guides: [
           "guides/plugins.md",
