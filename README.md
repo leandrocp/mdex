@@ -131,6 +131,7 @@ The library is built on top of:
 - [Algora](https://github.com/algora-io/algora)
 - [Ash AI](https://github.com/ash-project/ash_ai)
 - [Canada Navigator](https://github.com/canada-ca/navigator)
+- [Jido](https://github.com/agentjido)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
