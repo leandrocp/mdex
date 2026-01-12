@@ -132,6 +132,7 @@ The library is built on top of:
 - [Ash AI](https://github.com/ash-project/ash_ai)
 - [Canada Navigator](https://github.com/canada-ca/navigator)
 - [Jido](https://github.com/agentjido)
+- [TermUI](https://github.com/pcharbon70/term_ui)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
