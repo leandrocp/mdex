@@ -53,7 +53,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.10"}
+    {:mdex, "~> 0.11"}
   ]
 end
 ```

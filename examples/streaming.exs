@@ -1,6 +1,5 @@
 Mix.install([
-  # TODO: change to ~> 0.10 when available
-  {:mdex, ">= 0.9.3"},
+  {:mdex, "~> 0.10"},
   {:phoenix_playground, "~> 0.1"}
 ])
 
