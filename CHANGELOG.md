@@ -5,6 +5,7 @@
 ## Fixed
 - [Docs] Indent sigil modifiers items (@gmile)
 - [Plugins] Add `:plugins` to `MDEx.new/1` options to configure multiple plugins at once (@halostatue)
+- [Deps] Make `:rustler`  optional (@scrogson)
 
 ## 0.11.0 - 2026-01-09
 
