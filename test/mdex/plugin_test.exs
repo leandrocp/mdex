@@ -53,29 +53,41 @@ defmodule MDEx.PluginTest do
   alias MDEx.Document
 
   setup do
-    [document: MDEx.new()]
+    markdown = """
+    # Project Diagram
+
+    ```mermaid
+    graph TD
+        A[Enter Chart Definition] --> B(Preview)
+        B --> C{decide}
+        C --> D[Keep]
+        C --> E[Edit Definition]
+        E --> B
+        D --> F[Save Image and Code]
+        F --> B
+    ```
+    """
+
+    [markdown: markdown]
   end
 
+  @init12 """
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs';
+    const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+    mermaid.initialize({securityLevel: 'loose', theme: theme});
+  </script>
+  """
+
+  @init22 """
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@22/dist/mermaid.esm.min.mjs';
+    const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+    mermaid.initialize({securityLevel: 'loose', theme: theme});
+  </script>
+  """
+
   describe "plugin" do
-    setup do
-      markdown = """
-      # Project Diagram
-
-      ```mermaid
-      graph TD
-          A[Enter Chart Definition] --> B(Preview)
-          B --> C{decide}
-          C --> D[Keep]
-          C --> E[Edit Definition]
-          E --> B
-          D --> F[Save Image and Code]
-          F --> B
-      ```
-      """
-
-      [markdown: markdown]
-    end
-
     test "default options", %{markdown: markdown} do
       assert {:ok, html} =
                MDEx.new(markdown: markdown)
@@ -89,10 +101,41 @@ defmodule MDEx.PluginTest do
     test "custom options", %{markdown: markdown} do
       assert {:ok, html} =
                MDEx.new(markdown: markdown)
-               |> MDExMermaidPluginTest.attach()
+               |> MDExMermaidPluginTest.attach(mermaid_init: @init12)
+               |> MDEx.to_html()
+
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs'"
+      assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
+    end
+  end
+
+  describe "plugin (via MDEx.new/1)" do
+    test "default options via module", %{markdown: markdown} do
+      assert {:ok, html} =
+               MDEx.new(markdown: markdown, plugins: [MDExMermaidPluginTest])
                |> MDEx.to_html()
 
       assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'"
+      assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
+    end
+
+    test "custom options via {module, options}", %{markdown: markdown} do
+      assert {:ok, html} =
+               MDEx.new(markdown: markdown, plugins: [{MDExMermaidPluginTest, mermaid_init: @init12}])
+               |> MDEx.to_html()
+
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs'"
+      assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
+    end
+
+    test "custom options via fn/1", %{markdown: markdown} do
+      attach = fn document -> MDExMermaidPluginTest.attach(document, mermaid_init: @init22) end
+
+      assert {:ok, html} =
+               MDEx.new(markdown: markdown, plugins: [attach])
+               |> MDEx.to_html()
+
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@22/dist/mermaid.esm.min.mjs'"
       assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
     end
   end
