@@ -909,6 +909,18 @@ defmodule MDEx do
 
   @document Document.put_options(%MDEx.Document{}, MDEx.Document.default_options())
 
+  @typedoc """
+  A list of [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to attach to an `MDEx.Document` with `MDEx.new/1`.
+
+  Each list member may be one of:
+
+  - `t:module/0` - A module that exposes `attach/1`, where the `t:MDEx.Document.t/0` is the only parameter
+  - `{module, keyword}` - A module exposing `attach/2`, where the `t:MDEx.Document.t/0` is
+  the first the parameter, and the second parameter is a keyword option list
+  - `(document -> document)` - A `/1` function that accepts a `t:MDEx.Document.t/0`
+  """
+  @type plugins :: [module() | {module(), keyword()} | (MDEx.Document.t() -> MDEx.Document.t())]
+
   @doc """
   Builds a new `MDEx.Document` instance.
 
@@ -930,9 +942,10 @@ defmodule MDEx do
 
     - `:markdown` (`t:String.t/0`)  Raw Markdown to parse into the document. Defaults to `""`
     - `:extension` (`t:MDEx.Document.extension_options/0`) Enable extensions. Defaults to `MDEx.Document.default_extension_options/0`
-    - `:parse` - (`t:parse_options/0`) Modify parsing behavior. Defaults to `MDEx.Document.default_parse_options/0`
-    - `:render` - (`t:render_options/0`) Modify rendering behavior. Defaults to `MDEx.Document.default_render_options/0`
-    - `:syntax_highlight` - (`t:syntax_highlight_options/0` | `nil`) Modify syntax highlighting behavior or `nil` to disable. Defaults to `MDEx.Document.default_syntax_highlight_options/0`
+    - `:parse` - (`t:MDEx.Document.parse_options/0`) Modify parsing behavior. Defaults to `MDEx.Document.default_parse_options/0`
+    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
+    - `:render` - (`t:MDEx.Document.render_options/0`) Modify rendering behavior. Defaults to `MDEx.Document.default_render_options/0`
+    - `:syntax_highlight` - (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) Modify syntax highlighting behavior or `nil` to disable. Defaults to `MDEx.Document.default_syntax_highlight_options/0`
     - `:sanitize` - (`t:sanitize_options/0` | `nil`) Modify sanitization behavior  or `nil` to disable sanitization. Use `MDEx.Document.default_sanitize_options/0` to enable a default set of sanitization options. Defaults to `nil`.
 
   Note that `:sanitize` and `:unsafe` are disabled by default. See [Safety](https://hexdocs.pm/mdex/safety.html) for more info.
@@ -971,6 +984,20 @@ defmodule MDEx do
       ...> |> MDEx.to_html!()
       "<p><del>deprec</del></p>"
 
+  Attach [plugins](plugins.html) three different ways:
+
+  ```elixir
+  plugins = [
+    MDExGFM,
+    {MDExKatex,
+      block_attrs: fn seq ->
+        ~s(id="katex-) <> to_string(seq) <> ~s(" class="katex-block" phx-update="ignore")
+      end},
+    fn doc -> MDExMermaid.attach(doc) end
+  ]
+
+  MDEx.new(plugins: plugins)
+  ```
   """
   @spec new(keyword()) :: Document.t()
   def new(options \\ []) do
@@ -983,9 +1010,30 @@ defmodule MDEx do
       raise ArgumentError, ":markdown option must be a binary, got: #{inspect(markdown)}"
     end
 
+    {plugins, options} = Keyword.pop(options, :plugins, [])
+
     @document
     |> Document.put_options(options)
     |> Document.put_markdown(markdown)
+    |> attach_plugins(plugins)
+  end
+
+  defp attach_plugins(doc, [plugin | rest]) when is_atom(plugin) do
+    {:module, _} = Code.ensure_loaded(plugin)
+    attach_plugins(plugin.attach(doc), rest)
+  end
+
+  defp attach_plugins(doc, [{plugin, opts} | rest]) when is_atom(plugin) do
+    {:module, _} = Code.ensure_loaded(plugin)
+    attach_plugins(plugin.attach(doc, opts), rest)
+  end
+
+  defp attach_plugins(doc, [plugin | rest]) when is_function(plugin, 1) do
+    attach_plugins(plugin.(doc), rest)
+  end
+
+  defp attach_plugins(doc, []) do
+    doc
   end
 
   @doc """
