@@ -910,7 +910,7 @@ defmodule MDEx do
   @document Document.put_options(%MDEx.Document{}, MDEx.Document.default_options())
 
   @typedoc """
-  A list of [plugins](`m:MDEx.Document#pipeline-and-plugins`) to attach to an MDEx.Document with `MDEx.new/1`.
+  A list of [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to attach to an `MDEx.Document` with `MDEx.new/1`.
 
   Each list member may be one of:
 
@@ -943,7 +943,7 @@ defmodule MDEx do
     - `:markdown` (`t:String.t/0`)  Raw Markdown to parse into the document. Defaults to `""`
     - `:extension` (`t:MDEx.Document.extension_options/0`) Enable extensions. Defaults to `MDEx.Document.default_extension_options/0`
     - `:parse` - (`t:MDEx.Document.parse_options/0`) Modify parsing behavior. Defaults to `MDEx.Document.default_parse_options/0`
-    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
+    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
     - `:render` - (`t:MDEx.Document.render_options/0`) Modify rendering behavior. Defaults to `MDEx.Document.default_render_options/0`
     - `:syntax_highlight` - (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) Modify syntax highlighting behavior or `nil` to disable. Defaults to `MDEx.Document.default_syntax_highlight_options/0`
     - `:sanitize` - (`t:sanitize_options/0` | `nil`) Modify sanitization behavior  or `nil` to disable sanitization. Use `MDEx.Document.default_sanitize_options/0` to enable a default set of sanitization options. Defaults to `nil`.
@@ -984,7 +984,7 @@ defmodule MDEx do
       ...> |> MDEx.to_html!()
       "<p><del>deprec</del></p>"
 
-  Attach the `e:MDExGFM`, `e:MDExKatex`, and `e:MDExMermaid` plugins three different ways:
+  Attach [plugins](plugins.html) three different ways:
 
   ```elixir
   plugins = [
