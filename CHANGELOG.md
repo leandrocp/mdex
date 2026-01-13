@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+## Fixed
+- [Docs] Indent sigil modifiers items (@gmile)
+
 ## 0.11.0 - 2026-01-09
 
 ### Changed
