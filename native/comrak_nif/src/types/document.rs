@@ -831,7 +831,7 @@ pub struct ExEscapedTag {
 
 impl From<ExEscapedTag> for NodeValue {
     fn from(node: ExEscapedTag) -> Self {
-        NodeValue::EscapedTag(node.literal.to_string())
+        NodeValue::EscapedTag(Box::leak(node.literal.into_boxed_str()))
     }
 }
 

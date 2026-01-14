@@ -646,7 +646,8 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
-    :streaming
+    :streaming,
+    :assigns
   ]
 
   @extension_options_schema [
@@ -1217,6 +1218,28 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Enables streaming (experimental)."
+    ],
+    assigns: [
+      type: :map,
+      default: %{},
+      doc: """
+      A map of assigns available for use in pipelines, plugins, and HEEx rendering.
+
+      Assigns can be set at document creation time:
+
+          MDEx.new(assigns: %{title: "My Doc"})
+
+      Or dynamically using `MDEx.Document.assign/2` and `MDEx.Document.assign/3`:
+
+          document
+          |> MDEx.Document.assign(:title, "My Doc")
+          |> MDEx.Document.assign(author: "Jane", version: 1)
+
+      When rendering HEEx templates, assigns are available as `@variables`:
+
+          MDEx.to_heex!(document, assigns: %{name: "World"})
+          # In the template: Hello, {@name}!
+      """
     ]
   ]
 
@@ -1460,6 +1483,9 @@ defmodule MDEx.Document do
 
       {:streaming, value}, acc ->
         %{acc | options: Keyword.put(acc.options || [], :streaming, value)}
+
+      {:assigns, value}, acc ->
+        %{acc | options: Keyword.put(acc.options || [], :assigns, value)}
     end)
   end
 
@@ -1673,6 +1699,42 @@ defmodule MDEx.Document do
   @spec get_option(t(), atom(), term()) :: term()
   def get_option(%MDEx.Document{} = document, key, default \\ nil) when is_atom(key) do
     Keyword.get(document.options, key, default)
+  end
+
+  @doc """
+  Adds key-value pairs to the document assigns.
+
+  ## Examples
+
+      iex> document = MDEx.Document.assign(MDEx.new(), title: "Hello", author: "Jane")
+      iex> MDEx.Document.get_option(document, :assigns)
+      %{title: "Hello", author: "Jane"}
+
+      iex> document = MDEx.Document.assign(MDEx.new(), %{title: "Hello"})
+      iex> MDEx.Document.get_option(document, :assigns)
+      %{title: "Hello"}
+
+  """
+  @spec assign(t(), keyword() | map()) :: t()
+  def assign(%MDEx.Document{} = document, keyword_or_map) when is_list(keyword_or_map) or is_map(keyword_or_map) do
+    assigns = get_option(document, :assigns, %{})
+    new_assigns = Map.merge(assigns, Map.new(keyword_or_map))
+    %{document | options: Keyword.put(document.options, :assigns, new_assigns)}
+  end
+
+  @doc """
+  Adds a key-value pair to the document assigns.
+
+  ## Examples
+
+      iex> document = MDEx.Document.assign(MDEx.new(), :title, "Hello")
+      iex> MDEx.Document.get_option(document, :assigns)
+      %{title: "Hello"}
+
+  """
+  @spec assign(t(), atom(), term()) :: t()
+  def assign(%MDEx.Document{} = document, key, value) when is_atom(key) do
+    assign(document, [{key, value}])
   end
 
   @doc """
@@ -2302,11 +2364,12 @@ defmodule MDEx.Document do
 
   @doc false
   @spec rust_options!(Keyword.t()) :: map()
-  def rust_options!([] = _options) do
-    rust_options!(default_options())
-  end
-
   def rust_options!(options) do
+    options =
+      Keyword.merge(default_options(), options, fn _k, v1, v2 ->
+        if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
+      end)
+
     {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
     render = Keyword.put_new(render, :unsafe, unsafe)
 
