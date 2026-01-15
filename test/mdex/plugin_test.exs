@@ -139,4 +139,61 @@ defmodule MDEx.PluginTest do
       assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
     end
   end
+
+  describe "plugins via to_* functions" do
+    test "to_html with plugins option", %{markdown: markdown} do
+      assert {:ok, html} = MDEx.to_html(markdown, plugins: [MDExMermaidPluginTest])
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'"
+      assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
+    end
+
+    test "to_html! with plugins and other options", %{markdown: markdown} do
+      html =
+        MDEx.to_html!(markdown,
+          extension: [table: true],
+          plugins: [{MDExMermaidPluginTest, mermaid_init: @init12}]
+        )
+
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs'"
+      assert html =~ ~s|<pre id="mermaid-1" class="mermaid" phx-update="ignore">|
+    end
+
+    test "to_html with document and plugins option", %{markdown: markdown} do
+      document = MDEx.new(markdown: markdown)
+      assert {:ok, html} = MDEx.to_html(document, plugins: [MDExMermaidPluginTest])
+      assert html =~ "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'"
+    end
+  end
+
+  describe "put_plugins/2" do
+    test "attaches module plugin", %{markdown: markdown} do
+      doc = MDEx.new(markdown: markdown) |> Document.put_plugins([MDExMermaidPluginTest])
+      assert [enable_unsafe: _, inject_init: _, update_code_blocks: _] = doc.steps
+    end
+
+    test "attaches module with options" do
+      doc = MDEx.new() |> Document.put_plugins([{MDExMermaidPluginTest, mermaid_init: @init12}])
+      assert Document.get_option(doc, :mermaid_init) == @init12
+    end
+
+    test "attaches function plugin" do
+      attach = fn doc -> Document.put_extension_options(doc, table: true) end
+      doc = MDEx.new() |> Document.put_plugins([attach])
+      assert Document.get_option(doc, :extension)[:table] == true
+    end
+
+    test "attaches multiple plugins" do
+      attach_fn = fn doc -> Document.put_extension_options(doc, strikethrough: true) end
+
+      doc =
+        MDEx.new()
+        |> Document.put_plugins([
+          MDExMermaidPluginTest,
+          attach_fn
+        ])
+
+      assert [enable_unsafe: _, inject_init: _, update_code_blocks: _] = doc.steps
+      assert Document.get_option(doc, :extension)[:strikethrough] == true
+    end
+  end
 end

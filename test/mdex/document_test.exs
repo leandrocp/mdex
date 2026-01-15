@@ -1131,13 +1131,13 @@ defmodule MDEx.DocumentTest do
 
   test "register_options" do
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :foo]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :foo]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :foo]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :foo]))
   end
 
   describe "get_option" do

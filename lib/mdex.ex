@@ -349,7 +349,13 @@ defmodule MDEx do
       iex> MDEx.to_html("<marquee>visit https://beaconcms.org</marquee>", extension: [autolink: true], render: [unsafe: true])
       {:ok, "<p><marquee>visit <a href=\\"https://beaconcms.org\\">https://beaconcms.org</a></marquee></p>"}
 
-   Fragments of a document are also supported:
+  Using plugins for one-off conversions:
+
+      MDEx.to_html("# Hello", plugins: [MDExGFM])
+
+      MDEx.to_html("| a | b |\\n|---|---|", plugins: [{MyTablePlugin, style: :compact}])
+
+  Fragments of a document are also supported:
 
       iex> MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]})
       {:ok, "<p>MDEx</p>"}
@@ -364,11 +370,9 @@ defmodule MDEx do
   def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
     markdown = document || markdown || ""
-    document = Document.put_options(MDEx.new(), options)
 
-    markdown
-    |> Native.markdown_to_html_with_options(Document.rust_options!(document.options))
-    |> maybe_trim()
+    MDEx.new([markdown: markdown] ++ options)
+    |> to_html()
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
@@ -1193,30 +1197,9 @@ defmodule MDEx do
       raise ArgumentError, ":markdown option must be a binary, got: #{inspect(markdown)}"
     end
 
-    {plugins, options} = Keyword.pop(options, :plugins, [])
-
     @document
-    |> Document.put_options(options)
     |> Document.put_markdown(markdown)
-    |> attach_plugins(plugins)
-  end
-
-  defp attach_plugins(doc, [plugin | rest]) when is_atom(plugin) do
-    {:module, _} = Code.ensure_loaded(plugin)
-    attach_plugins(plugin.attach(doc), rest)
-  end
-
-  defp attach_plugins(doc, [{plugin, opts} | rest]) when is_atom(plugin) do
-    {:module, _} = Code.ensure_loaded(plugin)
-    attach_plugins(plugin.attach(doc, opts), rest)
-  end
-
-  defp attach_plugins(doc, [plugin | rest]) when is_function(plugin, 1) do
-    attach_plugins(plugin.(doc), rest)
-  end
-
-  defp attach_plugins(doc, []) do
-    doc
+    |> Document.put_options(options)
   end
 
   @doc """
