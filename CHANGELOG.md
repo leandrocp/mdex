@@ -8,6 +8,8 @@
 - [HEEx] Add support for `Phoenix.LiveView.Rendered` in `to_html/2` to convert rendered HEEx to HTML string
 - Add `:assigns` option to pass assigns to HEEx templates
 - [Document] Add `MDEx.Document.assign/2` and `MDEx.Document.assign/3` to set assigns on a document
+- [Document] Add `MDEx.Document.put_plugins/2` to attach plugins to a document
+- [Plugins] Add `:plugins` option to `MDEx.to_*` functions for one-off conversions with plugins
 
 ### Fixed
 - [Docs] Indent sigil modifiers items (@gmile)

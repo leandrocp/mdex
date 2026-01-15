@@ -408,7 +408,11 @@ defmodule MDEx.Document do
 
   MDEx.Document is a Req-like API to transform Markdown documents through a series of steps in a pipeline.
 
-  Its main use case it to enable plugins, for example:
+  Its main use case is to enable plugins. There are two ways to use plugins:
+
+  ### Using the `:plugins` Option
+
+  For quick one-off conversions, pass plugins directly to any `MDEx.to_*` function:
 
       markdown = \"\"\"
       # Project Diagram
@@ -418,12 +422,30 @@ defmodule MDEx.Document do
           A[Enter Chart Definition] --> B(Preview)
           B --> C{decide}
           C --> D[Keep]
-          C --> E[Edit Definition]
-          E --> B
-          D --> F[Save Image and Code]
-          F --> B
       \`\`\`
       \"\"\"
+
+      # Simple plugin without options
+      MDEx.to_html!(markdown, plugins: [MDExMermaid])
+
+      # Plugin with options
+      MDEx.to_html!(markdown, plugins: [{MDExMermaid, mermaid_version: "11"}])
+
+      # Multiple plugins with other options
+      MDEx.to_html!(markdown,
+        extension: [table: true],
+        plugins: [MDExGFM, {MDExMermaid, mermaid_version: "11"}]
+      )
+
+  You can also use `MDEx.Document.put_plugins/2` to attach plugins to a document:
+
+      MDEx.new(markdown: markdown)
+      |> MDEx.Document.put_plugins([MDExMermaid])
+      |> MDEx.to_html!()
+
+  ### Using Plugin.attach
+
+  For more control or when building pipelines, use the pipeline `attach` pattern:
 
       MDEx.new(markdown: markdown)
       |> MDExMermaid.attach(mermaid_version: "11")
@@ -647,7 +669,8 @@ defmodule MDEx.Document do
     :syntax_highlight,
     :sanitize,
     :streaming,
-    :assigns
+    :assigns,
+    :plugins
   ]
 
   @extension_options_schema [
@@ -1240,6 +1263,27 @@ defmodule MDEx.Document do
           MDEx.to_heex!(document, assigns: %{name: "World"})
           # In the template: Hello, {@name}!
       """
+    ],
+    plugins: [
+      type: {:list, :any},
+      default: [],
+      doc: """
+      A list of plugins to attach to the document.
+
+      Each plugin may be one of:
+
+      - `t:module/0` - A module that exposes `attach/1`
+      - `{module, keyword}` - A module exposing `attach/2` with options
+      - `(document -> document)` - A function that accepts and returns a document
+
+      See the [Pipeline and Plugins](#module-pipeline-and-plugins) section for more info.
+
+      ## Examples
+
+          MDEx.to_html!("# Hello", plugins: [MDExGFM])
+
+          MDEx.to_html!("# Hello", plugins: [{MDExMermaid, version: "11"}])
+      """
     ]
   ]
 
@@ -1334,6 +1378,18 @@ defmodule MDEx.Document do
   See `MDEx.Document` for more info and examples.
   """
   @type selector :: md_node() | module() | atom() | (md_node() -> boolean())
+
+  @typedoc """
+  A list of plugins to attach to a document.
+
+  Each plugin may be one of:
+
+  - `t:module/0` - A module that exposes `attach/1`, where the `t:MDEx.Document.t/0` is the only parameter
+  - `{module, keyword}` - A module exposing `attach/2`, where the `t:MDEx.Document.t/0` is
+    the first parameter, and the second parameter is a keyword option list
+  - `(document -> document)` - A function that accepts a `t:MDEx.Document.t/0` and returns one
+  """
+  @type plugins :: [module() | {module(), keyword()} | (t() -> t())]
 
   @doc """
   Returns all default options.
@@ -1486,6 +1542,9 @@ defmodule MDEx.Document do
 
       {:assigns, value}, acc ->
         %{acc | options: Keyword.put(acc.options || [], :assigns, value)}
+
+      {:plugins, plugins}, acc ->
+        put_plugins(acc, plugins)
     end)
   end
 
@@ -1685,6 +1744,57 @@ defmodule MDEx.Document do
     """)
 
     put_sanitize_options(document, nil)
+  end
+
+  @doc """
+  Attaches plugins to the document.
+
+  Plugins can be specified as:
+
+  - A module atom (calls `Module.attach(document)`)
+  - A tuple `{module, options}` (calls `Module.attach(document, options)`)
+  - A function `(document -> document)`
+
+  ## Examples
+
+      iex> defmodule MyPlugin do
+      ...>   def attach(doc, opts \\\\ []) do
+      ...>     MDEx.Document.put_extension_options(doc, table: true)
+      ...>   end
+      ...> end
+      iex> doc = MDEx.Document.put_plugins(MDEx.new(), [MyPlugin])
+      iex> MDEx.Document.get_option(doc, :extension)[:table]
+      true
+
+      iex> attach_fn = fn doc -> MDEx.Document.put_extension_options(doc, strikethrough: true) end
+      iex> doc = MDEx.Document.put_plugins(MDEx.new(), [attach_fn])
+      iex> MDEx.Document.get_option(doc, :extension)[:strikethrough]
+      true
+
+  Note that you can also use the pipeline `Plugin.attach(document)` style:
+
+      MDEx.new()
+      |> MyPlugin.attach(option: "value")
+      |> MDEx.to_html!()
+
+  """
+  @spec put_plugins(t(), plugins()) :: t()
+  def put_plugins(%MDEx.Document{} = document, plugins) when is_list(plugins) do
+    Enum.reduce(plugins, document, &attach_plugin/2)
+  end
+
+  defp attach_plugin(plugin, doc) when is_atom(plugin) do
+    {:module, _} = Code.ensure_loaded(plugin)
+    plugin.attach(doc)
+  end
+
+  defp attach_plugin({plugin, opts}, doc) when is_atom(plugin) do
+    {:module, _} = Code.ensure_loaded(plugin)
+    plugin.attach(doc, opts)
+  end
+
+  defp attach_plugin(plugin, doc) when is_function(plugin, 1) do
+    plugin.(doc)
   end
 
   @doc """
