@@ -1131,13 +1131,13 @@ defmodule MDEx.DocumentTest do
 
   test "register_options" do
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :foo]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :foo]))
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :foo]))
+    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :foo]))
   end
 
   describe "get_option" do
@@ -1152,6 +1152,60 @@ defmodule MDEx.DocumentTest do
 
     test "returns default when not registered" do
       refute Document.get_option(MDEx.new(), :foo)
+    end
+  end
+
+  describe "assign" do
+    test "assign/2 with keyword list" do
+      document = Document.assign(MDEx.new(), title: "Hello", author: "Jane")
+
+      assert Document.get_option(document, :assigns) == %{title: "Hello", author: "Jane"}
+    end
+
+    test "assign/2 with map" do
+      document = Document.assign(MDEx.new(), %{title: "Hello", count: 42})
+
+      assert Document.get_option(document, :assigns) == %{title: "Hello", count: 42}
+    end
+
+    test "assign/3 with key and value" do
+      document = Document.assign(MDEx.new(), :title, "Hello")
+
+      assert Document.get_option(document, :assigns) == %{title: "Hello"}
+    end
+
+    test "assign merges with existing assigns" do
+      document =
+        MDEx.new(assigns: %{existing: true})
+        |> Document.assign(:new_key, "new_value")
+
+      assert Document.get_option(document, :assigns) == %{existing: true, new_key: "new_value"}
+    end
+
+    test "assign overwrites existing key" do
+      document =
+        MDEx.new(assigns: %{title: "Old"})
+        |> Document.assign(:title, "New")
+
+      assert Document.get_option(document, :assigns) == %{title: "New"}
+    end
+
+    test "assign/2 merges multiple keys" do
+      document =
+        MDEx.new(assigns: %{a: 1})
+        |> Document.assign(b: 2, c: 3)
+
+      assert Document.get_option(document, :assigns) == %{a: 1, b: 2, c: 3}
+    end
+
+    test "chained assigns" do
+      document =
+        MDEx.new()
+        |> Document.assign(:first, 1)
+        |> Document.assign(:second, 2)
+        |> Document.assign(third: 3, fourth: 4)
+
+      assert Document.get_option(document, :assigns) == %{first: 1, second: 2, third: 3, fourth: 4}
     end
   end
 

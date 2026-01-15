@@ -151,7 +151,7 @@ defmodule MDEx.Sigil do
   """
 
   @doc """
-  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, JSON or XML.
+  The `~MD` sigil converts a Markdown string or a `%MDEx.Document{}` struct to either one of these formats: `MDEx.Document`, Markdown (CommonMark), HTML, [HEEx](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.Rendered.html) JSON or XML.
 
   ## Assigns
 
@@ -374,6 +374,7 @@ defmodule MDEx.Sigil do
 
   defmacro sigil_m({:<<>>, meta, pieces}, modifiers) do
     binary = {:<<>>, meta, unescape_tokens(pieces)}
+    opts = Macro.escape(@opts)
 
     cond do
       modifiers == ~c"AST" ->
@@ -385,32 +386,32 @@ defmodule MDEx.Sigil do
         """)
 
         quote do
-          MDEx.parse_document!(unquote(binary), unquote(@opts))
+          MDEx.parse_document!(unquote(binary), unquote(opts))
         end
 
       modifiers == ~c"HTML" ->
         quote do
-          MDEx.to_html!(expr(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_html!(expr(unquote(binary), __ENV__), unquote(opts))
         end
 
       modifiers == ~c"JSON" ->
         quote do
-          MDEx.to_json!(expr(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_json!(expr(unquote(binary), __ENV__), unquote(opts))
         end
 
       modifiers == ~c"XML" ->
         quote do
-          MDEx.to_xml!(expr(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_xml!(expr(unquote(binary), __ENV__), unquote(opts))
         end
 
       modifiers == ~c"MD" ->
         quote do
-          MDEx.to_markdown!(expr(unquote(binary), __ENV__), unquote(@opts))
+          MDEx.to_markdown!(expr(unquote(binary), __ENV__), unquote(opts))
         end
 
       :default ->
         quote do
-          MDEx.parse_document!(unquote(binary), unquote(@opts))
+          MDEx.parse_document!(unquote(binary), unquote(opts))
         end
     end
   end

@@ -13,6 +13,8 @@ defmodule MDExTest do
       to_json: 2,
       to_json!: 1,
       to_json!: 2,
+      to_heex: 1,
+      to_heex: 2,
       parse_document: 1,
       parse_document: 2,
       parse_document!: 1,
@@ -118,6 +120,94 @@ defmodule MDExTest do
     test "invalid input" do
       assert {:error, %MDEx.InvalidInputError{}} = MDEx.to_html(nil)
       assert {:error, %MDEx.InvalidInputError{}} = MDEx.to_html([])
+    end
+  end
+
+  describe "to_heex" do
+    test "markdown input" do
+      assert {:ok, %Phoenix.LiveView.Rendered{}} = MDEx.to_heex("# Hello")
+      assert "<h1>Hello</h1>" = MDEx.to_heex!("# Hello") |> MDEx.to_html!()
+    end
+
+    test "html tuple input" do
+      assert {:ok, %Phoenix.LiveView.Rendered{}} = MDEx.to_heex({:html, "<p>Hello</p>"})
+      assert "<p>Hello</p>" = MDEx.to_heex!({:html, "<p>Hello</p>"}) |> MDEx.to_html!()
+    end
+
+    test "document input" do
+      doc = %MDEx.Document{nodes: [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Hello"}], level: 1}]}
+      assert {:ok, %Phoenix.LiveView.Rendered{}} = MDEx.to_heex(doc)
+      assert "<h1>Hello</h1>" = MDEx.to_heex!(doc) |> MDEx.to_html!()
+    end
+
+    test "with assigns" do
+      assert "<p>Hello User</p>" = MDEx.to_heex!("Hello {@name}", assigns: %{name: "User"}) |> MDEx.to_html!()
+    end
+
+    test "with Document.assign" do
+      import Phoenix.Component
+
+      assert "<a href=\"https://elixir-lang.org\">Elixir</a>" =
+               MDEx.new(markdown: ~s[<.link href={@url}>{@title}</.link>])
+               |> MDEx.Document.assign(:url, "https://elixir-lang.org")
+               |> MDEx.Document.assign(:title, "Elixir")
+               |> MDEx.to_heex!()
+               |> MDEx.to_html!()
+    end
+
+    test "Document.assign merged with to_heex assigns, to_heex wins" do
+      import Phoenix.Component
+
+      assert "<a href=\"https://hex.pm\">Hex</a>" =
+               MDEx.new(markdown: ~s[<.link href={@url}>{@title}</.link>])
+               |> MDEx.Document.assign(:url, "https://elixir-lang.org")
+               |> MDEx.Document.assign(:title, "Elixir")
+               |> MDEx.to_heex!(assigns: %{url: "https://hex.pm", title: "Hex"})
+               |> MDEx.to_html!()
+    end
+
+    test "with component" do
+      import Phoenix.Component
+
+      assert "<a href=\"https://elixir-lang.org\">hello</a>" =
+               MDEx.to_heex!({:html, ~s[<.link href="https://elixir-lang.org">hello</.link>]}) |> MDEx.to_html!()
+    end
+
+    test "mixed content" do
+      import Phoenix.Component
+
+      html =
+        MDEx.to_heex!(~S"""
+        # Hello World
+
+        <.link href="/">Regular anchor link</.link>
+
+        ```elixir
+        IO.puts("Hello")
+        ```
+
+        <.link navigate="/?sort=asc" replace={false}>
+          Sort By Price
+        </.link>
+
+        ```rust
+        let result = ammonia::clean("<b><img src='' onerror=alert('hex')>I'm not trying to XSS you</b>");
+        ```
+        """)
+        |> MDEx.to_html!()
+
+      assert html ==
+               String.trim("""
+               <h1>Hello World</h1>
+               <a href="/">Regular anchor link</a>
+               <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Hello&quot;</span><span style="color: #c678dd;">)</span>
+               </div></code></pre>
+               <a href="/?sort=asc" data-phx-link="redirect" data-phx-link-state="push">
+                 Sort By Price
+               </a>
+               <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">let</span> <span style="color: #e06c75;">result</span> <span style="color: #abb2bf;">=</span> <span style="color: #e5c07b;">ammonia</span><span style="color: #abb2bf;">::</span><span style="color: #61afef;">clean</span><span style="color: #d19a66;">(</span><span style="color: #98c379;">&quot;&lt;b&gt;&lt;img src=&#39;&#39; onerror=alert(&#39;hex&#39;)&gt;I&#39;m not trying to XSS you&lt;/b&gt;&quot;</span><span style="color: #d19a66;">)</span><span style="color: #abb2bf;">;</span>
+               </div></code></pre>
+               """)
     end
   end
 

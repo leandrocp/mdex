@@ -42,6 +42,55 @@ defmodule MDEx do
 
   require Logger
 
+  @doc """
+  Sets up MDEx in the calling module.
+
+  This macro:
+
+    * `require MDEx` - enables the `to_heex/2` macro (requires Phoenix LiveView)
+    * `import MDEx.Sigil` - enables the `~MD` sigil
+
+  ## Example
+
+  Using the `~MD` sigil in a LiveView:
+
+  ```elixir
+  defmodule MyApp.PageLive do
+    use Phoenix.LiveView
+    use MDEx
+
+    def render(assigns) do
+      ~MD\"\"\"
+      # FAQ
+
+      <%= for {title, href} <- @toc do %>
+        ## <.link href={href}>{title}</.link>
+      <% end %>
+      \"\"\"HEEX
+    end
+  end
+  ```
+
+  Generating static HTML on environments where `~MD` sigil is not available:
+
+      defmodule MyApp.StaticHtmlBlog do
+        use MDEx
+        import Phoenix.Component
+
+        def render(assigns) do
+          MDEx.to_heex!(~s[<.link href={@url}>Click here</.link>], assigns: assigns)
+          |> MDEx.to_html!()
+        end
+      end
+
+  """
+  defmacro __using__(_opts) do
+    quote do
+      require MDEx
+      import MDEx.Sigil
+    end
+  end
+
   @typedoc """
   Input source document.
 
@@ -278,6 +327,11 @@ defmodule MDEx do
   @doc """
   Convert Markdown or `MDEx.Document` to HTML.
 
+  > #### Phoenix Components Not Supported in to_html {: .warning}
+  >
+  > This function does not support Phoenix components like `<.link>` or custom components.
+  > If you need to use Phoenix components in your Markdown or HTML content, use either `MDEx.Sigil.sigil_MD/2` or `to_heex/2` instead.
+
   ## Examples
 
       iex> MDEx.to_html("# MDEx")
@@ -310,10 +364,10 @@ defmodule MDEx do
   def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
     markdown = document || markdown || ""
-    options = Document.put_options(MDEx.new(), options).options
+    document = Document.put_options(MDEx.new(), options)
 
     markdown
-    |> Native.markdown_to_html_with_options(Document.rust_options!(options))
+    |> Native.markdown_to_html_with_options(Document.rust_options!(document.options))
     |> maybe_trim()
   end
 
@@ -322,6 +376,15 @@ defmodule MDEx do
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
+  end
+
+  if Code.ensure_loaded?(Phoenix.LiveView) do
+    def to_html(%Phoenix.LiveView.Rendered{} = rendered, _options) do
+      {:ok,
+       rendered
+       |> Phoenix.HTML.html_escape()
+       |> Phoenix.HTML.safe_to_string()}
+    end
   end
 
   def to_html(source, options) do
@@ -341,6 +404,147 @@ defmodule MDEx do
   def to_html!(source, options \\ []) do
     case to_html(source, options) do
       {:ok, html} -> html
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert Markdown, `MDEx.Document`, or HTML to HEEx with support for Phoenix components.
+
+  Returns a `Phoenix.LiveView.Rendered` struct that can be used in LiveView templates,
+  or converted to HTML string using `MDEx.to_html/1`.
+
+  > #### Requires `use MDEx` or `require MDEx` {: .warning}
+  >
+  > This macro requires the module to be required before use.
+  > You can include `use MDEx` at the top of your module to enable it or add `require MDEx`.
+
+  > #### Performance {: .warning}
+  >
+  > Calling `to_heex/2` multiple times during runtime might be slow because the template
+  > must be evaluated every time. Prefer moving the operation to compile-time or use `MDEx.Sigil.sigil_MD/2`.
+
+  ## Options
+
+    * `:assigns` - a map of assigns to pass to the HEEx template. Defaults to `%{}`.
+
+  Note that the following options are automatically enabled: `extension: [phoenix_heex: true]` and `render: [unsafe: true]`
+  in order to let the parser recognize all tags properly.
+
+  ## Examples
+
+      use MDEx
+      import Phoenix.Component
+
+      iex> MDEx.to_heex(~s[<.link href="https://elixir-lang.org">Elixir</.link>])
+      #=> {:ok, %Phoenix.LiveView.Rendered{...}}
+
+      iex> MDEx.to_heex(~s[<.link href="https://elixir-lang.org">Elixir</.link>]) |> MDEx.to_html!()
+      #=> {:ok, "<a href=\\"https://elixir-lang.org\\">Elixir</a>"}
+
+      iex> assigns = %{url: "https://elixir-lang.org"}
+      iex> MDEx.to_heex(~s[<.link href={@url}>Elixir</.link>], assigns: assigns) |> MDEx.to_html!()
+      #=> {:ok, "<a href=\\"https://elixir-lang.org\\">Elixir</a>"}
+
+  Using `MDEx.Document.assign/3` to set assigns on a document:
+
+      iex> MDEx.new(markdown: ~s[<.link href={@url}>{@title}</.link>])
+      ...> |> MDEx.Document.assign(:url, "https://elixir-lang.org")
+      ...> |> MDEx.Document.assign(:title, "Elixir")
+      ...> |> MDEx.to_heex!()
+      ...> |> MDEx.to_html!()
+      #=> "<a href=\\"https://elixir-lang.org\\">Elixir</a>"
+
+  """
+  @spec to_heex(source(), Document.options()) :: struct()
+  defmacro to_heex(source, options \\ []) do
+    if Code.ensure_loaded?(Phoenix.LiveView) do
+      caller = Macro.escape(__CALLER__)
+
+      quote do
+        MDEx.__to_heex__(unquote(source), unquote(options), unquote(caller))
+      end
+    else
+      quote do
+        IO.warn("Phoenix LiveView is required to use to_heex/2")
+        :ok
+      end
+    end
+  end
+
+  @doc """
+  Same as `to_heex/2` but raises error if the conversion fails.
+  """
+  @spec to_heex!(source(), MDEx.Document.options()) :: struct()
+  defmacro to_heex!(source, options \\ []) do
+    if Code.ensure_loaded?(Phoenix.LiveView) do
+      caller = Macro.escape(__CALLER__)
+
+      quote do
+        MDEx.__to_heex__!(unquote(source), unquote(options), unquote(caller))
+      end
+    else
+      quote do
+        IO.warn("Phoenix LiveView is required to use to_heex!/2")
+        :ok
+      end
+    end
+  end
+
+  @doc false
+  def __to_heex__({:html, html}, options, caller) do
+    assigns = options[:assigns] || %{}
+
+    rendered =
+      EEx.compile_string(
+        html,
+        engine: Phoenix.LiveView.TagEngine,
+        file: caller.file,
+        line: caller.line + 1,
+        caller: caller,
+        indentation: 0,
+        source: html,
+        tag_handler: Phoenix.LiveView.HTMLEngine
+      )
+
+    {rendered, _} = Code.eval_quoted(rendered, [assigns: assigns], Macro.Env.prune_compile_info(caller))
+    {:ok, rendered}
+  end
+
+  @doc false
+  def __to_heex__(%Document{} = doc, options, caller) do
+    {assigns, _options} = Keyword.pop(options, :assigns, %{})
+    assigns = Map.merge(Document.get_option(doc, :assigns, %{}), assigns)
+
+    html =
+      doc
+      |> Document.put_extension_options(phoenix_heex: true)
+      |> Document.put_render_options(unsafe: true)
+      |> to_html()
+
+    case html do
+      {:ok, html} -> __to_heex__({:html, html}, [assigns: assigns], caller)
+      error -> error
+    end
+  end
+
+  @doc false
+  def __to_heex__(source, options, caller) do
+    {assigns, options} = Keyword.pop(options, :assigns, %{})
+    extension = Keyword.merge(options[:extension] || [], phoenix_heex: true)
+    render = Keyword.merge(options[:render] || [], unsafe: true)
+    options = Keyword.merge(options, extension: extension, render: render)
+
+    case to_html(source, options) do
+      {:ok, html} -> __to_heex__({:html, html}, [assigns: assigns], caller)
+      error -> error
+    end
+  end
+
+  @doc false
+  def __to_heex__!(source, options, caller) do
+    case __to_heex__(source, options, caller) do
+      {:ok, heex} -> heex
       {:error, error} -> raise error
     end
   end
@@ -878,28 +1082,6 @@ defmodule MDEx do
     Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
   end
 
-  # if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
-  #   @doc """
-  #   Utility function to convert a `Phoenix.LiveView.Rendered` struct to HTML (string).
-  #
-  #   ## Example
-  #
-  #       iex> assigns = %{url: "https://elixir-lang.org", title: "Elixir Lang"}
-  #       iex> ~MD|<.link href={URI.parse(@url)}>{@title}</.link>|HEEX |> MDEx.rendered_to_html()
-  #       "<a href=\\"https://elixir-lang.org\\">Elixir</a>"
-  #   """
-  #   @spec rendered_to_html(Phoenix.LiveView.Rendered.t()) :: String.t()
-  #   def rendered_to_html(%Phoenix.LiveView.Rendered{} = rendered) do
-  #     rendered
-  #     |> Phoenix.HTML.html_escape()
-  #     |> Phoenix.HTML.safe_to_string()
-  #   end
-  # else
-  #   def rendered_to_html(_rendered) do
-  #     raise "MDEx.rendered_to_html/1 requires Phoenix.LiveView to be available"
-  #   end
-  # end
-
   defp opt(options, keys, default) do
     case get_in(options, keys) do
       nil -> default
@@ -941,12 +1123,13 @@ defmodule MDEx do
   ## Options
 
     - `:markdown` (`t:String.t/0`)  Raw Markdown to parse into the document. Defaults to `""`
+    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
     - `:extension` (`t:MDEx.Document.extension_options/0`) Enable extensions. Defaults to `MDEx.Document.default_extension_options/0`
     - `:parse` - (`t:MDEx.Document.parse_options/0`) Modify parsing behavior. Defaults to `MDEx.Document.default_parse_options/0`
-    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
     - `:render` - (`t:MDEx.Document.render_options/0`) Modify rendering behavior. Defaults to `MDEx.Document.default_render_options/0`
     - `:syntax_highlight` - (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) Modify syntax highlighting behavior or `nil` to disable. Defaults to `MDEx.Document.default_syntax_highlight_options/0`
     - `:sanitize` - (`t:sanitize_options/0` | `nil`) Modify sanitization behavior  or `nil` to disable sanitization. Use `MDEx.Document.default_sanitize_options/0` to enable a default set of sanitization options. Defaults to `nil`.
+    - `:assigns` - (`t:map/0`) A map of assigns for use in pipelines, plugins, and HEEx rendering. Can also be set with `MDEx.Document.assign/2`. Defaults to `%{}`.
 
   Note that `:sanitize` and `:unsafe` are disabled by default. See [Safety](https://hexdocs.pm/mdex/safety.html) for more info.
 

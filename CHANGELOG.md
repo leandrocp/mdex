@@ -2,7 +2,14 @@
 
 ## Unreleased
 
-## Fixed
+### Changed
+- Add `use MDEx` macro to set up MDEx in a module (optional)
+- [HEEx] Add `to_heex/2` and `to_heex!/2` macros to convert Markdown, `MDEx.Document`, or HTML to HEEx with Phoenix component support
+- [HEEx] Add support for `Phoenix.LiveView.Rendered` in `to_html/2` to convert rendered HEEx to HTML string
+- Add `:assigns` option to pass assigns to HEEx templates
+- [Document] Add `MDEx.Document.assign/2` and `MDEx.Document.assign/3` to set assigns on a document
+
+### Fixed
 - [Docs] Indent sigil modifiers items (@gmile)
 - [Plugins] Add `:plugins` to `MDEx.new/1` options to configure multiple plugins at once (@halostatue)
 - [Deps] Make `:rustler`  optional (@scrogson)
