@@ -36,7 +36,8 @@
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
 - Req-like [Document pipeline API](https://hexdocs.pm/mdex/MDEx.Document.html)
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
-- Discord and GitLab Flavored-ish Markdown
+- [GitLab Flavored Markdown](https://docs.gitlab.com/user/markdown)
+- Discord Flavored Markdown (Partial)
 - Wiki-style links
 - Phoenix HEEx components and expressions
 - [Streaming](https://hexdocs.pm/mdex/MDEx.Document.html#module-streaming) incomplete fragments
@@ -181,7 +182,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |To Quill Delta|✅|❌|❌|❌|
 |Emoji|✅|❌|❌|❌|
 |GFM³|✅|✅|❌|❌|
-|GitLab⁴|⚠️¹|❌|❌|❌|
+|GLFM⁴|✅|❌|❌|❌|
 |Discord⁵|⚠️¹|❌|❌|❌|
 
 1. Partial support
