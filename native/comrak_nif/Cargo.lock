@@ -319,7 +319,7 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 [[package]]
 name = "comrak"
 version = "0.49.0"
-source = "git+https://github.com/leandrocp/comrak?branch=lp-fix-heex#0b327a31ad1fe7b41a9b870ebfffa0e52c06e397"
+source = "git+https://github.com/kivikakk/comrak?rev=b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a#b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a"
 dependencies = [
  "bon",
  "caseless",
