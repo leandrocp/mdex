@@ -2,8 +2,6 @@
 
 # GitHub Flavored Markdown
 
-GitHub Flavored Markdown (GFM) extends CommonMark with features commonly used in software documentation. This example shows how to enable GFM extensions like tables, task lists, autolinks, strikethrough, and emoji shortcodes.
-
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
@@ -12,6 +10,10 @@ Mix.install([
   {:req, "~> 0.5"}
 ])
 ```
+
+## Intro
+
+GitHub Flavored Markdown (GFM) extends CommonMark with features commonly used in software documentation. This example shows how to enable GFM extensions like tables, task lists, autolinks, strikethrough, and emoji shortcodes.
 
 ## Setup
 

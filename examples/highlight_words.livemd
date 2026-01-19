@@ -2,14 +2,16 @@
 
 # Highlight Words
 
-This example demonstrates how to traverse and transform the MDEx document tree. It implements the `==highlighted text==` syntax by converting matching text into `<mark>` tags, showing how to use `Access` to navigate and update nodes.
-
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
   {:kino, "~> 0.16"}
 ])
 ```
+
+## Intro
+
+This example demonstrates how to traverse and transform the MDEx document tree. It implements the `==highlighted text==` syntax by converting matching text into `<mark>` tags, showing how to use `Access` to navigate and update nodes.
 
 ## Example
 

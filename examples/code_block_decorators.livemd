@@ -2,8 +2,6 @@
 
 # Code Block Decorators
 
-Code block decorators let you add metadata to fenced code blocks using key-value pairs in the info string. Use them to highlight specific lines, apply custom themes per block, or add other visual enhancements without modifying the code itself.
-
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8.1"},
@@ -11,9 +9,13 @@ Mix.install([
 ])
 ```
 
-## Docs
+## Intro
+
+Code block decorators let you add metadata to fenced code blocks using key-value pairs in the info string. Use them to highlight specific lines, apply custom themes per block, or add other visual enhancements without modifying the code itself.
 
 All options and more examples at [Guides / Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
+
+## Decorator: highlight_lines
 
 ````elixir
 import MDEx.Sigil
@@ -35,8 +37,6 @@ end
 """HTML
 |> Kino.HTML.new()
 ````
-
-## Decorator: highlight_lines
 
 ## Decorator: theme
 

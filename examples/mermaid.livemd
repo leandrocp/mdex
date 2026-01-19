@@ -2,8 +2,6 @@
 
 # Mermaid
 
-[Mermaid](https://mermaid.js.org) is a JavaScript library for creating diagrams from text. Use it to embed flowcharts, sequence diagrams, class diagrams, and more directly in your Markdown. The `mdex_mermaid` plugin transforms mermaid code blocks into rendered diagrams.
-
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
@@ -11,6 +9,10 @@ Mix.install([
   {:kino, "~> 0.16"}
 ])
 ```
+
+## Intro
+
+[Mermaid](https://mermaid.js.org) is a JavaScript library for creating diagrams from text. Use it to embed flowcharts, sequence diagrams, class diagrams, and more directly in your Markdown. The `mdex_mermaid` plugin transforms mermaid code blocks into rendered diagrams.
 
 ## Example
 

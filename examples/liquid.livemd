@@ -2,8 +2,6 @@
 
 # Liquid
 
-[Liquid](https://shopify.github.io/liquid/) is a template language created by Shopify. This example shows how to combine Liquid templating with MDEx by first processing Liquid variables and filters, then rendering the result as Markdown.
-
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
@@ -11,6 +9,10 @@ Mix.install([
   {:solid, "~> 0.15"}
 ])
 ```
+
+## Intro
+
+[Liquid](https://shopify.github.io/liquid/) is a template language created by Shopify. This example shows how to combine Liquid templating with MDEx by first processing Liquid variables and filters, then rendering the result as Markdown.
 
 ## Example
 
