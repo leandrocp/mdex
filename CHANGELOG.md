@@ -15,6 +15,7 @@
 - [Docs] Indent sigil modifiers items (@gmile)
 - [Plugins] Add `:plugins` to `MDEx.new/1` options to configure multiple plugins at once (@halostatue)
 - [Deps] Make `:rustler`  optional (@scrogson)
+- [Parser] Fix HEEx parsing on mixed components/markdown (ref https://github.com/kivikakk/comrak/commit/0b327a31ad1fe7b41a9b870ebfffa0e52c06e397)
 
 ## 0.11.0 - 2026-01-09
 
