@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.1 - 2026-01-19
 
 ### Changed
 - Add `use MDEx` macro to set up MDEx in a module (optional)
