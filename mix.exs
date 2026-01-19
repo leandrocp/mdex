@@ -85,6 +85,7 @@ defmodule MDEx.MixProject do
         "examples/liquid.livemd",
         "examples/phoenix_live_view_heex.livemd",
         {"guides/plugins.md", title: "Plugins"},
+        {"guides/heex.md", title: "HEEx Integration"},
         {"guides/compilation.md", title: "Compilation"},
         {"guides/safety.md", title: "Safety"},
         {"guides/code_block_decorators.md", title: "Code Block Decorators"}
@@ -152,6 +153,7 @@ defmodule MDEx.MixProject do
         ],
         Guides: [
           "guides/plugins.md",
+          "guides/heex.md",
           "guides/compilation.md",
           "guides/safety.md",
           "guides/code_block_decorators.md"

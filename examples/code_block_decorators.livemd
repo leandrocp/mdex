@@ -2,6 +2,8 @@
 
 # Code Block Decorators
 
+Code block decorators let you add metadata to fenced code blocks using key-value pairs in the info string. Use them to highlight specific lines, apply custom themes per block, or add other visual enhancements without modifying the code itself.
+
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8.1"},

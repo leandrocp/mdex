@@ -1,5 +1,7 @@
 # Light Dark Theme
 
+MDEx supports automatic light/dark mode switching for syntax highlighting using the `:html_multi_themes` formatter. This generates CSS that responds to the user's system color scheme preference, showing different themes without JavaScript.
+
 ```elixir
 Mix.install([
   {:mdex, "~> 0.11"},

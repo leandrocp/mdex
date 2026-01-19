@@ -1,5 +1,7 @@
 # Phoenix LiveView HEEx
 
+MDEx integrates with Phoenix LiveView, allowing you to write Markdown that includes Phoenix components, `phx-*` bindings, and Elixir expressions. Use the `~MD[...]HEEX` sigil modifier to compile Markdown templates with full HEEx support. See the [HEEx Integration guide](https://hexdocs.pm/mdex/heex.html) for more details.
+
 ```elixir
 Mix.install([
   {:mdex, "~> 0.11"},

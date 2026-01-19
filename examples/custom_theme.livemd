@@ -2,6 +2,8 @@
 
 # Custom Theme
 
+MDEx uses [Autumn](https://hex.pm/packages/autumn) for syntax highlighting, which supports customizable themes. This example shows how to modify an existing theme by changing styles for specific syntax elements like function calls.
+
 ```elixir
 Mix.install([
   {:mdex, "~> 0.8"},
