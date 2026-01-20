@@ -389,4 +389,66 @@ defmodule MDEx.SigilTest do
   #     ```|HEEX |> MDEx.rendered_to_html() =~ "lang = &lbrace;@lang&rbrace;"
   #   end
   # end
+
+  describe "use MDEx with options" do
+    defmodule UnderlineDisabled do
+      use MDEx, extension: [underline: false]
+
+      def html do
+        ~MD|Hello __world__|HTML
+      end
+    end
+
+    defmodule DefaultOptions do
+      use MDEx
+
+      def html do
+        ~MD|Hello __world__|HTML
+      end
+    end
+
+    test "underline disabled" do
+      assert UnderlineDisabled.html() == "<p>Hello <strong>world</strong></p>"
+    end
+
+    test "default options" do
+      assert DefaultOptions.html() == "<p>Hello <u>world</u></p>"
+    end
+  end
+
+  describe "use MDEx merge options" do
+    defmodule OverwriteOptions do
+      use MDEx, extension: [superscript: false]
+
+      def test_underline do
+        ~MD|Hello ~world~|HTML
+      end
+
+      def test_superscript do
+        ~MD|Hello ^world^|HTML
+      end
+    end
+
+    test "default underline still enabled" do
+      assert OverwriteOptions.test_underline() == "<p>Hello <del>world</del></p>"
+    end
+
+    test "disable default option" do
+      assert OverwriteOptions.test_superscript() == "<p>Hello ^world^</p>"
+    end
+  end
+
+  describe "import MDEx.Sigil without use MDEx" do
+    defmodule ImportOnly do
+      import MDEx.Sigil
+
+      def html do
+        ~MD|Hello ~world~|HTML
+      end
+    end
+
+    test "default options" do
+      assert ImportOnly.html() == "<p>Hello <del>world</del></p>"
+    end
+  end
 end

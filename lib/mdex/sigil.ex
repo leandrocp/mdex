@@ -37,6 +37,22 @@ defmodule MDEx.Sigil do
           end
         )
 
+  @doc false
+  def default_sigil_opts, do: @opts
+
+  @doc false
+  def merge_sigil_opts(user_opts) when is_list(user_opts) and user_opts != [] do
+    Keyword.merge(
+      @opts,
+      user_opts,
+      fn _key, v1, v2 ->
+        if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
+      end
+    )
+  end
+
+  def merge_sigil_opts(_), do: @opts
+
   @moduledoc """
   Sigils for parsing and formatting Markdown between different formats.
 
@@ -146,7 +162,7 @@ defmodule MDEx.Sigil do
   #{inspect(@opts, pretty: true)}
   ```
 
-  If you need a different set of options, you can call the regular functions in `MDEx` to pass the options you need.
+  If you need a different set of options, you can either pass options to [use MDEx](https://hexdocs.pm/mdex/MDEx.html#__using__/1) or call the regular functions in `MDEx`.
 
   """
 
@@ -221,17 +237,19 @@ defmodule MDEx.Sigil do
   """
   defmacro sigil_MD({:<<>>, _meta, [expr]}, modifiers) do
     expr = expr(expr, __CALLER__)
+    user_opts = Module.get_attribute(__CALLER__.module, :__mdex_opts__) || []
+    opts = MDEx.Sigil.merge_sigil_opts(user_opts)
 
     case modifiers do
       [] ->
         expr
-        |> MDEx.parse_document!(@opts)
+        |> MDEx.parse_document!(opts)
         |> Macro.escape()
 
       ~c"HTML" ->
         if Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
           expr
-          |> MDEx.to_html!(@opts)
+          |> MDEx.to_html!(opts)
           |> EEx.compile_string(
             engine: EEx.SmartEngine,
             file: __CALLER__.file,
@@ -239,7 +257,7 @@ defmodule MDEx.Sigil do
             indentation: 0
           )
         else
-          MDEx.to_html!(expr, @opts)
+          MDEx.to_html!(expr, opts)
         end
 
       ~c"HEEX" ->
@@ -248,8 +266,13 @@ defmodule MDEx.Sigil do
             raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
           end
 
+          heex_opts =
+            opts
+            |> Keyword.update(:extension, [phoenix_heex: true], &Keyword.put(&1, :phoenix_heex, true))
+            |> Keyword.update(:render, [unsafe: true], &Keyword.put(&1, :unsafe, true))
+
           expr
-          |> MDEx.to_html!(@opts)
+          |> MDEx.to_html!(heex_opts)
           |> EEx.compile_string(
             engine: Phoenix.LiveView.TagEngine,
             file: __CALLER__.file,
@@ -277,22 +300,22 @@ defmodule MDEx.Sigil do
             expr
 
           :else ->
-            MDEx.to_markdown!(expr, @opts)
+            MDEx.to_markdown!(expr, opts)
         end
 
       ~c"JSON" ->
         expr
-        |> MDEx.to_json!(@opts)
+        |> MDEx.to_json!(opts)
         |> Macro.escape()
 
       ~c"XML" ->
         expr
-        |> MDEx.to_xml!(@opts)
+        |> MDEx.to_xml!(opts)
         |> Macro.escape()
 
       ~c"DELTA" ->
         expr
-        |> MDEx.to_delta!(@opts)
+        |> MDEx.to_delta!(opts)
         |> Macro.escape()
 
       _ ->

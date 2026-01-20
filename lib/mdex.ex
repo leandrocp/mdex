@@ -50,7 +50,30 @@ defmodule MDEx do
     * `require MDEx` - enables the `to_heex/2` macro (requires Phoenix LiveView)
     * `import MDEx.Sigil` - enables the `~MD` sigil
 
-  ## Example
+  ## Options
+
+  You can pass `t:MDEx.Document.options/0` to customize the `~MD` sigil behavior.
+  These options are merged with the sigil's default options (see `MDEx.Sigil` for defaults).
+
+  ```elixir
+  defmodule MyApp.CustomMarkdown do
+    use MDEx,
+      extension: [strikethrough: false],
+      syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_latte"}],
+      plugins: [MyApp.MarkdownPlugin]
+
+    def render do
+      ~MD|Hello ~world~|HTML
+    end
+  end
+  ```
+
+  > #### HEEX modifier requirements {: .info}
+  >
+  > The `HEEX` modifier enforces `extension: [phoenix_heex: true]` and `render: [unsafe: true]`
+  > regardless of custom options.
+
+  ## Examples
 
   Using the `~MD` sigil in a LiveView:
 
@@ -84,10 +107,11 @@ defmodule MDEx do
       end
 
   """
-  defmacro __using__(_opts) do
+  defmacro __using__(opts \\ []) do
     quote do
       require MDEx
       import MDEx.Sigil
+      @__mdex_opts__ unquote(opts)
     end
   end
 
