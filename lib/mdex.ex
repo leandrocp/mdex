@@ -1283,4 +1283,11 @@ defmodule MDEx do
   defp maybe_apply_document_option(_document, other) do
     raise ArgumentError, "option :document must be a binary or %MDEx.Document{}, got: #{inspect(other)}"
   end
+
+  @doc false
+  def merge_options(kw1, kw2) do
+    Keyword.merge(kw1, kw2, fn _key, v1, v2 ->
+      if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
+    end)
+  end
 end

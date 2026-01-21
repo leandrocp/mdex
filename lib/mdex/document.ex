@@ -2475,10 +2475,7 @@ defmodule MDEx.Document do
   @doc false
   @spec rust_options!(Keyword.t()) :: map()
   def rust_options!(options) do
-    options =
-      Keyword.merge(default_options(), options, fn _k, v1, v2 ->
-        if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
-      end)
+    options = MDEx.merge_options(default_options(), options)
 
     {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
     render = Keyword.put_new(render, :unsafe, unsafe)

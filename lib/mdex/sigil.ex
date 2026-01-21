@@ -1,54 +1,36 @@
 defmodule MDEx.Sigil do
-  @opts Keyword.merge(
+  @opts MDEx.merge_options(
           MDEx.Document.default_options(),
-          [
-            extension: [
-              strikethrough: true,
-              table: true,
-              autolink: false,
-              tasklist: true,
-              superscript: true,
-              footnotes: true,
-              description_lists: true,
-              # need both multiline block quotes and alerts to enable github/gitlab multiline alerts
-              multiline_block_quotes: true,
-              alerts: true,
-              math_dollars: true,
-              math_code: true,
-              shortcodes: true,
-              underline: true,
-              spoiler: true,
-              phoenix_heex: true
-            ],
-            parse: [
-              relaxed_tasklist_matching: true,
-              relaxed_autolinks: true
-            ],
-            render: [
-              unsafe: true,
-              escape: false,
-              # github_pre_lang and full_info_string are required to enable code block decorators
-              github_pre_lang: true,
-              full_info_string: true
-            ]
+          extension: [
+            strikethrough: true,
+            table: true,
+            autolink: false,
+            tasklist: true,
+            superscript: true,
+            footnotes: true,
+            description_lists: true,
+            # need both multiline block quotes and alerts to enable github/gitlab multiline alerts
+            multiline_block_quotes: true,
+            alerts: true,
+            math_dollars: true,
+            math_code: true,
+            shortcodes: true,
+            underline: true,
+            spoiler: true,
+            phoenix_heex: true
           ],
-          fn _key, v1, v2 ->
-            if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
-          end
+          parse: [
+            relaxed_tasklist_matching: true,
+            relaxed_autolinks: true
+          ],
+          render: [
+            unsafe: true,
+            escape: false,
+            # github_pre_lang and full_info_string are required to enable code block decorators
+            github_pre_lang: true,
+            full_info_string: true
+          ]
         )
-
-  @doc false
-  def merge_sigil_opts(user_opts) when is_list(user_opts) and user_opts != [] do
-    Keyword.merge(
-      @opts,
-      user_opts,
-      fn _key, v1, v2 ->
-        if is_list(v1) and is_list(v2), do: Keyword.merge(v1, v2), else: v2
-      end
-    )
-  end
-
-  def merge_sigil_opts(_), do: @opts
 
   @moduledoc """
   Sigils for parsing and formatting Markdown between different formats.
@@ -235,7 +217,7 @@ defmodule MDEx.Sigil do
   defmacro sigil_MD({:<<>>, _meta, [expr]}, modifiers) do
     expr = expr(expr, __CALLER__)
     user_opts = Module.get_attribute(__CALLER__.module, :__mdex_opts__) || []
-    opts = MDEx.Sigil.merge_sigil_opts(user_opts)
+    opts = MDEx.merge_options(@opts, user_opts)
 
     case modifiers do
       [] ->
