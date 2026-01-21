@@ -4,7 +4,7 @@
 
 ```elixir
 Mix.install([
-  {:mdex, "~> 0.11"},
+  {:mdex, ">= 0.11.2"},
   {:kino, "~> 0.16"}
 ])
 ```
@@ -44,7 +44,7 @@ DefaultExample.render()
 You can pass options to `use MDEx` to customize the sigil behavior. Options are merged with the defaults:
 
 ````elixir
-defmodule CustomThemeExample do
+defmodule CustomOptsExample do
   use MDEx,
     extension: [strikethrough: false],
     syntax_highlight: [formatter: {:html_inline, theme: "gruvbox_light"}]
@@ -64,6 +64,6 @@ defmodule CustomThemeExample do
   end
 end
 
-CustomThemeExample.render()
+CustomOptsExample.render()
 |> Kino.HTML.new()
 ````
