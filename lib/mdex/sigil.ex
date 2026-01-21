@@ -38,9 +38,6 @@ defmodule MDEx.Sigil do
         )
 
   @doc false
-  def default_sigil_opts, do: @opts
-
-  @doc false
   def merge_sigil_opts(user_opts) when is_list(user_opts) and user_opts != [] do
     Keyword.merge(
       @opts,
