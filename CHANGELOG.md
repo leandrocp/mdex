@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.11.2 - 2026-01-21
 
 ### Changed
 - Pass options to `use MDEx` to allow modifying the `~MD` sigil behaviour
+
+### Fixed
+- [Docs] Fix examples
 
 ## 0.11.1 - 2026-01-19
 
