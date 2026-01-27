@@ -1,6 +1,6 @@
 mod sanitize;
 
-use autumnus::elixir::ExFormatterOption;
+use super::elixir_types::ExFormatterOption;
 use comrak::options::{Extension, ListStyleType, Parse, Render};
 pub use sanitize::*;
 use std::sync::Arc;
@@ -186,6 +186,7 @@ impl ExSanitizeOption {
 #[derive(Debug, Default, NifMap)]
 pub struct ExSyntaxHighlightOptions {
     pub formatter: ExFormatterOption,
+    pub language: Option<String>,
 }
 
 #[derive(Debug, Default, NifMap)]

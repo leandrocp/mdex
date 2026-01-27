@@ -11,17 +11,17 @@ Mix.install([
 
 ## Intro
 
-MDEx uses [Autumn](https://hex.pm/packages/autumn) for syntax highlighting, which supports customizable themes. This example shows how to modify an existing theme by changing styles for specific syntax elements like function calls.
+MDEx uses [Lumis](https://hex.pm/packages/lumis) for syntax highlighting, which supports customizable themes. This example shows how to modify an existing theme by changing styles for specific syntax elements like function calls.
 
 ## Customization
 
-Below we'll customize the `github_light` theme but you can work with any [%Autumn.Theme{}](https://hexdocs.pm/autumn/Autumn.Theme.html) or build one from scratch.
+Below we'll customize the `github_light` theme but you can work with any [%Lumis.Theme{}](https://hexdocs.pm/lumis/Lumis.Theme.html) or build one from scratch.
 
 ```elixir
-theme = Autumn.Theme.get("github_light")
+theme = Lumis.Theme.get("github_light")
 
 function_call_style =
-  %Autumn.Theme.Style{
+  %Lumis.Theme.Style{
     fg: "#d1242f",
     bg: "#e4b7be",
     bold: true
@@ -37,94 +37,94 @@ new_theme = put_in(
 <!-- livebook:{"output":true} -->
 
 ```
-%Autumn.Theme{
+%Lumis.Theme{
   name: "github_light",
   appearance: :light,
   revision: "c106c9472154d6b2c74b74565616b877ae8ed31d",
   highlights: %{
-    "function.macro" => %Autumn.Theme.Style{
+    "function.macro" => %Lumis.Theme.Style{
       fg: "#6639ba",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "variable.builtin" => %Autumn.Theme.Style{
+    "variable.builtin" => %Lumis.Theme.Style{
       fg: "#0550ae",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "markup.list.checked" => %Autumn.Theme.Style{
+    "markup.list.checked" => %Lumis.Theme.Style{
       fg: "#116329",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "character" => %Autumn.Theme.Style{
+    "character" => %Lumis.Theme.Style{
       fg: "#0a3069",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "string.special.symbol" => %Autumn.Theme.Style{
+    "string.special.symbol" => %Lumis.Theme.Style{
       fg: "#0550ae",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "markup.strong" => %Autumn.Theme.Style{
+    "markup.strong" => %Lumis.Theme.Style{
       fg: "#1f2328",
       bg: nil,
       bold: true,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "markup.list.unchecked" => %Autumn.Theme.Style{
+    "markup.list.unchecked" => %Lumis.Theme.Style{
       fg: "#57606a",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "variable.parameter.builtin" => %Autumn.Theme.Style{
+    "variable.parameter.builtin" => %Lumis.Theme.Style{
       fg: "#0550ae",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "character.special" => %Autumn.Theme.Style{
+    "character.special" => %Lumis.Theme.Style{
       fg: "#1f2328",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "boolean" => %Autumn.Theme.Style{
+    "boolean" => %Lumis.Theme.Style{
       fg: "#0550ae",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "string.escape" => %Autumn.Theme.Style{
+    "string.escape" => %Lumis.Theme.Style{
       fg: "#0a3069",
       bg: nil,
       bold: true,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
-    "keyword.exception" => %Autumn.Theme.Style{
+    "keyword.exception" => %Lumis.Theme.Style{
       fg: "#0550ae",
       bg: nil,
       bold: false,
       italic: false,
-      text_decoration: %Autumn.Theme.TextDecoration{underline: nil, strikethrough: false}
+      text_decoration: %Lumis.Theme.TextDecoration{underline: nil, strikethrough: false}
     },
     ...
   }

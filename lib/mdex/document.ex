@@ -660,7 +660,7 @@ defmodule MDEx.Document do
   @behaviour Access
   alias __MODULE__
   alias MDEx.Native
-  alias Autumn
+  alias Lumis
 
   @built_in_options [
     :extension,
@@ -984,9 +984,9 @@ defmodule MDEx.Document do
 
   @syntax_highlight_options_schema [
     formatter: [
-      type: {:custom, Autumn, :formatter_type, []},
-      type_spec: quote(do: Autumn.formatter()),
-      type_doc: "`t:Autumn.formatter/0`",
+      type: {:custom, Lumis, :formatter_type, []},
+      type_spec: quote(do: Lumis.formatter()),
+      type_doc: "`t:Lumis.formatter/0`",
       default: {:html_inline, theme: "onedark"},
       doc: "Syntax highlight code blocks using this formatter. See the type doc for more info."
     ]
@@ -1211,7 +1211,7 @@ defmodule MDEx.Document do
 
             syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
 
-        See [Autumn](https://hexdocs.pm/autumn) for more info and examples.
+        See [Lumis](https://hexdocs.pm/lumis) for more info and examples.
       """
     ],
     sanitize: [
@@ -2318,7 +2318,7 @@ defmodule MDEx.Document do
   @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
 
   @typedoc """
-  Syntax Highlight code blocks using [autumn](https://hexdocs.pm/autumn).
+  Syntax Highlight code blocks using [lumis](https://hexdocs.pm/lumis).
 
   ## Example
 
@@ -2487,8 +2487,8 @@ defmodule MDEx.Document do
 
         options ->
           options
-          |> Autumn.validate_options!()
-          |> Autumn.rust_options!()
+          |> Lumis.validate_options!()
+          |> Lumis.rust_options!()
       end
 
     sanitize =

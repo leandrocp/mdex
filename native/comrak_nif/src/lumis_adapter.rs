@@ -1,9 +1,9 @@
-use autumnus::elixir::ExFormatterOption;
-use autumnus::highlight::highlight_iter;
-use autumnus::html;
-use autumnus::languages::Language;
-use autumnus::themes::{self, Appearance};
+use crate::types::elixir_types::{ExFormatterOption, ThemeOrString};
 use comrak::adapters::SyntaxHighlighterAdapter;
+use lumis::highlight::highlight_iter;
+use lumis::html;
+use lumis::languages::Language;
+use lumis::themes::{self, Appearance};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -35,13 +35,13 @@ struct MultiThemesConfig {
     include_highlights: bool,
 }
 
-pub struct AutumnusAdapter {
+pub struct LumisAdapter {
     formatter_config: ExFormatterOption,
     stored_attrs: Mutex<Option<Arc<HashMap<String, String>>>>,
     stored_lang: Mutex<Option<Language>>,
 }
 
-impl Default for AutumnusAdapter {
+impl Default for LumisAdapter {
     fn default() -> Self {
         Self {
             formatter_config: ExFormatterOption::default(),
@@ -51,7 +51,7 @@ impl Default for AutumnusAdapter {
     }
 }
 
-impl AutumnusAdapter {
+impl LumisAdapter {
     pub fn new(formatter_config: ExFormatterOption) -> Self {
         Self {
             formatter_config,
@@ -86,12 +86,12 @@ impl AutumnusAdapter {
     fn theme_from_formatter(&self) -> Option<themes::Theme> {
         match &self.formatter_config {
             ExFormatterOption::HtmlInline { theme, .. } => theme.as_ref().and_then(|t| match t {
-                autumnus::elixir::ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
-                autumnus::elixir::ThemeOrString::String(name) => themes::get(name).ok(),
+                ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
+                ThemeOrString::String(name) => themes::get(name).ok(),
             }),
             ExFormatterOption::Terminal { theme } => theme.as_ref().and_then(|t| match t {
-                autumnus::elixir::ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
-                autumnus::elixir::ThemeOrString::String(name) => themes::get(name).ok(),
+                ThemeOrString::Theme(ex_theme) => Some(ex_theme.clone().into()),
+                ThemeOrString::String(name) => themes::get(name).ok(),
             }),
             _ => None,
         }
@@ -242,7 +242,88 @@ impl AutumnusAdapter {
                 return Some((lines, style, class));
             }
         }
-        None
+        drop(stored_attrs);
+
+        self.formatter_highlight_lines_config(theme)
+    }
+
+    fn formatter_highlight_lines_config(
+        &self,
+        theme: &Option<themes::Theme>,
+    ) -> Option<(Vec<usize>, Option<String>, Option<String>)> {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline {
+                highlight_lines: Some(hl),
+                ..
+            }
+            | ExFormatterOption::HtmlMultiThemes {
+                highlight_lines: Some(hl),
+                ..
+            } => {
+                let lines = Self::convert_line_specs(&hl.lines);
+                let style = hl.style.as_ref().map(|s| match s {
+                    crate::types::elixir_types::ExHtmlInlineHighlightLinesStyle::Theme => theme
+                        .as_ref()
+                        .and_then(|t| t.get_style("highlighted").map(|style| style.css(true, " ")))
+                        .unwrap_or_else(|| {
+                            let is_light = theme
+                                .as_ref()
+                                .map(|t| {
+                                    matches!(t.appearance, Appearance::Light)
+                                        || t.name.to_lowercase().contains("light")
+                                })
+                                .unwrap_or(false);
+                            let highlight_bg = if is_light { "#e7eaf0" } else { "#3b4252" };
+                            format!("background-color: {};", highlight_bg)
+                        }),
+                    crate::types::elixir_types::ExHtmlInlineHighlightLinesStyle::Style {
+                        style,
+                    } => style.clone(),
+                });
+                let class = hl.class.clone();
+                Some((lines, style, class))
+            }
+            ExFormatterOption::HtmlLinked {
+                highlight_lines: Some(hl),
+                ..
+            } => {
+                let lines = Self::convert_line_specs(&hl.lines);
+                let class = Some(hl.class.clone());
+                Some((lines, None, class))
+            }
+            _ => None,
+        }
+    }
+
+    fn convert_line_specs(lines: &[crate::types::elixir_types::ExLineSpec]) -> Vec<usize> {
+        let mut result = Vec::new();
+        for spec in lines {
+            match spec {
+                crate::types::elixir_types::ExLineSpec::Single(n) => result.push(*n),
+                crate::types::elixir_types::ExLineSpec::Range { start, end } => {
+                    for n in *start..=*end {
+                        result.push(n);
+                    }
+                }
+            }
+        }
+        result
+    }
+
+    #[allow(dead_code)]
+    fn header_config(&self) -> Option<(&str, &str)> {
+        match &self.formatter_config {
+            ExFormatterOption::HtmlInline {
+                header: Some(h), ..
+            }
+            | ExFormatterOption::HtmlLinked {
+                header: Some(h), ..
+            }
+            | ExFormatterOption::HtmlMultiThemes {
+                header: Some(h), ..
+            } => Some((&h.open_tag, &h.close_tag)),
+            _ => None,
+        }
     }
 
     fn custom_attrs(
@@ -267,7 +348,7 @@ impl AutumnusAdapter {
     }
 }
 
-impl SyntaxHighlighterAdapter for AutumnusAdapter {
+impl SyntaxHighlighterAdapter for LumisAdapter {
     fn write_pre_tag<'s>(
         &self,
         output: &mut dyn Write,
@@ -445,14 +526,13 @@ mod tests {
     use pretty_assertions::assert_str_eq;
 
     use super::*;
-    use autumnus::elixir::{ExFormatterOption, ThemeOrString};
     use comrak::options::Plugins;
     use comrak::{format_html_with_plugins, parse_document, Arena, Options};
 
     fn run_test(markdown: &str, formatter: ExFormatterOption, options: Options) -> String {
         let arena = Arena::new();
         let root = parse_document(&arena, markdown, &options);
-        let adapter = AutumnusAdapter::new(formatter);
+        let adapter = LumisAdapter::new(formatter);
 
         let plugins = Plugins {
             render: comrak::options::RenderPlugins {

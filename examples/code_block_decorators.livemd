@@ -30,7 +30,7 @@ defmodule Lines do
   end
 
   def libs do
-    [:comrak, :ammonia, :autumnus]
+    [:comrak, :ammonia, :lumis]
   end
 end
 ```
@@ -53,7 +53,7 @@ defmodule Lines do
   end
 
   def libs do
-    [:comrak, :ammonia, :autumnus]
+    [:comrak, :ammonia, :lumis]
   end
 end
 ```
@@ -76,7 +76,7 @@ defmodule Lines do
   end
 
   def libs do
-    [:comrak, :ammonia, :autumnus]
+    [:comrak, :ammonia, :lumis]
   end
 end
 ```
@@ -97,7 +97,7 @@ defmodule Lines do
   end
 
   def libs do
-    [:comrak, :ammonia, :autumnus]
+    [:comrak, :ammonia, :lumis]
   end
 end
 ```
