@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.3 - 2026-01-27
+
+### Changed
+- Replace `autumn` and `autumnus` with the unified `lumis` package.
+  Could be a small breaking change if you were using `%Autumn{}` directly, see https://github.com/leandrocp/autumn/blob/main/CHANGELOG.md#070---2026-01-27
+
 ## 0.11.2 - 2026-01-21
 
 ### Changed
