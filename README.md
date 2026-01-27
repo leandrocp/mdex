@@ -42,7 +42,7 @@
 - Phoenix HEEx components and expressions
 - [Streaming](https://hexdocs.pm/mdex/MDEx.Document.html#module-streaming) incomplete fragments
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
-- Built-in [Syntax Highlighting](https://autumnus.dev) for code blocks
+- Built-in [Syntax Highlighting](https://lumis.sh) for code blocks
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 - HTML sanitization
 - [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, HEEx, JSON, XML, and Quill Delta
@@ -117,7 +117,7 @@ The library is built on top of:
 
 - [comrak](https://crates.io/crates/comrak) - a fast Rust port of [GitHub's CommonMark parser](https://github.com/github/cmark-gfm)
 - [ammonia](https://crates.io/crates/ammonia) for HTML Sanitization
-- [autumnus](https://crates.io/crates/autumnus) for Syntax Highlighting
+- [lumis](https://crates.io/crates/lumis) for Syntax Highlighting
 
 <!-- MDOC -->
 

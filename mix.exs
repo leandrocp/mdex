@@ -45,7 +45,7 @@ defmodule MDEx.MixProject do
         Site: "https://mdelixir.dev",
         comrak: "https://crates.io/crates/comrak",
         ammonia: "https://crates.io/crates/ammonia",
-        autumnus: "https://autumnus.dev"
+        lumis: "https://lumis.sh"
       },
       files: ~w[
         lib/mdex.ex
@@ -171,7 +171,7 @@ defmodule MDEx.MixProject do
       {:rustler_precompiled, "~> 0.7"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
-      {:autumn, ">= 0.6.0"},
+      {:lumis, "~> 0.1"},
       {:jason, "~> 1.0"},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
@@ -181,7 +181,6 @@ defmodule MDEx.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "compile"],
-      "deps.vendorize": ["cmd cp -rv ../autumn/native/autumn native/comrak_nif/vendor"],
       "gen.checksum": "rustler_precompiled.download MDEx.Native --all --print",
       "gen.samples": "mdex.generate_samples",
       "format.all": ["format", "rust.fmt"],

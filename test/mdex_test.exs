@@ -334,10 +334,10 @@ defmodule MDExTest do
     end
 
     test "custom theme" do
-      theme = Autumn.Theme.get("github_light")
+      theme = Lumis.Theme.get("github_light")
 
       function_call_style =
-        %Autumn.Theme.Style{
+        %Lumis.Theme.Style{
           fg: "#d1242f",
           bg: "#e4b7be",
           bold: true
@@ -363,6 +363,87 @@ defmodule MDExTest do
         syntax_highlight: [formatter: {:html_inline, theme: custom_theme}]
       )
     end
+
+    test "with pre_class" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [formatter: {:html_inline, theme: "onedark", pre_class: "my-code-block"}]
+        )
+
+      assert html =~ ~s(<pre class="athl my-code-block")
+    end
+
+    test "with italic" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          defmodule Test do
+          end
+          ```
+          """,
+          syntax_highlight: [formatter: {:html_inline, theme: "nord", italic: true}]
+        )
+
+      assert html =~ ~s(font-style: italic)
+    end
+
+    test "with include_highlights" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :atom
+          ```
+          """,
+          syntax_highlight: [formatter: {:html_inline, theme: "onedark", include_highlights: true}]
+        )
+
+      assert html =~ ~s(data-highlight=)
+    end
+
+    test "with highlight_lines" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          line1
+          line2
+          line3
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_inline, theme: "github_dark", highlight_lines: %{lines: [2], style: :theme}}
+          ]
+        )
+
+      assert html =~ ~s(<div class="line" style="background-color: #484f58;" data-line="2">)
+      refute html =~ ~s(style="background-color: #484f58;" data-line="1")
+      refute html =~ ~s(style="background-color: #484f58;" data-line="3")
+    end
+
+    test "with highlight_lines custom style" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          line1
+          line2
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_inline, theme: "onedark", highlight_lines: %{lines: [1], style: "background-color: yellow;", class: "hl"}}
+          ]
+        )
+
+      assert html =~ ~s(<div class="line hl" style="background-color: yellow;" data-line="1">)
+      refute html =~ ~s(class="line hl" style="background-color: yellow;" data-line="2")
+    end
   end
 
   describe "syntax highlighting - html_linked" do
@@ -380,6 +461,60 @@ defmodule MDExTest do
         syntax_highlight: [formatter: :html_linked]
       )
     end
+
+    test "with pre_class" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [formatter: {:html_linked, pre_class: "linked-code"}]
+        )
+
+      assert html =~ ~s(<pre class="athl linked-code")
+    end
+
+    test "with highlight_lines" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          line1
+          line2
+          line3
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_linked, highlight_lines: %{lines: [2], class: "hl-line"}}
+          ]
+        )
+
+      assert html =~ ~s(<div class="line hl-line" data-line="2">)
+      refute html =~ ~s(class="line hl-line" data-line="1")
+      refute html =~ ~s(class="line hl-line" data-line="3")
+    end
+
+    test "with highlight_lines range" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          line1
+          line2
+          line3
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_linked, highlight_lines: %{lines: [1..2], class: "selected"}}
+          ]
+        )
+
+      assert html =~ ~s(<div class="line selected" data-line="1">)
+      assert html =~ ~s(<div class="line selected" data-line="2">)
+      refute html =~ ~s(class="line selected" data-line="3")
+    end
   end
 
   describe "syntax highlighting - html_multi_themes" do
@@ -396,6 +531,130 @@ defmodule MDExTest do
 
       assert html =~ ~s(--athl-light: #1f2328)
       assert html =~ ~s(--athl-dark: #e6edf3)
+    end
+
+    test "with theme structs" do
+      light_theme = Lumis.Theme.get("github_light")
+      dark_theme = Lumis.Theme.get("github_dark")
+
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: light_theme, dark: dark_theme]}
+          ]
+        )
+
+      assert html =~ ~s(--athl-light:)
+      assert html =~ ~s(--athl-dark:)
+    end
+
+    test "with default_theme" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], default_theme: "dark"}
+          ]
+        )
+
+      assert html =~ ~s(--athl-light:)
+      assert html =~ ~s(color:#)
+    end
+
+    test "with css_variable_prefix" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], css_variable_prefix: "--my-prefix"}
+          ]
+        )
+
+      assert html =~ ~s(--my-prefix-light:)
+      assert html =~ ~s(--my-prefix-dark:)
+    end
+
+    test "with pre_class" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], pre_class: "multi-theme-code"}
+          ]
+        )
+
+      assert html =~ ~s(<pre class="athl multi-theme-code")
+    end
+
+    test "with italic" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          defmodule Test do
+          end
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], italic: true}
+          ]
+        )
+
+      assert html =~ ~s(font-style:)
+    end
+
+    test "with include_highlights" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :atom
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], include_highlights: true}
+          ]
+        )
+
+      assert html =~ ~s(data-highlight=)
+    end
+
+    test "with highlight_lines" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          line1
+          line2
+          line3
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], highlight_lines: %{lines: [2], style: :theme}}
+          ]
+        )
+
+      assert html =~ ~s(<div class="line" style="background-color:)
+      assert html =~ ~s(data-line="2">)
+      refute html =~ ~s(style="background-color:) <> ~s( data-line="1")
+      refute html =~ ~s(style="background-color:) <> ~s( data-line="3")
     end
   end
 

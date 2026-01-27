@@ -11,7 +11,7 @@ Mix.install([
 
 ## Intro
 
-MDEx provides built-in syntax highlighting powered by [Autumn](https://hex.pm/packages/autumn). Use inline themes (styles embedded in the HTML) for simplicity, or class-based themes when you need external CSS control for features like light/dark mode switching.
+MDEx provides built-in syntax highlighting powered by [Lumis](https://hex.pm/packages/lumis). Use inline themes (styles embedded in the HTML) for simplicity, or class-based themes when you need external CSS control for features like light/dark mode switching.
 
 ## Example
 

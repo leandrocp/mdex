@@ -1,15 +1,15 @@
 #[macro_use]
 extern crate rustler;
 
-mod autumnus_adapter;
+mod lumis_adapter;
 mod types;
 
-use autumnus_adapter::AutumnusAdapter;
 use comrak::format_html_with_plugins;
 use comrak::options::Plugins;
 use comrak::{Anchorizer, Arena, Options};
 use lol_html::html_content::ContentType;
 use lol_html::{rewrite_str, text, RewriteStrSettings};
+use lumis_adapter::LumisAdapter;
 use rustler::{Encoder, Env, NifResult, Term};
 use types::{atoms::ok, document::*, options::*};
 
@@ -43,11 +43,10 @@ fn markdown_to_html_with_options<'a>(
     let root = comrak::parse_document(&arena, md, &comrak_options);
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter =
-        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
+    let lumis_adapter = LumisAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
-        plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+        plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
     let mut buffer = String::new();
@@ -75,11 +74,10 @@ fn markdown_to_xml_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter =
-        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
+    let lumis_adapter = LumisAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
-        plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+        plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
     comrak::format_xml_with_plugins(root, &comrak_options, &mut buffer, &plugins)
@@ -118,11 +116,10 @@ fn document_to_commonmark_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter =
-        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
+    let lumis_adapter = LumisAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
-        plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+        plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
     comrak::format_commonmark_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
@@ -163,11 +160,10 @@ fn document_to_html_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter =
-        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
+    let lumis_adapter = LumisAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
-        plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+        plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
     format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
@@ -207,11 +203,10 @@ fn document_to_xml_with_options<'a>(
     let mut buffer = String::new();
     let mut plugins = Plugins::default();
     let do_syntax_highlight = options.syntax_highlight.is_some();
-    let autumnus_adapter =
-        AutumnusAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
+    let lumis_adapter = LumisAdapter::new(options.syntax_highlight.unwrap_or_default().formatter);
 
     if do_syntax_highlight {
-        plugins.render.codefence_syntax_highlighter = Some(&autumnus_adapter);
+        plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
     comrak::format_xml_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)

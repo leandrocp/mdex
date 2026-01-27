@@ -513,7 +513,7 @@ MDEx.new(markdown: "# Title")
 
 ## Syntax Highlighting
 
-MDEx includes built-in syntax highlighting via [autumnus](https://crates.io/crates/autumnus) and [autumn](https://hex.pm/packages/autumn):
+MDEx includes built-in syntax highlighting via [lumis](https://crates.io/crates/lumis) and [lumis](https://hex.pm/packages/lumis):
 
 ````elixir
 MDEx.to_html!("""
@@ -538,14 +538,14 @@ syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
 syntax_highlight: nil
 
 # Get available themes and languages
-Autumn.available_themes()
+Lumis.available_themes()
 #=> ["onedark", "github_dark", "github_light", ...]
 
-Autumn.available_languages()
+Lumis.available_languages()
 #=> ["elixir", "rust", "javascript", ...]
 ```
 
-See [Autumnus themes](https://docs.rs/autumnus/latest/autumnus/#themes-available) for theme details and [Autumn documentation](https://hexdocs.pm/autumn) for configuration.
+See [Lumis themes](https://docs.rs/lumis/latest/lumis/#themes-available) for theme details and [Lumis documentation](https://hexdocs.pm/lumis) for configuration.
 
 ## Code Block Decorators
 
@@ -924,12 +924,12 @@ MDEx is built on top of these high-quality Rust libraries:
 - **[ammonia](https://crates.io/crates/ammonia)** - HTML sanitization
   - [Documentation](https://docs.rs/ammonia/latest/ammonia/)
 
-- **[autumnus](https://crates.io/crates/autumnus)** - Syntax highlighting powered by Tree-sitter and Neovim themes
-  - [Documentation](https://docs.rs/autumnus/latest/autumnus/)
-  - [Available Themes](https://docs.rs/autumnus/latest/autumnus/#themes-available)
+- **[lumis](https://crates.io/crates/lumis)** - Syntax highlighting powered by Tree-sitter and Neovim themes
+  - [Documentation](https://docs.rs/lumis/latest/lumis/)
+  - [Available Themes](https://docs.rs/lumis/latest/lumis/#themes-available)
 
-- **[autumn](https://hex.pm/packages/autumn)** - Elixir wrapper for autumnus
-  - [Documentation](https://hexdocs.pm/autumn/Autumn.html)
+- **[lumis](https://hex.pm/packages/lumis)** - Elixir wrapper for lumis
+  - [Documentation](https://hexdocs.pm/lumis/Lumis.html)
 
 ## Resources
 

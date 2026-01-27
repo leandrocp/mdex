@@ -22,7 +22,7 @@ mix deps | grep mdex
 ```
 
 ```sh
-mix deps | grep autumn
+mix deps | grep lumis
 ```
 
 ## To Reproduce
