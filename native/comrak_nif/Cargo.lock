@@ -242,8 +242,8 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
 name = "comrak"
-version = "0.49.0"
-source = "git+https://github.com/kivikakk/comrak?rev=b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a#b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a"
+version = "0.50.0"
+source = "git+https://github.com/leandrocp/comrak?branch=lp-fix-heex-nested#68d115b3b06968832775bff74144b99430b8fa17"
 dependencies = [
  "bon",
  "caseless",
@@ -252,8 +252,8 @@ dependencies = [
  "entities",
  "fmt2io",
  "jetscii",
- "phf 0.11.3",
- "phf_codegen 0.11.3",
+ "phf 0.13.1",
+ "phf_codegen 0.13.1",
  "rustc-hash",
  "shell-words",
  "smallvec",
@@ -521,11 +521,11 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "emojis"
-version = "0.6.4"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99e1f1df1f181f2539bac8bf027d31ca5ffbf9e559e3f2d09413b9107b5c02f4"
+checksum = "50c1c1870b766fc398e5f0526498d09c94b6de15be5fd769a28bbc804fb1b05d"
 dependencies = [
- "phf 0.11.3",
+ "phf 0.13.1",
 ]
 
 [[package]]
@@ -2464,9 +2464,9 @@ checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
 
 [[package]]
 name = "xdg"
-version = "2.5.2"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "213b7324336b53d2414b2db8537e56544d981803139155afa84f76eeebb7a546"
+checksum = "2fb433233f2df9344722454bc7e96465c9d03bff9d77c248f9e7523fe79585b5"
 
 [[package]]
 name = "yaml-rust"

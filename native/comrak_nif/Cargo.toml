@@ -14,7 +14,8 @@ crate-type = ["cdylib"]
 ammonia = "4.1"
 lumis = { version = "0.1", features = ["all-languages"] }
 # comrak = { version = "0.49", features = ["shortcodes", "phoenix_heex"] }
-comrak = { git = "https://github.com/kivikakk/comrak", rev = "b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a", features = ["shortcodes", "phoenix_heex"] }
+# comrak = { git = "https://github.com/kivikakk/comrak", rev = "b3ad5c942e7c6c00751c2e1f21d69d8ba7a5b31a", features = ["shortcodes", "phoenix_heex"] }
+comrak = { git = "https://github.com/leandrocp/comrak", branch = "lp-fix-heex-nested", features = ["shortcodes", "phoenix_heex"] }
 lol_html = "2.7"
 parking_lot = "0.12"
 phf = { version = "0.13", features = ["macros"] }
