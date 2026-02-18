@@ -142,6 +142,12 @@ The library is built on top of:
 - [Canada Navigator](https://github.com/canada-ca/navigator)
 - [Jido](https://github.com/agentjido)
 - [TermUI](https://github.com/pcharbon70/term_ui)
+- [BeamLens Web](https://github.com/beamlens/beamlens_web)
+- [Conpipe](https://github.com/andyl/conpipe)
+- [ExPress](https://github.com/nocksock/ex_press)
+- [Prosody](https://github.com/halostatue/prosody)
+- [Sagents Live Debugger](https://github.com/sagents-ai/sagents_live_debugger)
+- [Sayfa](https://github.com/furkanural/sayfa)
 - And [more...](https://github.com/search?q=lang%3Aelixir+%3Amdex&type=code)
 
 _Are you using MDEx and want to list your project here? Please send a PR!_
