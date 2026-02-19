@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.4 - 2026-02-19
 
 ### Changed
 - Bump comrak to revision [2d6339ce02bfc11082063eab39696ab8d843ab74](https://github.com/kivikakk/comrak/commit/2d6339ce02bfc11082063eab39696ab8d843ab74)
