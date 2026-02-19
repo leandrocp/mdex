@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- Bump comrak to revision [2d6339ce02bfc11082063eab39696ab8d843ab74](https://github.com/kivikakk/comrak/commit/2d6339ce02bfc11082063eab39696ab8d843ab74)
+- Bump lumis to v0.1.1
+- [Docs] Include mdex_custom_heading_id and mdex_video_embed into plugins list
+
 ## 0.11.3 - 2026-01-27
 
 ### Changed
