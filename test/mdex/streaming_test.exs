@@ -373,6 +373,51 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks, MDEx.new(extension: [strikethrough: true], streaming: true))
   end
 
+  test "simple insert" do
+    chunks = [
+      "++inserted ",
+      "text++"
+    ]
+
+    assert [
+             %Paragraph{
+               nodes: [
+                 %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+  end
+
+  test "simple highlight" do
+    chunks = [
+      "==marked ",
+      "text=="
+    ]
+
+    assert [
+             %Paragraph{
+               nodes: [
+                 %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+  end
+
+  test "simple subtext" do
+    chunks = [
+      "-# Some ",
+      "Subtext"
+    ]
+
+    assert [
+             %MDEx.Subtext{
+               nodes: [
+                 %Text{literal: "Some Subtext"}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [subtext: true], streaming: true))
+  end
+
   test "bold emphasis across chunks" do
     chunks = [
       "**strong ",

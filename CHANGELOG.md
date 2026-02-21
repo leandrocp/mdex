@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Add `insert` extension (https://github.com/kivikakk/comrak/pull/754)
+
+### Fixed
+- Add missing protocol definitions for `MDEx.Highlight` and `MDEx.Subtext` nodes
+
+### Changed
+- Update comrak to revision [fdc1ffb8e55201a8dfea79742ac494125ec861ce](https://github.com/kivikakk/comrak/commit/fdc1ffb8e55201a8dfea79742ac494125ec861ce)
+
 ## 0.11.4 - 2026-02-19
 
 ### Changed

@@ -49,6 +49,7 @@ pub enum NewNode {
     Strong(ExStrong),
     Strikethrough(ExStrikethrough),
     Highlight(ExHighlight),
+    Insert(ExInsert),
     Superscript(ExSuperscript),
     Link(ExLink),
     Image(ExImage),
@@ -100,6 +101,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Strong(n) => n.into(),
             NewNode::Strikethrough(n) => n.into(),
             NewNode::Highlight(n) => n.into(),
+            NewNode::Insert(n) => n.into(),
             NewNode::Superscript(n) => n.into(),
             NewNode::Link(n) => n.into(),
             NewNode::Image(n) => n.into(),
@@ -654,6 +656,18 @@ impl From<ExHighlight> for NodeValue {
 }
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.Insert"]
+pub struct ExInsert {
+    pub nodes: Vec<NewNode>,
+}
+
+impl From<ExInsert> for NodeValue {
+    fn from(_node: ExInsert) -> Self {
+        NodeValue::Insert
+    }
+}
+
+#[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Superscript"]
 pub struct ExSuperscript {
     pub nodes: Vec<NewNode>,
@@ -904,12 +918,14 @@ pub fn ex_document_to_comrak_ast<'a>(
     | NewNode::Image(ExImage { nodes, .. })
     | NewNode::Strikethrough(ExStrikethrough { nodes })
     | NewNode::Highlight(ExHighlight { nodes })
+    | NewNode::Insert(ExInsert { nodes })
     | NewNode::Superscript(ExSuperscript { nodes })
     | NewNode::MultilineBlockQuote(ExMultilineBlockQuote { nodes, .. })
     | NewNode::WikiLink(ExWikiLink { nodes, .. })
     | NewNode::Underline(ExUnderline { nodes })
     | NewNode::Subscript(ExSubscript { nodes })
     | NewNode::SpoileredText(ExSpoileredText { nodes })
+    | NewNode::Subtext(ExSubtext { nodes })
     | NewNode::EscapedTag(ExEscapedTag { nodes, .. })
     | NewNode::Alert(ExAlert { nodes, .. }) = new_node
     {
@@ -1093,6 +1109,8 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
         NodeValue::Strikethrough => NewNode::Strikethrough(ExStrikethrough { nodes: children }),
 
         NodeValue::Highlight => NewNode::Highlight(ExHighlight { nodes: children }),
+
+        NodeValue::Insert => NewNode::Insert(ExInsert { nodes: children }),
 
         NodeValue::Superscript => NewNode::Superscript(ExSuperscript { nodes: children }),
 

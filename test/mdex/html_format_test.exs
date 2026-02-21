@@ -18,7 +18,8 @@ defmodule MDEx.HTMLFormatTest do
     shortcodes: true,
     underline: true,
     spoiler: true,
-    greentext: true
+    greentext: true,
+    insert: true
   ]
 
   def assert_commonmark(document, extension \\ []) do
@@ -363,6 +364,33 @@ defmodule MDEx.HTMLFormatTest do
       Darth Vader is ||Luke's father||
       """,
       "<p>Darth Vader is <span class=\"spoiler\">Luke's father</span></p>"
+    )
+  end
+
+  test "insert" do
+    assert_format(
+      """
+      this is ++inserted++ text
+      """,
+      "<p>this is <ins>inserted</ins> text</p>"
+    )
+  end
+
+  test "highlight" do
+    assert_format(
+      """
+      this is ==marked== text
+      """,
+      "<p>this is <mark>marked</mark> text</p>",
+      highlight: true
+    )
+  end
+
+  test "subtext" do
+    assert_format(
+      "-# Some Subtext\n",
+      "<p><sub>Some Subtext</sub></p>",
+      subtext: true
     )
   end
 

@@ -40,8 +40,6 @@ defmodule MDEx do
 
   import MDEx.Document, only: [is_fragment: 1]
 
-  require Logger
-
   @doc """
   Sets up MDEx in the calling module.
 
