@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.5 - 2026-02-21
 
 ### Added
 - Add `insert` extension (https://github.com/kivikakk/comrak/pull/754)
