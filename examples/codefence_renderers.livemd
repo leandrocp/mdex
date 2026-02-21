@@ -1,0 +1,197 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Codefence Renderers
+
+```elixir
+System.put_env("MDEX_BUILD", "true")
+
+Mix.install([
+  {:mdex, path: Path.join(__DIR__, "..")},
+  {:pikchr, "~> 0.5"},
+  {:svg_charts, "~> 0.5.0"},
+  {:rustler, "~> 0.37", override: true},
+  {:rustler_precompiled, "~> 0.8", override: true},
+  {:kino, "~> 0.16"}
+])
+```
+
+## Intro
+
+Codefence renderers let you plug in custom renderers for fenced code blocks based on the language identifier. Any function that takes `(lang, meta, code)` and returns an HTML string can be used.
+
+This is useful for rendering diagrams, math, or other specialized content directly in Markdown.
+
+## Basic Usage
+
+The simplest example wraps code in a custom HTML element:
+
+````elixir
+markdown = """
+# Custom Block
+
+```alert
+This is important!
+```
+"""
+
+html =
+  MDEx.to_html!(markdown,
+    render: [unsafe: true],
+    syntax_highlight: nil,
+    codefence_renderers: %{
+      "alert" => fn _lang, _meta, code ->
+        ~s(<div class="alert">#{String.trim(code)}</div>)
+      end
+    }
+  )
+
+Kino.HTML.new(html)
+````
+
+## Pikchr Diagrams
+
+[Pikchr](https://pikchr.org) is a PIC-like markup language for diagrams. The [pikchr](https://hex.pm/packages/pikchr) package renders it to SVG via a precompiled NIF — no system dependencies needed.
+
+````elixir
+markdown = """
+# System Architecture
+
+```pikchr
+right
+Client: box "Client" fit
+arrow 300% "request" above
+Server: box "Server" fit
+arrow 300% "query" above
+DB: box "DB" fit
+
+arrow from DB.s down 50% then left until even with Server then to Server.s "rows" below
+arrow from Server.s down 100% then left until even with Client then to Client.s "response" below
+```
+
+Regular Elixir code still gets syntax highlighted:
+
+```elixir
+MDEx.to_html!("# Hello")
+```
+"""
+
+html =
+  MDEx.to_html!(markdown,
+    render: [unsafe: true],
+    codefence_renderers: %{
+      "pikchr" => fn _lang, _meta, code -> Pikchr.render!(code) end
+    }
+  )
+
+Kino.HTML.new(html)
+````
+
+## Multiple Renderers
+
+You can register multiple renderers at once. Unregistered languages fall through to the default syntax highlighter:
+
+````elixir
+markdown = """
+```pikchr
+box "Hello" fit
+arrow
+box "World" fit
+```
+
+```csv
+Name,Age
+Alice,30
+Bob,25
+```
+
+```elixir
+Enum.map(1..5, & &1 * 2)
+```
+"""
+
+html =
+  MDEx.to_html!(markdown,
+    render: [unsafe: true],
+    codefence_renderers: %{
+      "pikchr" => fn _lang, _meta, code -> Pikchr.render!(code) end,
+      "csv" => fn _lang, _meta, code ->
+        rows =
+          code
+          |> String.trim()
+          |> String.split("\n")
+          |> Enum.map(&String.split(&1, ","))
+
+        header = "<tr>" <> Enum.map_join(hd(rows), "", &"<th>#{&1}</th>") <> "</tr>"
+        body = Enum.map_join(tl(rows), "", fn row ->
+          "<tr>" <> Enum.map_join(row, "", &"<td>#{&1}</td>") <> "</tr>"
+        end)
+
+        "<table>#{header}#{body}</table>"
+      end
+    }
+  )
+
+Kino.HTML.new(html)
+````
+
+## SVG Charts
+
+[svg_charts](https://hex.pm/packages/svg_charts) renders charts to SVG via a precompiled NIF wrapping [charts-rs](https://github.com/vicanso/charts-rs). The chart type and data are specified as JSON directly in the code fence:
+
+````elixir
+markdown = """
+# Sales Report
+
+```chart
+{"type": "bar", "width": 630, "height": 410, "title_text": "Weekly Revenue", "title_height": 30, "legend_margin": {"top": 35}, "series_list": [{"name": "Online", "data": [120.0, 132.0, 101.0, 134.0, 90.0, 230.0, 210.0]}, {"name": "In-Store", "data": [220.0, 182.0, 191.0, 234.0, 290.0, 330.0, 310.0]}], "x_axis_data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
+```
+
+```chart
+{"type": "pie", "width": 500, "height": 400, "title_text": "Traffic Sources", "title_height": 30, "legend_margin": {"top": 35}, "series_list": [{"name": "Search", "data": [1048.0]}, {"name": "Direct", "data": [735.0]}, {"name": "Email", "data": [580.0]}, {"name": "Social", "data": [484.0]}]}
+```
+"""
+
+html =
+  MDEx.to_html!(markdown,
+    render: [unsafe: true],
+    syntax_highlight: nil,
+    codefence_renderers: %{
+      "chart" => fn _lang, _meta, code -> SvgCharts.render!(code) end
+    }
+  )
+
+Kino.HTML.new(html)
+````
+
+## Using the Meta String
+
+The info string after the language name is passed as the `meta` argument. You can use it for configuration:
+
+````elixir
+markdown = """
+```pikchr dark
+box "Dark" fit
+arrow
+box "Mode" fit
+```
+"""
+
+html =
+  MDEx.to_html!(markdown,
+    render: [unsafe: true],
+    codefence_renderers: %{
+      "pikchr" => fn _lang, meta, code ->
+        opts = if String.contains?(meta, "dark"), do: [dark_mode: true], else: []
+        svg = Pikchr.render!(code, opts)
+
+        if String.contains?(meta, "dark") do
+          ~s(<div style="background:#1e1e1e;padding:1rem;border-radius:8px">#{svg}</div>)
+        else
+          svg
+        end
+      end
+    }
+  )
+
+Kino.HTML.new(html)
+````

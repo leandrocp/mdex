@@ -2508,12 +2508,18 @@ defmodule MDEx.Document do
         opts -> adapt_sanitize_options(opts)
       end
 
+    codefence_renderer_langs =
+      options
+      |> Keyword.get(:codefence_renderers, %{})
+      |> Map.keys()
+
     %{
       extension: Map.new(options[:extension]),
       parse: Map.new(options[:parse]),
       render: Map.new(render),
       syntax_highlight: syntax_highlight,
-      sanitize: sanitize
+      sanitize: sanitize,
+      codefence_renderer_langs: codefence_renderer_langs
     }
   end
 

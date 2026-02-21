@@ -85,6 +85,7 @@ defmodule MDEx.MixProject do
         "examples/liquid.livemd",
         "examples/phoenix_live_view_heex.livemd",
         "examples/sigil_md.livemd",
+        "examples/codefence_renderers.livemd",
         {"guides/plugins.md", title: "Plugins"},
         {"guides/heex.md", title: "HEEx Integration"},
         {"guides/compilation.md", title: "Compilation"},
@@ -151,7 +152,8 @@ defmodule MDEx.MixProject do
           "examples/highlight_words.livemd",
           "examples/liquid.livemd",
           "examples/phoenix_live_view_heex.livemd",
-          "examples/sigil_md.livemd"
+          "examples/sigil_md.livemd",
+          "examples/codefence_renderers.livemd"
         ],
         Guides: [
           "guides/plugins.md",

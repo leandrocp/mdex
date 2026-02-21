@@ -391,14 +391,16 @@ defmodule MDEx do
 
   def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
+    {codefence_renderers, options} = Keyword.pop(options, :codefence_renderers, %{})
     markdown = document || markdown || ""
 
     MDEx.new([markdown: markdown] ++ options)
-    |> to_html()
+    |> to_html(codefence_renderers: codefence_renderers)
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Native.document_to_html_with_options/2)
+    {codefence_renderers, options} = Keyword.pop(options, :codefence_renderers, %{})
+    run_pipeline(document, options, codefence_renderers, &Native.document_to_html_with_options/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -1039,6 +1041,10 @@ defmodule MDEx do
   defp maybe_trim(error), do: error
 
   defp run_pipeline(document, options, converter) do
+    run_pipeline(document, options, %{}, converter)
+  end
+
+  defp run_pipeline(document, options, codefence_renderers, converter) do
     {document_opt, options} = pop_deprecated_document_option(options)
 
     document
@@ -1046,11 +1052,41 @@ defmodule MDEx do
     |> maybe_apply_document_option(document_opt)
     |> Document.run()
     |> then(fn document ->
+      rust_opts =
+        document.options
+        |> Keyword.put(:codefence_renderers, codefence_renderers)
+        |> Document.rust_options!()
+
       document
-      |> converter.(Document.rust_options!(document.options))
+      |> converter.(rust_opts)
+      |> apply_codefence_renderers(codefence_renderers)
       |> maybe_trim()
     end)
   end
+
+  defp apply_codefence_renderers({:ok, html}, renderers) when renderers == %{} do
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers({:ok, html, []}, _renderers) do
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers({:ok, html, collected}, renderers) do
+    html =
+      collected
+      |> Enum.with_index()
+      |> Enum.reduce(html, fn {{lang, meta, code}, idx}, acc ->
+        case Map.get(renderers, lang) do
+          nil -> acc
+          fun -> String.replace(acc, "<!--mdex:cfr:#{idx}-->", fun.(lang, meta, code))
+        end
+      end)
+
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers(error, _renderers), do: error
 
   @doc """
   Utility function to sanitize and escape HTML.

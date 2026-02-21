@@ -198,4 +198,5 @@ pub struct ExOptions {
     pub render: ExRenderOptions,
     pub syntax_highlight: Option<ExSyntaxHighlightOptions>,
     pub sanitize: Option<ExSanitizeOption>,
+    pub codefence_renderer_langs: Vec<String>,
 }

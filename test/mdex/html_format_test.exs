@@ -432,4 +432,160 @@ defmodule MDEx.HTMLFormatTest do
       "<div class=\"markdown-alert markdown-alert-caution\">\n<p class=\"markdown-alert-title\">Caution</p>\n<p>Ops</p>\n</div>"
     )
   end
+
+  describe "codefence_renderers" do
+    test "replaces codefence block with custom renderer output" do
+      md = "```custom\nhello world\n```"
+
+      html =
+        MDEx.to_html!(md,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "custom" => fn _lang, _meta, code -> "<div class=\"custom\">#{code}</div>" end
+          }
+        )
+
+      assert html =~ "<div class=\"custom\">hello world\n</div>"
+      refute html =~ "<!--mdex:cfr:"
+    end
+
+    test "passes lang and meta to renderer" do
+      md = "```diagram title=\"test\"\nbox \"Hello\"\n```"
+
+      html =
+        MDEx.to_html!(md,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "diagram" => fn lang, meta, code ->
+              "<div data-lang=\"#{lang}\" data-meta=\"#{meta}\">#{code}</div>"
+            end
+          }
+        )
+
+      assert html =~ "data-lang=\"diagram\""
+      assert html =~ "data-meta="
+      assert html =~ "title="
+      assert html =~ "box"
+    end
+
+    test "multiple codefence blocks are replaced independently" do
+      md = "```a\nfirst\n```\n\n```b\nsecond\n```"
+
+      html =
+        MDEx.to_html!(md,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "a" => fn _lang, _meta, code -> "<div class=\"a\">#{code}</div>" end,
+            "b" => fn _lang, _meta, code -> "<div class=\"b\">#{code}</div>" end
+          }
+        )
+
+      assert html =~ "<div class=\"a\">first\n</div>"
+      assert html =~ "<div class=\"b\">second\n</div>"
+    end
+
+    test "unregistered languages render normally" do
+      md = "```elixir\nIO.puts(\"hi\")\n```\n\n```custom\nhello\n```"
+
+      html =
+        MDEx.to_html!(md,
+          render: [unsafe: true],
+          codefence_renderers: %{
+            "custom" => fn _lang, _meta, code -> "<div>#{code}</div>" end
+          }
+        )
+
+      assert html =~ "<div>hello\n</div>"
+      assert html =~ "language-elixir"
+    end
+
+    test "empty codefence_renderers map has no effect" do
+      md = "```elixir\nIO.puts(\"hi\")\n```"
+
+      html1 = MDEx.to_html!(md)
+      html2 = MDEx.to_html!(md, codefence_renderers: %{})
+
+      assert html1 == html2
+    end
+
+    test "works with Document pipeline" do
+      doc = MDEx.parse_document!("```custom\nhello\n```", syntax_highlight: nil)
+
+      {:ok, html} =
+        MDEx.to_html(doc,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "custom" => fn _lang, _meta, code -> "<section>#{code}</section>" end
+          }
+        )
+
+      assert html =~ "<section>hello\n</section>"
+    end
+
+    test "real-world pattern: diagram renderer with mixed content" do
+      markdown = """
+      # Architecture
+
+      ```dot
+      digraph { A -> B -> C }
+      ```
+
+      Some text in between.
+
+      ```elixir
+      IO.puts("hello")
+      ```
+
+      ```dot
+      digraph { X -> Y }
+      ```
+      """
+
+      fake_dot_renderer = fn _lang, _meta, code ->
+        graph_id = code |> String.trim() |> :erlang.phash2() |> Integer.to_string()
+        ~s(<svg id="graph-#{graph_id}" class="dot-diagram"><text>#{String.trim(code)}</text></svg>)
+      end
+
+      html =
+        MDEx.to_html!(markdown,
+          render: [unsafe: true],
+          codefence_renderers: %{"dot" => fake_dot_renderer}
+        )
+
+      assert html =~ "<svg id=\"graph-"
+      assert html =~ "class=\"dot-diagram\""
+      assert html =~ "A -> B -> C"
+      assert html =~ "X -> Y"
+      assert html =~ "language-elixir"
+      refute html =~ "<!--mdex:cfr:"
+
+      svg_count = length(Regex.scan(~r/<svg/, html))
+      assert svg_count == 2
+    end
+
+    test "renderer error handling pattern" do
+      markdown = "```dot\ninvalid!\n```"
+
+      html =
+        MDEx.to_html!(markdown,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "dot" => fn _lang, _meta, code ->
+              if String.contains?(code, "digraph") do
+                "<svg>ok</svg>"
+              else
+                ~s(<pre class="error">Invalid DOT: #{String.trim(code)}</pre>)
+              end
+            end
+          }
+        )
+
+      assert html =~ "<pre class=\"error\">Invalid DOT: invalid!</pre>"
+    end
+  end
 end
