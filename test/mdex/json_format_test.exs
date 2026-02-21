@@ -17,7 +17,8 @@ defmodule MDEx.JsonFormatTest do
     shortcodes: true,
     underline: true,
     spoiler: true,
-    greentext: true
+    greentext: true,
+    insert: true
   ]
 
   def to_json(document, extension \\ []) do
@@ -39,5 +40,46 @@ defmodule MDEx.JsonFormatTest do
              node_type: "MDEx.Document",
              nodes: [%{node_type: "MDEx.Heading", nodes: [%{node_type: "MDEx.Text", literal: "Title"}], level: 1, setext: false}]
            } = to_json("# Title")
+  end
+
+  test "insert" do
+    assert %{
+             node_type: "MDEx.Document",
+             nodes: [
+               %{
+                 node_type: "MDEx.Paragraph",
+                 nodes: [
+                   %{node_type: "MDEx.Text", literal: "this is "},
+                   %{node_type: "MDEx.Insert", nodes: [%{node_type: "MDEx.Text", literal: "inserted"}]},
+                   %{node_type: "MDEx.Text", literal: " text"}
+                 ]
+               }
+             ]
+           } = to_json("this is ++inserted++ text")
+  end
+
+  test "highlight" do
+    assert %{
+             node_type: "MDEx.Document",
+             nodes: [
+               %{
+                 node_type: "MDEx.Paragraph",
+                 nodes: [
+                   %{node_type: "MDEx.Text", literal: "this is "},
+                   %{node_type: "MDEx.Highlight", nodes: [%{node_type: "MDEx.Text", literal: "marked"}]},
+                   %{node_type: "MDEx.Text", literal: " text"}
+                 ]
+               }
+             ]
+           } = to_json("this is ==marked== text", highlight: true)
+  end
+
+  test "subtext" do
+    assert %{
+             node_type: "MDEx.Document",
+             nodes: [
+               %{node_type: "MDEx.Subtext", nodes: [%{node_type: "MDEx.Text", literal: "Some Subtext"}]}
+             ]
+           } = to_json("-# Some Subtext\n", subtext: true)
   end
 end

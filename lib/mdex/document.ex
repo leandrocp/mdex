@@ -794,6 +794,11 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables the highlight extension using double equals ==highlighted text== (wraps text in <mark> tags)."
     ],
+    insert: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the insert extension using double plus ++inserted text++ (wraps text in <ins> tags)."
+    ],
     image_url_rewriter: [
       type: {:or, [:string, nil]},
       default: nil,
@@ -1340,6 +1345,8 @@ defmodule MDEx.Document do
           | MDEx.Emph.t()
           | MDEx.Strong.t()
           | MDEx.Strikethrough.t()
+          | MDEx.Highlight.t()
+          | MDEx.Insert.t()
           | MDEx.Superscript.t()
           | MDEx.Link.t()
           | MDEx.Image.t()
@@ -1351,6 +1358,7 @@ defmodule MDEx.Document do
           | MDEx.Underline.t()
           | MDEx.Subscript.t()
           | MDEx.SpoileredText.t()
+          | MDEx.Subtext.t()
           | MDEx.EscapedTag.t()
           | MDEx.Alert.t()
           | MDEx.HeexBlock.t()
@@ -2431,6 +2439,8 @@ defmodule MDEx.Document do
       MDEx.Emph,
       MDEx.Strong,
       MDEx.Strikethrough,
+      MDEx.Highlight,
+      MDEx.Insert,
       MDEx.Superscript,
       MDEx.Link,
       MDEx.Image,
@@ -2442,6 +2452,7 @@ defmodule MDEx.Document do
       MDEx.Underline,
       MDEx.Subscript,
       MDEx.SpoileredText,
+      MDEx.Subtext,
       MDEx.EscapedTag,
       MDEx.Alert
     ]
@@ -3031,6 +3042,18 @@ defmodule MDEx.Highlight do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.Insert do
+  @moduledoc """
+  Inserted text.
+
+  Uses double plus syntax: `++inserted text++`
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: []
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.Superscript do
   @moduledoc """
   Superscript.
@@ -3149,6 +3172,18 @@ defmodule MDEx.SpoileredText do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.Subtext do
+  @moduledoc """
+  Discord-style subtext.
+
+  Uses curly braces with hyphens syntax: `{-text-}`
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: []
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.EscapedTag do
   @moduledoc """
   Escaped tag.
@@ -3235,6 +3270,8 @@ defimpl Enumerable,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,
+    MDEx.Highlight,
+    MDEx.Insert,
     MDEx.Superscript,
     MDEx.Link,
     MDEx.Image,
@@ -3243,6 +3280,7 @@ defimpl Enumerable,
     MDEx.Underline,
     MDEx.Subscript,
     MDEx.SpoileredText,
+    MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.HeexBlock
@@ -3345,6 +3383,8 @@ defimpl String.Chars,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,
+    MDEx.Highlight,
+    MDEx.Insert,
     MDEx.Superscript,
     MDEx.Link,
     MDEx.Image,
@@ -3356,6 +3396,7 @@ defimpl String.Chars,
     MDEx.Underline,
     MDEx.Subscript,
     MDEx.SpoileredText,
+    MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.HeexBlock,
@@ -3403,6 +3444,8 @@ defimpl Jason.Encoder,
     MDEx.Emph,
     MDEx.Strong,
     MDEx.Strikethrough,
+    MDEx.Highlight,
+    MDEx.Insert,
     MDEx.Superscript,
     MDEx.Link,
     MDEx.Image,
@@ -3414,6 +3457,7 @@ defimpl Jason.Encoder,
     MDEx.Underline,
     MDEx.Subscript,
     MDEx.SpoileredText,
+    MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.HeexBlock,

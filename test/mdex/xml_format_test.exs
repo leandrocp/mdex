@@ -17,7 +17,8 @@ defmodule MDEx.XmlFormatTest do
     shortcodes: true,
     underline: true,
     spoiler: true,
-    greentext: true
+    greentext: true,
+    insert: true
   ]
 
   def assert_format(document, expected, extension \\ []) do
@@ -60,5 +61,53 @@ defmodule MDEx.XmlFormatTest do
       </heading>
     </document>
     """)
+  end
+
+  test "insert" do
+    assert_format("this is ++inserted++ text", """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE document SYSTEM "CommonMark.dtd">
+    <document xmlns="http://commonmark.org/xml/1.0">
+      <paragraph>
+        <text xml:space="preserve">this is </text>
+        <insert>
+          <text xml:space="preserve">inserted</text>
+        </insert>
+        <text xml:space="preserve"> text</text>
+      </paragraph>
+    </document>
+    """)
+  end
+
+  test "highlight" do
+    assert_format(
+      "this is ==marked== text",
+      """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE document SYSTEM "CommonMark.dtd">
+      <document xmlns="http://commonmark.org/xml/1.0">
+        <paragraph>
+          <text xml:space="preserve">this is </text>
+          <highlight>
+            <text xml:space="preserve">marked</text>
+          </highlight>
+          <text xml:space="preserve"> text</text>
+        </paragraph>
+      </document>
+      """, highlight: true)
+  end
+
+  test "subtext" do
+    assert_format(
+      "-# Some Subtext\n",
+      """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE document SYSTEM "CommonMark.dtd">
+      <document xmlns="http://commonmark.org/xml/1.0">
+        <subtext>
+          <text xml:space="preserve">Some Subtext</text>
+        </subtext>
+      </document>
+      """, subtext: true)
   end
 end

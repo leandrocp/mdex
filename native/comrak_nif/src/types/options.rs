@@ -31,6 +31,7 @@ pub struct ExExtensionOptions {
     pub greentext: bool,
     pub subtext: bool,
     pub highlight: bool,
+    pub insert: bool,
     pub image_url_rewriter: Option<String>,
     pub link_url_rewriter: Option<String>,
     pub cjk_friendly_emphasis: bool,
@@ -64,6 +65,7 @@ impl From<ExExtensionOptions> for Extension<'_> {
             greentext: options.greentext,
             subtext: options.subtext,
             highlight: options.highlight,
+            insert: options.insert,
             image_url_rewriter: match options.image_url_rewriter {
                 None => None,
                 Some(rewrite) => Some(Arc::new(move |url: &str| rewrite.replace("{@url}", url))),

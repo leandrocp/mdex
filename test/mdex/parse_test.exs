@@ -17,7 +17,8 @@ defmodule MDEx.ParseTest do
     shortcodes: true,
     underline: true,
     spoiler: true,
-    greentext: true
+    greentext: true,
+    insert: true
   ]
 
   def assert_parse_markdown(markdown, expected, opts \\ []) do
@@ -626,6 +627,47 @@ defmodule MDEx.ParseTest do
       %MDEx.Document{
         nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Darth Vader is "}, %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}]}]
       }
+    )
+  end
+
+  test "insert" do
+    assert_parse_markdown(
+      """
+      this is ++inserted++ text
+      """,
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Text{literal: "this is "}, %MDEx.Insert{nodes: [%MDEx.Text{literal: "inserted"}]}, %MDEx.Text{literal: " text"}]
+          }
+        ]
+      }
+    )
+  end
+
+  test "highlight" do
+    assert_parse_markdown(
+      """
+      this is ==marked== text
+      """,
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Text{literal: "this is "}, %MDEx.Highlight{nodes: [%MDEx.Text{literal: "marked"}]}, %MDEx.Text{literal: " text"}]
+          }
+        ]
+      },
+      extension: [highlight: true]
+    )
+  end
+
+  test "subtext" do
+    assert_parse_markdown(
+      "-# Some Subtext\n",
+      %MDEx.Document{
+        nodes: [%MDEx.Subtext{nodes: [%MDEx.Text{literal: "Some Subtext"}]}]
+      },
+      extension: [subtext: true]
     )
   end
 
