@@ -94,7 +94,9 @@ defmodule MDEx.XmlFormatTest do
           <text xml:space="preserve"> text</text>
         </paragraph>
       </document>
-      """, highlight: true)
+      """,
+      highlight: true
+    )
   end
 
   test "subtext" do
@@ -108,6 +110,8 @@ defmodule MDEx.XmlFormatTest do
           <text xml:space="preserve">Some Subtext</text>
         </subtext>
       </document>
-      """, subtext: true)
+      """,
+      subtext: true
+    )
   end
 end
