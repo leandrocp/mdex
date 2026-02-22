@@ -403,6 +403,36 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
   end
 
+  test "incomplete insert across chunks" do
+    chunks = [
+      "++inserted ",
+      "text"
+    ]
+
+    assert [
+             %Paragraph{
+               nodes: [
+                 %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+  end
+
+  test "incomplete highlight across chunks" do
+    chunks = [
+      "==marked ",
+      "text"
+    ]
+
+    assert [
+             %Paragraph{
+               nodes: [
+                 %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+  end
+
   test "simple subtext" do
     chunks = [
       "-# Some ",
@@ -505,7 +535,12 @@ defmodule MDEx.StreamingTest do
 
     assert [
              %MDEx.Paragraph{
-               nodes: [%MDEx.Text{literal: "[CommonMark spec](https://commonmark"}]
+               nodes: [
+                 %MDEx.Link{
+                   url: "https://commonmark",
+                   nodes: [%MDEx.Text{literal: "CommonMark spec"}]
+                 }
+               ]
              }
            ] = nodes(chunks)
   end
@@ -762,29 +797,27 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks)
   end
 
-  # FIXME
-  # test "table header" do
-  #   document = MDEx.new(extension: [table: true])
-  #   document = Enum.into(["| Lang | Version |\n"], document)
-  #
-  #   assert [
-  #            %MDEx.Table{
-  #              nodes: [
-  #                %MDEx.TableRow{
-  #                  nodes: [
-  #                    %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Lang"}]},
-  #                    %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Version"}]}
-  #                  ],
-  #                  header: true
-  #                }
-  #              ],
-  #              alignments: [:none, :none],
-  #              num_columns: 2,
-  #              num_rows: 0,
-  #              num_nonempty_cells: 0
-  #            }
-  #          ] = document.nodes
-  # end
+  test "table header" do
+    chunks = ["| Lang | Version |\n"]
+
+    assert [
+             %MDEx.Table{
+               nodes: [
+                 %MDEx.TableRow{
+                   nodes: [
+                     %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Lang"}]},
+                     %MDEx.TableCell{nodes: [%MDEx.Text{literal: "Version"}]}
+                   ],
+                   header: true
+                 }
+               ],
+               alignments: [:none, :none],
+               num_columns: 2,
+               num_rows: 1,
+               num_nonempty_cells: 2
+             }
+           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+  end
 
   test "table with incomplete header separator" do
     chunks = [
@@ -868,47 +901,51 @@ defmodule MDEx.StreamingTest do
   #          ] = Enum.reduce(chunks, MDEx.new(extension: [shortcodes: true]), fn chunk, doc -> Enum.into([chunk], doc) end).nodes
   # end
 
-  # FIXME
-  # test "task list with formatting" do
-  #   chunks = [
-  #     "- [x] **Phase ",
-  #     "1:** Setup\n",
-  #     "- [ ] Testing"
-  #   ]
-  #
-  #   assert [
-  #            %List{
-  #              nodes: [
-  #                %TaskItem{
-  #                  checked: true,
-  #                  nodes: [
-  #                    %Paragraph{
-  #                      nodes: [
-  #                        %Strong{
-  #                          nodes: [
-  #                            %Text{literal: "Phase"},
-  #                            %Text{literal: " 1:"}
-  #                          ]
-  #                        },
-  #                        %Text{literal: " Setup"}
-  #                      ]
-  #                    }
-  #                  ]
-  #                },
-  #                %TaskItem{
-  #                  checked: false,
-  #                  nodes: [
-  #                    %Paragraph{
-  #                      nodes: [
-  #                        %Text{literal: "Testing"}
-  #                      ]
-  #                    }
-  #                  ]
-  #                }
-  #              ]
-  #            }
-  #          ] = Enum.reduce(chunks, MDEx.new(extension: [tasklist: true]), fn chunk, doc -> Enum.into([chunk], doc) end).nodes
-  # end
+  test "task list with formatting" do
+    chunks = [
+      "- [x] **Phase ",
+      "1:** Setup\n",
+      "- [ ] Testing"
+    ]
+
+    options = [
+      extension: [tasklist: true],
+      parse: [relaxed_tasklist_matching: true],
+      streaming: true
+    ]
+
+    assert [
+             %List{
+               nodes: [
+                 %MDEx.TaskItem{
+                   checked: true,
+                   nodes: [
+                     %Paragraph{
+                       nodes: [
+                         %Strong{
+                           nodes: [
+                             %Text{literal: "Phase 1:"}
+                           ]
+                         },
+                         %Text{literal: " Setup"}
+                       ]
+                     }
+                   ]
+                 },
+                 %MDEx.TaskItem{
+                   checked: false,
+                   nodes: [
+                     %Paragraph{
+                       nodes: [
+                         %Text{literal: "Testing"}
+                       ]
+                     }
+                   ]
+                 }
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(options))
+  end
 
   test "task list retains emphasis across chunks" do
     options = [
@@ -974,26 +1011,25 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks)
   end
 
-  # FIXME
-  # test "autolink detection across chunks" do
-  #   document = MDEx.new(extension: [autolink: true])
-  #   document = Enum.into(["Visit https://common"], document)
-  #   document = Enum.into(["mark.org for specs"], document)
-  #
-  #   assert %Document{
-  #            nodes: [
-  #              %Paragraph{
-  #                nodes: [
-  #                  %Text{literal: "Visit "},
-  #                  %Link{
-  #                    url: "https://common",
-  #                    nodes: [%Text{literal: "https://commonmark.org for specs"}]
-  #                  }
-  #                ]
-  #              }
-  #            ]
-  #          } = document
-  # end
+  test "autolink detection across chunks" do
+    chunks = [
+      "Visit https://common",
+      "mark.org for specs"
+    ]
+
+    assert [
+             %Paragraph{
+               nodes: [
+                 %Text{literal: "Visit "},
+                 %MDEx.Link{
+                   url: "https://commonmark.org",
+                   nodes: [%Text{literal: "https://commonmark.org"}]
+                 },
+                 %Text{literal: " for specs"}
+               ]
+             }
+           ] = nodes(chunks, MDEx.new(extension: [autolink: true], streaming: true))
+  end
 
   test "line breaks with trailing spaces" do
     chunks = [
@@ -1079,5 +1115,70 @@ defmodule MDEx.StreamingTest do
                is_task_list: false
              }
            ] = nodes(chunks)
+  end
+
+  describe "multi-flush streaming (run between chunks)" do
+    # These tests exercise the fragment_state persistence across
+    # multiple run() calls, unlike the nodes() helper which buffers
+    # all chunks and flushes once.
+
+    defp multi_flush_nodes(chunks, document) do
+      Enum.reduce(chunks, document, fn chunk, doc ->
+        Enum.into([chunk], doc)
+        |> MDEx.Document.run()
+      end)
+      |> Map.get(:nodes)
+    end
+
+    test "fragment state tracks unclosed token across flushes" do
+      doc = MDEx.new(streaming: true)
+
+      # First flush: ** opens bold, FragmentParser completes it
+      doc = Enum.into(["**bold "], doc) |> MDEx.Document.run()
+      state = MDEx.Document.get_private(doc, :fragment_state)
+      assert %MDEx.FragmentParser.State{last_unclosed_token: "**"} = state
+    end
+
+    test "complete link then more text across flushes" do
+      assert [
+               %Paragraph{nodes: nodes}
+             ] =
+               multi_flush_nodes(
+                 ["[click](https://example.com) ", "more text"],
+                 MDEx.new(streaming: true)
+               )
+
+      assert %MDEx.Link{url: "https://example.com"} = hd(nodes)
+    end
+
+    test "code block complete in single flush then text" do
+      assert [
+               %CodeBlock{literal: "hello\n"},
+               %Paragraph{nodes: [%Text{literal: "after"}]}
+             ] =
+               multi_flush_nodes(
+                 ["```\nhello\n```\n", "after"],
+                 MDEx.new(streaming: true)
+               )
+    end
+
+    test "plain text across multiple flushes" do
+      assert [
+               %Paragraph{nodes: nodes}
+             ] =
+               multi_flush_nodes(
+                 ["Hello ", "world ", "!"],
+                 MDEx.new(streaming: true)
+               )
+
+      text =
+        Enum.map_join(nodes, "", fn
+          %Text{literal: t} -> t
+          %SoftBreak{} -> " "
+        end)
+
+      assert text =~ "Hello"
+      assert text =~ "world"
+    end
   end
 end
