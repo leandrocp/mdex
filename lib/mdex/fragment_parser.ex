@@ -28,6 +28,28 @@ defmodule MDEx.FragmentParser do
 
   defparsecp(:list_prefix_parser, parsec(:list_marker_prefix))
 
+  defmodule State do
+    @moduledoc false
+    defstruct last_unclosed_token: nil
+  end
+
+  @spec complete_with_state(String.t(), %State{} | nil) :: {String.t(), %State{}}
+  def complete_with_state(fragment, state) do
+    state = state || %State{}
+    prefix = state.last_unclosed_token || ""
+    completed = complete(fragment, prefix: prefix)
+
+    # Detect what token we closed (if any) to pass as prefix next time
+    new_unclosed = extract_unclosed_token(fragment, prefix)
+    {completed, %State{last_unclosed_token: new_unclosed}}
+  end
+
+  defp extract_unclosed_token(fragment, prefix) do
+    full = if prefix != "", do: prefix <> fragment, else: fragment
+    suffix = unmatched_suffix(full)
+    if suffix != "", do: suffix, else: nil
+  end
+
   @spec complete(String.t(), keyword()) :: String.t()
   def complete(fragment, options \\ []) do
     prefix = options[:prefix] || ""
@@ -445,10 +467,25 @@ defmodule MDEx.FragmentParser do
     end
   end
 
+  defp has_unclosed_delimiter?(text, "$") do
+    count = count_math_dollars(text, 0)
+    rem(count, 2) == 1
+  end
+
   defp has_unclosed_delimiter?(text, delimiter) do
     count = count_occurrences(text, delimiter)
     rem(count, 2) == 1
   end
+
+  defp count_math_dollars(<<>>, acc), do: acc
+  defp count_math_dollars(<<"\\$", rest::binary>>, acc), do: count_math_dollars(rest, acc)
+
+  defp count_math_dollars(<<"$", digit, rest::binary>>, acc) when digit in ?0..?9 do
+    count_math_dollars(rest, acc)
+  end
+
+  defp count_math_dollars(<<"$", rest::binary>>, acc), do: count_math_dollars(rest, acc + 1)
+  defp count_math_dollars(<<_char, rest::binary>>, acc), do: count_math_dollars(rest, acc)
 
   defp complete_list_line(core, line) do
     case extract_list_content(line) do
@@ -475,7 +512,7 @@ defmodule MDEx.FragmentParser do
   end
 
   defp unmatched_suffix(text) do
-    Enum.find_value([{"*", "**"}, {"_", "__"}, {"~", "~~"}], "", fn {single, double} ->
+    Enum.find_value([{"*", "**"}, {"_", "__"}, {"~", "~~"}, {"+", "++"}, {"=", "=="}], "", fn {single, double} ->
       case unmatched_emph_suffix(text, single, double) do
         suffix when suffix != "" -> suffix
         _ -> nil
@@ -528,39 +565,73 @@ defmodule MDEx.FragmentParser do
   defp prefix_has_open_backtick?(""), do: false
   defp prefix_has_open_backtick?(prefix), do: unmatched_backtick?(prefix)
 
+  @double_only_delimiters ["+", "="]
+
   defp unmatched_emph_suffix(core, single, double) do
-    single_code = single |> String.to_charlist() |> List.first()
-    total = count_emphasis_char(core, single_code)
     double_count = count_occurrences(core, double)
     unmatched_double = rem(double_count, 2)
-    unmatched_single = rem(max(total - double_count * 2, 0), 2)
 
-    cond do
-      unmatched_double == 1 and unmatched_single == 1 ->
-        if String.ends_with?(core, single) and not String.ends_with?(core, double) do
+    if single in @double_only_delimiters do
+      flanking = count_flanking_delimiters(core, double)
+
+      if rem(flanking, 2) == 1, do: double, else: ""
+    else
+      single_code = single |> String.to_charlist() |> List.first()
+      total = count_emphasis_char(core, single_code)
+      unmatched_single = rem(max(total - double_count * 2, 0), 2)
+
+      cond do
+        unmatched_double == 1 and unmatched_single == 1 ->
+          if String.ends_with?(core, single) and not String.ends_with?(core, double) do
+            single
+          else
+            double <> single
+          end
+
+        unmatched_double == 1 ->
+          double
+
+        unmatched_single == 1 ->
           single
-        else
-          double <> single
-        end
 
-      unmatched_double == 1 ->
-        double
-
-      unmatched_single == 1 ->
-        single
-
-      true ->
-        ""
+        true ->
+          ""
+      end
     end
   end
 
-  defp count_emphasis_char(bin, ?_) do
-    count_emphasis_underscore(bin)
+  # Count occurrences of a double delimiter (like ++ or ==) that appear in
+  # flanking position — preceded by whitespace/SOL or followed by whitespace/EOL.
+  # This prevents false positives like "C++17" or "x==1".
+  defp count_flanking_delimiters(bin, delim) do
+    delim_size = byte_size(delim)
+    do_count_flanking(bin, delim, delim_size, 0)
   end
 
-  defp count_emphasis_char(bin, char) do
-    count_char(bin, char)
+  defp do_count_flanking(bin, delim, delim_size, acc) do
+    case :binary.match(bin, delim) do
+      :nomatch ->
+        acc
+
+      {pos, _len} ->
+        before_ok = pos == 0 or non_alnum_at?(bin, pos - 1)
+        after_pos = pos + delim_size
+        after_ok = after_pos >= byte_size(bin) or non_alnum_at?(bin, after_pos)
+
+        new_acc = if before_ok or after_ok, do: acc + 1, else: acc
+        rest_start = pos + delim_size
+        rest = binary_part(bin, rest_start, byte_size(bin) - rest_start)
+        do_count_flanking(rest, delim, delim_size, new_acc)
+    end
   end
+
+  defp non_alnum_at?(bin, pos) do
+    char = :binary.at(bin, pos)
+    not (char in ?0..?9 or char in ?A..?Z or char in ?a..?z)
+  end
+
+  defp count_emphasis_char(bin, ?_), do: count_emphasis_underscore(bin)
+  defp count_emphasis_char(bin, char), do: count_char(bin, char)
 
   defp count_char(bin, char) when is_integer(char) do
     bin |> :binary.matches(<<char>>) |> count_matches()
@@ -602,6 +673,9 @@ defmodule MDEx.FragmentParser do
 
   defp incomplete_link_completion(core) do
     cond do
+      has_incomplete_link_url?(core) ->
+        core <> ")"
+
       incomplete_link_brackets?(core) ->
         ensure_placeholder_prefix(core, "](mdex:incomplete-link)")
 
@@ -612,6 +686,41 @@ defmodule MDEx.FragmentParser do
         nil
     end
   end
+
+  defp has_incomplete_link_url?(core) do
+    matches = :binary.matches(core, "](")
+
+    case matches do
+      [] ->
+        false
+
+      list ->
+        {pos, _len} = List.last(list)
+        has_open_bracket_before?(core, pos) and no_closing_paren_after?(core, pos)
+    end
+  end
+
+  defp has_open_bracket_before?(core, bracket_close_pos) do
+    # Scan backwards from the ] position to find a matching [
+    prefix = binary_part(core, 0, bracket_close_pos)
+    # Check for [ or ![ — the [ must not be escaped
+    find_label_start(prefix, byte_size(prefix) - 1) != nil
+  end
+
+  defp no_closing_paren_after?(core, pos) do
+    # pos is the position of "](" — check after the "("
+    after_start = pos + 2
+    remaining = binary_part(core, after_start, byte_size(core) - after_start)
+    not has_unmatched_close_paren?(remaining, 0)
+  end
+
+  # Walk the string tracking paren depth. A ) at depth 0 means
+  # the link destination is closed.
+  defp has_unmatched_close_paren?(<<>>, _depth), do: false
+  defp has_unmatched_close_paren?(<<"(", rest::binary>>, depth), do: has_unmatched_close_paren?(rest, depth + 1)
+  defp has_unmatched_close_paren?(<<")", _rest::binary>>, 0), do: true
+  defp has_unmatched_close_paren?(<<")", rest::binary>>, depth), do: has_unmatched_close_paren?(rest, depth - 1)
+  defp has_unmatched_close_paren?(<<_char, rest::binary>>, depth), do: has_unmatched_close_paren?(rest, depth)
 
   defp ensure_placeholder_prefix(core, placeholder) do
     if String.ends_with?(core, placeholder), do: core, else: core <> placeholder

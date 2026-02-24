@@ -229,4 +229,77 @@ defmodule MDEx.FragmentParserTest do
   test "complete display math doesn't add delimiter" do
     assert complete("$$x = 1$$") == "$$x = 1$$"
   end
+
+  test "++ins" do
+    assert complete("++ins") == "++ins++"
+  end
+
+  test "==mark" do
+    assert complete("==mark") == "==mark=="
+  end
+
+  test "This is ++inserted" do
+    assert complete("This is ++inserted") == "This is ++inserted++"
+  end
+
+  test "This is ==highlighted" do
+    assert complete("This is ==highlighted") == "This is ==highlighted=="
+  end
+
+  test "[foo](https://example" do
+    assert complete("[foo](https://example") == "[foo](https://example)"
+  end
+
+  test "![img](https://cdn.example.com/pic" do
+    assert complete("![img](https://cdn.example.com/pic") == "![img](https://cdn.example.com/pic)"
+  end
+
+  test "complete link is not modified" do
+    assert complete("[foo](https://example.com)") == "[foo](https://example.com)"
+  end
+
+  test "dollar followed by digit is not math" do
+    assert complete("Price is $5.00") == "Price is $5.00"
+  end
+
+  test "escaped dollar is not math" do
+    assert complete("Price is \\$5") == "Price is \\$5"
+  end
+
+  test "real inline math still works" do
+    assert complete("$x + y") == "$x + y$"
+  end
+
+  test "C++17 is not treated as insert delimiter" do
+    assert complete("C++17") == "C++17"
+  end
+
+  test "x==1 is not treated as highlight delimiter" do
+    assert complete("x==1") == "x==1"
+  end
+
+  test "stray ]( is not treated as link" do
+    assert complete("text ]( stray") == "text ]( stray"
+  end
+
+  test "a]( without [ is not treated as link" do
+    assert complete("no bracket]( url") == "no bracket]( url"
+  end
+
+  test "link with nested parens is incomplete" do
+    assert complete("[wiki](https://en.wikipedia.org/wiki/Foo_(bar)") ==
+             "[wiki](https://en.wikipedia.org/wiki/Foo_(bar))"
+  end
+
+  test "mixed currency and math $5 + $x" do
+    assert complete("$5 + $x") == "$5 + $x$"
+  end
+
+  test "multiple currency amounts $5.00 and $10" do
+    assert complete("$5.00 and $10") == "$5.00 and $10"
+  end
+
+  test "display math $$x$$ is complete" do
+    assert complete("$$x$$") == "$$x$$"
+  end
 end

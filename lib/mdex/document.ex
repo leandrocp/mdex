@@ -2168,11 +2168,13 @@ defmodule MDEx.Document do
   defp process_buffer(document), do: document
 
   defp flush_buffer(document, buffer) do
-    buffer =
+    {buffer, document} =
       if Document.get_option(document, :streaming) do
-        MDEx.FragmentParser.complete(buffer)
+        state = Document.get_private(document, :fragment_state)
+        {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state)
+        {completed, Document.put_private(document, :fragment_state, new_state)}
       else
-        buffer
+        {buffer, document}
       end
 
     case Native.parse_document(buffer, rust_options!(document.options)) do
