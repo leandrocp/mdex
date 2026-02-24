@@ -47,6 +47,20 @@ defmodule MDEx.HTMLFormatTest do
     assert html == String.trim(expected)
   end
 
+  def assert_linked_format(document, expected, extension \\ []) do
+    opts = [
+      extension: Keyword.merge(@extension, extension),
+      syntax_highlight: [formatter: :html_linked],
+      render: [unsafe: true]
+    ]
+
+    assert {:ok, doc} = MDEx.parse_document(document, opts)
+    assert {:ok, html} = MDEx.to_html(doc, opts)
+
+    # IO.puts(html)
+    assert html == String.trim(expected)
+  end
+
   test "text" do
     assert_format("mdex", "<p>mdex</p>\n")
 
@@ -168,6 +182,36 @@ defmodule MDEx.HTMLFormatTest do
       """,
       """
       <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">trim</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #c678dd;">)</span>
+      </div></code></pre>
+      """
+    )
+  end
+
+  test "linked code block" do
+    assert_linked_format(
+      """
+      ```elixir
+      String.trim(" MDEx ")
+      ```
+      """,
+      """
+      <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="module">String</span><span class="operator">.</span><span class="function-call">trim</span><span class="punctuation-bracket">(</span><span class="string">&quot; MDEx &quot;</span><span class="punctuation-bracket">)</span>
+      </div></code></pre>
+      """
+    )
+  end
+
+  test "linked plaintext block" do
+    assert_linked_format(
+      """
+      ```
+      plain
+      text
+      ```
+      """,
+      """
+      <pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+      </div><div class="line" data-line="2">text
       </div></code></pre>
       """
     )

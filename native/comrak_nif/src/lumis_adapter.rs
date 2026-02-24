@@ -413,6 +413,7 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
         } else {
             Language::guess(Some("plaintext"), source)
         };
+        let is_plaintext = language == Language::PlainText;
 
         let theme = self
             .decorator_theme()
@@ -443,7 +444,7 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
                 if text.trim().is_empty() {
                     html_output.push_str(text);
                 } else {
-                    let span = if is_linked {
+                    let span = if is_linked && !is_plaintext {
                         html::span_linked(text, scope)
                     } else if is_multi_themes {
                         if let Some(ref config) = multi_themes_config {
@@ -563,6 +564,33 @@ fn main() {
         let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
 </div><div class="line" data-line="2">    let message = &quot;Hello, world!&quot;;
 </div><div class="line" data-line="3">&rbrace;
+</div></code></pre>"#;
+
+        assert_str_eq!(output.trim(), expected.trim());
+    }
+
+    #[test]
+    fn test_html_inline_plaintext() {
+        let markdown = r#"
+```
+plain
+text
+```
+"#;
+
+        let formatter = ExFormatterOption::HtmlInline {
+            theme: None,
+            pre_class: None,
+            italic: false,
+            include_highlights: false,
+            highlight_lines: None,
+            header: None,
+        };
+
+        let output = run_test(markdown, formatter, Options::default());
+
+        let expected = r#"<pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+</div><div class="line" data-line="2">text
 </div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
@@ -725,6 +753,30 @@ fn main() {
         let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
 </div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">&quot;Hello, world!&quot;</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="3"><span class="punctuation-bracket">&rbrace;</span>
+</div></code></pre>"#;
+
+        assert_str_eq!(output.trim(), expected.trim());
+    }
+
+    #[test]
+    fn test_html_linked_plaintext() {
+        let markdown = r#"
+```
+plain
+text
+```
+"#;
+
+        let formatter = ExFormatterOption::HtmlLinked {
+            pre_class: None,
+            highlight_lines: None,
+            header: None,
+        };
+
+        let output = run_test(markdown, formatter, Options::default());
+
+        let expected = r#"<pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+</div><div class="line" data-line="2">text
 </div></code></pre>"#;
 
         assert_str_eq!(output.trim(), expected.trim());
