@@ -5,6 +5,9 @@
 ### Added
 - Option `:codefence_renderers` to customize code fence rendering (@neilberkman)
 
+### Fixed
+- Do not wrap plaintext code in `<span>` tags (@stewart)
+
 ## 0.11.5 - 2026-02-21
 
 ### Added
