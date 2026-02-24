@@ -1048,9 +1048,34 @@ defmodule MDEx do
     |> then(fn document ->
       document
       |> converter.(Document.rust_options!(document.options))
+      |> apply_codefence_renderers(document.options[:codefence_renderers])
       |> maybe_trim()
     end)
   end
+
+  defp apply_codefence_renderers({:ok, html}, renderers) when renderers == %{} do
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers({:ok, html, _collected = []}, _renderers) do
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers({:ok, html, collected}, renderers) do
+    html =
+      collected
+      |> Enum.with_index()
+      |> Enum.reduce(html, fn {{lang, meta, code}, idx}, acc ->
+        case Map.get(renderers, lang) do
+          nil -> acc
+          fun -> String.replace(acc, "<!--mdex:cfr:#{idx}-->", fun.(lang, meta, code))
+        end
+      end)
+
+    {:ok, html}
+  end
+
+  defp apply_codefence_renderers(error, _renderers), do: error
 
   @doc """
   Utility function to sanitize and escape HTML.

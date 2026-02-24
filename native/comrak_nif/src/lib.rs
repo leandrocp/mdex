@@ -4,7 +4,13 @@ extern crate rustler;
 mod lumis_adapter;
 mod types;
 
+use std::fmt;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
+
+use comrak::adapters::CodefenceRendererAdapter;
 use comrak::format_html_with_plugins;
+use comrak::nodes::Sourcepos;
 use comrak::options::Plugins;
 use comrak::{Anchorizer, Arena, Options};
 use lol_html::html_content::ContentType;
@@ -12,6 +18,43 @@ use lol_html::{rewrite_str, text, RewriteStrSettings};
 use lumis_adapter::LumisAdapter;
 use rustler::{Encoder, Env, NifResult, Term};
 use types::{atoms::ok, document::*, options::*};
+
+struct PlaceholderRenderer {
+    collected: Mutex<Vec<(String, String, String)>>,
+    counter: AtomicUsize,
+}
+
+impl PlaceholderRenderer {
+    fn new() -> Self {
+        Self {
+            collected: Mutex::new(Vec::new()),
+            counter: AtomicUsize::new(0),
+        }
+    }
+
+    fn take_collected(&self) -> Vec<(String, String, String)> {
+        std::mem::take(&mut self.collected.lock().unwrap())
+    }
+}
+
+impl CodefenceRendererAdapter for PlaceholderRenderer {
+    fn write(
+        &self,
+        output: &mut dyn fmt::Write,
+        lang: &str,
+        meta: &str,
+        code: &str,
+        _sourcepos: Option<Sourcepos>,
+    ) -> fmt::Result {
+        let idx = self.counter.fetch_add(1, Ordering::SeqCst);
+        write!(output, "<!--mdex:cfr:{}-->", idx)?;
+        self.collected
+            .lock()
+            .unwrap()
+            .push((lang.into(), meta.into(), code.into()));
+        Ok(())
+    }
+}
 
 rustler::init!("Elixir.MDEx.Native");
 
@@ -49,13 +92,33 @@ fn markdown_to_html_with_options<'a>(
         plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
+    let placeholder = PlaceholderRenderer::new();
+    let cfr_langs = &options.codefence_renderer_langs;
+    let has_cfr = !cfr_langs.is_empty();
+
+    if has_cfr {
+        for lang in cfr_langs {
+            plugins
+                .render
+                .codefence_renderers
+                .insert(lang.clone(), &placeholder);
+        }
+    }
+
     let mut buffer = String::new();
 
     format_html_with_plugins(root, &comrak_options, &mut buffer, &plugins)
         .expect("writing to String is infallible");
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
-    Ok((ok(), html).encode(env))
+
+    let collected: Vec<(String, String, String)> = if has_cfr {
+        placeholder.take_collected()
+    } else {
+        Vec::new()
+    };
+
+    Ok((ok(), html, collected).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -140,7 +203,7 @@ fn document_to_html(env: Env<'_>, ex_document: ExDocument) -> NifResult<Term<'_>
         .expect("writing to String is infallible");
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &None, false, true);
-    Ok((ok(), html).encode(env))
+    Ok((ok(), html, Vec::<(String, String, String)>::new()).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
@@ -166,11 +229,31 @@ fn document_to_html_with_options<'a>(
         plugins.render.codefence_syntax_highlighter = Some(&lumis_adapter);
     }
 
+    let placeholder = PlaceholderRenderer::new();
+    let cfr_langs = &options.codefence_renderer_langs;
+    let has_cfr = !cfr_langs.is_empty();
+
+    if has_cfr {
+        for lang in cfr_langs {
+            plugins
+                .render
+                .codefence_renderers
+                .insert(lang.clone(), &placeholder);
+        }
+    }
+
     format_html_with_plugins(comrak_ast, &comrak_options, &mut buffer, &plugins)
         .expect("writing to String is infallible");
     let unsafe_html = buffer;
     let html = do_safe_html(unsafe_html, &options.sanitize, false, true);
-    Ok((ok(), html).encode(env))
+
+    let collected: Vec<(String, String, String)> = if has_cfr {
+        placeholder.take_collected()
+    } else {
+        Vec::new()
+    };
+
+    Ok((ok(), html, collected).encode(env))
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]

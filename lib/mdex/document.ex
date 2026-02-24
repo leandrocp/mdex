@@ -670,7 +670,8 @@ defmodule MDEx.Document do
     :sanitize,
     :streaming,
     :assigns,
-    :plugins
+    :plugins,
+    :codefence_renderers
   ]
 
   @extension_options_schema [
@@ -1289,6 +1290,15 @@ defmodule MDEx.Document do
 
           MDEx.to_html!("# Hello", plugins: [{MDExMermaid, version: "11"}])
       """
+    ],
+    codefence_renderers: [
+      type: :map,
+      default: %{},
+      doc: """
+      Provide language-specific renderers for codefence blocks.
+
+      See [Codefence Renderers examples](https://hexdocs.pm/mdex/codefence_renderers.html) for more info.
+      """
     ]
   ]
 
@@ -1553,6 +1563,9 @@ defmodule MDEx.Document do
 
       {:plugins, plugins}, acc ->
         put_plugins(acc, plugins)
+
+      {:codefence_renderers, renderers}, acc ->
+        put_codefence_renderers(acc, renderers)
     end)
   end
 
@@ -1789,6 +1802,49 @@ defmodule MDEx.Document do
   @spec put_plugins(t(), plugins()) :: t()
   def put_plugins(%MDEx.Document{} = document, plugins) when is_list(plugins) do
     Enum.reduce(plugins, document, &attach_plugin/2)
+  end
+
+  @doc """
+  Updates the document's `:codefence_renderers` option.
+
+  Codefence renderers allow to customize how code blocks are rendered based on their info string.
+
+  See [Codefence Renderers examples](https://hexdocs.pm/mdex/codefence_renderers.html) for more info.
+
+  ## Example
+
+  Given a Markdown containing a code block with `chart` as info string:
+
+      ```chart
+      {"type": "bar", "width": 630, "height": 410, "title_text": "Weekly Revenue", ...
+      ```
+
+  Provide a custom renderer for `chart` code blocks to customize what will be rendered in that block (the key must match the info string):
+
+      codefence_renderers: %{
+        "chart" => fn _lang, _meta, code -> SvgCharts.render!(code) end
+      }
+
+  """
+  @spec put_codefence_renderers(t(), map()) :: t()
+  def put_codefence_renderers(%MDEx.Document{} = document, renderers) when renderers in [nil, %{}] do
+    %{
+      document
+      | options:
+          update_in(document.options, [:codefence_renderers], fn _renderers ->
+            %{}
+          end)
+    }
+  end
+
+  def put_codefence_renderers(%MDEx.Document{} = document, renderers) when is_map(renderers) do
+    %{
+      document
+      | options:
+          update_in(document.options, [:codefence_renderers], fn old ->
+            Map.merge(old || %{}, renderers)
+          end)
+    }
   end
 
   defp attach_plugin(plugin, doc) when is_atom(plugin) do
@@ -2508,12 +2564,18 @@ defmodule MDEx.Document do
         opts -> adapt_sanitize_options(opts)
       end
 
+    codefence_renderer_langs =
+      options
+      |> Keyword.get(:codefence_renderers, %{})
+      |> Map.keys()
+
     %{
       extension: Map.new(options[:extension]),
       parse: Map.new(options[:parse]),
       render: Map.new(render),
       syntax_highlight: syntax_highlight,
-      sanitize: sanitize
+      sanitize: sanitize,
+      codefence_renderer_langs: codefence_renderer_langs
     }
   end
 

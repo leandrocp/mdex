@@ -1131,13 +1131,25 @@ defmodule MDEx.DocumentTest do
 
   test "register_options" do
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins]))
+
+    assert MapSet.equal?(
+             opts,
+             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers])
+           )
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :foo]))
+
+    assert MapSet.equal?(
+             opts,
+             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers, :foo])
+           )
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
-    assert MapSet.equal?(opts, MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :foo]))
+
+    assert MapSet.equal?(
+             opts,
+             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers, :foo])
+           )
   end
 
   describe "get_option" do
