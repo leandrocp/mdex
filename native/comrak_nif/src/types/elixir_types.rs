@@ -189,7 +189,7 @@ impl ExFormatterOption {
                 builder
                     .lang(language)
                     .themes(themes_map)
-                    .css_variable_prefix(css_variable_prefix.as_deref().unwrap_or("--athl"))
+                    .css_variable_prefix(css_variable_prefix.as_deref().unwrap_or("--lumis"))
                     .pre_class(pre_class)
                     .italic(italic)
                     .include_highlights(include_highlights)

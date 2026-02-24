@@ -9,6 +9,9 @@
 - [Syntax Highlighter] Do not wrap plaintext code in `<span>` tags (@stewart)
 - [Streaming] Several fixes to fragment parser: insert/highlight completion, handle incomplete links, prevent false positives on $ tokens (@neilberkman)
 
+### Changed
+- [Deps] Update `lumis` to v0.1.3 - renamed classes/prefix from `athl` to `lumis` so it could cause small breaking changes if you were relying on the old class names for any reason
+
 ## 0.11.5 - 2026-02-21
 
 ### Added

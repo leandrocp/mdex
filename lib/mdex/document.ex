@@ -2393,7 +2393,7 @@ defmodule MDEx.Document do
       ...> {:mdex, "~> 0.1"}
       ...> ```
       ...> \""", syntax_highlight: [formatter: {:html_inline, theme: "nord"}])
-      #=> <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+      #=> <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
       #=> </span></code></pre>
   """
   @type syntax_highlight_options() :: [unquote(NimbleOptions.option_typespec(@syntax_highlight_options_schema))]

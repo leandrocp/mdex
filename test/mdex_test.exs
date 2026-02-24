@@ -39,7 +39,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
@@ -54,7 +54,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_linked, []}]
@@ -69,7 +69,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
+        <pre class="lumis" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "Dracula"}]
@@ -200,12 +200,12 @@ defmodule MDExTest do
                String.trim("""
                <h1>Hello World</h1>
                <a href="/">Regular anchor link</a>
-               <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Hello&quot;</span><span style="color: #c678dd;">)</span>
+               <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">IO</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">puts</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot;Hello&quot;</span><span style="color: #c678dd;">)</span>
                </div></code></pre>
                <a href="/?sort=asc" data-phx-link="redirect" data-phx-link-state="push">
                  Sort By Price
                </a>
-               <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">let</span> <span style="color: #e06c75;">result</span> <span style="color: #abb2bf;">=</span> <span style="color: #e5c07b;">ammonia</span><span style="color: #abb2bf;">::</span><span style="color: #61afef;">clean</span><span style="color: #d19a66;">(</span><span style="color: #98c379;">&quot;&lt;b&gt;&lt;img src=&#39;&#39; onerror=alert(&#39;hex&#39;)&gt;I&#39;m not trying to XSS you&lt;/b&gt;&quot;</span><span style="color: #d19a66;">)</span><span style="color: #abb2bf;">;</span>
+               <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">let</span> <span style="color: #e06c75;">result</span> <span style="color: #abb2bf;">=</span> <span style="color: #e5c07b;">ammonia</span><span style="color: #abb2bf;">::</span><span style="color: #61afef;">clean</span><span style="color: #d19a66;">(</span><span style="color: #98c379;">&quot;&lt;b&gt;&lt;img src=&#39;&#39; onerror=alert(&#39;hex&#39;)&gt;I&#39;m not trying to XSS you&lt;/b&gt;&quot;</span><span style="color: #d19a66;">)</span><span style="color: #abb2bf;">;</span>
                </div></code></pre>
                """)
     end
@@ -236,7 +236,7 @@ defmodule MDExTest do
     test "enabled by default" do
       expected =
         String.trim(~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """)
 
@@ -281,7 +281,7 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
         </div></code></pre>
         """
       )
@@ -295,7 +295,7 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
         </div></code></pre>
         """
       )
@@ -311,7 +311,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline]
@@ -326,7 +326,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+        <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
@@ -357,7 +357,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #1f2328;">&lbrace;</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">&rbrace;</span>
+        <pre class="lumis" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #1f2328;">&lbrace;</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: custom_theme}]
@@ -375,7 +375,7 @@ defmodule MDExTest do
           syntax_highlight: [formatter: {:html_inline, theme: "onedark", pre_class: "my-code-block"}]
         )
 
-      assert html =~ ~s(<pre class="athl my-code-block")
+      assert html =~ ~s(<pre class="lumis my-code-block")
     end
 
     test "with italic" do
@@ -455,7 +455,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="punctuation-bracket">&lbrace;</span><span class="string-special-symbol">:mdex</span><span class="punctuation-delimiter">,</span> <span class="string">&quot;~&gt; 0.1&quot;</span><span class="punctuation-bracket">&rbrace;</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_linked]
@@ -473,7 +473,7 @@ defmodule MDExTest do
           syntax_highlight: [formatter: {:html_linked, pre_class: "linked-code"}]
         )
 
-      assert html =~ ~s(<pre class="athl linked-code")
+      assert html =~ ~s(<pre class="lumis linked-code")
     end
 
     test "with highlight_lines" do
@@ -529,8 +529,8 @@ defmodule MDExTest do
           syntax_highlight: [formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"]}]
         )
 
-      assert html =~ ~s(--athl-light: #1f2328)
-      assert html =~ ~s(--athl-dark: #e6edf3)
+      assert html =~ ~s(--lumis-light: #1f2328)
+      assert html =~ ~s(--lumis-dark: #e6edf3)
     end
 
     test "with theme structs" do
@@ -549,8 +549,8 @@ defmodule MDExTest do
           ]
         )
 
-      assert html =~ ~s(--athl-light:)
-      assert html =~ ~s(--athl-dark:)
+      assert html =~ ~s(--lumis-light:)
+      assert html =~ ~s(--lumis-dark:)
     end
 
     test "with default_theme" do
@@ -566,7 +566,7 @@ defmodule MDExTest do
           ]
         )
 
-      assert html =~ ~s(--athl-light:)
+      assert html =~ ~s(--lumis-light:)
       assert html =~ ~s(color:#)
     end
 
@@ -600,7 +600,7 @@ defmodule MDExTest do
           ]
         )
 
-      assert html =~ ~s(<pre class="athl multi-theme-code")
+      assert html =~ ~s(<pre class="lumis multi-theme-code")
     end
 
     test "with italic" do
@@ -853,7 +853,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
         sanitize: MDEx.Document.default_sanitize_options()
@@ -876,7 +876,7 @@ defmodule MDExTest do
         <ul>
         <li>Elixir {:ex}</li>
         </ul>
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:ok</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:ok</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;code&quot;</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """
       )
@@ -978,7 +978,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #d19a66;">@</span><span style="color: #d19a66;">lang </span><span style="color: #e06c75;">:elixir</span>
+        <pre class="lumis custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #d19a66;">@</span><span style="color: #d19a66;">lang </span><span style="color: #e06c75;">:elixir</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -993,7 +993,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #bd93f9;">:hello</span>
+        <pre class="lumis" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #bd93f9;">:hello</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -1009,7 +1009,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span>
         </div><div class="line" data-line="2"><span data-highlight="keyword" style="color: #c678dd;">end</span>
         </div></code></pre>
         """,
@@ -1027,7 +1027,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
         </div><div class="line" style="background-color: #3b4252;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span><span style="color: #abb2bf;">,</span> <span style="color: #e06c75;">do: </span><span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
@@ -1048,7 +1048,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">defmodule</span> <span style="color: #e5c07b;">Example</span> <span style="color: #c678dd;">do</span>
         </div><div class="line" style="background-color: #3b4252;" data-line="2">  <span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
         </div><div class="line" style="background-color: #3b4252;" data-line="3">    <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="4">  <span style="color: #c678dd;">end</span>
@@ -1069,7 +1069,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
         </div><div class="line" style="background-color: yellow; font-weight: bold;" data-line="2">  <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
@@ -1086,7 +1086,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" style="background-color: #282c34;" data-line="1"><span style="color: #e06c75;">:hello</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" style="background-color: #282c34;" data-line="1"><span style="color: #e06c75;">:hello</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true]
@@ -1103,7 +1103,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">def</span> <span style="color: #e06c75;">hello</span> <span style="color: #c678dd;">do</span>
         </div><div class="line focus-line" style="background-color: #3b4252;" data-line="2">  <span style="color: #e06c75;">:world</span>
         </div><div class="line" data-line="3"><span style="color: #c678dd;">end</span>
         </div></code></pre>
@@ -1124,7 +1124,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #ff79c6;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
+        <pre class="lumis my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword" style="color: #ff79c6;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
         </div><div class="line hl" style="background-color: #44475a;" data-line="2">  <span data-highlight="keyword" style="color: #ff79c6;">def</span> <span data-highlight="variable" style="color: #f8f8f2;">hello</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span>
         </div><div class="line hl" style="background-color: #44475a;" data-line="3">    <span data-highlight="string.special.symbol" style="color: #bd93f9;">:world</span>
         </div><div class="line" data-line="4">  <span data-highlight="keyword" style="color: #ff79c6;">end</span>
@@ -1145,7 +1145,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="constant">@</span><span class="constant">lang </span><span class="string-special-symbol">:elixir</span>
+        <pre class="lumis custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="constant">@</span><span class="constant">lang </span><span class="string-special-symbol">:elixir</span>
         </div></code></pre>
         """,
         render: [github_pre_lang: true, full_info_string: true],
@@ -1163,7 +1163,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
         </div><div class="line highlighted" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span><span class="punctuation-delimiter">,</span> <span class="string-special-symbol">do: </span><span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="3"><span class="keyword">end</span>
         </div></code></pre>
@@ -1185,7 +1185,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
         </div><div class="line highlighted" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line highlighted" data-line="3">    <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="4">  <span class="keyword">end</span>
@@ -1207,7 +1207,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line focus-line" data-line="2">  <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="3"><span class="keyword">end</span>
         </div></code></pre>
@@ -1229,7 +1229,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="athl my-code"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
+        <pre class="lumis my-code"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword">defmodule</span> <span class="module">Example</span> <span class="keyword">do</span>
         </div><div class="line focus" data-line="2">  <span class="keyword">def</span> <span class="variable">hello</span> <span class="keyword">do</span>
         </div><div class="line focus" data-line="3">    <span class="string-special-symbol">:world</span>
         </div><div class="line" data-line="4">  <span class="keyword">end</span>
