@@ -3,10 +3,11 @@
 ## Unreleased
 
 ### Added
-- Option `:codefence_renderers` to customize code fence rendering (@neilberkman)
+- [Option] Add  `:codefence_renderers` to customize code fence rendering (@neilberkman)
 
 ### Fixed
-- Do not wrap plaintext code in `<span>` tags (@stewart)
+- [Syntax Highlighter] Do not wrap plaintext code in `<span>` tags (@stewart)
+- [Streaming] Several fixes to fragment parser: insert/highlight completion, handle incomplete links, prevent false positives on $ tokens (@neilberkman)
 
 ## 0.11.5 - 2026-02-21
 
