@@ -40,7 +40,7 @@ end
 ```
 ````
 
-Output: `<pre class="athl" style="color: #c9d1d9; background-color: #0d1117;">...`
+Output: `<pre class="lumis" style="color: #c9d1d9; background-color: #0d1117;">...`
 
 #### Add Custom CSS Classes
 
@@ -52,7 +52,7 @@ console.log("Hello!");
 ```
 ````
 
-Output: `<pre class="athl code-example interactive">...`
+Output: `<pre class="lumis code-example interactive">...`
 
 #### Highlight Specific Lines
 
@@ -129,7 +129,7 @@ interface User {
    - `highlight_lines_style` only works with `:html_inline` formatter
    - `theme` only works with `:html_inline` formatter
 
-2. **CSS Classes**: The `athl` class is always added to `<pre>` elements when using syntax highlighting
+2. **CSS Classes**: The `lumis` class is always added to `<pre>` elements when using syntax highlighting
 
 3. **Line Numbers**: The `data-line` attribute is added to each line for reference
 

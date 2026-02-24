@@ -181,7 +181,7 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="athl" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">trim</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #c678dd;">)</span>
+      <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #e5c07b;">String</span><span style="color: #56b6c2;">.</span><span style="color: #61afef;">trim</span><span style="color: #c678dd;">(</span><span style="color: #98c379;">&quot; MDEx &quot;</span><span style="color: #c678dd;">)</span>
       </div></code></pre>
       """
     )
@@ -195,7 +195,7 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="athl"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="module">String</span><span class="operator">.</span><span class="function-call">trim</span><span class="punctuation-bracket">(</span><span class="string">&quot; MDEx &quot;</span><span class="punctuation-bracket">)</span>
+      <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span class="module">String</span><span class="operator">.</span><span class="function-call">trim</span><span class="punctuation-bracket">(</span><span class="string">&quot; MDEx &quot;</span><span class="punctuation-bracket">)</span>
       </div></code></pre>
       """
     )
@@ -210,7 +210,7 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+      <pre class="lumis"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
       </div><div class="line" data-line="2">text
       </div></code></pre>
       """

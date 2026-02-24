@@ -116,7 +116,7 @@ impl LumisAdapter {
                     default_theme: default_theme.clone(),
                     css_variable_prefix: css_variable_prefix
                         .clone()
-                        .unwrap_or_else(|| "--athl".to_string()),
+                        .unwrap_or_else(|| "--lumis".to_string()),
                     italic: *italic,
                     include_highlights: *include_highlights,
                 })
@@ -561,7 +561,7 @@ fn main() {
 
         let output = run_test(markdown, ExFormatterOption::default(), Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
+        let expected = r#"<pre class="lumis"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
 </div><div class="line" data-line="2">    let message = &quot;Hello, world!&quot;;
 </div><div class="line" data-line="3">&rbrace;
 </div></code></pre>"#;
@@ -589,7 +589,7 @@ text
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+        let expected = r#"<pre class="lumis"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
 </div><div class="line" data-line="2">text
 </div></code></pre>"#;
 
@@ -617,7 +617,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
+        let expected = r#"<pre class="lumis"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1">fn main() &lbrace;
 </div><div class="line" data-line="2">    let message = &quot;Hello, world!&quot;;
 </div><div class="line" data-line="3">&rbrace;
 </div></code></pre>"#;
@@ -648,7 +648,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+        let expected = r#"<pre class="lumis custom-pre-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0; font-style: italic;">fn</span> <span data-highlight="function" style="color: #88c0d0; font-style: italic;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">1</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
 </div><div class="line" data-line="3">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="number" style="color: #b48ead;">2</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
 </div><div class="line" data-line="4">    <span data-highlight="keyword" style="color: #81a1c1; font-style: italic;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">sum</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">a</span> <span data-highlight="operator" style="color: #81a1c1;">+</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">b</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
@@ -686,7 +686,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl my-custom-pre extra-class" style="color: #1f2328; background-color: #ffffff;"><code class="language-rust" translate="no" tabindex="0"><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
+        let expected = r#"<pre class="lumis my-custom-pre extra-class" style="color: #1f2328; background-color: #ffffff;"><code class="language-rust" translate="no" tabindex="0"><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">x</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">1</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
 </div><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="3">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">y</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">2</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
 </div><div class="line custom-highlight-class" style="background-color: #ffffcc; border-left: 3px solid #ff0000" data-line="4">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">z</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">3</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
@@ -723,7 +723,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl default-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" style="background-color: #e7eaf0;" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
+        let expected = r#"<pre class="lumis default-class" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" style="background-color: #e7eaf0;" data-line="1"><span data-highlight="keyword.function" style="color: #cf222e;">fn</span> <span data-highlight="function" style="color: #6639ba;">main</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">(</span><span data-highlight="punctuation.bracket" style="color: #1f2328;">)</span> <span data-highlight="punctuation.bracket" style="color: #1f2328;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">x</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="number" style="color: #0550ae;">1</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
 </div><div class="line" style="background-color: #e7eaf0;" data-line="3">    <span data-highlight="keyword" style="color: #cf222e;">let</span> <span data-highlight="variable" style="color: #1f2328;">message</span> <span data-highlight="operator" style="color: #0550ae;">=</span> <span data-highlight="string" style="color: #0a3069;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #1f2328;">;</span>
 </div><div class="line" data-line="4"><span data-highlight="punctuation.bracket" style="color: #1f2328;">&rbrace;</span>
@@ -750,7 +750,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+        let expected = r#"<pre class="lumis"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
 </div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">&quot;Hello, world!&quot;</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="3"><span class="punctuation-bracket">&rbrace;</span>
 </div></code></pre>"#;
@@ -775,7 +775,7 @@ text
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
+        let expected = r#"<pre class="lumis"><code class="language-plaintext" translate="no" tabindex="0"><div class="line" data-line="1">plain
 </div><div class="line" data-line="2">text
 </div></code></pre>"#;
 
@@ -802,7 +802,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, Options::default());
 
-        let expected = r#"<pre class="athl custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+        let expected = r#"<pre class="lumis custom-linked-class"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
 </div><div class="line" data-line="2">    <span class="keyword">let</span> <span class="variable">a</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="3">    <span class="keyword">let</span> <span class="variable">b</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="4">    <span class="keyword">let</span> <span class="variable">sum</span> <span class="operator">=</span> <span class="variable">a</span> <span class="operator">+</span> <span class="variable">b</span><span class="punctuation-delimiter">;</span>
@@ -837,7 +837,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl custom-linked-pre extra-linked"><code class="language-rust" translate="no" tabindex="0"><div class="line my-custom-highlight-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
+        let expected = r#"<pre class="lumis custom-linked-pre extra-linked"><code class="language-rust" translate="no" tabindex="0"><div class="line my-custom-highlight-line" data-line="1"><span class="keyword-function">fn</span> <span class="function">main</span><span class="punctuation-bracket">(</span><span class="punctuation-bracket">)</span> <span class="punctuation-bracket">&lbrace;</span>
 </div><div class="line my-custom-highlight-line" data-line="2">    <span class="keyword">let</span> <span class="variable">x</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation-delimiter">;</span>
 </div><div class="line" data-line="3">    <span class="keyword">let</span> <span class="variable">y</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation-delimiter">;</span>
 </div><div class="line my-custom-highlight-line" data-line="4">    <span class="keyword">let</span> <span class="variable">z</span> <span class="operator">=</span> <span class="number">3</span><span class="punctuation-delimiter">;</span>
@@ -873,7 +873,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+        let expected = r#"<pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
 </div><div class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
 </div></code></pre>"#;
@@ -906,7 +906,7 @@ fn main() {
 
         let output = run_test(markdown, formatter, options);
 
-        let expected = r#"<pre class="athl" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
+        let expected = r#"<pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-rust" translate="no" tabindex="0"><div class="line" data-line="1"><span data-highlight="keyword.function" style="color: #88c0d0;">fn</span> <span data-highlight="function" style="color: #88c0d0;">main</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">(</span><span data-highlight="punctuation.bracket" style="color: #88c0d0;">)</span> <span data-highlight="punctuation.bracket" style="color: #88c0d0;">&lbrace;</span>
 </div><div class="line" data-line="2">    <span data-highlight="keyword" style="color: #81a1c1;">let</span> <span data-highlight="variable" style="color: #d8dee9; font-weight: bold;">message</span> <span data-highlight="operator" style="color: #81a1c1;">=</span> <span data-highlight="string" style="color: #a3be8c;">&quot;Hello, world!&quot;</span><span data-highlight="punctuation.delimiter" style="color: #88c0d0;">;</span>
 </div><div class="line" data-line="3"><span data-highlight="punctuation.bracket" style="color: #88c0d0;">&rbrace;</span>
 </div></code></pre>"#;
