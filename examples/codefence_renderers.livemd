@@ -3,14 +3,10 @@
 # Codefence Renderers
 
 ```elixir
-System.put_env("MDEX_BUILD", "true")
-
 Mix.install([
-  {:mdex, path: Path.join(__DIR__, "..")},
+  {:mdex, ">= 0.11.6"},
   {:pikchr, "~> 0.5"},
   {:svg_charts, "~> 0.5.0"},
-  {:rustler, "~> 0.37", override: true},
-  {:rustler_precompiled, "~> 0.8", override: true},
   {:kino, "~> 0.16"}
 ])
 ```

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.6 - 2026-02-24
 
 ### Added
 - [Option] Add  `:codefence_renderers` to customize code fence rendering (@neilberkman)
