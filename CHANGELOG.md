@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- [Docs] Add mdex_mermex plugin
+
 ## 0.11.6 - 2026-02-24
 
 ### Added
