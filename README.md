@@ -87,6 +87,18 @@ iex> MDEx.new(markdown: "# Hello :smile:", extension: [shortcodes: true]) |> MDE
 ```
 
 ```elixir
+Mix.install([
+  {:mdex_gfm, "~> 0.1"}
+])
+
+MDEx.new(markdown: "- [x] task 1\n- [ ] task 2")
+|> MDExGFM.attach()
+|> MDEx.to_html!(
+  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+)
+```
+
+```elixir
 iex> import MDEx.Sigil
 iex> ~MD[# Hello :smile:]HTML
 "<h1>Hello 😄</h1>"
