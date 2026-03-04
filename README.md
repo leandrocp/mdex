@@ -76,16 +76,13 @@ mix igniter.install mdex
 
 ## Usage
 
+#### Convert to HTML
 ```elixir
 iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>"
 ```
 
-```elixir
-iex> MDEx.new(markdown: "# Hello :smile:", extension: [shortcodes: true]) |> MDEx.to_html!()
-"<h1>Hello 😄</h1>"
-```
-
+#### GitHub Flavored Markdown (GFM)
 ```elixir
 Mix.install([
   {:mdex_gfm, "~> 0.1"}
@@ -98,6 +95,7 @@ MDEx.new(markdown: "- [x] task 1\n- [ ] task 2")
 )
 ```
 
+#### Sigils
 ```elixir
 iex> import MDEx.Sigil
 iex> ~MD[# Hello :smile:]HTML
