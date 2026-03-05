@@ -40,7 +40,7 @@
 - Discord Flavored Markdown (Partial)
 - Wiki-style links
 - Phoenix HEEx components and expressions
-- [Streaming](https://hexdocs.pm/mdex/MDEx.Document.html#module-streaming) incomplete fragments
+- [Streaming](https://hexdocs.pm/mdex/streaming.html) incomplete fragments
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in [Syntax Highlighting](https://lumis.sh) for code blocks
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)

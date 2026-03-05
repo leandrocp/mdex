@@ -74,24 +74,8 @@ defmodule MDEx.Document do
 
   ## Streaming
 
-  > #### Experimental {: .warning}
-  >
-  > Streaming is still experimental and subject to change in future releases.
-  >
-  > It's **disabled by default** until the API is stabilized. Enable it with the option `streaming: true`.
-
-  Streaming ties together `MDEx.new(streaming: true)`, `MDEx.Document.put_markdown/3`, and `MDEx.Document.run/1` or `MDEx.to_*`
-  so you can feed complete or incomplete Markdown fragments into the Document which will be completed on demand to render valid output.
-
-  Typical usage:
-
-    1. Start with `MDEx.new(streaming: true)` — the document enables streaming and buffers fragments.
-    2. Call `MDEx.Document.put_markdown/3` as fragments arrive — the text is buffered and parsing/rendering is deferred.
-    3. Call `MDEx.Document.run/1` or any `MDEx.to_*` — buffered fragments are parsed completing nodes to ensure valid output.
-
-  This is ideal for AI or chat apps where Markdown comes in bursts but must stay renderable.
-
-  For example, feeding `**Fol` produces a temporary `MDEx.Strong` node then adding `low**` replaces it with the final content on the next run.
+  Pass `streaming: true` to buffer Markdown fragments and get valid output at every render,
+  even when chunks arrive with unclosed syntax. Useful for rendering LLM responses as they stream in.
 
       iex> doc = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("**Fol")
       iex> MDEx.to_html!(doc)
@@ -99,7 +83,7 @@ defmodule MDEx.Document do
       iex> doc |> MDEx.Document.put_markdown("low**") |> MDEx.to_html!()
       "<p><strong>Follow</strong></p>"
 
-  You can find a demo application in `examples/streaming.exs`.
+  See the [Streaming guide](streaming.html) for details on LiveView integration, fragment completion, and a full demo.
 
   ## Protocols
 
@@ -1246,7 +1230,7 @@ defmodule MDEx.Document do
     streaming: [
       type: :boolean,
       default: false,
-      doc: "Enables streaming (experimental)."
+      doc: "Enables streaming. See the [Streaming guide](streaming.html) for details."
     ],
     assigns: [
       type: :map,
