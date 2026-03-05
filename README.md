@@ -83,17 +83,31 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 ```
 
 #### GitHub Flavored Markdown (GFM)
-```elixir
+````elixir
 Mix.install([
   {:mdex_gfm, "~> 0.1"}
 ])
 
-MDEx.new(markdown: "- [x] task 1\n- [ ] task 2")
-|> MDExGFM.attach()
-|> MDEx.to_html!(
-  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
-)
+markdown = """
+- [x] Set up project
+- [ ] Write docs
+
+```elixir
+spawn(fn -> send(current, {self(), 1 + 2}) end)
 ```
+"""
+
+MDEx.new(
+  markdown: markdown,
+  syntax_highlight: [
+    formatter: {:html_multi_themes,
+      themes: [light: "github_light", dark: "github_dark"],
+      default_theme: "light-dark()"}
+  ]
+)
+|> MDExGFM.attach()
+|> MDEx.to_html!()
+````
 
 #### Sigils
 ```elixir
@@ -119,6 +133,7 @@ iex> ~MD[# Hello :smile:]
 >
 ```
 
+#### Streaming
 ```elixir
 iex> MDEx.new(streaming: true)
 ...> |> MDEx.Document.put_markdown("**Install")
