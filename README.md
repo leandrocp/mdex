@@ -141,9 +141,9 @@ iex> MDEx.new(streaming: true)
 "<p><strong>Install</strong></p>"
 ```
 
-## Examples
+## Examples and Guides
 
-Livebook examples are available at [Pages / Examples](https://hexdocs.pm/mdex/gfm.html)
+In docs you can find [Livebook examples](https://hexdocs.pm/mdex/gfm.html) covering options and usage, and [Guides](https://hexdocs.pm/mdex/plugins.html) for more info.
 
 ## Foundation
 
