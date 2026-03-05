@@ -391,7 +391,7 @@ defmodule MDEx do
 
   def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
-    markdown = document || markdown || ""
+    markdown = document || markdown
 
     MDEx.new([markdown: markdown] ++ options)
     |> to_html()
@@ -630,7 +630,7 @@ defmodule MDEx do
 
   def to_xml(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
-    markdown = document || markdown || ""
+    markdown = document || markdown
     options = Document.put_options(MDEx.new(), options).options
 
     markdown
