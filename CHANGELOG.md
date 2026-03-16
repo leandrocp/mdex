@@ -4,6 +4,7 @@
 
 ### Changed
 - [Docs] Add mdex_mermex plugin
+- [Docs] Update `usage-rules.md`
 
 ## 0.11.6 - 2026-02-24
 

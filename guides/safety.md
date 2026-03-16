@@ -1,7 +1,7 @@
 MDEx employs 4 mechanisms to handle safety: omitting), escaping, sanitizing, and unsafe rendering.
 
 TL;DR is if you trust the input then just use `render: [unsafe: true]` option to render raw HTML,
-otherwise consider using `render: [unsafe: true], sanitize: MDEx.default_sanitize_options()` to be on the safe side.
+otherwise consider using `render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options()` to be on the safe side.
 
 ### Omitting/Removing unsafe content (default)
 
@@ -28,7 +28,7 @@ iex> MDEx.to_html!("<h1>Hello</h1>", render: [escape: true])
 But if the input is provided by external sources, it might be a good idea to sanitize it:
 
 ```elixir
-iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe: true], sanitize: MDEx.default_sanitize_options())
+iex> MDEx.to_html!("<a href=https://elixir-lang.org>Elixir</a>", render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options())
 "<p><a href=\"https://elixir-lang.org\" rel=\"noopener noreferrer\">Elixir</a></p>"
 ```
 

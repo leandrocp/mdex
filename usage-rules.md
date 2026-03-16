@@ -1,471 +1,289 @@
 # MDEx Usage Rules
 
-MDEx is a fast and extensible Markdown parser for Elixir. It provides multiple output formats (HTML, HEEx, JSON, XML, Delta), syntax highlighting, plugins, and a powerful Document API for programmatic manipulation.
+MDEx is a fast, extensible Markdown library for Elixir. It parses Markdown into an AST (`MDEx.Document`) and renders to HTML, HEEx, JSON, XML, normalized Markdown, or Quill Delta.
 
-## Core Principles
+This file is the source of truth for coding agents working with MDEx.
 
-1. **Prefer the ~MD Sigil** - It's the most idiomatic and performant approach (compile-time parsing)
-2. **Use `use MDEx`** - Sets up the module with `require MDEx` and `import MDEx.Sigil`
-3. **Use Document API for Manipulation** - Leverage the Req-like pipeline for transformations
-4. **Enable Extensions as Needed** - Start minimal, add features progressively
-5. **Chain Operations** - Compose transformations instead of nesting
-6. **Leverage Protocols** - Use Access, Enumerable, and Collectable for tree operations
+## Agent Defaults
 
-## Decision Guide: When to Use What
+1. **Prefer `~MD` for static content** - If the Markdown is a literal known at compile time, use the sigil.
+2. **Use `use MDEx` in modules that render Markdown** - It adds `require MDEx` and `import MDEx.Sigil`.
+3. **Use `HEEX` only when you need Phoenix semantics** - Components, `phx-*`, `{@assigns}`, or HEEx expressions.
+4. **Use runtime functions for runtime content** - Database content, user input, files, API responses, LLM output.
+5. **Use `MDEx.Document` when you need control** - AST transforms, plugins, streaming, custom renderers, inspection.
+6. **Keep options explicit and minimal** - Only enable extensions and unsafe rendering when needed.
 
-### Choose Your Approach
+## Decision Guide
 
-**Use `~MD[...]HTML` sigil when:**
-- Content is static or known at compile-time
-- Working with templates that have EEx assigns
-- Performance is critical (compile-time = zero runtime parsing cost)
-- Content won't change based on runtime data
-- You're rendering in templates or views
+Choose the narrowest tool that fits the job.
 
-**Use `~MD[...]HEEX` sigil when:**
-- You need Phoenix LiveView components in Markdown
-- Using `phx-*` bindings or Elixir expressions
-- Rendering content with Phoenix function components like `<.link>`
-- Building LiveView templates with Markdown
+### Static Markdown known at compile time
 
-**Use `MDEx.to_html!/2` when:**
-- Content comes from user input or database
-- Markdown is dynamic and changes at runtime
-- You need quick one-off conversions
-- Working with external data sources
-- Simple use case without manipulation
-
-**Use `MDEx.to_heex!/2` when:**
-- Dynamic content needs Phoenix component support at runtime
-- Processing user-generated content with LiveView components
-- Note: Prefer `~MD[...]HEEX` for static content (better performance)
-
-**Use Document API (`MDEx.new/1` + pipeline) when:**
-- You need to transform or manipulate the AST
-- Building custom plugins
-- Applying multiple transformations
-- Need to inspect or modify nodes programmatically
-- Working with streaming content
-- Require complex preprocessing or postprocessing
-
-**Use `MDEx.parse_document!/2` when:**
-- You only need the AST (not HTML output)
-- Building custom renderers
-- Extracting structured data (TOC, metadata, etc.)
-- Analyzing document structure
-- Converting to non-HTML formats
-
-**Use `MDEx.parse_fragment!/2` when:**
-- Parsing a single Markdown element
-- You expect exactly one node as result
-- Building custom inline parsers
-
-### Output Format Selection
-
-| Format | Function | Use Case |
-|--------|----------|----------|
-| **HTML** | `to_html!/2` | Web rendering (most common) |
-| **HEEx** | `to_heex!/2` | Phoenix LiveView with components |
-| **JSON** | `to_json!/2` | API responses, data interchange |
-| **XML** | `to_xml!/2` | Legacy systems, XML workflows |
-| **Markdown** | `to_markdown!/2` | Normalize or reformat Markdown |
-| **Delta** | `to_delta!/2` | Rich text editors (Quill) |
-
-### Streaming vs Non-Streaming
-
-**Use streaming (`streaming: true`) when:**
-- Content arrives in chunks (AI responses, SSE)
-- LiveView with incremental updates
-- Real-time collaborative editing
-- Progressive rendering is needed
-
-**Use non-streaming (default) when:**
-- You have complete Markdown upfront
-- Single-shot conversions
-- Static content rendering
-- Batch processing
-
-### Troubleshooting Quick Reference
-
-**Problem: HTML is being escaped**
-```elixir
-# Solution: Enable unsafe mode (be careful!)
-MDEx.to_html!(markdown, render: [unsafe: true])
-```
-
-**Problem: Phoenix components not rendering**
-```elixir
-# Solution: Use to_heex!/2 or ~MD[...]HEEX, not to_html!/2
-~MD[<.link href="/">Home</.link>]HEEX
-# Or at runtime:
-MDEx.to_heex!(markdown, assigns: assigns)
-```
-
-**Problem: Syntax highlighting not working**
-```elixir
-# Solution: Ensure formatter is configured
-syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
-```
-
-**Problem: Code decorators not working**
-```elixir
-# Solution: Enable both required render options
-render: [github_pre_lang: true, full_info_string: true]
-```
-
-**Problem: Streaming not accumulating content**
-```elixir
-# Solution: Use Enum.into/2, not put_markdown/2
-document = Enum.into(["chunk"], document)
-```
-
-**Problem: Table/strikethrough not rendering**
-```elixir
-# Solution: Enable GFM extensions
-extension: [table: true, strikethrough: true]
-```
-
-**Problem: Can't use inline node as document root**
-```elixir
-# Solution: Wrap it in a block container
-doc = MDEx.Document.wrap(inline_node)
-```
-
-**Problem: Plugins not being applied**
-```elixir
-# Solution: Use :plugins option or attach in pipeline
-MDEx.to_html!(markdown, plugins: [MDExGFM])
-# Or:
-MDEx.new(markdown: md) |> MDExGFM.attach() |> MDEx.to_html!()
-```
-
-## Basic Usage
-
-### Module Setup
-
-Use the `use MDEx` macro to set up your module:
+- Use `~MD[...]HTML` for HTML output.
+- Use `~MD[...]HEEX` if the Markdown contains Phoenix components or HEEx expressions.
+- Use bare `~MD[...]` if you want a compile-time `MDEx.Document`.
 
 ```elixir
-defmodule MyApp.Content do
-  use MDEx  # Adds: require MDEx, import MDEx.Sigil
+defmodule MyApp.Page do
+  use MDEx
 
-  def render(markdown) do
-    ~MD[#{markdown}]HTML
+  def hero do
+    ~MD[
+    # Hello
+
+    This is **static** content.
+    ]HTML
   end
 end
 ```
 
-### Simple Conversions
+### Dynamic Markdown available only at runtime
 
-The most common use case is converting Markdown to HTML:
-
-```elixir
-# Using to_html! (runtime parsing)
-MDEx.to_html!("# Hello World")
-#=> "<h1>Hello World</h1>"
-
-# With options
-MDEx.to_html!("Hello ~world~", extension: [strikethrough: true])
-#=> "<p>Hello <del>world</del></p>"
-
-# With plugins (one-off usage)
-MDEx.to_html!("# Title", plugins: [MDExGFM])
-```
-
-### Using the ~MD Sigil (PREFERRED)
-
-**Always prefer the ~MD sigil when possible** - it compiles Markdown at compile-time, making it significantly faster and more idiomatic:
+- Use `MDEx.to_html!/2` for normal rendering.
+- Use `MDEx.to_heex!/2` only when runtime content needs Phoenix component support.
+- Use `MDEx.parse_document!/2` if you need the AST instead of rendered output.
 
 ```elixir
-use MDEx  # Or: import MDEx.Sigil
+html = MDEx.to_html!(markdown)
 
-# Compile to HTML at compile-time
-~MD[# Hello World]HTML
-#=> "<h1>Hello World</h1>"
-
-# Get Document AST (default, no modifier)
-~MD[# Hello World]
-#=> %MDEx.Document{nodes: [...]}
-
-# Works with assigns
-assigns = %{name: "Elixir"}
-~MD[# Hello <%= @name %>]HTML
-#=> "<h1>Hello Elixir</h1>"
+rendered = MDEx.to_heex!(markdown, assigns: assigns)
 ```
 
-### All Sigil Modifiers
+### AST inspection or transformation
+
+- Use `MDEx.parse_document!/2` for a one-off AST.
+- Use `MDEx.new/1` plus `MDEx.Document` pipeline functions for reusable flows.
+- Use `MDEx.parse_fragment!/1` only when you need a single fragment node.
+
+```elixir
+doc =
+  markdown
+  |> MDEx.parse_document!()
+  |> MDEx.Document.update_nodes(MDEx.Text, fn node ->
+    %{node | literal: String.upcase(node.literal)}
+  end)
+
+MDEx.to_html!(doc)
+```
+
+### Streaming or chunked Markdown
+
+- Use `MDEx.new(streaming: true)`.
+- Append chunks with `MDEx.Document.put_markdown/2` or `Enum.into/2`.
+- Render after each chunk with `MDEx.to_html!/1` or another `to_*` function.
+
+```elixir
+doc = MDEx.new(streaming: true)
+doc = MDEx.Document.put_markdown(doc, "**Hel")
+html = MDEx.to_html!(doc)
+
+doc = MDEx.Document.put_markdown(doc, "lo**")
+html = MDEx.to_html!(doc)
+```
+
+## Canonical API Choices
+
+### `use MDEx`
+
+Use this in modules that use `~MD` or `MDEx.to_heex!/2`.
+
+```elixir
+defmodule MyApp.Content do
+  use MDEx
+end
+```
+
+You can pass default sigil options:
+
+```elixir
+defmodule MyApp.Content do
+  use MDEx,
+    extension: [strikethrough: true],
+    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+end
+```
+
+### `~MD` sigil
+
+Preferred for compile-time Markdown.
+
+The sigil is opinionated: its defaults enable many extensions and `render: [unsafe: true]`. If you need stricter or more explicit behavior, either pass options to `use MDEx` or use the runtime `MDEx.to_*` / `MDEx.parse_*` functions directly.
+
+- `~MD[...]` -> `MDEx.Document`
+- `~MD[...]HTML` -> HTML string
+- `~MD[...]HEEX` -> `Phoenix.LiveView.Rendered`
+- `~MD[...]JSON` -> JSON string
+- `~MD[...]XML` -> XML string
+- `~MD[...]MD` -> normalized Markdown
+- `~MD[...]DELTA` -> Quill Delta ops
 
 ```elixir
 use MDEx
 
-# No modifier - returns Document AST
-~MD[# Hello]
-#=> %MDEx.Document{nodes: [...]}
-
-# HTML - returns HTML string
-~MD[# Hello]HTML
-#=> "<h1>Hello</h1>"
-
-# HEEX - returns Phoenix.LiveView.Rendered (requires LiveView)
-~MD[<.link href="/">Home</.link>]HEEX
-#=> %Phoenix.LiveView.Rendered{...}
-
-# JSON - returns JSON AST string
-~MD[# Hello]JSON
-#=> "{\"nodes\":[...]}"
-
-# XML - returns XML with CommonMark DTD
-~MD[# Hello]XML
-#=> "<?xml version=\"1.0\"?>..."
-
-# MD - returns normalized Markdown
-~MD[#   Hello   ]MD
-#=> "# Hello"
-
-# DELTA - returns Quill Delta operations
-~MD[# Hello]DELTA
-#=> [%{"insert" => "Hello"}, %{"insert" => "\n", "attributes" => %{"header" => 1}}]
+doc = ~MD[# Title]
+html = ~MD[# Title]HTML
+json = ~MD[# Title]JSON
 ```
 
-## Phoenix LiveView Integration (HEEx)
+### `MDEx.to_html!/2`
 
-MDEx supports Phoenix LiveView components directly in Markdown via the HEEX modifier and `to_heex!/2` function.
-
-### Using ~MD[...]HEEX (Compile-time)
+Use for runtime Markdown when you only need HTML.
 
 ```elixir
-use MDEx
-
-# Phoenix function components work directly
-~MD[
-# Welcome
-
-<.link href="/" class="btn">Home</.link>
-
-Click <.button phx-click="save">Save</.button> to continue.
-]HEEX
-
-# With assigns
-assigns = %{user: %{name: "Alice"}}
-~MD[
-# Hello <%= @user.name %>
-
-<.link navigate={~p"/users/#{@user.name}"}>Profile</.link>
-]HEEX
+MDEx.to_html!("# Hello")
+MDEx.to_html!(markdown, extension: [table: true, strikethrough: true])
 ```
 
-### Using to_heex!/2 (Runtime)
+### `MDEx.to_heex!/2`
+
+Use for runtime Markdown that must support Phoenix components or HEEx expressions.
+
+- `MDEx.to_heex!/2` is a macro, so `use MDEx` or `require MDEx` must be in scope.
+- It automatically enables `extension: [phoenix_heex: true]` and `render: [unsafe: true]`.
+- Prefer `~MD[...]HEEX` when the content is static.
 
 ```elixir
-# Runtime HEEx conversion (use sparingly - slower than sigil)
-markdown = "# Hello\n\n<.link href=\"/\">Home</.link>"
-MDEx.to_heex!(markdown, assigns: %{})
+defmodule MyAppWeb.PageLive do
+  use Phoenix.LiveView
+  use MDEx
 
-# With assigns
-MDEx.to_heex!("Welcome <%= @name %>", assigns: %{name: "World"})
+  def render(assigns) do
+    markdown = "# {@title}\n\n<.link href={@href}>Open</.link>"
+    MDEx.to_heex!(markdown, assigns: assigns)
+  end
+end
 ```
 
-### HEEx Requirements
+### `MDEx.parse_document!/2`
 
-- Requires Phoenix LiveView (`phoenix_live_view ~> 1.0`)
-- Must use `use MDEx` or `require MDEx` for macros
-- Automatically enables: `extension: [phoenix_heex: true]` and `render: [unsafe: true]`
-- The `assigns` variable must be in scope for HEEX modifier
-
-## Output Formats
-
-MDEx supports multiple output formats from the same Markdown source:
+Use when you want the full AST.
 
 ```elixir
-markdown = "# Hello **World**"
-
-# HTML
-MDEx.to_html!(markdown)
-#=> "<h1>Hello <strong>World</strong></h1>"
-
-# HEEx (with Phoenix components support)
-MDEx.to_heex!(markdown, assigns: %{})
-#=> %Phoenix.LiveView.Rendered{...}
-
-# JSON
-MDEx.to_json!(markdown)
-#=> "{\"nodes\":[{\"nodes\":[{\"literal\":\"Hello \",\"node_type\":\"MDEx.Text\"}..."
-
-# XML
-MDEx.to_xml!(markdown)
-#=> "<?xml version=\"1.0\" encoding=\"UTF-8\"?>..."
-
-# Markdown (normalized)
 doc = MDEx.parse_document!(markdown)
-MDEx.to_markdown!(doc)
-#=> "# Hello **World**"
-
-# Quill Delta (for rich text editors)
-MDEx.to_delta!(markdown)
-#=> [%{"insert" => "Hello "}, %{"insert" => "World", "attributes" => %{"bold" => true}}, ...]
 ```
 
-### Delta Format with Custom Converters
-
-Customize how specific nodes convert to Delta operations:
+It also accepts tagged JSON input:
 
 ```elixir
-custom_converters = %{
-  # Custom table rendering
-  MDEx.Table => fn table, _opts ->
-    [%{"insert" => "[Table: #{table.num_rows} rows]"}]
-  end,
-
-  # Skip math nodes
-  MDEx.Math => fn _math, _opts -> :skip end,
-
-  # Custom image handling
-  MDEx.Image => fn image, _opts ->
-    [%{"insert" => %{"image" => image.url}}]
-  end
-}
-
-MDEx.to_delta!(markdown, custom_converters: custom_converters)
+doc = MDEx.parse_document!({:json, json})
 ```
 
-## Document API and AST Manipulation
+### `MDEx.parse_fragment!/1`
 
-MDEx provides a powerful Document API for programmatic manipulation of Markdown:
+Use when you expect a single fragment node and want to inject or wrap it later.
 
 ```elixir
-# Create a document with options
-document = MDEx.new(
-  markdown: "# Hello",
-  extension: [table: true, strikethrough: true],
-  render: [unsafe: false],
-  plugins: [MDExGFM]
-)
-
-# Parse and get AST
-doc = MDEx.parse_document!("# Hello **World**")
-#=> %MDEx.Document{nodes: [%MDEx.Heading{...}]}
-
-# Parse a single fragment
-node = MDEx.parse_fragment!("**bold**")
-#=> %MDEx.Strong{nodes: [%MDEx.Text{literal: "bold"}]}
-
-# Access nodes using protocols
-doc[MDEx.Heading]  # Get all headings
-doc[:text]         # Get all text nodes (atom shorthand)
-doc[0]             # Get first node (depth-first traversal)
-doc[-1]            # Get last node
-
-# Access by function
-doc[fn node -> Map.get(node, :level) == 1 end]
-
-# Enumerate over all nodes
-Enum.count(doc)
-Enum.map(doc, fn node -> inspect(node) end)
-Enum.filter(doc, fn node -> is_struct(node, MDEx.Code) end)
-
-# Update nodes with Access
-update_in(doc, [Access.at(1), :literal], &String.upcase/1)
-
-# Traverse and update
-MDEx.traverse_and_update(doc, fn
-  %MDEx.Text{literal: text} = node -> %{node | literal: String.upcase(text)}
-  node -> node
-end)
-
-# With accumulator
-MDEx.traverse_and_update(doc, [], fn node, acc ->
-  case node do
-    %MDEx.Heading{} -> {node, [node | acc]}
-    _ -> {node, acc}
-  end
-end)
+heading = MDEx.parse_fragment!("# Title")
 ```
 
-### Document Pipeline (Req-like API)
+Treat this API as experimental.
 
-Chain operations using the pipeline API:
+### `MDEx.new/1`
+
+Use this as the entrypoint for pipelines, plugins, streaming, assigns, and reusable option sets.
 
 ```elixir
-MDEx.new(markdown: "# Title")
-|> MDEx.Document.put_options(extension: [table: true])
-|> MDEx.Document.put_render_options(unsafe: true)
-|> MDEx.Document.append_steps(custom_step: &my_transform/1)
+doc =
+  MDEx.new(
+    markdown: markdown,
+    extension: [table: true],
+    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+  )
+```
+
+## HEEx Rules
+
+Use HEEx support only when the Markdown contains Phoenix-specific syntax.
+
+Choose HEEx when the Markdown includes:
+
+- `<.link>`, `<.button>`, or other function components
+- fully qualified components
+- `phx-*` bindings
+- `{@assign}` or other HEEx expressions
+- EEx blocks mixed into Markdown
+
+Prefer plain HTML rendering when the content is just Markdown plus ordinary HTML.
+
+```elixir
+def render(assigns) do
+  ~MD"""
+  # {@title}
+
+  <.button phx-click="save">Save</.button>
+  """HEEX
+end
+```
+
+Important details:
+
+- The `assigns` variable must be in scope for `~MD[...]HEEX`.
+- Component imports are not automatic. Import your component modules the same way you would in normal HEEx.
+- `to_html!/2` does not understand Phoenix components. Use HEEx APIs first, then convert to HTML if needed.
+
+```elixir
+MDEx.to_heex!(markdown, assigns: assigns)
 |> MDEx.to_html!()
 ```
 
-### Assigns
+## Document API
 
-Store and access assigns in documents:
+`MDEx.Document` is the right abstraction when the agent needs to manipulate or inspect Markdown structurally.
+
+Common operations:
+
+- `MDEx.Document.put_options/2`
+- `MDEx.Document.put_render_options/2`
+- `MDEx.Document.put_plugins/2`
+- `MDEx.Document.assign/2` and `assign/3`
+- `MDEx.Document.append_steps/2`
+- `MDEx.Document.update_nodes/3`
+- `MDEx.Document.put_private/3`, `get_private/3`, `update_private/4`
+- `MDEx.Document.put_markdown/2`
+- `MDEx.Document.wrap/1`
+- `MDEx.Document.run/1`
 
 ```elixir
-doc = MDEx.new(markdown: "# Hello <%= @name %>")
-|> MDEx.Document.assign(name: "World")
-|> MDEx.Document.assign(:count, 42)
+doc =
+  MDEx.new(markdown: "# Title")
+  |> MDEx.Document.put_options(extension: [table: true])
+  |> MDEx.Document.put_render_options(unsafe: true)
+  |> MDEx.Document.append_steps(custom_step: &my_transform/1)
 
-# Access in pipeline steps or HEEx rendering
-doc.assigns.name  #=> "World"
+html = MDEx.to_html!(doc)
 ```
-
-### Private Storage
-
-Store plugin-specific data:
-
-```elixir
-doc
-|> MDEx.Document.put_private(:my_plugin, :processed, true)
-|> MDEx.Document.get_private(:my_plugin, :processed, false)
-|> MDEx.Document.update_private(:my_plugin, :count, 0, &(&1 + 1))
-```
-
-### Protocols
-
-MDEx.Document implements several protocols for flexible manipulation:
-
-- **Access** - Get/update nodes by index, type, or function
-- **Enumerable** - Use Enum functions (map, filter, reduce, etc.)
-- **Collectable** - Build documents by collecting nodes or chunks
-- **String.Chars** - Convert to CommonMark with `to_string/1`
-- **Inspect** - Pretty-print document tree
 
 ## Plugins
 
-MDEx supports a plugin system via the Document pipeline API. Plugins use `append_steps/2` to inject transformation steps.
+Plugins attach behavior to the document pipeline.
 
-### Using Plugins
+Preferred ways to use plugins:
 
-Three ways to use plugins:
+1. One-off rendering: pass `plugins: [...]` to `MDEx.to_*`.
+2. Reusable pipeline: attach the plugin to `MDEx.new(...)`.
+3. Manual control: call `MDEx.Document.put_plugins/2`.
 
 ```elixir
-# 1. Via :plugins option (one-off conversions)
 MDEx.to_html!(markdown, plugins: [MDExGFM])
-MDEx.to_html!(markdown, plugins: [{MDExMermaid, mermaid_version: "11"}])
 
-# 2. Via attach in pipeline
-MDEx.new(markdown: "# Title")
+MDEx.new(markdown: markdown)
 |> MDExGFM.attach()
-|> MDExMermaid.attach(mermaid_version: "11")
-|> MDEx.to_html!()
-
-# 3. Via put_plugins
-MDEx.new(markdown: "# Title")
-|> MDEx.Document.put_plugins([MDExGFM, {MDExMermaid, mermaid_version: "11"}])
 |> MDEx.to_html!()
 ```
 
-## Plugins
+Plugin entries can be:
 
-- [mdex_gfm](https://hex.pm/packages/mdex_gfm) - Enable [GitHub Flavored Markdown](https://github.github.com/gfm) (GFM)
-- [mdex_mermaid](https://hex.pm/packages/mdex_mermaid) - Render [Mermaid](https://mermaid.js.org) diagrams in code blocks
-- [mdex_katex](https://hex.pm/packages/mdex_katex) - Render math formulas using [KaTeX](https://katex.org)
-- [mdex_video_embed](https://hex.pm/packages/mdex_video_embed) - Privacy-respecting video embeds from code blocks
-- [mdex_custom_heading_id](https://hex.pm/packages/mdex_custom_heading_id) - Custom heading IDs for markdown headings
-- [mdex_mermex](https://hex.pm/packages/mdex_mermex) - Render [Mermaid](https://mermaid.js.org) diagrams server-side using Mermex (Rust NIF)
+- a module, like `MDExGFM`
+- a `{module, options}` tuple
+- a function that receives and returns a document
 
-See [Plugins Guide](https://hexdocs.pm/mdex/plugins.html) for more.
+### Writing plugins
 
-### Writing Custom Plugins
+Custom plugins should usually:
 
-Plugins are modules that manipulate the Document through pipeline steps:
+1. `register_options/2` for custom options
+2. `put_options/2` to merge user input
+3. `append_steps/2` to transform the document
 
 ```elixir
 defmodule MyPlugin do
@@ -473,573 +291,244 @@ defmodule MyPlugin do
 
   def attach(document, options \\ []) do
     document
-    # Register custom options
     |> Document.register_options([:my_option])
-    # Merge user options
     |> Document.put_options(options)
-    # Add transformation steps
-    |> Document.append_steps(
-      enable_unsafe: &enable_unsafe/1,
-      inject_content: &inject_content/1,
-      transform_nodes: &transform_nodes/1
-    )
+    |> Document.append_steps(transform: &transform/1)
   end
 
-  defp enable_unsafe(document) do
-    Document.put_render_options(document, unsafe: true)
-  end
-
-  defp inject_content(document) do
-    node = %MDEx.HtmlBlock{literal: "<div>Injected</div>"}
-    Document.put_node_in_document_root(document, node, :top)
-  end
-
-  defp transform_nodes(document) do
-    selector = fn
-      %MDEx.CodeBlock{info: "custom"} -> true
-      _ -> false
-    end
-
-    Document.update_nodes(document, selector, fn node ->
+  defp transform(document) do
+    Document.update_nodes(document, MDEx.CodeBlock, fn node ->
       %MDEx.HtmlBlock{literal: "<pre>#{node.literal}</pre>"}
     end)
   end
 end
-
-# Usage
-MDEx.to_html!(markdown, plugins: [MyPlugin])
-# Or:
-MDEx.new(markdown: "# Title")
-|> MyPlugin.attach(my_option: "value")
-|> MDEx.to_html!()
 ```
 
-## Syntax Highlighting
+Use `document.private` helpers for plugin state instead of overloading assigns.
 
-MDEx includes built-in syntax highlighting via [lumis](https://crates.io/crates/lumis) and [lumis](https://hex.pm/packages/lumis):
+## Streaming Rules
 
-````elixir
-MDEx.to_html!("""
-```elixir
-def hello do
-  :world
-end
-```
-""", syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}])
-````
+Streaming mode is especially useful for LLM or SSE output.
 
-### Formatters and Themes
+- Always set `streaming: true` on document creation.
+- Keep the same document instance across chunks.
+- `put_markdown/2` appends chunks to the document buffer.
+- `Enum.into(chunks, doc)` is the cleanest way to accumulate many chunks.
+- Any `to_*` call flushes the buffer, completes open syntax temporarily, and re-renders.
 
 ```elixir
-# HTML inline (styles embedded)
-syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
-
-# HTML linked (CSS classes)
-syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
-
-# Disable syntax highlighting
-syntax_highlight: nil
-
-# Get available themes and languages
-Lumis.available_themes()
-#=> ["onedark", "github_dark", "github_light", ...]
-
-Lumis.available_languages()
-#=> ["elixir", "rust", "javascript", ...]
+doc = Enum.into(["# Hel", "lo\n\n", "**world**"], MDEx.new(streaming: true))
+html = MDEx.to_html!(doc)
 ```
 
-See [Lumis themes](https://docs.rs/lumis/latest/lumis/#themes-available) for theme details and [Lumis documentation](https://hexdocs.pm/lumis) for configuration.
+If you want to replace prior content instead of appending, create a fresh document.
 
-## Code Block Decorators
+## Output Formats
 
-Customize individual code blocks with decorators in the info string.
+Use the renderer that matches the integration point.
 
-**Prerequisites**: Enable both render options:
+| Format | Main API | Typical use |
+| --- | --- | --- |
+| HTML | `to_html!/2` or `~MD[...]HTML` | Web pages, emails, rendered output |
+| HEEx | `to_heex!/2` or `~MD[...]HEEX` | LiveView templates with components |
+| JSON | `to_json!/2` or `~MD[...]JSON` | Serialization, APIs, tests |
+| XML | `to_xml!/2` or `~MD[...]XML` | CommonMark XML interop |
+| Markdown | `to_markdown!/2` on `MDEx.Document`, or `~MD[...]MD` | Normalization, round-tripping |
+| Delta | `to_delta!/2` or `~MD[...]DELTA` | Quill and rich text editors |
+
+### Delta converters
+
+Use `custom_converters` when a node should map to custom Delta operations.
 
 ```elixir
-render: [github_pre_lang: true, full_info_string: true]
-```
-
-### Decorator Examples
-
-````markdown
-# Override theme
-```elixir theme=github_dark
-def hello, do: :world
-```
-
-# Add CSS classes
-```javascript pre_class="my-class interactive"
-console.log("Hello");
-```
-
-# Highlight specific lines
-```python highlight_lines="1,3-5"
-import math
-x = 1
-y = 2
-z = 3
-result = x + y + z
-```
-
-# Custom highlight styling (html_inline only)
-```ruby highlight_lines="2" highlight_lines_style="background: yellow;"
-def method
-  # highlighted line
-end
-```
-
-# Include syntax token data
-```rust include_highlights
-let x: i32 = 42;
-```
-````
-
-See the [Code Block Decorators Guide](https://hexdocs.pm/mdex/code_block_decorators.html) for complete documentation.
-
-## Streaming
-
-MDEx supports streaming for real-time Markdown processing (e.g., AI chat applications). Streaming automatically completes incomplete fragments to ensure valid output at each render.
-
-### Basic Streaming with put_markdown
-
-```elixir
-# Create a streaming document
-doc = MDEx.new(streaming: true)
-
-# Add initial chunk
-doc = MDEx.Document.put_markdown(doc, "**Fol")
-MDEx.to_html!(doc)
-#=> "<p><strong>Fol</strong></p>"  (temporary completion)
-
-# Add more content (overwrites previous markdown)
-doc = MDEx.Document.put_markdown(doc, "**Follow**")
-MDEx.to_html!(doc)
-#=> "<p><strong>Follow</strong></p>"  (final output)
-```
-
-### Incremental Updates with Collectable Protocol
-
-**Preferred for LiveView and incremental streaming** - Use the Collectable protocol to append chunks:
-
-```elixir
-# Initialize streaming document
-document = MDEx.new(streaming: true)
-
-# Collect chunks incrementally (accumulates content)
-document = Enum.into(["**Hel"], document)
-MDEx.to_html!(document)
-#=> "<p><strong>Hel</strong></p>"
-
-document = Enum.into(["lo**\n\n"], document)
-MDEx.to_html!(document)
-#=> "<p><strong>Hello</strong></p>"
-
-document = Enum.into(["Next ", "paragraph"], document)
-MDEx.to_html!(document)
-#=> "<p><strong>Hello</strong></p>\n<p>Next paragraph</p>"
-```
-
-### LiveView Integration Pattern
-
-```elixir
-defmodule MyAppWeb.ChatLive do
-  use MyAppWeb, :live_view
-  use MDEx
-
-  def mount(_params, _session, socket) do
-    {:ok, assign(socket, document: MDEx.new(streaming: true), html: "")}
-  end
-
-  def handle_info({:chunk, chunk}, socket) do
-    # Accumulate chunk using Collectable protocol
-    document = Enum.into([chunk], socket.assigns.document)
-    html = MDEx.to_html!(document)
-
-    {:noreply, assign(socket, document: document, html: html)}
-  end
-end
-```
-
-**Use Cases**:
-- AI/LLM chat responses arriving in chunks
-- Real-time collaborative editing
-- Progressive content loading
-- Streaming API responses
-
-See the [Streaming Example](https://github.com/leandrocp/mdex/blob/main/examples/streaming.exs) for a complete LiveView demo.
-
-## Safety and Sanitization
-
-By default, MDEx escapes HTML for safety. Use sanitization and unsafe rendering carefully:
-
-```elixir
-# Default: HTML is escaped
-MDEx.to_html!("<script>alert('xss')</script>")
-#=> (escaped output)
-
-# Allow raw HTML (UNSAFE)
-MDEx.to_html!("<div>Custom HTML</div>", render: [unsafe: true])
-#=> "<p><div>Custom HTML</div></p>"
-
-# Sanitize HTML after rendering
-MDEx.to_html!("<script>bad</script><p>Good</p>",
-  render: [unsafe: true],
-  sanitize: MDEx.Document.default_sanitize_options()
-)
-#=> "<p>Good</p>"  (script removed)
-
-# Custom sanitization
-MDEx.to_html!(markdown,
-  render: [unsafe: true],
-  sanitize: [
-    rm_tags: ["script", "iframe"],
-    add_tags: ["custom-component"]
-  ]
-)
-
-# Escape curly braces only in code (for LiveView compatibility)
-MDEx.safe_html(html, escape: [curly_braces_in_code: true])
-```
-
-Sanitization uses [ammonia](https://crates.io/crates/ammonia) for HTML cleaning.
-
-See [Safety Guide](https://hexdocs.pm/mdex/safety.html) for security best practices.
-
-## Node Types
-
-MDEx provides 55+ node types for complete Markdown representation:
-
-### Block Nodes (can be document root)
-
-| Node | Description |
-|------|-------------|
-| `MDEx.Document` | Document root container |
-| `MDEx.Heading` | Headings (level 1-6) |
-| `MDEx.Paragraph` | Paragraph container |
-| `MDEx.BlockQuote` | Block quote |
-| `MDEx.List` | Bullet or ordered list |
-| `MDEx.ListItem` | List item |
-| `MDEx.TaskItem` | Task list item with checkbox |
-| `MDEx.CodeBlock` | Fenced or indented code |
-| `MDEx.HtmlBlock` | Raw HTML block |
-| `MDEx.ThematicBreak` | Horizontal rule |
-| `MDEx.Table` | GFM table |
-| `MDEx.TableRow` | Table row |
-| `MDEx.TableCell` | Table cell |
-| `MDEx.FootnoteDefinition` | Footnote definition |
-| `MDEx.DescriptionList` | Definition list |
-| `MDEx.DescriptionItem` | Definition item |
-| `MDEx.DescriptionTerm` | Definition term |
-| `MDEx.DescriptionDetails` | Definition details |
-| `MDEx.Alert` | GitHub/GitLab alerts |
-| `MDEx.MultilineBlockQuote` | Multiline block quote |
-| `MDEx.FrontMatter` | YAML front matter |
-
-### Inline Nodes (require block parent)
-
-| Node | Description |
-|------|-------------|
-| `MDEx.Text` | Plain text |
-| `MDEx.Code` | Inline code |
-| `MDEx.Strong` | Bold text |
-| `MDEx.Emph` | Italic text |
-| `MDEx.Strikethrough` | Strikethrough text |
-| `MDEx.Underline` | Underlined text |
-| `MDEx.Subscript` | Subscript (H~2~O) |
-| `MDEx.Superscript` | Superscript (E=mc^2^) |
-| `MDEx.SpoileredText` | Spoiler text |
-| `MDEx.Highlight` | Highlighted text |
-| `MDEx.Link` | Hyperlink |
-| `MDEx.WikiLink` | Wiki-style link |
-| `MDEx.Image` | Image |
-| `MDEx.Math` | Math expression |
-| `MDEx.HtmlInline` | Inline raw HTML |
-| `MDEx.SoftBreak` | Soft line break |
-| `MDEx.LineBreak` | Hard line break |
-| `MDEx.FootnoteReference` | Footnote reference |
-| `MDEx.ShortCode` | Emoji shortcode |
-| `MDEx.Escaped` | Escaped character |
-| `MDEx.HeexBlock` | Phoenix HEEx block |
-| `MDEx.HeexInline` | Phoenix HEEx inline |
-
-## Common Patterns
-
-### Table of Contents
-
-```elixir
-doc = MDEx.parse_document!(markdown)
-
-Enum.reduce(doc, [], fn
-  %MDEx.Heading{level: level, nodes: [%MDEx.Text{literal: text}]}, acc ->
-    [{level, text, MDEx.anchorize(text)} | acc]
-  _, acc -> acc
-end)
-|> Enum.reverse()
-```
-
-### Transform Code Blocks
-
-```elixir
-MDEx.parse_document!(markdown)
-|> MDEx.traverse_and_update(fn
-  %MDEx.CodeBlock{info: "mermaid"} = node ->
-    %MDEx.HtmlBlock{literal: render_mermaid(node.literal)}
-  node -> node
-end)
-|> MDEx.to_html!()
-```
-
-### Extract Front Matter
-
-```elixir
-doc = MDEx.parse_document!(markdown,
-  extension: [front_matter_delimiter: "---"])
-
-front_matter = doc[MDEx.FrontMatter] |> List.first()
-YamlElixir.read_from_string!(front_matter.literal)
-```
-
-### Find All Links
-
-```elixir
-doc = MDEx.parse_document!(markdown)
-
-links = Enum.filter(doc, fn
-  %MDEx.Link{} -> true
-  _ -> false
-end)
-```
-
-### Custom Node Transformation
-
-```elixir
-# Convert all code blocks of a specific language
-MDEx.Document.update_nodes(doc,
-  fn %MDEx.CodeBlock{info: "diagram"} -> true; _ -> false end,
-  fn node -> %MDEx.HtmlBlock{literal: render_diagram(node.literal)} end
+MDEx.to_delta!(markdown,
+  custom_converters: %{
+    MDEx.Image => fn image, _opts ->
+      [%{"insert" => %{"image" => image.url}}]
+    end
+  }
 )
 ```
 
-## Options Reference
+## Options That Matter Most
 
-MDEx provides several option categories for controlling parsing and rendering behavior:
+### `extension:`
 
-### Extension Options
+Turn on Markdown syntax that is not enabled by default.
 
-Enable features like GFM, math, and more:
+Common examples:
 
 ```elixir
 extension: [
-  # GFM features
-  strikethrough: true,
   table: true,
-  autolink: true,
+  strikethrough: true,
   tasklist: true,
-  tagfilter: true,
-
-  # Math
-  math_dollars: true,
-  math_code: true,
-
-  # Advanced
-  superscript: true,
-  subscript: true,
+  autolink: true,
   footnotes: true,
-  description_lists: true,
-  wikilinks_title_after_pipe: true,
-
-  # Text styling
-  underline: true,
-  spoiler: true,
-  highlight: true,
-
-  # Other
-  header_ids: "prefix-",
-  front_matter_delimiter: "---",
-  alerts: true,
-  shortcodes: true,
-  phoenix_heex: true  # For HEEx support
+  math_dollars: true,
+  phoenix_heex: true
 ]
 ```
 
-### Parse Options
+### `parse:`
 
-Control parsing behavior:
+Use for parsing behavior tweaks.
 
 ```elixir
-parse: [
-  smart: true,                    # Smart punctuation
-  relaxed_tasklist_matching: true,
-  relaxed_autolinks: true,
-  default_info_string: "text"
-]
+parse: [smart: true, default_info_string: "text"]
 ```
 
-### Render Options
+### `render:`
 
-Control output generation:
+Use for output behavior.
 
 ```elixir
 render: [
-  unsafe: true,              # Allow raw HTML
-  escape: false,             # Escape special characters
-  github_pre_lang: true,     # Use lang attr on pre tag
-  full_info_string: true,    # Keep full info string
-  hardbreaks: true,          # Convert newlines to <br>
-  sourcepos: true,           # Add source positions
-  figure_with_caption: true  # Wrap images in figure
+  unsafe: true,
+  github_pre_lang: true,
+  full_info_string: true,
+  hardbreaks: true
 ]
 ```
 
-### Syntax Highlight Options
+### `syntax_highlight:`
+
+Use built-in lumis highlighting or disable it.
 
 ```elixir
-syntax_highlight: [
-  formatter: {:html_inline, theme: "onedark"}
-]
-# Or disable:
+syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+syntax_highlight: [formatter: {:html_linked, theme: "onedark"}]
 syntax_highlight: nil
 ```
 
-### Sanitize Options
+### `sanitize:`
+
+Use when allowing raw HTML but still needing safe output.
 
 ```elixir
-sanitize: [
-  tags: ["p", "a", "code"],           # Allowed tags
-  add_tags: ["custom-tag"],
-  rm_tags: ["script"],
-  tag_attributes: %{"a" => ["href"]},
-  url_schemes: ["http", "https"],
-  link_rel: "noopener noreferrer"
-]
+sanitize: MDEx.Document.default_sanitize_options()
 ```
 
-See [MDEx.Document typespecs](https://hexdocs.pm/mdex/MDEx.Document.html) for complete option documentation.
+### `codefence_renderers:`
 
-## Foundation Libraries
+Use when specific code fence info strings should render custom output.
 
-MDEx is built on top of these high-quality Rust libraries:
+```elixir
+MDEx.to_html!(markdown,
+  codefence_renderers: %{
+    "chart" => fn _lang, _meta, code -> SvgCharts.render!(code) end
+  }
+)
+```
 
-- **[comrak](https://crates.io/crates/comrak)** - Fast CommonMark parser (port of GitHub's cmark-gfm)
-  - [Documentation](https://docs.rs/comrak/latest/comrak/)
+## Safety Rules
 
-- **[ammonia](https://crates.io/crates/ammonia)** - HTML sanitization
-  - [Documentation](https://docs.rs/ammonia/latest/ammonia/)
+- Raw HTML is omitted by default.
+- Raw HTML requires `render: [unsafe: true]`.
+- Use `render: [escape: true]` if you want raw HTML rendered as escaped text.
+- If unsafe HTML is enabled for untrusted content, also set `sanitize:`.
+- Use `MDEx.safe_html/2` when you need to sanitize an HTML string directly.
 
-- **[lumis](https://crates.io/crates/lumis)** - Syntax highlighting powered by Tree-sitter and Neovim themes
-  - [Documentation](https://docs.rs/lumis/latest/lumis/)
-  - [Available Themes](https://docs.rs/lumis/latest/lumis/#themes-available)
+```elixir
+MDEx.to_html!(markdown,
+  render: [unsafe: true],
+  sanitize: MDEx.Document.default_sanitize_options()
+)
+```
 
-- **[lumis](https://hex.pm/packages/lumis)** - Elixir wrapper for lumis
-  - [Documentation](https://hexdocs.pm/lumis/Lumis.html)
+## AST and Traversal Patterns
 
-## Resources
+Use these when the agent needs structural changes rather than string replacement.
 
-### Official Documentation
+### Access and Enum protocols
 
-- **[Hex Package](https://hex.pm/packages/mdex)** - Package on Hex.pm
-- **[HexDocs](https://hexdocs.pm/mdex)** - Complete API documentation
-- **[GitHub Repository](https://github.com/leandrocp/mdex)** - Source code and issues
+`MDEx.Document` implements `Access`, `Enumerable`, and `Collectable`.
 
-### Guides
+```elixir
+doc = MDEx.parse_document!(markdown)
 
-- [Plugins](https://hexdocs.pm/mdex/plugins.html) - How to use and create plugins
-- [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators.html) - Customize code blocks
-- [Safety](https://hexdocs.pm/mdex/safety.html) - Security best practices
-- [Compilation](https://hexdocs.pm/mdex/compilation.html) - Build and compilation info
+headings = doc[MDEx.Heading]
+first_node = doc[0]
+texts = doc[:text]
+count = Enum.count(doc)
+```
 
-### Examples (Livebooks)
+### Tree traversal
 
-- [GitHub Flavored Markdown](https://hexdocs.pm/mdex/gfm.html) - GFM features demo
-- [Syntax Highlighting](https://hexdocs.pm/mdex/syntax_highlight.html) - Highlighting themes
-- [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-1.html) - Decorator examples
-- [Mermaid Diagrams](https://hexdocs.pm/mdex/mermaid.html) - Mermaid plugin demo
-- [Custom Themes](https://hexdocs.pm/mdex/custom_theme.html) - Custom syntax themes
-- [Liquid Templates](https://hexdocs.pm/mdex/liquid.html) - Liquid integration
-- [Highlight Words](https://hexdocs.pm/mdex/highlight_words.html) - Word highlighting
-- [Streaming Example](https://github.com/leandrocp/mdex/blob/main/examples/streaming.exs) - Real-time streaming
+Prefer structural transforms with `MDEx.traverse_and_update/2` or `MDEx.Document.update_nodes/3`.
 
-## Performance Tips
+```elixir
+doc =
+  MDEx.parse_document!(markdown)
+  |> MDEx.traverse_and_update(fn
+    %MDEx.Text{literal: text} = node -> %{node | literal: String.upcase(text)}
+    node -> node
+  end)
+```
 
-1. **Use ~MD sigil** for static content (compile-time parsing)
-2. **Use `use MDEx`** to set up modules correctly
-3. **Pass `:plugins` option** for one-off conversions instead of building pipelines
-4. **Minimize document rebuilds** when using the pipeline API
-5. **Cache rendered output** for frequently accessed content
-6. **Disable unused extensions** to reduce parsing overhead
-7. **Use `Enum.into/2`** for streaming instead of repeated `put_markdown/2`
-8. **Prefer `~MD[...]HEEX`** over `to_heex!/2` for static content
+### Wrapping inline nodes
 
-## Common Gotchas
+Inline nodes cannot be document roots. Wrap them first.
 
-1. **Info String Order** - Language must come first: `elixir theme=dark` (not `theme=dark elixir`)
+```elixir
+doc = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
+```
 
-2. **Streaming Requires Flag** - Set `streaming: true` explicitly when creating documents
+## Common Mistakes
 
-3. **Unsafe HTML** - Raw HTML requires `render: [unsafe: true]`
-   ```elixir
-   # Wrong: HTML is escaped by default
-   MDEx.to_html!("<div>Custom</div>")
-   #=> "&lt;div&gt;Custom&lt;/div&gt;"
+1. **Using `to_html!/2` for Phoenix components** - Use HEEx APIs instead.
+2. **Using runtime rendering for static literals** - Prefer the sigil.
+3. **Forgetting `use MDEx` or `require MDEx`** - Required for `~MD` and `to_heex!/2`.
+4. **Assuming HTML is allowed by default** - Raw HTML is omitted unless `unsafe: true` is set.
+5. **Forgetting required extensions** - Tables, strikethrough, math, footnotes, and similar syntax need explicit options unless a plugin enables them.
+6. **Treating `parse_fragment!/1` like a full document parser** - It is for one fragment node.
+7. **Expecting component imports to be automatic in HEEx** - Import or fully qualify them yourself.
+8. **Replacing streaming content with `put_markdown/2`** - It appends; create a new document if you want replacement.
+9. **Putting inline nodes at the root** - Wrap them in a block container.
+10. **Using plugins without attaching or passing them** - They do nothing until attached.
 
-   # Right: Enable unsafe mode
-   MDEx.to_html!("<div>Custom</div>", render: [unsafe: true])
-   #=> "<p><div>Custom</div></p>"
-   ```
+## Recommended Patterns
 
-4. **Phoenix Components** - Use `to_heex!/2` or `~MD[...]HEEX`, not `to_html!/2`
-   ```elixir
-   # Wrong: to_html! doesn't support components
-   MDEx.to_html!("<.link href=\"/\">Home</.link>")
+### Static site or fixed template content
 
-   # Right: Use HEEX
-   ~MD[<.link href="/">Home</.link>]HEEX
-   ```
+Use `use MDEx` plus `~MD[...]HTML`.
 
-5. **Code Decorators** - Need both `github_pre_lang: true` and `full_info_string: true`
+### LiveView content with components
 
-6. **Extension Conflicts** - Some extensions may interact unexpectedly, test combinations
-   - `underline: true` requires specific parse options
-   - Discord features (`greentext`, `multiline_block_quotes`) may conflict with standard Markdown
+Use `use MDEx` plus `~MD[...]HEEX`.
 
-7. **Fragment Nodes** - Not all nodes can be used as document root
-   ```elixir
-   # Wrong: Inline nodes like Text can't be document root
-   doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "Hello"}]}
+### User-generated Markdown from a database
 
-   # Right: Wrap inline nodes in a block container
-   doc = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
-   #=> Document with Paragraph containing Text
-   ```
+Use `MDEx.to_html!/2` and consider sanitization if raw HTML is enabled.
 
-8. **Streaming Position** - `put_markdown/2` replaces content, use `Enum.into/2` for accumulation
-   ```elixir
-   # Wrong for incremental updates
-   doc = MDEx.Document.put_markdown(doc, "chunk1")
-   doc = MDEx.Document.put_markdown(doc, "chunk2")  # Overwrites chunk1!
+### LLM chat output
 
-   # Right: Use Collectable protocol
-   doc = Enum.into(["chunk1"], doc)
-   doc = Enum.into(["chunk2"], doc)  # Accumulates
-   ```
+Use `MDEx.new(streaming: true)` and keep the document in state between chunks.
 
-9. **Assigns Scope** - For `~MD[...]HEEX`, the `assigns` variable must be in scope
-   ```elixir
-   # Wrong: assigns not defined
-   ~MD[Hello <%= @name %>]HEEX
+### Reusable Markdown processing pipeline
 
-   # Right: Define assigns first
-   assigns = %{name: "World"}
-   ~MD[Hello <%= @name %>]HEEX
-   ```
+Use `MDEx.new/1`, attach plugins, append steps, then render.
 
-10. **Plugin Application** - Plugins must be attached or passed via `:plugins` option
-    ```elixir
-    # Wrong: Plugin not applied
-    MDEx.new(markdown: md)
-    |> MDEx.to_html!()
+### Custom semantic transforms
 
-    # Right: Attach plugin or use :plugins option
-    MDEx.to_html!(md, plugins: [MDExGFM])
-    ```
+Parse to `MDEx.Document`, change nodes structurally, then render.
+
+## Plugin Ecosystem
+
+- `mdex_gfm` - GitHub Flavored Markdown helpers
+- `mdex_mermaid` - Mermaid diagrams in code blocks
+- `mdex_katex` - KaTeX math rendering
+- `mdex_video_embed` - privacy-respecting video embeds
+- `mdex_custom_heading_id` - custom heading IDs
+- `mdex_mermex` - server-side Mermaid rendering with Mermex
+
+## Reference Links
+
+- HexDocs: https://hexdocs.pm/mdex
+- `MDEx.Document`: https://hexdocs.pm/mdex/MDEx.Document.html
+- `MDEx.Sigil`: https://hexdocs.pm/mdex/MDEx.Sigil.html
+- Plugins guide: https://hexdocs.pm/mdex/plugins.html
+- HEEx guide: https://hexdocs.pm/mdex/heex.html
+- Streaming guide: https://hexdocs.pm/mdex/streaming.html
+- Safety guide: https://hexdocs.pm/mdex/safety.html
+- Code block decorators guide: https://hexdocs.pm/mdex/code_block_decorators.html
