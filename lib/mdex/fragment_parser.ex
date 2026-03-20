@@ -115,44 +115,50 @@ defmodule MDEx.FragmentParser do
          nil <- maybe_complete_table(core, trailing),
          nil <- maybe_complete_math(core, trailing) do
       line = last_line(core)
-      opening_append = opening_completion_append(core)
 
-      cond do
-        skip_completion?(core, line) ->
-          {core, :none}
-
-        unmatched_backtick?(core) ->
-          if prefix_has_open_backtick?(prefix) and String.ends_with?(core, "`") do
-            {prefix <> core, :none}
-          else
-            {core <> "`", :backtick_appended}
-          end
-
-        opening_append != "" ->
-          {core <> opening_append, :none}
-
-        closer = closing_token(core) ->
-          if prefix != "" and prefix == closer do
-            {prefix <> core, :none}
-          else
+      {completed, flag} =
+        cond do
+          skip_completion?(core, line) ->
             {core, :none}
-          end
 
-        list_marker_line?(line) ->
-          {complete_list_line(core, line), :none}
+          unmatched_backtick?(core) ->
+            if prefix_has_open_backtick?(prefix) and String.ends_with?(core, "`") do
+              {prefix <> core, :none}
+            else
+              {core <> "`", :backtick_appended}
+            end
 
-        true ->
-          case incomplete_link_completion(core) do
-            nil ->
-              case unmatched_suffix(line) do
-                suffix when suffix != "" -> {core <> suffix, :none}
-                _ -> {core, :none}
-              end
+          true ->
+            # Compute unmatched_suffix once and reuse for both opening_append and fallback
+            line_suffix = unmatched_suffix(line)
+            opening_append = opening_completion_append(core, line_suffix)
 
-            completion ->
-              {completion, :none}
-          end
-      end
+            cond do
+              opening_append != "" ->
+                {core <> opening_append, :none}
+
+              closer = closing_token(core) ->
+                if prefix != "" and prefix == closer do
+                  {prefix <> core, :none}
+                else
+                  {core, :none}
+                end
+
+              list_marker_line?(line) ->
+                {complete_list_line(core, line), :none}
+
+              true ->
+                case incomplete_link_completion(core) do
+                  nil ->
+                    if line_suffix != "", do: {core <> line_suffix, :none}, else: {core, :none}
+
+                  completion ->
+                    {completion, :none}
+                end
+            end
+        end
+
+      {strip_incomplete_html(completed), flag}
     end
   end
 
@@ -287,10 +293,9 @@ defmodule MDEx.FragmentParser do
   defp only_spaces?(_), do: false
 
   defp consume_trailing_for_fence(trailing) do
-    if String.starts_with?(trailing, "\n") do
-      {"\n", drop_prefix(trailing, "\n")}
-    else
-      {"", trailing}
+    case trailing do
+      <<?\n, rest::binary>> -> {"\n", rest}
+      _ -> {"", trailing}
     end
   end
 
@@ -334,22 +339,19 @@ defmodule MDEx.FragmentParser do
 
   defp trim_trailing_line(markdown, closing_line) do
     newline_closing = "\n" <> closing_line
+    nc_size = byte_size(newline_closing)
+    nc_nl_size = nc_size + 1
 
     cond do
       String.ends_with?(markdown, newline_closing <> "\n") ->
-        drop_suffix(markdown, byte_size(newline_closing <> "\n"))
+        binary_part(markdown, 0, byte_size(markdown) - nc_nl_size)
 
       String.ends_with?(markdown, newline_closing) ->
-        drop_suffix(markdown, byte_size(newline_closing))
+        binary_part(markdown, 0, byte_size(markdown) - nc_size)
 
       true ->
         markdown
     end
-  end
-
-  defp drop_suffix(markdown, size_to_drop) do
-    length = byte_size(markdown)
-    binary_part(markdown, 0, length - size_to_drop)
   end
 
   defp whitespace_char?(char), do: char in @ws_chars
@@ -409,17 +411,19 @@ defmodule MDEx.FragmentParser do
   defp final_space_run(<<_char, rest::binary>>, count), do: final_space_run(rest, count)
 
   defp maybe_complete_table(core, trailing) do
-    if String.starts_with?(trailing, "\n") do
-      line = last_line(core)
+    case trailing do
+      <<?\n, _::binary>> ->
+        line = last_line(core)
 
-      if table_header_line?(line) do
-        separator = generate_table_separator(line)
-        {core <> "\n" <> separator, {:consume_trailing, "\n"}}
-      else
+        if table_header_line?(line) do
+          separator = generate_table_separator(line)
+          {core <> "\n" <> separator, {:consume_trailing, "\n"}}
+        else
+          nil
+        end
+
+      _ ->
         nil
-      end
-    else
-      nil
     end
   end
 
@@ -453,10 +457,19 @@ defmodule MDEx.FragmentParser do
   defp maybe_complete_math(core, trailing) do
     cond do
       has_unclosed_delimiter?(core, "$$") ->
-        if String.starts_with?(trailing, "\n") do
-          {core <> "\n$$", {:consume_trailing, "\n"}}
-        else
-          {core <> "$$", :none}
+        suffix =
+          if String.ends_with?(core, "$") and not String.ends_with?(core, "$$") do
+            "$"
+          else
+            "$$"
+          end
+
+        case trailing do
+          <<?\n, _::binary>> ->
+            {core <> "\n" <> suffix, {:consume_trailing, "\n"}}
+
+          _ ->
+            {core <> suffix, :none}
         end
 
       has_unclosed_delimiter?(core, "$") ->
@@ -512,18 +525,86 @@ defmodule MDEx.FragmentParser do
   end
 
   defp unmatched_suffix(text) do
-    Enum.find_value([{"*", "**"}, {"_", "__"}, {"~", "~~"}, {"+", "++"}, {"=", "=="}], "", fn {single, double} ->
-      case unmatched_emph_suffix(text, single, double) do
-        suffix when suffix != "" -> suffix
-        _ -> nil
-      end
-    end)
+    # Collect all unmatched suffixes with the position of their last opening delimiter,
+    # then sort by position descending so innermost (latest) closes first.
+    do_unmatched_suffix(text, [{"*", "**"}, {"_", "__"}, {"~", "~~"}, {"+", "++"}, {"=", "=="}], [])
   end
 
-  defp opening_completion_append(core) do
+  defp do_unmatched_suffix(_text, [], []), do: ""
+  defp do_unmatched_suffix(_text, [], [{_pos, suffix}]), do: suffix
+
+  defp do_unmatched_suffix(_text, [], acc) do
+    acc
+    |> Enum.sort_by(fn {pos, _} -> pos end, :desc)
+    |> Enum.map_join("", fn {_, suffix} -> suffix end)
+  end
+
+  defp do_unmatched_suffix(text, [{single, double} | rest], acc) do
+    case unmatched_emph_suffix(text, single, double) do
+      suffix when suffix != "" ->
+        pos = last_unmatched_opening_pos(text, single, double)
+        do_unmatched_suffix(text, rest, [{pos, suffix} | acc])
+
+      _ ->
+        do_unmatched_suffix(text, rest, acc)
+    end
+  end
+
+  @double_only_delimiters ["+", "="]
+  @double_only_delimiters_set MapSet.new(@double_only_delimiters)
+
+  defp last_unmatched_opening_pos(text, single, double) do
+    if MapSet.member?(@double_only_delimiters_set, single) do
+      last_match_pos(text, double)
+    else
+      # Find all single-char positions that aren't part of doubles
+      single_byte = :binary.first(single)
+      double_positions = binary_match_positions(text, double)
+      all_single = binary_match_positions(text, <<single_byte>>)
+
+      # Filter out positions that are part of double delimiters
+      standalone = reject_double_occupied(all_single, double_positions)
+
+      case standalone do
+        [] -> last_match_pos(text, double)
+        positions -> List.last(positions)
+      end
+    end
+  end
+
+  # Reject single positions that overlap with any double delimiter position
+  defp reject_double_occupied(singles, []), do: singles
+
+  defp reject_double_occupied(singles, doubles) do
+    occupied =
+      Enum.reduce(doubles, MapSet.new(), fn pos, acc ->
+        acc |> MapSet.put(pos) |> MapSet.put(pos + 1)
+      end)
+
+    Enum.reject(singles, &MapSet.member?(occupied, &1))
+  end
+
+  defp last_match_pos(text, token) do
+    case :binary.matches(text, token) do
+      [] -> 0
+      matches -> elem(List.last(matches), 0)
+    end
+  end
+
+  defp binary_match_positions(text, token) do
+    case :binary.matches(text, token) do
+      [] -> []
+      matches -> Enum.map(matches, fn {pos, _} -> pos end)
+    end
+  end
+
+  defp opening_completion_append(core, line_suffix) do
     with token when token != nil <- opening_token(core),
          append when append != "" <- missing_trailing_for(core, token),
-         true <- rem(count_occurrences(core, token), 2) == 1 do
+         true <- rem(count_occurrences(core, token), 2) == 1,
+         # Don't use opening_append if there are other unclosed delimiters
+         # that need to close first (nesting order matters)
+         false <- line_suffix != "" and line_suffix != append do
       append
     else
       _ -> ""
@@ -539,24 +620,29 @@ defmodule MDEx.FragmentParser do
   end
 
   defp missing_trailing_for(bin, token) do
-    with char when char != nil <- String.first(token),
-         needed = div(String.length(token), String.length(char)),
-         present = trailing_run_len(bin, char),
-         true <- present < needed do
-      String.duplicate(char, needed - present)
+    token_byte = :binary.first(token)
+    needed = byte_size(token)
+    present = trailing_byte_run(bin, token_byte)
+
+    if present < needed do
+      String.duplicate(<<token_byte>>, needed - present)
     else
-      _ -> ""
+      ""
     end
   end
 
-  defp trailing_run_len(bin, char) do
-    char_len = String.length(char)
+  # Count how many consecutive occurrences of `byte` are at the end of `bin`
+  defp trailing_byte_run(bin, byte) do
+    trailing_byte_run(bin, byte, byte_size(bin) - 1, 0)
+  end
 
-    if char_len == 0 do
-      0
+  defp trailing_byte_run(_bin, _byte, index, count) when index < 0, do: count
+
+  defp trailing_byte_run(bin, byte, index, count) do
+    if :binary.at(bin, index) == byte do
+      trailing_byte_run(bin, byte, index - 1, count + 1)
     else
-      consumed = String.length(bin) - String.length(String.trim_trailing(bin, char))
-      div(consumed, char_len)
+      count
     end
   end
 
@@ -564,8 +650,6 @@ defmodule MDEx.FragmentParser do
 
   defp prefix_has_open_backtick?(""), do: false
   defp prefix_has_open_backtick?(prefix), do: unmatched_backtick?(prefix)
-
-  @double_only_delimiters ["+", "="]
 
   defp unmatched_emph_suffix(core, single, double) do
     double_count = count_occurrences(core, double)
@@ -576,7 +660,7 @@ defmodule MDEx.FragmentParser do
 
       if rem(flanking, 2) == 1, do: double, else: ""
     else
-      single_code = single |> String.to_charlist() |> List.first()
+      single_code = :binary.first(single)
       total = count_emphasis_char(core, single_code)
       unmatched_single = rem(max(total - double_count * 2, 0), 2)
 
@@ -630,19 +714,54 @@ defmodule MDEx.FragmentParser do
     not (char in ?0..?9 or char in ?A..?Z or char in ?a..?z)
   end
 
+  defp count_emphasis_char(bin, ?*), do: count_emphasis_asterisk(bin)
   defp count_emphasis_char(bin, ?_), do: count_emphasis_underscore(bin)
   defp count_emphasis_char(bin, char), do: count_char(bin, char)
 
   defp count_char(bin, char) when is_integer(char) do
-    bin |> :binary.matches(<<char>>) |> count_matches()
+    count_token_matches(bin, <<char>>, 0)
   end
 
   defp count_occurrences(bin, token) do
-    bin |> :binary.matches(token) |> count_matches()
+    count_token_matches(bin, token, 0)
   end
 
-  defp count_matches(:nomatch), do: 0
-  defp count_matches(matches), do: length(matches)
+  defp count_token_matches(bin, token, acc) do
+    case :binary.match(bin, token) do
+      :nomatch ->
+        acc
+
+      {pos, len} ->
+        next = pos + len
+        rest = binary_part(bin, next, byte_size(bin) - next)
+        count_token_matches(rest, token, acc + 1)
+    end
+  end
+
+  defp count_emphasis_asterisk(bin) do
+    count_emphasis_asterisk(bin, :boundary, 0)
+  end
+
+  defp count_emphasis_asterisk(<<>>, _prev_type, acc), do: acc
+
+  defp count_emphasis_asterisk(<<char, rest::binary>>, prev_type, acc) do
+    cond do
+      char == ?* ->
+        next_type = next_char_type_ws(rest)
+        new_acc = if prev_type == :space and next_type == :space, do: acc, else: acc + 1
+        count_emphasis_asterisk(rest, :asterisk, new_acc)
+
+      char in @ws_chars ->
+        count_emphasis_asterisk(rest, :space, acc)
+
+      true ->
+        count_emphasis_asterisk(rest, :non_space, acc)
+    end
+  end
+
+  defp next_char_type_ws(<<>>), do: :boundary
+  defp next_char_type_ws(<<char, _rest::binary>>) when char in [9, 10, 11, 12, 13, 32], do: :space
+  defp next_char_type_ws(_), do: :non_space
 
   defp count_emphasis_underscore(bin) do
     count_emphasis_underscore(bin, :boundary, 0)
@@ -670,6 +789,54 @@ defmodule MDEx.FragmentParser do
   defp char_type(char) when char in ?A..?Z, do: :word
   defp char_type(char) when char in ?a..?z, do: :word
   defp char_type(_char), do: :boundary
+
+  defp strip_incomplete_html(text) do
+    case last_byte_pos(text, ?<) do
+      nil ->
+        text
+
+      pos ->
+        after_lt_size = byte_size(text) - pos
+
+        if :binary.match(text, ">", [{:scope, {pos, after_lt_size}}]) != :nomatch do
+          text
+        else
+          after_lt = binary_part(text, pos, after_lt_size)
+
+          cond do
+            tag_start?(after_lt) ->
+              if inside_inline_code?(text, pos) do
+                text
+              else
+                String.trim_trailing(binary_part(text, 0, pos))
+              end
+
+            true ->
+              text
+          end
+        end
+    end
+  end
+
+  defp last_byte_pos(text, byte), do: last_byte_pos(text, byte, byte_size(text) - 1)
+
+  defp last_byte_pos(_text, _byte, index) when index < 0, do: nil
+
+  defp last_byte_pos(text, byte, index) do
+    if :binary.at(text, index) == byte do
+      index
+    else
+      last_byte_pos(text, byte, index - 1)
+    end
+  end
+
+  defp tag_start?(<<"<", char, _rest::binary>>) when char in ?a..?z or char in ?A..?Z or char == ?/, do: true
+  defp tag_start?(_), do: false
+
+  defp inside_inline_code?(text, pos) do
+    prefix = binary_part(text, 0, pos)
+    rem(count_char(prefix, ?`), 2) == 1
+  end
 
   defp incomplete_link_completion(core) do
     cond do
@@ -727,8 +894,14 @@ defmodule MDEx.FragmentParser do
   end
 
   defp incomplete_link_brackets?(core) do
-    count_occurrences(core, "[") > count_occurrences(core, "]")
+    has_unclosed_bracket?(core, 0)
   end
+
+  defp has_unclosed_bracket?(<<>>, depth), do: depth > 0
+  defp has_unclosed_bracket?(<<?\[, rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth + 1)
+  defp has_unclosed_bracket?(<<?\], rest::binary>>, 0), do: has_unclosed_bracket?(rest, 0)
+  defp has_unclosed_bracket?(<<?\], rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth - 1)
+  defp has_unclosed_bracket?(<<_, rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth)
 
   defp incomplete_link_destination?(core) do
     case trailing_link_label(core) do
@@ -740,23 +913,19 @@ defmodule MDEx.FragmentParser do
   defp fence_candidate?(""), do: false
 
   defp fence_candidate?(bin) do
-    not String.contains?(bin, "\n") and Enum.any?(@fence_chars, &(leading_run_len(bin, &1) >= 3))
+    not String.contains?(bin, "\n") and has_fence_start?(bin)
   end
 
   defp fence_line_start?(line) do
-    Enum.any?(@fence_chars, &(leading_run_len(line, &1) >= 3))
+    has_fence_start?(line)
   end
 
-  defp leading_run_len("", _char), do: 0
-
-  defp leading_run_len(bin, char) do
-    char_len = String.length(char)
-
-    if char_len == 0 do
-      0
-    else
-      consumed = String.length(bin) - String.length(String.trim_leading(bin, char))
-      div(consumed, char_len)
+  # Check if a line starts with >= 3 consecutive fence chars
+  defp has_fence_start?(bin) do
+    case bin do
+      <<"```", _::binary>> -> true
+      <<"~~~", _::binary>> -> true
+      _ -> false
     end
   end
 

@@ -76,7 +76,7 @@ defmodule MDEx.FragmentParserTest do
   end
 
   test "mixed emphasis with strikethrough ~~strike *bold" do
-    assert complete("~~strike *bold") == "~~strike *bold~~"
+    assert complete("~~strike *bold") == "~~strike *bold*~~"
   end
 
   test "incomplete emphasis in list items" do
@@ -301,5 +301,122 @@ defmodule MDEx.FragmentParserTest do
 
   test "display math $$x$$ is complete" do
     assert complete("$$x$$") == "$$x$$"
+  end
+
+  describe "space-flanked asterisk (not emphasis)" do
+    test "5 * 0 = ? stays unchanged" do
+      assert complete("5 * 0 = ?") == "5 * 0 = ?"
+    end
+
+    test "2 * 3 * 4 stays unchanged" do
+      assert complete("2 * 3 * 4") == "2 * 3 * 4"
+    end
+
+    test "*italic text gets closed" do
+      assert complete("*italic text") == "*italic text*"
+    end
+
+    test "a *word gets closed" do
+      assert complete("a *word") == "a *word*"
+    end
+  end
+
+  describe "half-complete $$ math close" do
+    test "$$x^2 + y^2$ gets single $ appended" do
+      assert complete("$$x^2 + y^2$") == "$$x^2 + y^2$$"
+    end
+
+    test "$$formula gets full $$ appended" do
+      assert complete("$$formula") == "$$formula$$"
+    end
+
+    test "$$formula$$ stays unchanged" do
+      assert complete("$$formula$$") == "$$formula$$"
+    end
+  end
+
+  describe "incomplete HTML tag stripping" do
+    test "Hello <div is stripped" do
+      assert complete("Hello <div") == "Hello"
+    end
+
+    test "text <custom class=\"foo is stripped" do
+      assert complete("text <custom class=\"foo") == "text"
+    end
+
+    test "<br> hello is unchanged (complete tag)" do
+      assert complete("<br> hello") == "<br> hello"
+    end
+
+    test "inline code with < is not stripped" do
+      assert complete("`<div`") == "`<div`"
+    end
+  end
+
+  describe "nested bracket depth in links" do
+    test "[outer [inner] text has one unclosed bracket" do
+      result = complete("[outer [inner] text")
+      assert String.contains?(result, "](")
+    end
+
+    test "[a] [b] trailing label gets destination placeholder" do
+      assert complete("[a] [b]") == "[a] [b](mdex:incomplete-link)"
+    end
+  end
+
+  describe "edge cases for coverage" do
+    test "empty string" do
+      assert complete("") == ""
+    end
+
+    test "whitespace only" do
+      assert complete("   ") == ""
+    end
+
+    test "less-than not a tag start" do
+      assert complete("5 < 10") == "5 < 10"
+    end
+
+    test "less-than followed by digit" do
+      assert complete("value <3") == "value <3"
+    end
+
+    test "only incomplete tag" do
+      assert complete("<span") == ""
+    end
+
+    test "list marker with no content" do
+      assert complete("- ") == "- "
+    end
+
+    test "fenced code with partial closing and content" do
+      assert complete("````\ncode\n``x") == "````\ncode\n``x\n````"
+    end
+
+    test "single pipe table does not generate separator" do
+      assert complete("| only\n") == "| only\n"
+    end
+
+    test "incomplete link destination with trailing label" do
+      assert complete("text [label]") == "text [label](mdex:incomplete-link)"
+    end
+
+    test "tilde fence" do
+      assert complete("~~~\ncode") == "~~~\ncode\n~~~"
+    end
+
+    test "display math with trailing newline and half close" do
+      assert complete("$$formula$\n") == "$$formula$\n$"
+    end
+  end
+
+  describe "proper nesting order for multiple unclosed markers" do
+    test "**bold _under closes inner first" do
+      assert complete("**bold _under") == "**bold _under_**"
+    end
+
+    test "*em **strong closes inner first" do
+      assert complete("*em **strong") == "*em **strong***"
+    end
   end
 end
