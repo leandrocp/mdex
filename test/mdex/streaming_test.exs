@@ -1117,6 +1117,56 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks)
   end
 
+  describe "space-flanked asterisk (not emphasis)" do
+    test "arithmetic expression with * stays unchanged" do
+      chunks = ["5 * 0 = ?"]
+
+      assert [
+               %Paragraph{nodes: [%Text{literal: "5 * 0 = ?"}]}
+             ] = nodes(chunks)
+    end
+
+    test "multiple space-flanked * stays unchanged" do
+      chunks = ["2 * 3 ", "* 4"]
+
+      assert [
+               %Paragraph{nodes: [%Text{literal: "2 * 3 * 4"}]}
+             ] = nodes(chunks)
+    end
+  end
+
+  describe "incomplete HTML tag stripping" do
+    test "incomplete tag at end is stripped" do
+      chunks = ["Hello <div"]
+
+      assert [
+               %Paragraph{nodes: [%Text{literal: "Hello"}]}
+             ] = nodes(chunks)
+    end
+
+    test "complete tag is preserved" do
+      chunks = ["<br> hello"]
+
+      assert [
+               %Paragraph{nodes: [%MDEx.HtmlInline{literal: "<br>"}, %Text{literal: " hello"}]}
+             ] = nodes(chunks)
+    end
+  end
+
+  describe "proper nesting order for multiple unclosed markers" do
+    test "**bold _under closes inner first" do
+      chunks = ["**bold _under"]
+
+      assert [
+               %Paragraph{
+                 nodes: [
+                   %Strong{nodes: [%Text{literal: "bold "}, %Emph{nodes: [%Text{literal: "under"}]}]}
+                 ]
+               }
+             ] = nodes(chunks)
+    end
+  end
+
   describe "multi-flush streaming (run between chunks)" do
     # These tests exercise the fragment_state persistence across
     # multiple run() calls, unlike the nodes() helper which buffers
