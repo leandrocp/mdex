@@ -1,10 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.11.7 - 2026-03-20
 
 ### Changed
+- [Streaming] Improve performance
 - [Docs] Add mdex_mermex plugin
 - [Docs] Update `usage-rules.md`
+- [Docs] Add Streaming guide
+
+### Fixed
+- [Streaming] Handle more edge cases
 
 ## 0.11.6 - 2026-02-24
 
