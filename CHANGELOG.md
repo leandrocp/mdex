@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Automate releases with release-please and Hex publishing from release tags
+
 ## 0.11.7 - 2026-03-20
 
 ### Changed

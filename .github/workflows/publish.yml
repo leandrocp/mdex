@@ -1,0 +1,45 @@
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  MDEX_BUILD: "1"
+
+jobs:
+  nif-release:
+    uses: leandrocp/github-actions/.github/workflows/nif-release.yml@main
+    with:
+      project-name: comrak_nif
+      project-dir: native/comrak_nif
+
+  hex-publish:
+    name: Publish to Hex
+    needs: nif-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          elixir-version: "1.19"
+
+      - name: Fetch dependencies
+        run: mix deps.get
+
+      - name: Generate checksums
+        run: mix rustler_precompiled.download MDEx.Native --all --print
+
+      - name: Publish to Hex
+        run: mix hex.publish --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
