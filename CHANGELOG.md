@@ -3,10 +3,7 @@
 ## Unreleased
 
 ### Added
-- Automate releases with release-please and Hex publishing from release tags.
-
-### Changed
-- Generate NIF checksums during tagged releases before publishing to Hex.
+- Automate releases with release-please and Hex publishing from release tags
 
 ## 0.11.7 - 2026-03-20
 
