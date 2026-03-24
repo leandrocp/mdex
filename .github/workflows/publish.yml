@@ -5,6 +5,9 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+env:
+  MDEX_BUILD: "1"
+
 jobs:
   nif-release:
     uses: leandrocp/github-actions/.github/workflows/nif-release.yml@main
@@ -32,16 +35,11 @@ jobs:
 
       - name: Fetch dependencies
         run: mix deps.get
-        env:
-          MDEX_BUILD: "1"
 
       - name: Generate checksums
         run: mix rustler_precompiled.download MDEx.Native --all --print
-        env:
-          MDEX_BUILD: "1"
 
       - name: Publish to Hex
         run: mix hex.publish --yes
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-          MDEX_BUILD: "1"
