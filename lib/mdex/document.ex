@@ -4,15 +4,14 @@ defmodule MDEx.Sourcepos do
   @moduledoc """
   Source position information for AST nodes.
 
-  Contains the start and end positions as `{line, column}` tuples.
-
-  Note that these values reflect the original source positions from parsing
-  and are not automatically updated when the AST is modified programmatically.
+  Contains the start and end positions as `{line, column}` tuples,
+  both 1-based. These values reflect the original source positions
+  from parsing and are not updated when the AST is modified programmatically.
 
   See https://docs.rs/comrak/latest/comrak/nodes/struct.Sourcepos.html
   """
 
-  @type t :: %__MODULE__{start: {non_neg_integer(), non_neg_integer()}, end: {non_neg_integer(), non_neg_integer()}}
+  @type t :: %__MODULE__{start: {pos_integer(), pos_integer()}, end: {pos_integer(), pos_integer()}}
   defstruct start: {0, 0}, end: {0, 0}
 end
 
@@ -3479,6 +3478,12 @@ defimpl String.Chars,
   end
 end
 
+defimpl String.Chars, for: MDEx.Sourcepos do
+  def to_string(%MDEx.Sourcepos{start: {sl, sc}, end: {el, ec}}) do
+    "#{sl}:#{sc}-#{el}:#{ec}"
+  end
+end
+
 defimpl Jason.Encoder, for: MDEx.Sourcepos do
   def encode(%MDEx.Sourcepos{start: {sl, sc}, end: {el, ec}}, opts) do
     Jason.Encode.map(%{"start" => [sl, sc], "end" => [el, ec]}, opts)
@@ -3639,11 +3644,14 @@ defimpl Inspect, for: MDEx.Document do
       node
       |> Map.from_struct()
       |> Map.delete(:nodes)
-      |> Enum.map(fn {k, v} -> "#{k}: #{inspect(v)}" end)
+      |> Enum.map(fn {k, v} -> "#{k}: #{format_value(v)}" end)
 
     case attrs do
       [] -> "[#{module_name}]"
       attrs -> "[#{module_name}] #{Enum.join(attrs, ", ")}"
     end
   end
+
+  defp format_value(%MDEx.Sourcepos{} = sourcepos), do: to_string(sourcepos)
+  defp format_value(v), do: inspect(v)
 end
