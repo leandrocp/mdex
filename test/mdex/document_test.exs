@@ -53,22 +53,54 @@ defmodule MDEx.DocumentTest do
     end
 
     test "get_in" do
-      assert get_in(@document, [:document, Access.all(), :code]) == [
-               [%MDEx.Code{literal: "elixir", num_backticks: 1}, %MDEx.Code{literal: "rust", num_backticks: 1}]
-             ]
+      assert get_in(@document, [:document, Access.all(), :code]) ==
+               [
+                 [
+                   %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+                   %MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}
+                 ]
+               ]
 
-      assert get_in(@document, [:document, Access.all(), %MDEx.Text{literal: "more"}]) == [[%MDEx.Text{literal: "more"}]]
+      assert get_in(@document, [:document, Access.all(), %MDEx.Text{literal: "more"}]) ==
+               [[%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}]]
     end
 
     test "update_in" do
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1}]},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                   level: 1,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                 }
                ]
              } =
                update_in(@document, [:code, Access.key!(:literal)], fn literal ->
@@ -79,12 +111,39 @@ defmodule MDEx.DocumentTest do
     test "update_in all nested" do
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "RUST"}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                   level: 1,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{num_backticks: 1, literal: "RUST", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                 }
                ]
              } =
                update_in(@document, [:document, Access.key!(:nodes), Access.all(), :code, Access.key!(:literal)], fn literal ->
@@ -93,39 +152,72 @@ defmodule MDEx.DocumentTest do
     end
 
     test "fetch by struct" do
-      assert @document[%MDEx.Text{literal: "more"}] == [%MDEx.Text{literal: "more"}]
+      assert @document[%MDEx.Text{literal: "more"}] == [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}]
     end
 
     test "fetch by module" do
-      assert @document[MDEx.Code] == [%MDEx.Code{num_backticks: 1, literal: "elixir"}, %MDEx.Code{num_backticks: 1, literal: "rust"}]
+      assert @document[MDEx.Code] == [
+               %MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+               %MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}
+             ]
     end
 
     test "fetch by atom shortcut" do
-      assert @document[:code] == [%MDEx.Code{num_backticks: 1, literal: "elixir"}, %MDEx.Code{num_backticks: 1, literal: "rust"}]
+      assert @document[:code] == [
+               %MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+               %MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}
+             ]
     end
 
     test "fetch by function" do
       assert @document[&Map.has_key?(&1, :literal)] == [
-               %MDEx.Text{literal: "Languages"},
-               %MDEx.Text{literal: "Elixir"},
-               %MDEx.Code{literal: "elixir", num_backticks: 1},
-               %MDEx.Text{literal: "Rust"},
-               %MDEx.Code{literal: "rust", num_backticks: 1},
-               %MDEx.Text{literal: "more"}
+               %MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}},
+               %MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}},
+               %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+               %MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}},
+               %MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}},
+               %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
              ]
     end
 
     test "get and update by struct key" do
       assert {
-               %MDEx.Text{literal: "more"},
+               %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "MORE", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } =
@@ -134,15 +226,42 @@ defmodule MDEx.DocumentTest do
                end)
 
       assert {
-               %MDEx.Code{literal: "rust", num_backticks: 1},
+               %MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "RUST", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "RUST", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } =
@@ -152,30 +271,84 @@ defmodule MDEx.DocumentTest do
     end
 
     test "get and update by module key" do
-      assert {%MDEx.Text{literal: "Languages"},
+      assert {%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}},
               %MDEx.Document{
                 nodes: [
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "LANGUAGES"}], level: 1, setext: false},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "LANGUAGES", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                  }
                 ]
               }} =
                MDEx.Document.get_and_update(@document, MDEx.Text, fn node ->
                  {node, %{node | literal: String.upcase(node.literal)}}
                end)
 
-      assert {%MDEx.Code{num_backticks: 1, literal: "elixir"},
+      assert {%MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
               %MDEx.Document{
                 nodes: [
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR"}]},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{num_backticks: 1, literal: "ELIXIR", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                  }
                 ]
               }} =
                MDEx.Document.get_and_update(@document, MDEx.Code, fn node ->
@@ -185,15 +358,42 @@ defmodule MDEx.DocumentTest do
 
     test "get and update by atom key" do
       assert {
-               %MDEx.Code{literal: "elixir", num_backticks: 1},
+               %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1}]},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "ELIXIR", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } =
@@ -203,15 +403,42 @@ defmodule MDEx.DocumentTest do
     end
 
     test "get and update by function key" do
-      assert {%MDEx.Text{literal: "more"},
+      assert {%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}},
               %MDEx.Document{
                 nodes: [
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MORE"}]}
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                    level: 2,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "MORE", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                  }
                 ]
               }} =
                MDEx.Document.get_and_update(@document, &(Map.get(&1, :literal) == "more"), fn node ->
@@ -224,26 +451,77 @@ defmodule MDEx.DocumentTest do
                :default,
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } = MDEx.Document.pop(@document, %MDEx.List{}, :default)
 
       assert {
-               %MDEx.Text{literal: "more"},
+               %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: []}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{nodes: [], sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
                  ]
                }
              } = MDEx.Document.pop(@document, %MDEx.Text{literal: "more"})
@@ -251,15 +529,39 @@ defmodule MDEx.DocumentTest do
 
     test "pop by module key" do
       assert {
-               %MDEx.Code{literal: "elixir", num_backticks: 1},
+               %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: []},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{nodes: [], sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } = MDEx.Document.pop(@document, MDEx.Code)
@@ -267,15 +569,39 @@ defmodule MDEx.DocumentTest do
 
     test "pop by atom key" do
       assert {
-               %MDEx.Code{literal: "elixir", num_backticks: 1},
+               %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
                %MDEx.Document{
                  nodes: [
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: []},
-                   %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                   %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                   %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                     level: 1,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   },
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                   },
+                   %MDEx.Paragraph{nodes: [], sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+                   %MDEx.Heading{
+                     nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                     level: 2,
+                     setext: false,
+                     closed: false,
+                     sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Code{literal: "rust", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                   },
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                   }
                  ]
                }
              } = MDEx.Document.pop(@document, :code)
@@ -293,7 +619,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "pop by integer index" do
-      assert MDEx.Document.pop(@document, 2) == {%MDEx.Text{literal: "Languages"}, @document}
+      assert MDEx.Document.pop(@document, 2) == {%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}, @document}
       assert MDEx.Document.pop(@document, 100) == {nil, @document}
       assert MDEx.Document.pop(@document, 100, :default) == {:default, @document}
     end
@@ -323,7 +649,7 @@ defmodule MDEx.DocumentTest do
     test "get_and_update by integer index" do
       assert MDEx.Document.get_and_update(@document, 2, fn node ->
                {node, %{node | literal: String.upcase(node.literal)}}
-             end) == {%MDEx.Text{literal: "Languages"}, @document}
+             end) == {%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}, @document}
 
       assert MDEx.Document.get_and_update(@document, 100, fn node ->
                {node, node}
@@ -331,25 +657,23 @@ defmodule MDEx.DocumentTest do
     end
 
     test "fetch by integer index" do
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "elixir", num_backticks: 1}]},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rust", num_backticks: 1}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-               ]
-             } = @document[0]
+      assert @document[0] == @document
 
-      assert %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false} = @document[1]
-      assert %MDEx.Text{literal: "Languages"} = @document[2]
-      assert %MDEx.Text{literal: "more"} = @document[12]
+      assert @document[1] == %MDEx.Heading{
+               nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+               level: 1,
+               setext: false,
+               closed: false,
+               sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+             }
+
+      assert @document[2] == %MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}
+      assert @document[12] == %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
     end
 
     test "fetch by integer index out of bounds" do
       assert @document[100] == nil
-      assert @document[-1] == %MDEx.Text{literal: "more"}
+      assert @document[-1] == %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
       assert @document[-100] == nil
     end
 
@@ -359,7 +683,7 @@ defmodule MDEx.DocumentTest do
         _ -> false
       end
 
-      assert @document[complex_selector] == [%MDEx.Code{num_backticks: 1, literal: "elixir"}]
+      assert @document[complex_selector] == [%MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}]
 
       never_match = fn _ -> false end
       assert @document[never_match] == nil
@@ -369,7 +693,7 @@ defmodule MDEx.DocumentTest do
         _ -> false
       end
 
-      assert @document[guarded_selector] == [%MDEx.Code{num_backticks: 1, literal: "rust"}]
+      assert @document[guarded_selector] == [%MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}]
     end
 
     test "access nested document operations" do
@@ -400,12 +724,39 @@ defmodule MDEx.DocumentTest do
     test "modify existing nodes" do
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "ex", num_backticks: 1}]},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{literal: "rs", num_backticks: 1}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                   level: 1,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{literal: "ex", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{literal: "rs", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                 }
                ]
              } =
                MDEx.traverse_and_update(@document, fn
@@ -423,8 +774,14 @@ defmodule MDEx.DocumentTest do
     test "append child" do
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Test"}], level: 1, setext: false},
-                 %MDEx.Code{num_backticks: 1, literal: "foo = 1"}
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Test", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+                   level: 1,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
+                 },
+                 %MDEx.Code{num_backticks: 1, literal: "foo = 1", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 9}}}
                ]
              } =
                MDEx.traverse_and_update(~MD[# Test], fn
@@ -440,12 +797,33 @@ defmodule MDEx.DocumentTest do
     test "pop existing node" do
       assert %MDEx.Document{
                nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: []},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: []},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                   level: 1,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                 },
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                 },
+                 %MDEx.Paragraph{nodes: [], sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}},
+                 %MDEx.Heading{
+                   nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                   level: 2,
+                   setext: false,
+                   closed: false,
+                   sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                 },
+                 %MDEx.Paragraph{nodes: [], sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}},
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                   sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                 }
                ]
              } =
                MDEx.traverse_and_update(@document, fn
@@ -467,9 +845,30 @@ defmodule MDEx.DocumentTest do
 
       assert {%MDEx.Document{
                 nodes: [
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "ex"}], level: 1, setext: false},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rs"}], level: 1, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                  %MDEx.Heading{
+                    nodes: [
+                      %MDEx.Text{literal: "Lang: ", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 8}}},
+                      %MDEx.Code{num_backticks: 1, literal: "ex", sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 16}}}
+                    ],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 16}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [
+                      %MDEx.Text{literal: "Lang: ", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 8}}},
+                      %MDEx.Code{num_backticks: 1, literal: "rs", sourcepos: %MDEx.Sourcepos{start: {3, 9}, end: {3, 14}}}
+                    ],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 14}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 4}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 4}}
+                  }
                 ]
               }, 2} =
                MDEx.traverse_and_update(document, 0, fn
@@ -497,9 +896,30 @@ defmodule MDEx.DocumentTest do
 
       assert {%MDEx.Document{
                 nodes: [
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "ex"}], level: 1, setext: false},
-                  %MDEx.Heading{nodes: [%MDEx.Text{literal: "Lang: "}, %MDEx.Code{num_backticks: 1, literal: "rust"}], level: 1, setext: false},
-                  %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                  %MDEx.Heading{
+                    nodes: [
+                      %MDEx.Text{literal: "Lang: ", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 8}}},
+                      %MDEx.Code{num_backticks: 1, literal: "ex", sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 16}}}
+                    ],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 16}}
+                  },
+                  %MDEx.Heading{
+                    nodes: [
+                      %MDEx.Text{literal: "Lang: ", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 8}}},
+                      %MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {3, 9}, end: {3, 14}}}
+                    ],
+                    level: 1,
+                    setext: false,
+                    closed: false,
+                    sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 14}}
+                  },
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 4}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 4}}
+                  }
                 ]
               }, :halted} =
                MDEx.traverse_and_update(document, :cont, fn
@@ -613,7 +1033,7 @@ defmodule MDEx.DocumentTest do
           _ -> false
         end)
 
-      assert %MDEx.Text{literal: "Languages"} = first_text
+      assert first_text == %MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}
     end
 
     test "slice behavior for enumeration" do
@@ -658,24 +1078,54 @@ defmodule MDEx.DocumentTest do
     end
 
     test "find" do
-      assert Enum.find(@document, nil, fn node -> node == %MDEx.Text{literal: "more"} end) == %MDEx.Text{literal: "more"}
+      assert Enum.find(@document, nil, fn
+               %MDEx.Text{literal: "more"} -> true
+               _ -> false
+             end) == %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
     end
 
     test "member?" do
-      assert Enum.member?(@document, %MDEx.Code{literal: "elixir", num_backticks: 1}) == true
-      assert Enum.member?(@document, %MDEx.Text{literal: "more"}) == true
+      assert Enum.any?(@document, &match?(%MDEx.Code{literal: "elixir", num_backticks: 1}, &1))
+      assert Enum.any?(@document, &match?(%MDEx.Text{literal: "more"}, &1))
     end
 
     test "suspended" do
       assert [
                {%MDEx.Document{
                   nodes: [
-                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                    %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                    %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                    %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
+                    %MDEx.Heading{
+                      nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+                      level: 1,
+                      setext: false,
+                      closed: false,
+                      sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                    },
+                    %MDEx.Heading{
+                      nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 11}}}],
+                      level: 2,
+                      setext: false,
+                      closed: false,
+                      sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 11}}
+                    },
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                    },
+                    %MDEx.Heading{
+                      nodes: [%MDEx.Text{literal: "Rust", sourcepos: %MDEx.Sourcepos{start: {6, 6}, end: {6, 9}}}],
+                      level: 2,
+                      setext: false,
+                      closed: false,
+                      sourcepos: %MDEx.Sourcepos{start: {6, 3}, end: {6, 9}}
+                    },
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Code{num_backticks: 1, literal: "rust", sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {7, 3}, end: {7, 8}}
+                    },
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}
+                    }
                   ]
                 }, 1}
              ] = Enum.zip(@document, [1])
@@ -684,21 +1134,19 @@ defmodule MDEx.DocumentTest do
 
   describe "Enum.at/3" do
     test "traversal order with Enum.at/2" do
-      assert %MDEx.Document{
-               nodes: [
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "elixir"}]},
-                 %MDEx.Heading{nodes: [%MDEx.Text{literal: "Rust"}], level: 2, setext: false},
-                 %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "rust"}]},
-                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "more"}]}
-               ]
-             } = Enum.at(@document, 0)
+      assert Enum.at(@document, 0) == @document
 
-      assert %MDEx.Heading{nodes: [%MDEx.Text{literal: "Languages"}], level: 1, setext: false} = Enum.at(@document, 1)
-      assert %MDEx.Text{literal: "Languages"} = Enum.at(@document, 2)
-      assert %MDEx.Code{num_backticks: 1, literal: "elixir"} = Enum.at(@document, 6)
-      assert %MDEx.Text{literal: "more"} = Enum.at(@document, 12)
+      assert Enum.at(@document, 1) == %MDEx.Heading{
+               nodes: [%MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}],
+               level: 1,
+               setext: false,
+               closed: false,
+               sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+             }
+
+      assert Enum.at(@document, 2) == %MDEx.Text{literal: "Languages", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 11}}}
+      assert Enum.at(@document, 6) == %MDEx.Code{num_backticks: 1, literal: "elixir", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}
+      assert Enum.at(@document, 12) == %MDEx.Text{literal: "more", sourcepos: %MDEx.Sourcepos{start: {9, 1}, end: {9, 4}}}
     end
 
     test "simple nested structure traversal" do
@@ -708,10 +1156,23 @@ defmodule MDEx.DocumentTest do
       """
 
       assert Enum.at(doc, 0) == doc
-      assert Enum.at(doc, 1) == %MDEx.Heading{nodes: [%MDEx.Text{literal: "Main"}], level: 1, setext: false}
-      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Main"}
-      assert Enum.at(doc, 3) == %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Para"}]}
-      assert Enum.at(doc, 4) == %MDEx.Text{literal: "Para"}
+
+      assert Enum.at(doc, 1) == %MDEx.Heading{
+               nodes: [%MDEx.Text{literal: "Main", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+               level: 1,
+               setext: false,
+               closed: false,
+               sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
+             }
+
+      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Main", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}
+
+      assert Enum.at(doc, 3) == %MDEx.Paragraph{
+               nodes: [%MDEx.Text{literal: "Para", sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 4}}}],
+               sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 4}}
+             }
+
+      assert Enum.at(doc, 4) == %MDEx.Text{literal: "Para", sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 4}}}
     end
 
     test "complex nested structure traversal" do
@@ -722,8 +1183,16 @@ defmodule MDEx.DocumentTest do
       """
 
       assert Enum.at(doc, 0) == doc
-      assert Enum.at(doc, 1) == %MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false}
-      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Title"}
+
+      assert Enum.at(doc, 1) == %MDEx.Heading{
+               nodes: [%MDEx.Text{literal: "Title", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}],
+               level: 1,
+               setext: false,
+               closed: false,
+               sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}
+             }
+
+      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Title", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}
 
       list_node = Enum.at(doc, 3)
       assert %MDEx.List{} = list_node
@@ -732,18 +1201,22 @@ defmodule MDEx.DocumentTest do
       first_item = Enum.at(doc, 4)
       assert %MDEx.ListItem{} = first_item
 
-      first_paragraph = Enum.at(doc, 5)
-      assert first_paragraph == %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 1"}]}
+      assert Enum.at(doc, 5) == %MDEx.Paragraph{
+               nodes: [%MDEx.Text{literal: "Item 1", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}],
+               sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}
+             }
 
-      assert Enum.at(doc, 6) == %MDEx.Text{literal: "Item 1"}
+      assert Enum.at(doc, 6) == %MDEx.Text{literal: "Item 1", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}
 
       second_item = Enum.at(doc, 7)
       assert %MDEx.ListItem{} = second_item
 
-      second_paragraph = Enum.at(doc, 8)
-      assert second_paragraph == %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Item 2"}]}
+      assert Enum.at(doc, 8) == %MDEx.Paragraph{
+               nodes: [%MDEx.Text{literal: "Item 2", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 8}}}],
+               sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 8}}
+             }
 
-      assert Enum.at(doc, 9) == %MDEx.Text{literal: "Item 2"}
+      assert Enum.at(doc, 9) == %MDEx.Text{literal: "Item 2", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 8}}}
     end
 
     test "mixed content structure traversal" do
@@ -758,10 +1231,23 @@ defmodule MDEx.DocumentTest do
       """
 
       assert Enum.at(doc, 0) == doc
-      assert Enum.at(doc, 1) == %MDEx.Heading{nodes: [%MDEx.Text{literal: "Code Examples"}], level: 1, setext: false}
-      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Code Examples"}
-      assert Enum.at(doc, 3) == %MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "inline"}]}
-      assert Enum.at(doc, 4) == %MDEx.Code{num_backticks: 1, literal: "inline"}
+
+      assert Enum.at(doc, 1) == %MDEx.Heading{
+               nodes: [%MDEx.Text{literal: "Code Examples", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 15}}}],
+               level: 1,
+               setext: false,
+               closed: false,
+               sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 15}}
+             }
+
+      assert Enum.at(doc, 2) == %MDEx.Text{literal: "Code Examples", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 15}}}
+
+      assert Enum.at(doc, 3) == %MDEx.Paragraph{
+               nodes: [%MDEx.Code{num_backticks: 1, literal: "inline", sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 8}}}],
+               sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 8}}
+             }
+
+      assert Enum.at(doc, 4) == %MDEx.Code{num_backticks: 1, literal: "inline", sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 8}}}
 
       code_block = Enum.at(doc, 5)
       assert %MDEx.CodeBlock{info: "elixir", literal: "def hello, do: :world\n"} = code_block

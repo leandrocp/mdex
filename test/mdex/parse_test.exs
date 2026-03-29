@@ -40,7 +40,7 @@ defmodule MDEx.ParseTest do
       title: MDEx
       ---
       """,
-      %MDEx.Document{nodes: [%MDEx.FrontMatter{literal: "---\ntitle: MDEx\n---\n"}]}
+      %MDEx.Document{nodes: [%MDEx.FrontMatter{literal: "---\ntitle: MDEx\n---\n", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 3}}}]}
     )
   end
 
@@ -49,7 +49,19 @@ defmodule MDEx.ParseTest do
       """
       > MDEx
       """,
-      %MDEx.Document{nodes: [%MDEx.BlockQuote{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.BlockQuote{
+            nodes: [
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "MDEx", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
+          }
+        ]
+      }
     )
   end
 
@@ -65,24 +77,36 @@ defmodule MDEx.ParseTest do
             %MDEx.List{
               nodes: [
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "*",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 5}}
                 },
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "*",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 5}}
                 }
               ],
               list_type: :bullet,
@@ -91,7 +115,8 @@ defmodule MDEx.ParseTest do
               start: 1,
               delimiter: :period,
               bullet_char: "*",
-              tight: true
+              tight: true,
+              sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {2, 5}}
             }
           ]
         }
@@ -110,24 +135,36 @@ defmodule MDEx.ParseTest do
             %MDEx.List{
               nodes: [
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "-",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 5}}
                 },
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "-",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 5}}
                 }
               ],
               list_type: :bullet,
@@ -136,19 +173,26 @@ defmodule MDEx.ParseTest do
               start: 1,
               delimiter: :period,
               bullet_char: "-",
-              tight: true
+              tight: true,
+              sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {2, 5}}
             },
             %MDEx.List{
               nodes: [
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "baz"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "baz", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "+",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 5}}
                 }
               ],
               list_type: :bullet,
@@ -157,7 +201,8 @@ defmodule MDEx.ParseTest do
               start: 1,
               delimiter: :period,
               bullet_char: "+",
-              tight: true
+              tight: true,
+              sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 5}}
             }
           ]
         }
@@ -176,34 +221,52 @@ defmodule MDEx.ParseTest do
             %MDEx.List{
               nodes: [
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "-",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 5}}
                 },
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "bar"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "-",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 5}}
                 },
                 %MDEx.ListItem{
-                  nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "baz"}]}],
+                  nodes: [
+                    %MDEx.Paragraph{
+                      nodes: [%MDEx.Text{literal: "baz", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 5}}}],
+                      sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 5}}
+                    }
+                  ],
                   list_type: :bullet,
                   marker_offset: 0,
                   padding: 2,
                   start: 1,
                   delimiter: :period,
                   bullet_char: "-",
-                  tight: false
+                  tight: false,
+                  sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 5}}
                 }
               ],
               list_type: :bullet,
@@ -212,7 +275,8 @@ defmodule MDEx.ParseTest do
               start: 1,
               delimiter: :period,
               bullet_char: "-",
-              tight: true
+              tight: true,
+              sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 5}}
             }
           ]
         }
@@ -233,13 +297,31 @@ defmodule MDEx.ParseTest do
             nodes: [
               %MDEx.DescriptionItem{
                 nodes: [
-                  %MDEx.DescriptionTerm{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "MDEx"}]}]},
-                  %MDEx.DescriptionDetails{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Built with Elixir and Rust"}]}]}
+                  %MDEx.DescriptionTerm{
+                    nodes: [
+                      %MDEx.Paragraph{
+                        nodes: [%MDEx.Text{literal: "MDEx", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 4}}}],
+                        sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 4}}
+                      }
+                    ],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 4}}
+                  },
+                  %MDEx.DescriptionDetails{
+                    nodes: [
+                      %MDEx.Paragraph{
+                        nodes: [%MDEx.Text{literal: "Built with Elixir and Rust", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 28}}}],
+                        sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 28}}
+                      }
+                    ],
+                    sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 28}}
+                  }
                 ],
                 marker_offset: 0,
-                padding: 2
+                padding: 2,
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 28}}
               }
-            ]
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 28}}
           }
         ]
       }
@@ -262,7 +344,8 @@ defmodule MDEx.ParseTest do
             fence_length: 3,
             fence_offset: 0,
             info: "elixir",
-            literal: "String.trim(\" MDEx \")\n"
+            literal: "String.trim(\" MDEx \")\n",
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 3}}
           }
         ]
       }
@@ -274,7 +357,9 @@ defmodule MDEx.ParseTest do
       """
       <h1>MDEx</h1>
       """,
-      %MDEx.Document{nodes: [%MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>MDEx</h1>\n"}]}
+      %MDEx.Document{
+        nodes: [%MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>MDEx</h1>\n", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 13}}}]
+      }
     )
   end
 
@@ -286,8 +371,18 @@ defmodule MDEx.ParseTest do
       """,
       %MDEx.Document{
         nodes: [
-          %MDEx.Heading{nodes: [%MDEx.Text{literal: "level_1"}], level: 1, setext: false},
-          %MDEx.Heading{nodes: [%MDEx.Text{literal: "level_6"}], level: 6, setext: false}
+          %MDEx.Heading{
+            nodes: [%MDEx.Text{literal: "level_1", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 9}}}],
+            level: 1,
+            setext: false,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 9}}
+          },
+          %MDEx.Heading{
+            nodes: [%MDEx.Text{literal: "level_6", sourcepos: %MDEx.Sourcepos{start: {2, 8}, end: {2, 14}}}],
+            level: 6,
+            setext: false,
+            sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 14}}
+          }
         ]
       }
     )
@@ -299,7 +394,12 @@ defmodule MDEx.ParseTest do
       ***
       ---
       """,
-      %MDEx.Document{nodes: [%MDEx.ThematicBreak{}, %MDEx.ThematicBreak{}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.ThematicBreak{sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 3}}},
+          %MDEx.ThematicBreak{sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 3}}}
+        ]
+      }
     )
   end
 
@@ -313,9 +413,29 @@ defmodule MDEx.ParseTest do
       %MDEx.Document{
         nodes: [
           %MDEx.Paragraph{
-            nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "1", ref_num: 1, ix: 1, texts: [{"^", 1}, {"1", 1}]}]
+            nodes: [
+              %MDEx.Text{literal: "footnote", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}},
+              %MDEx.FootnoteReference{
+                name: "1",
+                ref_num: 1,
+                ix: 1,
+                texts: [{"^", 1}, {"1", 1}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 12}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 12}}
           },
-          %MDEx.FootnoteDefinition{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "ref"}]}], name: "1", total_references: 1}
+          %MDEx.FootnoteDefinition{
+            nodes: [
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "ref", sourcepos: %MDEx.Sourcepos{start: {3, 7}, end: {3, 9}}}],
+                sourcepos: %MDEx.Sourcepos{start: {3, 7}, end: {3, 9}}
+              }
+            ],
+            name: "1",
+            total_references: 1,
+            sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 9}}
+          }
         ]
       }
     )
@@ -328,8 +448,24 @@ defmodule MDEx.ParseTest do
       """,
       %MDEx.Document{
         nodes: [
-          %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "footnote"}, %MDEx.FootnoteReference{name: "__inline_1", ref_num: 1, ix: 1, texts: []}]},
-          %MDEx.FootnoteDefinition{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "inline content"}]}], name: "__inline_1", total_references: 1}
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "footnote", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}},
+              %MDEx.FootnoteReference{name: "__inline_1", ref_num: 1, ix: 1, texts: [], sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 25}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 25}}
+          },
+          %MDEx.FootnoteDefinition{
+            nodes: [
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "inline content", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 14}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 0}}
+              }
+            ],
+            name: "__inline_1",
+            total_references: 1,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 0}}
+          }
         ]
       },
       extension: [inline_footnotes: true]
@@ -348,18 +484,39 @@ defmodule MDEx.ParseTest do
           %MDEx.Table{
             nodes: [
               %MDEx.TableRow{
-                nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "foo"}]}, %MDEx.TableCell{nodes: [%MDEx.Text{literal: "bar"}]}],
-                header: true
+                nodes: [
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 2}, end: {1, 6}}
+                  },
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 11}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 8}, end: {1, 12}}
+                  }
+                ],
+                header: true,
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 13}}
               },
               %MDEx.TableRow{
-                nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "baz"}]}, %MDEx.TableCell{nodes: [%MDEx.Text{literal: "bim"}]}],
-                header: false
+                nodes: [
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "baz", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 5}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {3, 2}, end: {3, 6}}
+                  },
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "bim", sourcepos: %MDEx.Sourcepos{start: {3, 9}, end: {3, 11}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {3, 8}, end: {3, 12}}
+                  }
+                ],
+                header: false,
+                sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 13}}
               }
             ],
             alignments: [:none, :none],
             num_columns: 2,
             num_rows: 2,
-            num_nonempty_cells: 4
+            num_nonempty_cells: 4,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 13}}
           }
         ]
       }
@@ -376,18 +533,39 @@ defmodule MDEx.ParseTest do
           %MDEx.Table{
             nodes: [
               %MDEx.TableRow{
-                nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "abc"}]}, %MDEx.TableCell{nodes: [%MDEx.Text{literal: "defghi"}]}],
-                header: true
+                nodes: [
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "abc", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 2}, end: {1, 6}}
+                  },
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "defghi", sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 14}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 8}, end: {1, 15}}
+                  }
+                ],
+                header: true,
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 16}}
               },
               %MDEx.TableRow{
-                nodes: [%MDEx.TableCell{nodes: [%MDEx.Text{literal: "bar"}]}, %MDEx.TableCell{nodes: [%MDEx.Text{literal: "baz"}]}],
-                header: false
+                nodes: [
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 3}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 4}}
+                  },
+                  %MDEx.TableCell{
+                    nodes: [%MDEx.Text{literal: "baz", sourcepos: %MDEx.Sourcepos{start: {3, 7}, end: {3, 9}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {3, 6}, end: {3, 9}}
+                  }
+                ],
+                header: false,
+                sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 9}}
               }
             ],
             alignments: [:center, :right],
             num_columns: 2,
             num_rows: 2,
-            num_nonempty_cells: 4
+            num_nonempty_cells: 4,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 9}}
           }
         ]
       }
@@ -404,8 +582,28 @@ defmodule MDEx.ParseTest do
         nodes: [
           %MDEx.List{
             nodes: [
-              %MDEx.TaskItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Done"}]}], checked: true, marker: "x"},
-              %MDEx.TaskItem{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Not done"}]}], checked: false, marker: ""}
+              %MDEx.TaskItem{
+                nodes: [
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "Done", sourcepos: %MDEx.Sourcepos{start: {1, 7}, end: {1, 10}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {1, 7}, end: {1, 10}}
+                  }
+                ],
+                checked: true,
+                marker: "x",
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 10}}
+              },
+              %MDEx.TaskItem{
+                nodes: [
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "Not done", sourcepos: %MDEx.Sourcepos{start: {2, 7}, end: {2, 14}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {2, 7}, end: {2, 14}}
+                  }
+                ],
+                checked: false,
+                marker: "",
+                sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 14}}
+              }
             ],
             list_type: :bullet,
             marker_offset: 0,
@@ -414,7 +612,8 @@ defmodule MDEx.ParseTest do
             delimiter: :period,
             bullet_char: "*",
             tight: true,
-            is_task_list: true
+            is_task_list: true,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {2, 14}}
           }
         ]
       }
@@ -427,7 +626,18 @@ defmodule MDEx.ParseTest do
       foo
       bar
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}, %MDEx.SoftBreak{}, %MDEx.Text{literal: "bar"}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 3}}},
+              %MDEx.SoftBreak{sourcepos: %MDEx.Sourcepos{start: {1, 4}, end: {1, 4}}},
+              %MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 3}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {2, 3}}
+          }
+        ]
+      }
     )
 
     assert_parse_markdown(
@@ -435,7 +645,18 @@ defmodule MDEx.ParseTest do
       foo
       bar
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "foo"}, %MDEx.SoftBreak{}, %MDEx.Text{literal: "bar"}]}]},
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 3}}},
+              %MDEx.SoftBreak{sourcepos: %MDEx.Sourcepos{start: {1, 4}, end: {1, 4}}},
+              %MDEx.Text{literal: "bar", sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 3}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {2, 3}}
+          }
+        ]
+      },
       render: [hardbreaks: true]
     )
   end
@@ -445,7 +666,14 @@ defmodule MDEx.ParseTest do
       """
       `String.trim(" MDEx ")`
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Code{num_backticks: 1, literal: "String.trim(\" MDEx \")"}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Code{num_backticks: 1, literal: "String.trim(\" MDEx \")", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 23}}}],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 23}}
+          }
+        ]
+      }
     )
   end
 
@@ -455,7 +683,16 @@ defmodule MDEx.ParseTest do
       <a><bab><c2c>
       """,
       %MDEx.Document{
-        nodes: [%MDEx.Paragraph{nodes: [%MDEx.HtmlInline{literal: "<a>"}, %MDEx.HtmlInline{literal: "<bab>"}, %MDEx.HtmlInline{literal: "<c2c>"}]}]
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.HtmlInline{literal: "<a>", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 3}}},
+              %MDEx.HtmlInline{literal: "<bab>", sourcepos: %MDEx.Sourcepos{start: {1, 4}, end: {1, 8}}},
+              %MDEx.HtmlInline{literal: "<c2c>", sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 13}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 13}}
+          }
+        ]
       }
     )
   end
@@ -472,15 +709,28 @@ defmodule MDEx.ParseTest do
         nodes: [
           %MDEx.Paragraph{
             nodes: [
-              %MDEx.Emph{nodes: [%MDEx.Text{literal: "emph"}]},
-              %MDEx.SoftBreak{},
-              %MDEx.Strong{nodes: [%MDEx.Text{literal: "strong"}]},
-              %MDEx.SoftBreak{},
-              %MDEx.Strikethrough{nodes: [%MDEx.Text{literal: "strikethrough"}]},
-              %MDEx.SoftBreak{},
-              %MDEx.Text{literal: "X"},
-              %MDEx.Superscript{nodes: [%MDEx.Text{literal: "2"}]}
-            ]
+              %MDEx.Emph{
+                nodes: [%MDEx.Text{literal: "emph", sourcepos: %MDEx.Sourcepos{start: {1, 2}, end: {1, 5}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
+              },
+              %MDEx.SoftBreak{sourcepos: %MDEx.Sourcepos{start: {1, 7}, end: {1, 7}}},
+              %MDEx.Strong{
+                nodes: [%MDEx.Text{literal: "strong", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}],
+                sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 10}}
+              },
+              %MDEx.SoftBreak{sourcepos: %MDEx.Sourcepos{start: {2, 11}, end: {2, 11}}},
+              %MDEx.Strikethrough{
+                nodes: [%MDEx.Text{literal: "strikethrough", sourcepos: %MDEx.Sourcepos{start: {3, 2}, end: {3, 14}}}],
+                sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 15}}
+              },
+              %MDEx.SoftBreak{sourcepos: %MDEx.Sourcepos{start: {3, 16}, end: {3, 16}}},
+              %MDEx.Text{literal: "X", sourcepos: %MDEx.Sourcepos{start: {4, 1}, end: {4, 1}}},
+              %MDEx.Superscript{
+                nodes: [%MDEx.Text{literal: "2", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 3}}}],
+                sourcepos: %MDEx.Sourcepos{start: {4, 2}, end: {4, 4}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {4, 4}}
           }
         ]
       }
@@ -494,7 +744,21 @@ defmodule MDEx.ParseTest do
 
       [foo]
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Link{nodes: [%MDEx.Text{literal: "foo"}], title: "title", url: "/url"}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Link{
+                nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {3, 2}, end: {3, 4}}}],
+                title: "title",
+                url: "/url",
+                sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 5}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 5}}
+          }
+        ]
+      }
     )
   end
 
@@ -503,7 +767,21 @@ defmodule MDEx.ParseTest do
       """
       ![foo](/url "title")
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Image{nodes: [%MDEx.Text{literal: "foo"}], title: "title", url: "/url"}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Image{
+                nodes: [%MDEx.Text{literal: "foo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                title: "title",
+                url: "/url",
+                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 20}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 20}}
+          }
+        ]
+      }
     )
   end
 
@@ -512,7 +790,14 @@ defmodule MDEx.ParseTest do
       """
       :smile:
       """,
-      %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.ShortCode{code: "smile", emoji: "😄"}]}]}
+      %MDEx.Document{
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [%MDEx.ShortCode{code: "smile", emoji: "😄", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}}],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}
+          }
+        ]
+      }
     )
   end
 
@@ -527,12 +812,16 @@ defmodule MDEx.ParseTest do
         nodes: [
           %MDEx.Paragraph{
             nodes: [
-              %MDEx.Math{dollar_math: true, display_math: false, literal: "1 + 2"},
-              %MDEx.Text{literal: " and "},
-              %MDEx.Math{dollar_math: true, display_math: true, literal: "x = y"}
-            ]
+              %MDEx.Math{dollar_math: true, display_math: false, literal: "1 + 2", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+              %MDEx.Text{literal: " and ", sourcepos: %MDEx.Sourcepos{start: {1, 8}, end: {1, 12}}},
+              %MDEx.Math{dollar_math: true, display_math: true, literal: "x = y", sourcepos: %MDEx.Sourcepos{start: {1, 13}, end: {1, 21}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 21}}
           },
-          %MDEx.Paragraph{nodes: [%MDEx.Math{dollar_math: false, display_math: false, literal: "1 + 2"}]}
+          %MDEx.Paragraph{
+            nodes: [%MDEx.Math{dollar_math: false, display_math: false, literal: "1 + 2", sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 9}}}],
+            sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 9}}
+          }
         ]
       }
     )
@@ -552,28 +841,43 @@ defmodule MDEx.ParseTest do
         nodes: [
           %MDEx.MultilineBlockQuote{
             nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "A paragraph."}]},
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "A paragraph.", sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 12}}}],
+                sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 12}}
+              },
               %MDEx.List{
                 nodes: [
                   %MDEx.ListItem{
-                    nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item one"}]}],
+                    nodes: [
+                      %MDEx.Paragraph{
+                        nodes: [%MDEx.Text{literal: "item one", sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}}],
+                        sourcepos: %MDEx.Sourcepos{start: {4, 3}, end: {4, 10}}
+                      }
+                    ],
                     list_type: :bullet,
                     marker_offset: 0,
                     padding: 2,
                     start: 1,
                     delimiter: :period,
                     bullet_char: "-",
-                    tight: false
+                    tight: false,
+                    sourcepos: %MDEx.Sourcepos{start: {4, 1}, end: {4, 10}}
                   },
                   %MDEx.ListItem{
-                    nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "item two"}]}],
+                    nodes: [
+                      %MDEx.Paragraph{
+                        nodes: [%MDEx.Text{literal: "item two", sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 10}}}],
+                        sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 3}}
+                      }
+                    ],
                     list_type: :bullet,
                     marker_offset: 0,
                     padding: 2,
                     start: 1,
                     delimiter: :period,
                     bullet_char: "-",
-                    tight: false
+                    tight: false,
+                    sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 3}}
                   }
                 ],
                 list_type: :bullet,
@@ -582,11 +886,13 @@ defmodule MDEx.ParseTest do
                 start: 1,
                 delimiter: :period,
                 bullet_char: "-",
-                tight: true
+                tight: true,
+                sourcepos: %MDEx.Sourcepos{start: {4, 1}, end: {5, 10}}
               }
             ],
             fence_length: 3,
-            fence_offset: 0
+            fence_offset: 0,
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {6, 3}}
           }
         ]
       }
@@ -600,7 +906,18 @@ defmodule MDEx.ParseTest do
         [[repo|https://github.com/leandrocp/mdex]]
         """,
         %MDEx.Document{
-          nodes: [%MDEx.Paragraph{nodes: [%MDEx.WikiLink{nodes: [%MDEx.Text{literal: "repo"}], url: "https://github.com/leandrocp/mdex"}]}]
+          nodes: [
+            %MDEx.Paragraph{
+              nodes: [
+                %MDEx.WikiLink{
+                  nodes: [%MDEx.Text{literal: "repo", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+                  url: "https://github.com/leandrocp/mdex",
+                  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 42}}
+                }
+              ],
+              sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 42}}
+            }
+          ]
         },
         extension: [wikilinks_title_before_pipe: true]
       )
@@ -612,7 +929,18 @@ defmodule MDEx.ParseTest do
         [[https://github.com/leandrocp/mdex|repo]]
         """,
         %MDEx.Document{
-          nodes: [%MDEx.Paragraph{nodes: [%MDEx.WikiLink{nodes: [%MDEx.Text{literal: "repo"}], url: "https://github.com/leandrocp/mdex"}]}]
+          nodes: [
+            %MDEx.Paragraph{
+              nodes: [
+                %MDEx.WikiLink{
+                  nodes: [%MDEx.Text{literal: "repo", sourcepos: %MDEx.Sourcepos{start: {1, 37}, end: {1, 40}}}],
+                  url: "https://github.com/leandrocp/mdex",
+                  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 42}}
+                }
+              ],
+              sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 42}}
+            }
+          ]
         },
         extension: [wikilinks_title_after_pipe: true]
       )
@@ -625,7 +953,18 @@ defmodule MDEx.ParseTest do
       Darth Vader is ||Luke's father||
       """,
       %MDEx.Document{
-        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Darth Vader is "}, %MDEx.SpoileredText{nodes: [%MDEx.Text{literal: "Luke's father"}]}]}]
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "Darth Vader is ", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 15}}},
+              %MDEx.SpoileredText{
+                nodes: [%MDEx.Text{literal: "Luke's father", sourcepos: %MDEx.Sourcepos{start: {1, 18}, end: {1, 30}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 16}, end: {1, 32}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 32}}
+          }
+        ]
       }
     )
   end
@@ -638,7 +977,15 @@ defmodule MDEx.ParseTest do
       %MDEx.Document{
         nodes: [
           %MDEx.Paragraph{
-            nodes: [%MDEx.Text{literal: "this is "}, %MDEx.Insert{nodes: [%MDEx.Text{literal: "inserted"}]}, %MDEx.Text{literal: " text"}]
+            nodes: [
+              %MDEx.Text{literal: "this is ", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}},
+              %MDEx.Insert{
+                nodes: [%MDEx.Text{literal: "inserted", sourcepos: %MDEx.Sourcepos{start: {1, 11}, end: {1, 18}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 20}}
+              },
+              %MDEx.Text{literal: " text", sourcepos: %MDEx.Sourcepos{start: {1, 21}, end: {1, 25}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 25}}
           }
         ]
       }
@@ -653,7 +1000,15 @@ defmodule MDEx.ParseTest do
       %MDEx.Document{
         nodes: [
           %MDEx.Paragraph{
-            nodes: [%MDEx.Text{literal: "this is "}, %MDEx.Highlight{nodes: [%MDEx.Text{literal: "marked"}]}, %MDEx.Text{literal: " text"}]
+            nodes: [
+              %MDEx.Text{literal: "this is ", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}},
+              %MDEx.Highlight{
+                nodes: [%MDEx.Text{literal: "marked", sourcepos: %MDEx.Sourcepos{start: {1, 11}, end: {1, 16}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 18}}
+              },
+              %MDEx.Text{literal: " text", sourcepos: %MDEx.Sourcepos{start: {1, 19}, end: {1, 23}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 23}}
           }
         ]
       },
@@ -665,7 +1020,12 @@ defmodule MDEx.ParseTest do
     assert_parse_markdown(
       "-# Some Subtext\n",
       %MDEx.Document{
-        nodes: [%MDEx.Subtext{nodes: [%MDEx.Text{literal: "Some Subtext"}]}]
+        nodes: [
+          %MDEx.Subtext{
+            nodes: [%MDEx.Text{literal: "Some Subtext", sourcepos: %MDEx.Sourcepos{start: {1, 4}, end: {1, 15}}}],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 15}}
+          }
+        ]
       },
       extension: [subtext: true]
     )
@@ -682,10 +1042,25 @@ defmodule MDEx.ParseTest do
         nodes: [
           %MDEx.BlockQuote{
             nodes: [
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "one"}]},
-              %MDEx.BlockQuote{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "two"}]}]},
-              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "three"}]}
-            ]
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "one", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 5}}
+              },
+              %MDEx.BlockQuote{
+                nodes: [
+                  %MDEx.Paragraph{
+                    nodes: [%MDEx.Text{literal: "two", sourcepos: %MDEx.Sourcepos{start: {2, 5}, end: {2, 7}}}],
+                    sourcepos: %MDEx.Sourcepos{start: {2, 5}, end: {2, 7}}
+                  }
+                ],
+                sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 7}}
+              },
+              %MDEx.Paragraph{
+                nodes: [%MDEx.Text{literal: "three", sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 7}}}],
+                sourcepos: %MDEx.Sourcepos{start: {3, 3}, end: {3, 7}}
+              }
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 7}}
           }
         ]
       }
@@ -696,9 +1071,93 @@ defmodule MDEx.ParseTest do
     assert_parse_markdown(
       "H~2~O",
       %MDEx.Document{
-        nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "H"}, %MDEx.Subscript{nodes: [%MDEx.Text{literal: "2"}]}, %MDEx.Text{literal: "O"}]}]
+        nodes: [
+          %MDEx.Paragraph{
+            nodes: [
+              %MDEx.Text{literal: "H", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 1}}},
+              %MDEx.Subscript{
+                nodes: [%MDEx.Text{literal: "2", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 3}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 2}, end: {1, 4}}
+              },
+              %MDEx.Text{literal: "O", sourcepos: %MDEx.Sourcepos{start: {1, 5}, end: {1, 5}}}
+            ],
+            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 5}}
+          }
+        ]
       },
       extension: [subscript: true]
     )
+  end
+
+  describe "sourcepos" do
+    test "text" do
+      assert {:ok, document} = MDEx.parse_document("hello world\n")
+
+      assert [
+               %MDEx.Paragraph{
+                 sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}},
+                 nodes: [
+                   %MDEx.Text{
+                     literal: "hello world",
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 11}}
+                   }
+                 ]
+               }
+             ] = document.nodes
+    end
+
+    test "heading and paragraph" do
+      assert {:ok, document} = MDEx.parse_document("# Hello\nworld\n")
+
+      assert [
+               %MDEx.Heading{
+                 nodes: [
+                   %MDEx.Text{
+                     literal: "Hello",
+                     sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}
+                   }
+                 ],
+                 level: 1,
+                 setext: false,
+                 closed: false,
+                 sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}
+               },
+               %MDEx.Paragraph{
+                 nodes: [
+                   %MDEx.Text{
+                     literal: "world",
+                     sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 5}}
+                   }
+                 ],
+                 sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 5}}
+               }
+             ] = document.nodes
+    end
+
+    test "nested nodes have sourcepos" do
+      assert {:ok, document} = MDEx.parse_document("**bold**\n")
+
+      assert [
+               %MDEx.Paragraph{
+                 sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}},
+                 nodes: [
+                   %MDEx.Strong{
+                     sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}},
+                     nodes: [
+                       %MDEx.Text{
+                         literal: "bold",
+                         sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}
+                       }
+                     ]
+                   }
+                 ]
+               }
+             ] = document.nodes
+    end
+
+    test "document root" do
+      assert {:ok, document} = MDEx.parse_document("hello\n")
+      assert %MDEx.Sourcepos{start: {0, 0}, end: {0, 0}} = document.sourcepos
+    end
   end
 end
