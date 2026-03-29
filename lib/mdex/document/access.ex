@@ -17,7 +17,7 @@ defmodule MDEx.Document.Access do
   def fetch(document, selector)
 
   def fetch(document, selector) when is_struct(selector) do
-    case Enum.filter(document, fn node -> node == selector end) do
+    case Enum.filter(document, &struct_match?(&1, selector)) do
       [] -> :error
       node -> {:ok, node}
     end
@@ -52,12 +52,13 @@ defmodule MDEx.Document.Access do
         node, {:halted, old} ->
           {node, {:halted, old}}
 
-        ^selector, {:cont, _old} ->
-          {old, new} = fun.(selector)
-          {new, {:halted, old}}
-
-        node, acc ->
-          {node, acc}
+        node, {:cont, _old} = acc ->
+          if struct_match?(node, selector) do
+            {old, new} = fun.(node)
+            {new, {:halted, old}}
+          else
+            {node, acc}
+          end
       end)
 
     {old, document}
@@ -123,11 +124,12 @@ defmodule MDEx.Document.Access do
         node, {:halted, old} ->
           {node, {:halted, old}}
 
-        ^key, {:cont, _} ->
-          {:pop, {:halted, key}}
-
-        node, acc ->
-          {node, acc}
+        node, {:cont, _} = acc ->
+          if struct_match?(node, key) do
+            {:pop, {:halted, node}}
+          else
+            {node, acc}
+          end
       end)
 
     {old || default, new}
@@ -159,6 +161,21 @@ defmodule MDEx.Document.Access do
     node = Enum.at(document, key)
     {node || default, document}
   end
+
+  @doc false
+  def struct_match?(%mod{} = node, %mod{} = selector) do
+    defaults = struct(mod)
+
+    selector
+    |> Map.from_struct()
+    |> Map.delete(:sourcepos)
+    |> Map.delete(:nodes)
+    |> Enum.all?(fn {field, value} ->
+      value == Map.get(defaults, field) or value == Map.get(node, field)
+    end)
+  end
+
+  def struct_match?(_, _), do: false
 
   @doc false
   def modulefy!(nil = _selector), do: raise(%MDEx.InvalidSelector{selector: nil})

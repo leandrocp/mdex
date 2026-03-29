@@ -315,10 +315,10 @@ defmodule MDEx do
   ## Examples
 
       iex> MDEx.parse_fragment("# Elixir")
-      {:ok, %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir"}], level: 1, setext: false, closed: false}}
+      {:ok, %MDEx.Heading{nodes: [%MDEx.Text{literal: "Elixir", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 8}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}}}
 
       iex> MDEx.parse_fragment("<h1>Elixir</h1>")
-      {:ok, %MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>Elixir</h1>"}}
+      {:ok, %MDEx.HtmlBlock{nodes: [], block_type: 6, literal: "<h1>Elixir</h1>", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 15}}}}
 
   """
   @spec parse_fragment(String.t(), MDEx.Document.options()) :: {:ok, Document.md_node()} | nil
@@ -1207,8 +1207,8 @@ defmodule MDEx do
       ...> |> MDEx.Document.run()
       iex> doc.nodes
       [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 8}}}
       ]
 
   Enabling streaming to render partial input as it arrives:

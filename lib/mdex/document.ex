@@ -1,5 +1,21 @@
 # based on https://github.com/wojtekmach/easyhtml
 
+defmodule MDEx.Sourcepos do
+  @moduledoc """
+  Source position information for AST nodes.
+
+  Contains the start and end positions as `{line, column}` tuples.
+
+  Note that these values reflect the original source positions from parsing
+  and are not automatically updated when the AST is modified programmatically.
+
+  See https://docs.rs/comrak/latest/comrak/nodes/struct.Sourcepos.html
+  """
+
+  @type t :: %__MODULE__{start: {non_neg_integer(), non_neg_integer()}, end: {non_neg_integer(), non_neg_integer()}}
+  defstruct start: {0, 0}, end: {0, 0}
+end
+
 defmodule MDEx.Document do
   @moduledoc """
   Document is the core structure to store, manipulate, and render Markdown documents.
@@ -1299,6 +1315,7 @@ defmodule MDEx.Document do
         }
 
   defstruct nodes: [],
+            sourcepos: %MDEx.Sourcepos{},
             buffer: [],
             options: [],
             registered_options: MapSet.new(@built_in_options),
@@ -2057,8 +2074,8 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.run()
       iex> document.nodes
       [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 8}}}
       ]
 
   Executing pipeline steps:
@@ -2080,12 +2097,7 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.put_markdown("IO.inspect(:mdex)")
       ...>   |> MDEx.Document.run()
       iex> document.nodes
-      [
-        %MDEx.CodeBlock{
-          info: "elixir",
-          literal: "IO.inspect(:mdex)\\n"
-        }
-      ]
+      [%MDEx.CodeBlock{nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "elixir", literal: "IO.inspect(:mdex)\\n", closed: true, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 3}}}]
 
   """
   @spec run(t()) :: t()
@@ -2263,8 +2275,8 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.run()
       iex> document.nodes
       [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second"}], level: 1, setext: false}
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 8}}}
       ]
 
       iex> document =
@@ -2273,8 +2285,8 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.run()
       iex> document.nodes
       [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First"}], level: 1, setext: false},
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Last"}], level: 1, setext: false}
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "First", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "Last", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 6}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 6}}}
       ]
 
       iex> document = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("`let x =")
@@ -2312,8 +2324,8 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.update_nodes(MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
       iex> document.nodes
       [
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "HELLO"}], level: 1, setext: false},
-        %MDEx.Heading{nodes: [%MDEx.Text{literal: "WORLD"}], level: 2, setext: false}
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "HELLO", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
+        %MDEx.Heading{nodes: [%MDEx.Text{literal: "WORLD", sourcepos: %MDEx.Sourcepos{start: {2, 4}, end: {2, 8}}}], level: 2, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 8}}}
       ]
 
   """
@@ -2330,7 +2342,7 @@ defmodule MDEx.Document do
     end)
   end
 
-  defp match_selector?(node, selector) when is_struct(selector), do: node == selector
+  defp match_selector?(node, selector) when is_struct(selector), do: MDEx.Document.Access.struct_match?(node, selector)
   defp match_selector?(%mod{} = _node, selector) when is_atom(selector), do: mod == MDEx.Document.Access.modulefy!(selector)
   defp match_selector?(node, selector) when is_function(selector, 1), do: selector.(node)
 
@@ -2512,7 +2524,7 @@ defmodule MDEx.Document do
 
       iex> document = MDEx.Document.wrap(MDEx.new(markdown: "# Title") |> MDEx.Document.run())
       iex> document.nodes
-      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Title"}], level: 1, setext: false}]
+      [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Title", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}}]
 
       iex> document = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
       iex> document.nodes
@@ -2701,8 +2713,8 @@ defmodule MDEx.FrontMatter do
   Document metadata.
   """
 
-  @type t :: %__MODULE__{literal: String.t()}
-  defstruct literal: ""
+  @type t :: %__MODULE__{literal: String.t(), sourcepos: MDEx.Sourcepos.t()}
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2713,8 +2725,8 @@ defmodule MDEx.BlockQuote do
   Spec: https://github.github.com/gfm/#block-quotes
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], sourcepos: MDEx.Sourcepos.t()}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2744,7 +2756,8 @@ defmodule MDEx.List do
             delimiter: :period,
             bullet_char: "-",
             tight: true,
-            is_task_list: false
+            is_task_list: false,
+            sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
 end
@@ -2775,7 +2788,8 @@ defmodule MDEx.ListItem do
             delimiter: :period,
             bullet_char: "-",
             tight: true,
-            is_task_list: false
+            is_task_list: false,
+            sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
 end
@@ -2786,7 +2800,7 @@ defmodule MDEx.DescriptionList do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2798,7 +2812,7 @@ defmodule MDEx.DescriptionItem do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], marker_offset: non_neg_integer(), padding: non_neg_integer(), tight: boolean()}
-  defstruct nodes: [], marker_offset: 0, padding: 0, tight: false
+  defstruct nodes: [], marker_offset: 0, padding: 0, tight: false, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2810,7 +2824,7 @@ defmodule MDEx.DescriptionTerm do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2822,7 +2836,7 @@ defmodule MDEx.DescriptionDetails do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2843,7 +2857,16 @@ defmodule MDEx.CodeBlock do
           literal: String.t(),
           closed: boolean()
         }
-  defstruct nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "", literal: "", closed: true
+  defstruct nodes: [],
+            fenced: true,
+            fence_char: "`",
+            fence_length: 3,
+            fence_offset: 0,
+            info: "",
+            literal: "",
+            closed: true,
+            sourcepos: %MDEx.Sourcepos{}
+
   use MDEx.Document.Access
 end
 
@@ -2855,7 +2878,7 @@ defmodule MDEx.HtmlBlock do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], block_type: non_neg_integer(), literal: String.t()}
-  defstruct nodes: [], block_type: 0, literal: ""
+  defstruct nodes: [], block_type: 0, literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2867,7 +2890,7 @@ defmodule MDEx.Paragraph do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2882,7 +2905,7 @@ defmodule MDEx.Heading do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean(), closed: boolean()}
-  defstruct nodes: [], level: 1, setext: false, closed: false
+  defstruct nodes: [], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2894,7 +2917,7 @@ defmodule MDEx.ThematicBreak do
   """
 
   @type t :: %__MODULE__{}
-  defstruct []
+  defstruct sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2904,7 +2927,7 @@ defmodule MDEx.FootnoteDefinition do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], name: String.t(), total_references: non_neg_integer()}
-  defstruct nodes: [], name: "", total_references: 0
+  defstruct nodes: [], name: "", total_references: 0, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2914,7 +2937,7 @@ defmodule MDEx.FootnoteReference do
   """
 
   @type t :: %__MODULE__{name: String.t(), ref_num: non_neg_integer(), ix: non_neg_integer(), texts: [{String.t(), non_neg_integer()}]}
-  defstruct name: "", ref_num: nil, ix: nil, texts: []
+  defstruct name: "", ref_num: nil, ix: nil, texts: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2932,7 +2955,7 @@ defmodule MDEx.Table do
           num_rows: non_neg_integer(),
           num_nonempty_cells: non_neg_integer()
         }
-  defstruct nodes: [], alignments: [], num_columns: 0, num_rows: 0, num_nonempty_cells: 0
+  defstruct nodes: [], alignments: [], num_columns: 0, num_rows: 0, num_nonempty_cells: 0, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2944,7 +2967,7 @@ defmodule MDEx.TableRow do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], header: boolean()}
-  defstruct nodes: [], header: false
+  defstruct nodes: [], header: false, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2956,7 +2979,7 @@ defmodule MDEx.TableCell do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2968,7 +2991,7 @@ defmodule MDEx.Text do
   """
 
   @type t :: %__MODULE__{literal: String.t()}
-  defstruct literal: ""
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2980,7 +3003,7 @@ defmodule MDEx.TaskItem do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], checked: boolean(), marker: String.t()}
-  defstruct nodes: [], checked: false, marker: ""
+  defstruct nodes: [], checked: false, marker: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -2992,7 +3015,7 @@ defmodule MDEx.SoftBreak do
   """
 
   @type t :: %__MODULE__{}
-  defstruct []
+  defstruct sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3004,7 +3027,7 @@ defmodule MDEx.LineBreak do
   """
 
   @type t :: %__MODULE__{}
-  defstruct []
+  defstruct sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3016,7 +3039,7 @@ defmodule MDEx.Code do
   """
 
   @type t :: %__MODULE__{num_backticks: non_neg_integer(), literal: String.t()}
-  defstruct num_backticks: 0, literal: ""
+  defstruct num_backticks: 0, literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3028,7 +3051,7 @@ defmodule MDEx.HtmlInline do
   """
 
   @type t :: %__MODULE__{literal: String.t()}
-  defstruct literal: ""
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3038,7 +3061,7 @@ defmodule MDEx.Raw do
   """
 
   @type t :: %__MODULE__{literal: String.t()}
-  defstruct literal: ""
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3050,7 +3073,7 @@ defmodule MDEx.Emph do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3062,7 +3085,7 @@ defmodule MDEx.Strong do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3074,7 +3097,7 @@ defmodule MDEx.Strikethrough do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3086,7 +3109,7 @@ defmodule MDEx.Highlight do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3098,7 +3121,7 @@ defmodule MDEx.Insert do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3108,7 +3131,7 @@ defmodule MDEx.Superscript do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3120,7 +3143,7 @@ defmodule MDEx.Link do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t(), title: String.t() | nil}
-  defstruct nodes: [], url: "", title: nil
+  defstruct nodes: [], url: "", title: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3132,7 +3155,7 @@ defmodule MDEx.Image do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t(), title: String.t() | nil}
-  defstruct nodes: [], url: "", title: nil
+  defstruct nodes: [], url: "", title: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3142,7 +3165,7 @@ defmodule MDEx.ShortCode do
   """
 
   @type t :: %__MODULE__{code: String.t(), emoji: String.t()}
-  defstruct code: "", emoji: ""
+  defstruct code: "", emoji: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3152,7 +3175,7 @@ defmodule MDEx.Math do
   """
 
   @type t :: %__MODULE__{dollar_math: boolean(), display_math: boolean(), literal: String.t()}
-  defstruct dollar_math: false, display_math: false, literal: ""
+  defstruct dollar_math: false, display_math: false, literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3164,7 +3187,7 @@ defmodule MDEx.MultilineBlockQuote do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], fence_length: non_neg_integer(), fence_offset: non_neg_integer()}
-  defstruct nodes: [], fence_length: 0, fence_offset: 0
+  defstruct nodes: [], fence_length: 0, fence_offset: 0, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3176,7 +3199,7 @@ defmodule MDEx.Escaped do
   """
 
   @type t :: %__MODULE__{}
-  defstruct []
+  defstruct sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3186,7 +3209,7 @@ defmodule MDEx.WikiLink do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t()}
-  defstruct nodes: [], url: ""
+  defstruct nodes: [], url: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3196,7 +3219,7 @@ defmodule MDEx.Underline do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3206,7 +3229,7 @@ defmodule MDEx.Subscript do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3216,7 +3239,7 @@ defmodule MDEx.SpoileredText do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3228,7 +3251,7 @@ defmodule MDEx.Subtext do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
-  defstruct nodes: []
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3238,7 +3261,7 @@ defmodule MDEx.EscapedTag do
   """
 
   @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], literal: String.t()}
-  defstruct nodes: [], literal: ""
+  defstruct nodes: [], literal: "", sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3263,7 +3286,8 @@ defmodule MDEx.Alert do
             title: nil,
             multiline: false,
             fence_length: 0,
-            fence_offset: 0
+            fence_offset: 0,
+            sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
 end
@@ -3280,7 +3304,7 @@ defmodule MDEx.HeexBlock do
           literal: String.t(),
           node: String.t()
         }
-  defstruct nodes: [], literal: "", node: ""
+  defstruct nodes: [], literal: "", node: "", sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
 end
@@ -3293,7 +3317,7 @@ defmodule MDEx.HeexInline do
   """
 
   @type t :: %__MODULE__{literal: String.t()}
-  defstruct literal: ""
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
 end
 
 defimpl Enumerable,
@@ -3452,6 +3476,12 @@ defimpl String.Chars,
   ] do
   def to_string(node) do
     MDEx.to_markdown!(%MDEx.Document{nodes: [node]})
+  end
+end
+
+defimpl Jason.Encoder, for: MDEx.Sourcepos do
+  def encode(%MDEx.Sourcepos{start: {sl, sc}, end: {el, ec}}, opts) do
+    Jason.Encode.map(%{"start" => [sl, sc], "end" => [el, ec]}, opts)
   end
 end
 

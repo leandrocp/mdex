@@ -694,30 +694,46 @@ defmodule MDExTest do
   end
 
   test "parse_fragment" do
-    assert MDEx.parse_fragment!("test") == %MDEx.Text{literal: "test"}
-    assert MDEx.parse_fragment!("`elixir`") == %MDEx.Code{literal: "elixir", num_backticks: 1}
-    assert MDEx.parse_fragment!("# Test") == %MDEx.Heading{level: 1, nodes: [%MDEx.Text{literal: "Test"}], setext: false}
+    assert MDEx.parse_fragment!("test") == %MDEx.Text{literal: "test", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 4}}}
+    assert MDEx.parse_fragment!("`elixir`") == %MDEx.Code{literal: "elixir", num_backticks: 1, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 8}}}
+
+    assert MDEx.parse_fragment!("# Test") == %MDEx.Heading{
+             level: 1,
+             nodes: [%MDEx.Text{literal: "Test", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+             setext: false,
+             closed: false,
+             sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
+           }
 
     assert MDEx.parse_fragment!("- Test") == %MDEx.List{
              bullet_char: "-",
              delimiter: :period,
              list_type: :bullet,
              marker_offset: 0,
+             is_task_list: false,
              nodes: [
                %MDEx.ListItem{
-                 nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Test"}]}],
+                 nodes: [
+                   %MDEx.Paragraph{
+                     nodes: [%MDEx.Text{literal: "Test", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}}],
+                     sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 6}}
+                   }
+                 ],
                  bullet_char: "-",
                  delimiter: :period,
                  list_type: :bullet,
                  marker_offset: 0,
                  padding: 2,
                  start: 1,
-                 tight: false
+                 tight: false,
+                 is_task_list: false,
+                 sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
                }
              ],
              padding: 2,
              start: 1,
-             tight: true
+             tight: true,
+             sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 6}}
            }
   end
 

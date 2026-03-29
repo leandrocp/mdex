@@ -16,6 +16,33 @@ mod atoms {
     }
 }
 
+#[derive(Clone, Debug, Default, NifStruct, PartialEq)]
+#[module = "MDEx.Sourcepos"]
+pub struct ExSourcepos {
+    pub start: (usize, usize),
+    pub end: (usize, usize),
+}
+
+fn sourcepos_to_ex(sp: &Sourcepos) -> ExSourcepos {
+    ExSourcepos {
+        start: (sp.start.line, sp.start.column),
+        end: (sp.end.line, sp.end.column),
+    }
+}
+
+fn ex_to_sourcepos(ex: &ExSourcepos) -> Sourcepos {
+    Sourcepos {
+        start: LineColumn {
+            line: ex.start.0,
+            column: ex.start.1,
+        },
+        end: LineColumn {
+            line: ex.end.0,
+            column: ex.end.1,
+        },
+    }
+}
+
 // https://docs.rs/comrak/latest/comrak/nodes/enum.NodeValue.html
 #[derive(Clone, Debug, NifUntaggedEnum, PartialEq)]
 pub enum NewNode {
@@ -126,6 +153,7 @@ impl From<NewNode> for NodeValue {
 #[module = "MDEx.Document"]
 pub struct ExDocument {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExDocument> for NodeValue {
@@ -138,6 +166,7 @@ impl From<ExDocument> for NodeValue {
 #[module = "MDEx.FrontMatter"]
 pub struct ExFrontMatter {
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExFrontMatter> for NodeValue {
@@ -150,6 +179,7 @@ impl From<ExFrontMatter> for NodeValue {
 #[module = "MDEx.BlockQuote"]
 pub struct ExBlockQuote {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExBlockQuote> for NodeValue {
@@ -182,6 +212,7 @@ pub struct ExList {
     pub bullet_char: String,
     pub tight: bool,
     pub is_task_list: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExList> for NodeValue {
@@ -217,6 +248,7 @@ pub struct ExListItem {
     pub bullet_char: String,
     pub tight: bool,
     pub is_task_list: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExListItem> for NodeValue {
@@ -243,6 +275,7 @@ impl From<ExListItem> for NodeValue {
 #[module = "MDEx.DescriptionList"]
 pub struct ExDescriptionList {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExDescriptionList> for NodeValue {
@@ -258,6 +291,7 @@ pub struct ExDescriptionItem {
     pub marker_offset: usize,
     pub padding: usize,
     pub tight: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExDescriptionItem> for NodeValue {
@@ -274,6 +308,7 @@ impl From<ExDescriptionItem> for NodeValue {
 #[module = "MDEx.DescriptionTerm"]
 pub struct ExDescriptionTerm {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExDescriptionTerm> for NodeValue {
@@ -286,6 +321,7 @@ impl From<ExDescriptionTerm> for NodeValue {
 #[module = "MDEx.DescriptionDetails"]
 pub struct ExDescriptionDetails {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExDescriptionDetails> for NodeValue {
@@ -305,6 +341,7 @@ pub struct ExCodeBlock {
     pub info: String,
     pub literal: String,
     pub closed: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExCodeBlock> for NodeValue {
@@ -327,6 +364,7 @@ pub struct ExHtmlBlock {
     pub nodes: Vec<NewNode>,
     pub block_type: u8,
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHtmlBlock> for NodeValue {
@@ -342,6 +380,7 @@ impl From<ExHtmlBlock> for NodeValue {
 #[module = "MDEx.Paragraph"]
 pub struct ExParagraph {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExParagraph> for NodeValue {
@@ -357,6 +396,7 @@ pub struct ExHeading {
     pub level: u8,
     pub setext: bool,
     pub closed: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHeading> for NodeValue {
@@ -371,7 +411,9 @@ impl From<ExHeading> for NodeValue {
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.ThematicBreak"]
-pub struct ExThematicBreak {}
+pub struct ExThematicBreak {
+    pub sourcepos: ExSourcepos,
+}
 
 impl From<ExThematicBreak> for NodeValue {
     fn from(_node: ExThematicBreak) -> Self {
@@ -385,6 +427,7 @@ pub struct ExFootnoteDefinition {
     pub nodes: Vec<NewNode>,
     pub name: String,
     pub total_references: u32,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExFootnoteDefinition> for NodeValue {
@@ -403,6 +446,7 @@ pub struct ExFootnoteReference {
     pub ref_num: u32,
     pub ix: u32,
     pub texts: Vec<(String, usize)>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExFootnoteReference> for NodeValue {
@@ -432,6 +476,7 @@ pub struct ExTable {
     pub num_columns: usize,
     pub num_rows: usize,
     pub num_nonempty_cells: usize,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExTable> for NodeValue {
@@ -459,6 +504,7 @@ impl From<ExTable> for NodeValue {
 pub struct ExTableRow {
     pub nodes: Vec<NewNode>,
     pub header: bool,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExTableRow> for NodeValue {
@@ -471,6 +517,7 @@ impl From<ExTableRow> for NodeValue {
 #[module = "MDEx.TableCell"]
 pub struct ExTableCell {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExTableCell> for NodeValue {
@@ -483,6 +530,7 @@ impl From<ExTableCell> for NodeValue {
 #[module = "MDEx.Text"]
 pub struct ExText {
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExText> for NodeValue {
@@ -497,6 +545,7 @@ pub struct ExTaskItem {
     pub nodes: Vec<NewNode>,
     pub checked: bool,
     pub marker: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExTaskItem> for NodeValue {
@@ -513,7 +562,9 @@ impl From<ExTaskItem> for NodeValue {
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.SoftBreak"]
-pub struct ExSoftBreak {}
+pub struct ExSoftBreak {
+    pub sourcepos: ExSourcepos,
+}
 
 impl From<ExSoftBreak> for NodeValue {
     fn from(_node: ExSoftBreak) -> Self {
@@ -523,7 +574,9 @@ impl From<ExSoftBreak> for NodeValue {
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.LineBreak"]
-pub struct ExLineBreak {}
+pub struct ExLineBreak {
+    pub sourcepos: ExSourcepos,
+}
 
 impl From<ExLineBreak> for NodeValue {
     fn from(_node: ExLineBreak) -> Self {
@@ -536,6 +589,7 @@ impl From<ExLineBreak> for NodeValue {
 pub struct ExCode {
     pub num_backticks: usize,
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExCode> for NodeValue {
@@ -551,6 +605,7 @@ impl From<ExCode> for NodeValue {
 #[module = "MDEx.HtmlInline"]
 pub struct ExHtmlInline {
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHtmlInline> for NodeValue {
@@ -565,6 +620,7 @@ pub struct ExHeexBlock {
     pub nodes: Vec<NewNode>,
     pub literal: String,
     pub node: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHeexBlock> for NodeValue {
@@ -587,6 +643,7 @@ impl From<ExHeexBlock> for NodeValue {
 #[module = "MDEx.HeexInline"]
 pub struct ExHeexInline {
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHeexInline> for NodeValue {
@@ -599,6 +656,7 @@ impl From<ExHeexInline> for NodeValue {
 #[module = "MDEx.Raw"]
 pub struct ExRaw {
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExRaw> for NodeValue {
@@ -611,6 +669,7 @@ impl From<ExRaw> for NodeValue {
 #[module = "MDEx.Emph"]
 pub struct ExEmph {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExEmph> for NodeValue {
@@ -623,6 +682,7 @@ impl From<ExEmph> for NodeValue {
 #[module = "MDEx.Strong"]
 pub struct ExStrong {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExStrong> for NodeValue {
@@ -635,6 +695,7 @@ impl From<ExStrong> for NodeValue {
 #[module = "MDEx.Strikethrough"]
 pub struct ExStrikethrough {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExStrikethrough> for NodeValue {
@@ -647,6 +708,7 @@ impl From<ExStrikethrough> for NodeValue {
 #[module = "MDEx.Highlight"]
 pub struct ExHighlight {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExHighlight> for NodeValue {
@@ -659,6 +721,7 @@ impl From<ExHighlight> for NodeValue {
 #[module = "MDEx.Insert"]
 pub struct ExInsert {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExInsert> for NodeValue {
@@ -671,6 +734,7 @@ impl From<ExInsert> for NodeValue {
 #[module = "MDEx.Superscript"]
 pub struct ExSuperscript {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExSuperscript> for NodeValue {
@@ -685,6 +749,7 @@ pub struct ExLink {
     pub nodes: Vec<NewNode>,
     pub url: String,
     pub title: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExLink> for NodeValue {
@@ -702,6 +767,7 @@ pub struct ExImage {
     pub nodes: Vec<NewNode>,
     pub url: String,
     pub title: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExImage> for NodeValue {
@@ -717,6 +783,7 @@ impl From<ExImage> for NodeValue {
 pub struct ExShortCode {
     pub code: String,
     pub emoji: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExShortCode> for NodeValue {
@@ -734,6 +801,7 @@ pub struct ExMath {
     pub dollar_math: bool,
     pub display_math: bool,
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExMath> for NodeValue {
@@ -752,6 +820,7 @@ pub struct ExMultilineBlockQuote {
     pub nodes: Vec<NewNode>,
     pub fence_length: usize,
     pub fence_offset: usize,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExMultilineBlockQuote> for NodeValue {
@@ -765,7 +834,9 @@ impl From<ExMultilineBlockQuote> for NodeValue {
 
 #[derive(Clone, Debug, NifStruct, PartialEq)]
 #[module = "MDEx.Escaped"]
-pub struct ExEscaped {}
+pub struct ExEscaped {
+    pub sourcepos: ExSourcepos,
+}
 
 impl From<ExEscaped> for NodeValue {
     fn from(_node: ExEscaped) -> Self {
@@ -778,6 +849,7 @@ impl From<ExEscaped> for NodeValue {
 pub struct ExWikiLink {
     pub nodes: Vec<NewNode>,
     pub url: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExWikiLink> for NodeValue {
@@ -792,6 +864,7 @@ impl From<ExWikiLink> for NodeValue {
 #[module = "MDEx.Underline"]
 pub struct ExUnderline {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExUnderline> for NodeValue {
@@ -804,6 +877,7 @@ impl From<ExUnderline> for NodeValue {
 #[module = "MDEx.Subscript"]
 pub struct ExSubscript {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExSubscript> for NodeValue {
@@ -816,6 +890,7 @@ impl From<ExSubscript> for NodeValue {
 #[module = "MDEx.SpoileredText"]
 pub struct ExSpoileredText {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExSpoileredText> for NodeValue {
@@ -828,6 +903,7 @@ impl From<ExSpoileredText> for NodeValue {
 #[module = "MDEx.Subtext"]
 pub struct ExSubtext {
     pub nodes: Vec<NewNode>,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExSubtext> for NodeValue {
@@ -841,6 +917,7 @@ impl From<ExSubtext> for NodeValue {
 pub struct ExEscapedTag {
     pub nodes: Vec<NewNode>,
     pub literal: String,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExEscapedTag> for NodeValue {
@@ -868,6 +945,7 @@ pub struct ExAlert {
     pub multiline: bool,
     pub fence_length: usize,
     pub fence_offset: usize,
+    pub sourcepos: ExSourcepos,
 }
 
 impl From<ExAlert> for NodeValue {
@@ -895,40 +973,99 @@ pub fn ex_document_to_comrak_ast<'a>(
     let node_value = NodeValue::from(new_node.clone());
     let node_arena = arena.alloc(node_value.into());
 
-    if let NewNode::Document(ExDocument { nodes })
-    | NewNode::BlockQuote(ExBlockQuote { nodes })
-    | NewNode::List(ExList { nodes, .. })
-    | NewNode::ListItem(ExListItem { nodes, .. })
-    | NewNode::DescriptionList(ExDescriptionList { nodes })
-    | NewNode::DescriptionItem(ExDescriptionItem { nodes, .. })
-    | NewNode::DescriptionTerm(ExDescriptionTerm { nodes })
-    | NewNode::DescriptionDetails(ExDescriptionDetails { nodes })
-    | NewNode::CodeBlock(ExCodeBlock { nodes, .. })
-    | NewNode::HtmlBlock(ExHtmlBlock { nodes, .. })
-    | NewNode::Paragraph(ExParagraph { nodes })
-    | NewNode::Heading(ExHeading { nodes, .. })
-    | NewNode::FootnoteDefinition(ExFootnoteDefinition { nodes, .. })
-    | NewNode::Table(ExTable { nodes, .. })
-    | NewNode::TableRow(ExTableRow { nodes, .. })
-    | NewNode::TableCell(ExTableCell { nodes })
-    | NewNode::TaskItem(ExTaskItem { nodes, .. })
-    | NewNode::Emph(ExEmph { nodes })
-    | NewNode::Strong(ExStrong { nodes })
-    | NewNode::Link(ExLink { nodes, .. })
-    | NewNode::Image(ExImage { nodes, .. })
-    | NewNode::Strikethrough(ExStrikethrough { nodes })
-    | NewNode::Highlight(ExHighlight { nodes })
-    | NewNode::Insert(ExInsert { nodes })
-    | NewNode::Superscript(ExSuperscript { nodes })
-    | NewNode::MultilineBlockQuote(ExMultilineBlockQuote { nodes, .. })
-    | NewNode::WikiLink(ExWikiLink { nodes, .. })
-    | NewNode::Underline(ExUnderline { nodes })
-    | NewNode::Subscript(ExSubscript { nodes })
-    | NewNode::SpoileredText(ExSpoileredText { nodes })
-    | NewNode::Subtext(ExSubtext { nodes })
-    | NewNode::EscapedTag(ExEscapedTag { nodes, .. })
-    | NewNode::Alert(ExAlert { nodes, .. }) = new_node
-    {
+    let (sourcepos, children) = match new_node {
+        NewNode::Document(ExDocument { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::FrontMatter(ExFrontMatter { sourcepos, .. }) => (sourcepos, None),
+        NewNode::BlockQuote(ExBlockQuote { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::List(ExList {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::ListItem(ExListItem {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::DescriptionList(ExDescriptionList { nodes, sourcepos }) => {
+            (sourcepos, Some(nodes))
+        }
+        NewNode::DescriptionItem(ExDescriptionItem {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::DescriptionTerm(ExDescriptionTerm { nodes, sourcepos }) => {
+            (sourcepos, Some(nodes))
+        }
+        NewNode::DescriptionDetails(ExDescriptionDetails { nodes, sourcepos }) => {
+            (sourcepos, Some(nodes))
+        }
+        NewNode::CodeBlock(ExCodeBlock {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::HtmlBlock(ExHtmlBlock {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::Paragraph(ExParagraph { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Heading(ExHeading {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::ThematicBreak(ExThematicBreak { sourcepos }) => (sourcepos, None),
+        NewNode::FootnoteDefinition(ExFootnoteDefinition {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::FootnoteReference(ExFootnoteReference { sourcepos, .. }) => (sourcepos, None),
+        NewNode::Table(ExTable {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::TableRow(ExTableRow {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::TableCell(ExTableCell { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Text(ExText { sourcepos, .. }) => (sourcepos, None),
+        NewNode::TaskItem(ExTaskItem {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::SoftBreak(ExSoftBreak { sourcepos }) => (sourcepos, None),
+        NewNode::LineBreak(ExLineBreak { sourcepos }) => (sourcepos, None),
+        NewNode::Code(ExCode { sourcepos, .. }) => (sourcepos, None),
+        NewNode::HtmlInline(ExHtmlInline { sourcepos, .. }) => (sourcepos, None),
+        NewNode::Raw(ExRaw { sourcepos, .. }) => (sourcepos, None),
+        NewNode::Emph(ExEmph { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Strong(ExStrong { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Strikethrough(ExStrikethrough { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Highlight(ExHighlight { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Insert(ExInsert { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Superscript(ExSuperscript { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Link(ExLink {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::Image(ExImage {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::ShortCode(ExShortCode { sourcepos, .. }) => (sourcepos, None),
+        NewNode::Math(ExMath { sourcepos, .. }) => (sourcepos, None),
+        NewNode::MultilineBlockQuote(ExMultilineBlockQuote {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::Escaped(ExEscaped { sourcepos }) => (sourcepos, None),
+        NewNode::WikiLink(ExWikiLink {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::Underline(ExUnderline { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Subscript(ExSubscript { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::SpoileredText(ExSpoileredText { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::Subtext(ExSubtext { nodes, sourcepos }) => (sourcepos, Some(nodes)),
+        NewNode::EscapedTag(ExEscapedTag {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::Alert(ExAlert {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::HeexBlock(ExHeexBlock {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
+        NewNode::HeexInline(ExHeexInline { sourcepos, .. }) => (sourcepos, None),
+    };
+
+    node_arena.data_mut().sourcepos = ex_to_sourcepos(&sourcepos);
+
+    if let Some(nodes) = children {
         for node in nodes {
             let child = ex_document_to_comrak_ast(arena, node);
             node_arena.append(child);
@@ -941,15 +1078,23 @@ pub fn ex_document_to_comrak_ast<'a>(
 pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
     let children: Vec<NewNode> = node.children().map(comrak_ast_to_ex_document).collect();
     let node_data = node.data();
+    let sourcepos = sourcepos_to_ex(&node_data.sourcepos);
 
     match &node_data.value {
-        NodeValue::Document => NewNode::Document(ExDocument { nodes: children }),
+        NodeValue::Document => NewNode::Document(ExDocument {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::FrontMatter(ref literal) => NewNode::FrontMatter(ExFrontMatter {
             literal: literal.to_string(),
+            sourcepos,
         }),
 
-        NodeValue::BlockQuote => NewNode::BlockQuote(ExBlockQuote { nodes: children }),
+        NodeValue::BlockQuote => NewNode::BlockQuote(ExBlockQuote {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::List(ref attrs) => NewNode::List(ExList {
             nodes: children,
@@ -967,6 +1112,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             bullet_char: char_to_string(attrs.bullet_char).unwrap_or_default(),
             tight: attrs.tight,
             is_task_list: attrs.is_task_list,
+            sourcepos,
         }),
 
         NodeValue::Item(ref attrs) => NewNode::ListItem(ExListItem {
@@ -985,26 +1131,31 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             bullet_char: char_to_string(attrs.bullet_char).unwrap_or_default(),
             tight: attrs.tight,
             is_task_list: attrs.is_task_list,
+            sourcepos,
         }),
 
-        NodeValue::DescriptionList => {
-            NewNode::DescriptionList(ExDescriptionList { nodes: children })
-        }
+        NodeValue::DescriptionList => NewNode::DescriptionList(ExDescriptionList {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::DescriptionItem(ref attrs) => NewNode::DescriptionItem(ExDescriptionItem {
             nodes: children,
             marker_offset: attrs.marker_offset,
             padding: attrs.padding,
             tight: attrs.tight,
+            sourcepos,
         }),
 
-        NodeValue::DescriptionTerm => {
-            NewNode::DescriptionTerm(ExDescriptionTerm { nodes: children })
-        }
+        NodeValue::DescriptionTerm => NewNode::DescriptionTerm(ExDescriptionTerm {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::DescriptionDetails => {
-            NewNode::DescriptionDetails(ExDescriptionDetails { nodes: children })
-        }
+        NodeValue::DescriptionDetails => NewNode::DescriptionDetails(ExDescriptionDetails {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::CodeBlock(attrs) => NewNode::CodeBlock(ExCodeBlock {
             nodes: children,
@@ -1015,30 +1166,37 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             info: attrs.info.to_string(),
             literal: attrs.literal.to_string(),
             closed: attrs.closed,
+            sourcepos,
         }),
 
         NodeValue::HtmlBlock(ref attrs) => NewNode::HtmlBlock(ExHtmlBlock {
             nodes: children,
             block_type: attrs.block_type,
             literal: attrs.literal.to_string(),
+            sourcepos,
         }),
 
-        NodeValue::Paragraph => NewNode::Paragraph(ExParagraph { nodes: children }),
+        NodeValue::Paragraph => NewNode::Paragraph(ExParagraph {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::Heading(ref attrs) => NewNode::Heading(ExHeading {
             nodes: children,
             level: attrs.level,
             setext: attrs.setext,
             closed: attrs.closed,
+            sourcepos,
         }),
 
-        NodeValue::ThematicBreak => NewNode::ThematicBreak(ExThematicBreak {}),
+        NodeValue::ThematicBreak => NewNode::ThematicBreak(ExThematicBreak { sourcepos }),
 
         NodeValue::FootnoteDefinition(ref attrs) => {
             NewNode::FootnoteDefinition(ExFootnoteDefinition {
                 nodes: children,
                 name: attrs.name.to_string(),
                 total_references: attrs.total_references,
+                sourcepos,
             })
         }
 
@@ -1048,6 +1206,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
                 ref_num: attrs.ref_num,
                 ix: attrs.ix,
                 texts: attrs.texts.clone(),
+                sourcepos,
             })
         }
 
@@ -1066,75 +1225,107 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             num_columns: attrs.num_columns,
             num_rows: attrs.num_rows,
             num_nonempty_cells: attrs.num_nonempty_cells,
+            sourcepos,
         }),
 
         NodeValue::TableRow(header) => NewNode::TableRow(ExTableRow {
             nodes: children,
             header: *header,
+            sourcepos,
         }),
 
-        NodeValue::TableCell => NewNode::TableCell(ExTableCell { nodes: children }),
+        NodeValue::TableCell => NewNode::TableCell(ExTableCell {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::Text(ref literal) => NewNode::Text(ExText {
             literal: literal.to_string(),
+            sourcepos,
         }),
 
         NodeValue::TaskItem(marker) => NewNode::TaskItem(ExTaskItem {
             nodes: children,
             checked: marker.symbol.is_some(),
             marker: marker.symbol.map_or_else(String::new, |c| c.to_string()),
+            sourcepos,
         }),
 
-        NodeValue::SoftBreak => NewNode::SoftBreak(ExSoftBreak {}),
+        NodeValue::SoftBreak => NewNode::SoftBreak(ExSoftBreak { sourcepos }),
 
-        NodeValue::LineBreak => NewNode::LineBreak(ExLineBreak {}),
+        NodeValue::LineBreak => NewNode::LineBreak(ExLineBreak { sourcepos }),
 
         NodeValue::Code(ref attrs) => NewNode::Code(ExCode {
             num_backticks: attrs.num_backticks,
             literal: attrs.literal.to_string(),
+            sourcepos,
         }),
 
         NodeValue::HtmlInline(ref literal) => NewNode::HtmlInline(ExHtmlInline {
             literal: literal.to_string(),
+            sourcepos,
         }),
 
         NodeValue::Raw(ref literal) => NewNode::Raw(ExRaw {
             literal: literal.to_string(),
+            sourcepos,
         }),
 
-        NodeValue::Emph => NewNode::Emph(ExEmph { nodes: children }),
+        NodeValue::Emph => NewNode::Emph(ExEmph {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Strong => NewNode::Strong(ExStrong { nodes: children }),
+        NodeValue::Strong => NewNode::Strong(ExStrong {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Strikethrough => NewNode::Strikethrough(ExStrikethrough { nodes: children }),
+        NodeValue::Strikethrough => NewNode::Strikethrough(ExStrikethrough {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Highlight => NewNode::Highlight(ExHighlight { nodes: children }),
+        NodeValue::Highlight => NewNode::Highlight(ExHighlight {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Insert => NewNode::Insert(ExInsert { nodes: children }),
+        NodeValue::Insert => NewNode::Insert(ExInsert {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Superscript => NewNode::Superscript(ExSuperscript { nodes: children }),
+        NodeValue::Superscript => NewNode::Superscript(ExSuperscript {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::Link(attrs) => NewNode::Link(ExLink {
             nodes: children,
             url: attrs.url.to_string(),
             title: attrs.title.to_string(),
+            sourcepos,
         }),
 
         NodeValue::Image(attrs) => NewNode::Image(ExImage {
             nodes: children,
             url: attrs.url.to_string(),
             title: attrs.title.to_string(),
+            sourcepos,
         }),
 
         NodeValue::ShortCode(attrs) => NewNode::ShortCode(ExShortCode {
             code: attrs.code.to_string(),
             emoji: attrs.emoji.to_string(),
+            sourcepos,
         }),
 
         NodeValue::Math(ref attrs) => NewNode::Math(ExMath {
             dollar_math: attrs.dollar_math,
             display_math: attrs.display_math,
             literal: attrs.literal.to_string(),
+            sourcepos,
         }),
 
         NodeValue::MultilineBlockQuote(ref attrs) => {
@@ -1142,27 +1333,42 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
                 nodes: children,
                 fence_length: attrs.fence_length,
                 fence_offset: attrs.fence_offset,
+                sourcepos,
             })
         }
 
-        NodeValue::Escaped => NewNode::Escaped(ExEscaped {}),
+        NodeValue::Escaped => NewNode::Escaped(ExEscaped { sourcepos }),
 
         NodeValue::WikiLink(ref attrs) => NewNode::WikiLink(ExWikiLink {
             nodes: children,
             url: attrs.url.to_string(),
+            sourcepos,
         }),
 
-        NodeValue::Underline => NewNode::Underline(ExUnderline { nodes: children }),
+        NodeValue::Underline => NewNode::Underline(ExUnderline {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Subscript => NewNode::Subscript(ExSubscript { nodes: children }),
+        NodeValue::Subscript => NewNode::Subscript(ExSubscript {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::SpoileredText => NewNode::SpoileredText(ExSpoileredText { nodes: children }),
+        NodeValue::SpoileredText => NewNode::SpoileredText(ExSpoileredText {
+            nodes: children,
+            sourcepos,
+        }),
 
-        NodeValue::Subtext => NewNode::Subtext(ExSubtext { nodes: children }),
+        NodeValue::Subtext => NewNode::Subtext(ExSubtext {
+            nodes: children,
+            sourcepos,
+        }),
 
         NodeValue::EscapedTag(ref literal) => NewNode::EscapedTag(ExEscapedTag {
             nodes: children,
             literal: literal.to_string(),
+            sourcepos,
         }),
 
         NodeValue::Alert(attrs) => NewNode::Alert(ExAlert {
@@ -1178,6 +1384,7 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
             multiline: attrs.multiline,
             fence_length: attrs.fence_length,
             fence_offset: attrs.fence_offset,
+            sourcepos,
         }),
 
         NodeValue::HeexBlock(ref attrs) => NewNode::HeexBlock(ExHeexBlock {
@@ -1190,10 +1397,12 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
                 HeexNode::Expression => "expression".to_string(),
                 HeexNode::Tag(tag) => tag.clone(),
             },
+            sourcepos,
         }),
 
         NodeValue::HeexInline(ref literal) => NewNode::HeexInline(ExHeexInline {
             literal: literal.to_string(),
+            sourcepos,
         }),
     }
 }
