@@ -1,20 +1,13 @@
 # Changelog
 
-## Unreleased
-
-### Added
-- Automate releases with release-please and Hex publishing from release tags
-
 ## [0.12.0](https://github.com/leandrocp/mdex/compare/v0.11.7...v0.12.0) (2026-03-29)
 
-
-### ⚠ BREAKING CHANGES
-
-* add sourcepos (line:column) in all nodes ([#320](https://github.com/leandrocp/mdex/issues/320))
+This version introduces a `:sourcepos` field in all nodes which might cause breaking changes
+if you match or depend on the fields of those structs, for example in tests.
 
 ### Features
 
-* add sourcepos (line:column) in all nodes ([#320](https://github.com/leandrocp/mdex/issues/320)) ([eab8050](https://github.com/leandrocp/mdex/commit/eab80502501169a752f0ab876f513c8612a188e1))
+* Add sourcepos (line:column) in all nodes ([#320](https://github.com/leandrocp/mdex/issues/320)) ([eab8050](https://github.com/leandrocp/mdex/commit/eab80502501169a752f0ab876f513c8612a188e1))
 
 ## 0.11.7 - 2026-03-20
 
