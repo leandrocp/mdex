@@ -83,6 +83,9 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 ```
 
 #### GitHub Flavored Markdown (GFM)
+
+_Using the `:html_multi_themes` syntax highlighting formatter is not required but you get light/dark using it._
+
 ````elixir
 Mix.install([
   {:mdex_gfm, "~> 0.1"}
