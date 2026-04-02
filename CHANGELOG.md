@@ -2,6 +2,9 @@
 
 ## [0.12.1](https://github.com/leandrocp/mdex/compare/v0.12.0...v0.12.1) (2026-04-02)
 
+### Maintenance
+
+* update lumis to v0.5 ([#324](https://github.com/leandrocp/mdex/issues/324)) ([7670465](https://github.com/leandrocp/mdex/commit/7670465997511fbfe4581b6cc6d1b230f6060c7e))
 
 ### Bug Fixes
 
