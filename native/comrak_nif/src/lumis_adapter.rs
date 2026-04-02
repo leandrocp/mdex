@@ -435,7 +435,8 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
             source,
             language,
             theme.clone(),
-            |text, range, scope, _style| {
+            |text, language_name, range, scope, _style| {
+                let language = Some(Language::guess(Some(language_name), source));
                 if range.start > last_end {
                     let gap = &source[last_end..range.start];
                     html_output.push_str(gap);
@@ -451,7 +452,7 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
                             html::span_multi_themes(
                                 text,
                                 scope,
-                                Some(language),
+                                language,
                                 &config.themes,
                                 config.default_theme.as_deref(),
                                 &config.css_variable_prefix,
@@ -461,8 +462,8 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
                         } else {
                             html::span_inline(
                                 text,
+                                language,
                                 scope,
-                                Some(language),
                                 theme.as_ref(),
                                 italic,
                                 include_highlights,
@@ -471,8 +472,8 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
                     } else {
                         html::span_inline(
                             text,
+                            language,
                             scope,
-                            Some(language),
                             theme.as_ref(),
                             italic,
                             include_highlights,
