@@ -148,7 +148,7 @@ defmodule MDEx.FragmentParser do
                 {complete_list_line(core, line), :none}
 
               true ->
-                case incomplete_link_completion(core) do
+                case incomplete_link_completion(core, trailing) do
                   nil ->
                     if line_suffix != "", do: {core <> line_suffix, :none}, else: {core, :none}
 
@@ -509,7 +509,7 @@ defmodule MDEx.FragmentParser do
             replace_last_line(core, new_line)
 
           "" ->
-            case incomplete_link_completion(content) do
+            case incomplete_link_completion(content, "") do
               nil -> core
               completion -> replace_last_line(core, prefix <> completion)
             end
@@ -838,19 +838,23 @@ defmodule MDEx.FragmentParser do
     rem(count_char(prefix, ?`), 2) == 1
   end
 
-  defp incomplete_link_completion(core) do
-    cond do
-      has_incomplete_link_url?(core) ->
-        core <> ")"
+  defp incomplete_link_completion(core, trailing) do
+    if String.starts_with?(trailing, "\n") do
+      nil
+    else
+      cond do
+        has_incomplete_link_url?(core) ->
+          core <> ")"
 
-      incomplete_link_brackets?(core) ->
-        ensure_placeholder_prefix(core, "](mdex:incomplete-link)")
+        incomplete_link_brackets?(core) ->
+          ensure_placeholder_prefix(core, "](mdex:incomplete-link)")
 
-      incomplete_link_destination?(core) ->
-        ensure_placeholder_prefix(core, "(mdex:incomplete-link)")
+        incomplete_link_destination?(core) ->
+          ensure_placeholder_prefix(core, "(mdex:incomplete-link)")
 
-      true ->
-        nil
+        true ->
+          nil
+      end
     end
   end
 
@@ -894,14 +898,22 @@ defmodule MDEx.FragmentParser do
   end
 
   defp incomplete_link_brackets?(core) do
-    has_unclosed_bracket?(core, 0)
+    case unclosed_bracket_start(core, byte_size(core) - 1, 0) do
+      nil -> false
+      start -> not contains_newline_from?(core, start)
+    end
   end
 
-  defp has_unclosed_bracket?(<<>>, depth), do: depth > 0
-  defp has_unclosed_bracket?(<<?\[, rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth + 1)
-  defp has_unclosed_bracket?(<<?\], rest::binary>>, 0), do: has_unclosed_bracket?(rest, 0)
-  defp has_unclosed_bracket?(<<?\], rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth - 1)
-  defp has_unclosed_bracket?(<<_, rest::binary>>, depth), do: has_unclosed_bracket?(rest, depth)
+  defp unclosed_bracket_start(_core, index, _depth) when index < 0, do: nil
+
+  defp unclosed_bracket_start(core, index, depth) do
+    case :binary.at(core, index) do
+      ?] -> unclosed_bracket_start(core, index - 1, depth + 1)
+      ?[ when depth == 0 -> index
+      ?[ -> unclosed_bracket_start(core, index - 1, depth - 1)
+      _ -> unclosed_bracket_start(core, index - 1, depth)
+    end
+  end
 
   defp incomplete_link_destination?(core) do
     case trailing_link_label(core) do
@@ -987,7 +999,11 @@ defmodule MDEx.FragmentParser do
       case :binary.at(core, last_index) do
         ?] ->
           with start when not is_nil(start) <- find_label_start(core, last_index - 1) do
-            {start, last_index - start + 1}
+            if contains_newline_from?(core, start) do
+              nil
+            else
+              {start, last_index - start + 1}
+            end
           else
             _ -> nil
           end
@@ -1005,6 +1021,15 @@ defmodule MDEx.FragmentParser do
       ?[ -> index
       ?] -> nil
       _ -> find_label_start(binary, index - 1)
+    end
+  end
+
+  defp contains_newline_from?(binary, start) do
+    length = byte_size(binary) - start
+
+    case :binary.match(binary, "\n", [{:scope, {start, length}}]) do
+      :nomatch -> false
+      _ -> true
     end
   end
 end
