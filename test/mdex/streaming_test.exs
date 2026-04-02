@@ -527,6 +527,22 @@ defmodule MDEx.StreamingTest do
            ] = nodes(chunks)
   end
 
+  test "incomplete link label crossing newline stays as text" do
+    chunks = [
+      "[foo\nbar"
+    ]
+
+    assert [
+             %MDEx.Paragraph{
+               nodes: [
+                 %Text{literal: "[foo"},
+                 %SoftBreak{},
+                 %Text{literal: "bar"}
+               ]
+             }
+           ] = nodes(chunks)
+  end
+
   test "incomplete link with incomplete url" do
     chunks = [
       "[CommonMark ",

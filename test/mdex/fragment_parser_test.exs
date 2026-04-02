@@ -178,6 +178,14 @@ defmodule MDEx.FragmentParserTest do
     assert complete("[foo]") == "[foo](mdex:incomplete-link)"
   end
 
+  test "incomplete link label crossing newline is not completed" do
+    assert complete("[foo\nbar") == "[foo\nbar"
+  end
+
+  test "trailing link label on previous line is not completed" do
+    assert complete("[foo]\n") == "[foo]\n"
+  end
+
   test "![foo" do
     assert complete("![foo") == "![foo](mdex:incomplete-link)"
   end
@@ -399,6 +407,10 @@ defmodule MDEx.FragmentParserTest do
 
     test "incomplete link destination with trailing label" do
       assert complete("text [label]") == "text [label](mdex:incomplete-link)"
+    end
+
+    test "trailing label on previous line is left as text" do
+      assert complete("text [label]\nnext") == "text [label]\nnext"
     end
 
     test "tilde fence" do
