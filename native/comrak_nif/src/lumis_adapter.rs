@@ -436,7 +436,7 @@ impl SyntaxHighlighterAdapter for LumisAdapter {
             language,
             theme.clone(),
             |text, language_name, range, scope, _style| {
-                let language = Some(Language::guess(Some(language_name), source));
+                let language = Some(language_name);
                 if range.start > last_end {
                     let gap = &source[last_end..range.start];
                     html_output.push_str(gap);
