@@ -984,6 +984,11 @@ defmodule MDEx.Document do
       Brute-force and expensive, but produces nicer output.
       Note that the result may not in fact be minimal.
       """
+    ],
+    compact_html: [
+      type: :boolean,
+      default: false,
+      doc: "Suppress newlines in pretty-printing"
     ]
   ]
 
