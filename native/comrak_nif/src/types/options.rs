@@ -144,6 +144,7 @@ pub struct ExRenderOptions {
     pub tasklist_classes: bool,
     pub ol_width: usize,
     pub experimental_minimize_commonmark: bool,
+    pub compact_html: bool,
 }
 
 impl From<ExRenderOptions> for Render {
@@ -165,6 +166,7 @@ impl From<ExRenderOptions> for Render {
             tasklist_classes: options.tasklist_classes,
             ol_width: options.ol_width,
             experimental_minimize_commonmark: options.experimental_minimize_commonmark,
+            compact_html: options.compact_html,
         }
     }
 }
