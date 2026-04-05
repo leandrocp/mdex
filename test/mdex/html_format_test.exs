@@ -632,4 +632,26 @@ defmodule MDEx.HTMLFormatTest do
       assert html =~ "<pre class=\"error\">Invalid DOT: invalid!</pre>"
     end
   end
+
+  test "compact_html suppresses newlines between block elements" do
+    opts = [render: [compact_html: true, unsafe: true]]
+    assert {:ok, html} = MDEx.to_html("# Hello\n\nWorld.\n", opts)
+    assert html == "<h1>Hello</h1><p>World.</p>"
+  end
+
+  test "block_directive renders as div" do
+    assert_format(
+      ":::warning\nparagraph\n:::\n",
+      "<div class=\"warning\">\n<p>paragraph</p>\n</div>",
+      block_directive: true
+    )
+  end
+
+  test "block_directive with nested content" do
+    assert_format(
+      ":::note\n# Title\n\nSome text.\n\n- item one\n- item two\n:::\n",
+      "<div class=\"note\">\n<h1>Title</h1>\n<p>Some text.</p>\n<ul>\n<li>item one</li>\n<li>item two</li>\n</ul>\n</div>",
+      block_directive: true
+    )
+  end
 end

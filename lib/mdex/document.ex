@@ -707,7 +707,17 @@ defmodule MDEx.Document do
     header_ids: [
       type: {:or, [:string, nil]},
       default: nil,
-      doc: "Enables the header IDs Comrak extension."
+      doc: "Deprecated: use `:header_id_prefix` instead."
+    ],
+    header_id_prefix: [
+      type: {:or, [:string, nil]},
+      default: nil,
+      doc: "Enables the header IDs Comrak extension, with the given ID prefix."
+    ],
+    header_id_prefix_in_href: [
+      type: :boolean,
+      default: false,
+      doc: "When enabled alongside `header_id_prefix`, the prefix is also applied to the `href` anchor in the generated link."
     ],
     footnotes: [
       type: :boolean,
@@ -850,6 +860,11 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Enables Phoenix HEEx components and expressions."
+    ],
+    block_directive: [
+      type: :boolean,
+      default: false,
+      doc: "Enables the container block directive extension. Uses `:::info` syntax to create `<div class=\"info\">` blocks."
     ]
   ]
 
@@ -894,6 +909,12 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Wrap escaped characters in a <span> to allow any post-processing to recognize them."
+    ],
+    sourcepos_chars: [
+      type: :boolean,
+      default: false,
+      doc:
+        "Convert byte-based columns in Sourcepos to character-based columns, so that multi-byte UTF-8 characters occupy one column instead of multiple."
     ]
   ]
 
@@ -1376,6 +1397,7 @@ defmodule MDEx.Document do
           | MDEx.Subtext.t()
           | MDEx.EscapedTag.t()
           | MDEx.Alert.t()
+          | MDEx.BlockDirective.t()
           | MDEx.HeexBlock.t()
           | MDEx.HeexInline.t()
 
@@ -2512,7 +2534,8 @@ defmodule MDEx.Document do
       MDEx.SpoileredText,
       MDEx.Subtext,
       MDEx.EscapedTag,
-      MDEx.Alert
+      MDEx.Alert,
+      MDEx.BlockDirective
     ]
   end
 
@@ -2571,14 +2594,32 @@ defmodule MDEx.Document do
       |> Keyword.get(:codefence_renderers, %{})
       |> Map.keys()
 
+    extension = migrate_header_ids(options[:extension])
+
     %{
-      extension: Map.new(options[:extension]),
+      extension: Map.new(extension),
       parse: Map.new(options[:parse]),
       render: Map.new(render),
       syntax_highlight: syntax_highlight,
       sanitize: sanitize,
       codefence_renderer_langs: codefence_renderer_langs
     }
+  end
+
+  defp migrate_header_ids(extension) do
+    {header_ids, extension} = Keyword.pop(extension, :header_ids)
+
+    if header_ids do
+      IO.warn("extension :header_ids is deprecated, use :header_id_prefix instead")
+
+      if Keyword.has_key?(extension, :header_id_prefix) do
+        extension
+      else
+        Keyword.put(extension, :header_id_prefix, header_ids)
+      end
+    else
+      extension
+    end
   end
 
   @doc false
@@ -3296,6 +3337,37 @@ defmodule MDEx.Alert do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.BlockDirective do
+  @moduledoc """
+  Container block directive.
+
+  Uses `:::` syntax to create container blocks:
+
+      :::warning
+      A paragraph.
+
+      - item one
+      - item two
+      :::
+
+  Renders as `<div class="warning">...</div>`.
+  """
+
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          info: String.t(),
+          fence_length: non_neg_integer(),
+          fence_offset: non_neg_integer()
+        }
+  defstruct nodes: [],
+            info: "",
+            fence_length: 0,
+            fence_offset: 0,
+            sourcepos: %MDEx.Sourcepos{}
+
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.HeexBlock do
   @moduledoc """
   Phoenix LiveView HEEx block-level element.
@@ -3359,6 +3431,7 @@ defimpl Enumerable,
     MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.BlockDirective,
     MDEx.HeexBlock
   ] do
   def count(_), do: {:error, __MODULE__}
@@ -3475,6 +3548,7 @@ defimpl String.Chars,
     MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline
   ] do
@@ -3548,6 +3622,7 @@ defimpl Jason.Encoder,
     MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline
   ] do

@@ -13,7 +13,8 @@ pub struct ExExtensionOptions {
     pub autolink: bool,
     pub tasklist: bool,
     pub superscript: bool,
-    pub header_ids: Option<String>,
+    pub header_id_prefix: Option<String>,
+    pub header_id_prefix_in_href: bool,
     pub footnotes: bool,
     pub inline_footnotes: bool,
     pub description_lists: bool,
@@ -36,8 +37,10 @@ pub struct ExExtensionOptions {
     pub link_url_rewriter: Option<String>,
     pub cjk_friendly_emphasis: bool,
     pub phoenix_heex: bool,
+    pub block_directive: bool,
 }
 
+#[allow(deprecated)]
 impl From<ExExtensionOptions> for Extension<'_> {
     fn from(options: ExExtensionOptions) -> Self {
         Extension {
@@ -47,7 +50,9 @@ impl From<ExExtensionOptions> for Extension<'_> {
             autolink: options.autolink,
             tasklist: options.tasklist,
             superscript: options.superscript,
-            header_ids: options.header_ids,
+            header_id_prefix: options.header_id_prefix,
+            header_id_prefix_in_href: options.header_id_prefix_in_href,
+            header_ids: None,
             footnotes: options.footnotes,
             inline_footnotes: options.inline_footnotes,
             description_lists: options.description_lists,
@@ -76,6 +81,7 @@ impl From<ExExtensionOptions> for Extension<'_> {
             },
             cjk_friendly_emphasis: options.cjk_friendly_emphasis,
             phoenix_heex: options.phoenix_heex,
+            block_directive: options.block_directive,
         }
     }
 }
@@ -90,6 +96,7 @@ pub struct ExParseOptions {
     pub tasklist_in_table: bool,
     pub leave_footnote_definitions: bool,
     pub escaped_char_spans: bool,
+    pub sourcepos_chars: bool,
 }
 
 impl From<ExParseOptions> for Parse<'_> {
@@ -103,6 +110,7 @@ impl From<ExParseOptions> for Parse<'_> {
             tasklist_in_table: options.tasklist_in_table,
             leave_footnote_definitions: options.leave_footnote_definitions,
             escaped_char_spans: options.escaped_char_spans,
+            sourcepos_chars: options.sourcepos_chars,
             broken_link_callback: None,
         }
     }
