@@ -903,9 +903,9 @@ dependencies = [
 
 [[package]]
 name = "lumis"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd10f7b8ff60101598533ec3c80cac1096b10f88f52331928fc1f51efd8fd8fa"
+checksum = "520b3f3cad099fc00f702ef0eab5b6f419e866d5d3271069c47a3fb209dd0046"
 dependencies = [
  "anyhow",
  "cc",
