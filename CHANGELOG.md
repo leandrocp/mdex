@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.1](https://github.com/leandrocp/mdex/compare/v0.12.0...v0.12.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* stop incomplete link completion at newlines ([#325](https://github.com/leandrocp/mdex/issues/325)) ([1ed11ee](https://github.com/leandrocp/mdex/commit/1ed11ee1bb20b06e217891a7373ca88d485639e8))
+
+
+### Dependencies
+
+* update lumis v0.6 ([#332](https://github.com/leandrocp/mdex/issues/332)) ([e9c0d82](https://github.com/leandrocp/mdex/commit/e9c0d829f19b0a7ff24bf11b6d63022cf486107e))
+
 ## [0.12.0](https://github.com/leandrocp/mdex/compare/v0.11.7...v0.12.0) (2026-03-29)
 
 This version introduces a `:sourcepos` field in all nodes which might cause breaking changes
