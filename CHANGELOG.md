@@ -2,10 +2,17 @@
 
 ## [0.12.1](https://github.com/leandrocp/mdex/compare/v0.12.0...v0.12.1) (2026-04-06)
 
+### Features
+* **document**: add `compact_html`([#328](https://github.com/leandrocp/mdex/issues/328)) ([830c9b0](https://github.com/leandrocp/mdex/commit/830c9b09abdadeee23f2807b7cbe4510e4c87393)) by @bfolkens
+* **document**: add `block_directive`, `sourcepos_chars`, `header_id_prefix` and `header_id_prefix_in_href` ([#329](https://github.com/leandrocp/mdex/issues/329)) ([50168c139264c833a8d9ded8543f26b54b17e470](https://github.com/leandrocp/mdex/commit/50168c1)) 
+
+### Deprecated
+
+* **document**: deprecate `:header_ids` in favor of `header_id_prefix` and `header_id_prefix_in_href` ([#329](https://github.com/leandrocp/mdex/issues/329)) ([50168c139264c833a8d9ded8543f26b54b17e470](https://github.com/leandrocp/mdex/commit/50168c1)) 
 
 ### Bug Fixes
 
-* stop incomplete link completion at newlines ([#325](https://github.com/leandrocp/mdex/issues/325)) ([1ed11ee](https://github.com/leandrocp/mdex/commit/1ed11ee1bb20b06e217891a7373ca88d485639e8))
+* **streaming**: stop incomplete link completion at newlines ([#325](https://github.com/leandrocp/mdex/issues/325)) ([1ed11ee](https://github.com/leandrocp/mdex/commit/1ed11ee1bb20b06e217891a7373ca88d485639e8))
 
 
 ### Dependencies
