@@ -21,6 +21,7 @@ defmodule MDEx.Tree do
   def is_block_node?(%MDEx.TaskItem{}), do: true
   def is_block_node?(%MDEx.MultilineBlockQuote{}), do: true
   def is_block_node?(%MDEx.Alert{}), do: true
+  def is_block_node?(%MDEx.BlockDirective{}), do: true
   def is_block_node?(_), do: false
 
   def is_inline_node?(node), do: !is_block_node?(node)

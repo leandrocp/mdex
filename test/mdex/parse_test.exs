@@ -1160,4 +1160,16 @@ defmodule MDEx.ParseTest do
       assert %MDEx.Sourcepos{start: {0, 0}, end: {0, 0}} = document.sourcepos
     end
   end
+
+  test "block_directive" do
+    assert {:ok, document} =
+             MDEx.parse_document(":::warning\nparagraph\n:::\n", extension: [block_directive: true])
+
+    assert [
+             %MDEx.BlockDirective{
+               info: "warning",
+               nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "paragraph"}]}]
+             }
+           ] = document.nodes
+  end
 end

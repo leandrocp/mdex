@@ -93,6 +93,7 @@ pub enum NewNode {
     Alert(ExAlert),
     HeexBlock(ExHeexBlock),
     HeexInline(ExHeexInline),
+    BlockDirective(ExBlockDirective),
 }
 
 impl From<NewNode> for NodeValue {
@@ -145,6 +146,7 @@ impl From<NewNode> for NodeValue {
             NewNode::Alert(n) => n.into(),
             NewNode::HeexBlock(n) => n.into(),
             NewNode::HeexInline(n) => n.into(),
+            NewNode::BlockDirective(n) => n.into(),
         }
     }
 }
@@ -966,6 +968,26 @@ impl From<ExAlert> for NodeValue {
     }
 }
 
+#[derive(Clone, Debug, NifStruct, PartialEq)]
+#[module = "MDEx.BlockDirective"]
+pub struct ExBlockDirective {
+    pub nodes: Vec<NewNode>,
+    pub info: String,
+    pub fence_length: usize,
+    pub fence_offset: usize,
+    pub sourcepos: ExSourcepos,
+}
+
+impl From<ExBlockDirective> for NodeValue {
+    fn from(node: ExBlockDirective) -> Self {
+        NodeValue::BlockDirective(Box::new(comrak::nodes::NodeBlockDirective {
+            info: node.info,
+            fence_length: node.fence_length,
+            fence_offset: node.fence_offset,
+        }))
+    }
+}
+
 pub fn ex_document_to_comrak_ast<'a>(
     arena: &'a TypedArena<AstNode<'a>>,
     new_node: NewNode,
@@ -1061,6 +1083,9 @@ pub fn ex_document_to_comrak_ast<'a>(
             nodes, sourcepos, ..
         }) => (sourcepos, Some(nodes)),
         NewNode::HeexInline(ExHeexInline { sourcepos, .. }) => (sourcepos, None),
+        NewNode::BlockDirective(ExBlockDirective {
+            nodes, sourcepos, ..
+        }) => (sourcepos, Some(nodes)),
     };
 
     node_arena.data_mut().sourcepos = ex_to_sourcepos(&sourcepos);
@@ -1402,6 +1427,14 @@ pub fn comrak_ast_to_ex_document<'a>(node: &'a AstNode<'a>) -> NewNode {
 
         NodeValue::HeexInline(ref literal) => NewNode::HeexInline(ExHeexInline {
             literal: literal.to_string(),
+            sourcepos,
+        }),
+
+        NodeValue::BlockDirective(ref attrs) => NewNode::BlockDirective(ExBlockDirective {
+            nodes: children,
+            info: attrs.info.clone(),
+            fence_length: attrs.fence_length,
+            fence_offset: attrs.fence_offset,
             sourcepos,
         }),
     }
