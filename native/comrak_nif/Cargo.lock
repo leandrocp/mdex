@@ -909,9 +909,9 @@ dependencies = [
 
 [[package]]
 name = "lumis"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "725fa28de0d39ab4f76f3eb59449762eee31fe251619342635c32d65ef8cd35f"
+checksum = "92a7fb5a55ee0f8d62de6e80ac2cbe178c8ed39470a67baf8223b5610d99f776"
 dependencies = [
  "anyhow",
  "cc",
@@ -1020,9 +1020,9 @@ checksum = "b53f577698ec4ecb8d23b052ce0a6701ae4fc8cd315417bb77ec045c01f00caa"
 
 [[package]]
 name = "lumis-core"
-version = "1.0.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0065dac9660abec11ada50962069fa31095a8efd73fad1aef2f47b6e22e6d695"
+checksum = "6e71084518851fe774e7ce0c3212641cee44edebecd14fa345a8d3db66d87961"
 dependencies = [
  "derive_builder",
  "glob",
@@ -1939,9 +1939,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-c"
-version = "0.24.1"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a3aad8f0129083a59fe8596157552d2bb7148c492d44c21558d68ca1c722707"
+checksum = "a9b2eb57a55fed6b00812912e730b7a275cf4fe98bfd6a5d76263d4438371728"
 dependencies = [
  "cc",
  "tree-sitter-language",
@@ -2251,9 +2251,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-jinja"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48fe39a344ddc8226aedae56699f21a6a85d97f9bb306ba0f709ef422dc44a59"
+checksum = "31d144fa6fe361155241ada1b4a413ea95c9f323d127f0714f1e5a2c6ed8a35d"
 dependencies = [
  "cc",
  "tree-sitter",
@@ -2497,9 +2497,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-scala"
-version = "0.25.0"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83079f50ea7d03e0faf6be6260ed97538e6df7349ec3cbcbf5771f7b38e3c8b7"
+checksum = "3394d6bc99bceae03c75482a93f1bcefff11e69d3a405f1410e864212b52739a"
 dependencies = [
  "cc",
  "tree-sitter-language",
@@ -2740,9 +2740,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09dac053f1cd375980747450bfc7250c264eaae0583872e845c0c7cd578872b5"
+checksum = "2ee1708bef14716a11bae175f579062d4554d95be2c6829f518df847b7b3fdd0"
 
 [[package]]
 name = "writeable"
