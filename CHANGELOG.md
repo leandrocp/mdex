@@ -5,7 +5,6 @@
 
 ### Features
 
-* update lumis ([#335](https://github.com/leandrocp/mdex/issues/335)) ([464a546](https://github.com/leandrocp/mdex/commit/464a546be833df8b3b1c23860fc9cb42ad6c7c2e))
 * update lumis ([#337](https://github.com/leandrocp/mdex/issues/337)) ([7cf3a44](https://github.com/leandrocp/mdex/commit/7cf3a44731aea3a85f1fb383cd0b79f47b2867e3))
 
 ## [0.12.1](https://github.com/leandrocp/mdex/compare/v0.12.0...v0.12.1) (2026-04-06)
