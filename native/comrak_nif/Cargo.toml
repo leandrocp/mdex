@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 ammonia = "4.1"
 lumis = { version = "0.9", features = ["all-languages"] }
 comrak = { version = "0.52", features = ["shortcodes", "phoenix_heex"] }
-lol_html = "2.7"
+lol_html = "2.8"
 parking_lot = "0.12"
 phf = { version = "0.13", features = ["macros"] }
 rustler = "0.37"
