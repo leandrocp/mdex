@@ -30,7 +30,7 @@ defmodule MDEx.FragmentParser do
 
   defmodule State do
     @moduledoc false
-    defstruct last_unclosed_token: nil
+    defstruct last_unclosed_token: nil, last_flush_ended_with_newline: true
   end
 
   @spec complete_with_state(String.t(), %State{} | nil) :: {String.t(), %State{}}
@@ -41,8 +41,18 @@ defmodule MDEx.FragmentParser do
 
     # Detect what token we closed (if any) to pass as prefix next time
     new_unclosed = extract_unclosed_token(fragment, prefix)
-    {completed, %State{last_unclosed_token: new_unclosed}}
+
+    new_state = %{
+      state
+      | last_unclosed_token: new_unclosed,
+        last_flush_ended_with_newline: trailing_newline?(fragment)
+    }
+
+    {completed, new_state}
   end
+
+  defp trailing_newline?(<<>>), do: false
+  defp trailing_newline?(binary), do: :binary.last(binary) in [?\n, ?\r]
 
   defp extract_unclosed_token(fragment, prefix) do
     full = if prefix != "", do: prefix <> fragment, else: fragment
@@ -305,10 +315,10 @@ defmodule MDEx.FragmentParser do
   end
 
   @doc false
-  def merge_stream_buffer(existing_markdown, buffer, last_node) do
+  def merge_stream_buffer(existing_markdown, buffer, last_node, state \\ %State{}) do
     existing_markdown
     |> maybe_strip_trailing_fence(last_node)
-    |> ensure_trailing_newline()
+    |> prepare_stream_boundary(state)
     |> append_buffer(buffer)
   end
 
@@ -319,12 +329,26 @@ defmodule MDEx.FragmentParser do
 
   defp maybe_strip_trailing_fence(markdown, _), do: markdown
 
+  defp prepare_stream_boundary(markdown, %State{last_flush_ended_with_newline: false}) do
+    trim_trailing_newline(markdown)
+  end
+
+  defp prepare_stream_boundary(markdown, _state), do: ensure_trailing_newline(markdown)
+
   defp ensure_trailing_newline(<<>>), do: ""
 
   defp ensure_trailing_newline(binary) do
     case :binary.last(binary) do
       ?\n -> binary
       _ -> binary <> "\n"
+    end
+  end
+
+  defp trim_trailing_newline(binary) do
+    cond do
+      String.ends_with?(binary, "\r\n") -> binary_part(binary, 0, byte_size(binary) - 2)
+      String.ends_with?(binary, "\n") -> binary_part(binary, 0, byte_size(binary) - 1)
+      true -> binary
     end
   end
 

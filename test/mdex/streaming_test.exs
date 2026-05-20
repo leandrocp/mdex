@@ -6,6 +6,7 @@ defmodule MDEx.StreamingTest do
   alias MDEx.CodeBlock
   alias MDEx.Emph
   alias MDEx.Heading
+  alias MDEx.HtmlBlock
   # alias MDEx.Image
   # alias MDEx.Link
   alias MDEx.List
@@ -1245,6 +1246,26 @@ defmodule MDEx.StreamingTest do
 
       assert text =~ "Hello"
       assert text =~ "world"
+    end
+
+    test "continues trailing html block without injecting a newline" do
+      assert [
+               %HtmlBlock{literal: "<div>foobar</div>"}
+             ] =
+               multi_flush_nodes(
+                 ["<div>foo", "bar</div>"],
+                 MDEx.new(streaming: true)
+               )
+    end
+
+    test "continues trailing title" do
+      assert [
+               %Heading{nodes: [%Text{literal: "Title"}]}
+             ] =
+               multi_flush_nodes(
+                 ["# Tit", "le"],
+                 MDEx.new(streaming: true)
+               )
     end
   end
 end
