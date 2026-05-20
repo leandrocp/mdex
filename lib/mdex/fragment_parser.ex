@@ -30,14 +30,15 @@ defmodule MDEx.FragmentParser do
 
   defmodule State do
     @moduledoc false
-    defstruct last_unclosed_token: nil, last_flush_ended_with_newline: true
+    defstruct last_unclosed_token: nil, last_flush_ended_with_newline: true, pending_html: nil
   end
 
   @spec complete_with_state(String.t(), %State{} | nil) :: {String.t(), %State{}}
-  def complete_with_state(fragment, state) do
+  def complete_with_state(raw_fragment, state) do
     state = state || %State{}
     prefix = state.last_unclosed_token || ""
-    completed = complete(fragment, prefix: prefix)
+    fragment = (state.pending_html || "") <> raw_fragment
+    {completed, pending_html} = complete_fragment(fragment, prefix: prefix, preserve_pending_html: true)
 
     # Detect what token we closed (if any) to pass as prefix next time
     new_unclosed = extract_unclosed_token(fragment, prefix)
@@ -45,7 +46,8 @@ defmodule MDEx.FragmentParser do
     new_state = %{
       state
       | last_unclosed_token: new_unclosed,
-        last_flush_ended_with_newline: trailing_newline?(fragment)
+        last_flush_ended_with_newline: trailing_newline?(raw_fragment),
+        pending_html: pending_html
     }
 
     {completed, new_state}
@@ -62,17 +64,22 @@ defmodule MDEx.FragmentParser do
 
   @spec complete(String.t(), keyword()) :: String.t()
   def complete(fragment, options \\ []) do
+    {completed, _pending_html} = complete_fragment(fragment, options)
+    completed
+  end
+
+  defp complete_fragment(fragment, options) do
     prefix = options[:prefix] || ""
 
     if list_marker_line?(fragment) do
       {trailing_ws, core_with_leading} = split_trailing_ws(fragment)
-      {completed, flag} = complete_core(core_with_leading, prefix, trailing_ws, options)
-      completed <> adjust_trailing(trailing_ws, flag)
+      {completed, flag, pending_html} = complete_core(core_with_leading, prefix, trailing_ws, options)
+      {completed <> adjust_trailing(trailing_ws, flag), pending_html}
     else
       {leading, core, trailing} = split_ws(fragment)
       leading = maybe_preserve_leading(leading)
-      {completed, flag} = complete_core(core, prefix, trailing, options)
-      leading <> completed <> adjust_trailing(trailing, flag)
+      {completed, flag, pending_html} = complete_core(core, prefix, trailing, options)
+      {leading <> completed <> adjust_trailing(trailing, flag), pending_html}
     end
   end
 
@@ -118,15 +125,15 @@ defmodule MDEx.FragmentParser do
 
   defp adjust_trailing(trailing, _flag), do: trailing
 
-  defp complete_core("", _prefix, _trailing, _options), do: {"", :none}
+  defp complete_core("", _prefix, _trailing, _options), do: {"", :none, nil}
 
   defp complete_core(core, prefix, trailing, options) do
-    with nil <- maybe_complete_fence(core, trailing, options),
-         nil <- maybe_complete_table(core, trailing),
-         nil <- maybe_complete_math(core, trailing) do
-      line = last_line(core)
+    {completed, flag} =
+      with nil <- maybe_complete_fence(core, trailing, options),
+           nil <- maybe_complete_table(core, trailing),
+           nil <- maybe_complete_math(core, trailing) do
+        line = last_line(core)
 
-      {completed, flag} =
         cond do
           skip_completion?(core, line) ->
             {core, :none}
@@ -167,9 +174,10 @@ defmodule MDEx.FragmentParser do
                 end
             end
         end
+      end
 
-      {strip_incomplete_html(completed), flag}
-    end
+    {completed, pending_html} = strip_incomplete_html(completed, options[:preserve_pending_html] == true)
+    {completed, flag, pending_html}
   end
 
   defp maybe_complete_fence(core, trailing, _options) do
@@ -814,29 +822,32 @@ defmodule MDEx.FragmentParser do
   defp char_type(char) when char in ?a..?z, do: :word
   defp char_type(_char), do: :boundary
 
-  defp strip_incomplete_html(text) do
+  defp strip_incomplete_html(text, preserve_pending_html) do
     case last_byte_pos(text, ?<) do
       nil ->
-        text
+        {text, nil}
 
       pos ->
         after_lt_size = byte_size(text) - pos
 
         if :binary.match(text, ">", [{:scope, {pos, after_lt_size}}]) != :nomatch do
-          text
+          {text, nil}
         else
           after_lt = binary_part(text, pos, after_lt_size)
 
           cond do
+            preserve_pending_html and after_lt == "<" and not inside_inline_code?(text, pos) ->
+              {String.trim_trailing(binary_part(text, 0, pos)), after_lt}
+
             tag_start?(after_lt) ->
               if inside_inline_code?(text, pos) do
-                text
+                {text, nil}
               else
-                String.trim_trailing(binary_part(text, 0, pos))
+                {String.trim_trailing(binary_part(text, 0, pos)), after_lt}
               end
 
             true ->
-              text
+              {text, nil}
           end
         end
     end

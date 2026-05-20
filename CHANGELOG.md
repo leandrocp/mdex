@@ -5,6 +5,7 @@
 ### Fixed
 
 - [Streaming] Preserve chunk boundaries without synthetic newlines across flushes.
+- [Streaming] Preserve incomplete HTML across multiple flushes.
 
 ## [0.12.2](https://github.com/leandrocp/mdex/compare/v0.12.1...v0.12.2) (2026-04-22)
 

@@ -359,6 +359,25 @@ defmodule MDEx.FragmentParserTest do
     test "inline code with < is not stripped" do
       assert complete("`<div`") == "`<div`"
     end
+
+    test "incomplete tag is preserved in state" do
+      assert {"Hello", %MDEx.FragmentParser.State{pending_html: "<div"}} =
+               complete_with_state("Hello <div", nil)
+    end
+
+    test "pending incomplete tag is prepended on next completion" do
+      {_completed, state} = complete_with_state("<div", nil)
+
+      assert {"<div>hello", %MDEx.FragmentParser.State{pending_html: nil}} =
+               complete_with_state(">hello", state)
+    end
+
+    test "trailing bare less-than is preserved only in stateful completion" do
+      assert complete("hello <") == "hello <"
+
+      assert {"hello", %MDEx.FragmentParser.State{pending_html: "<"}} =
+               complete_with_state("hello <", nil)
+    end
   end
 
   describe "nested bracket depth in links" do

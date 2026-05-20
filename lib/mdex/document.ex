@@ -2180,6 +2180,7 @@ defmodule MDEx.Document do
     case render_existing_nodes(document) do
       {:ok, existing_markdown} ->
         buffer = merge_with_existing(document, existing_markdown)
+        document = clear_pending_html(document)
         flush_buffer(document, buffer)
 
       {:error, halted} ->
@@ -2223,8 +2224,21 @@ defmodule MDEx.Document do
   defp merge_with_existing(%{nodes: nodes, buffer: buffer} = document, existing_markdown) do
     last_node = List.last(nodes)
     state = Document.get_private(document, :fragment_state)
+    buffer = buffer ++ [pending_html(document)]
     MDEx.FragmentParser.merge_stream_buffer(existing_markdown, buffer, last_node, state)
   end
+
+  defp pending_html(%{private: %{fragment_state: %MDEx.FragmentParser.State{pending_html: pending_html}}}) do
+    pending_html || ""
+  end
+
+  defp pending_html(_document), do: ""
+
+  defp clear_pending_html(%{private: %{fragment_state: %MDEx.FragmentParser.State{} = state}} = document) do
+    put_private(document, :fragment_state, %{state | pending_html: nil})
+  end
+
+  defp clear_pending_html(document), do: document
 
   @deprecated "Use MDEx.parse_document/2 or MDEx.Document.put_markdown/1 instead"
   def parse_markdown(%Document{} = document, markdown) when is_binary(markdown) do
