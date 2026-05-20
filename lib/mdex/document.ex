@@ -2220,9 +2220,10 @@ defmodule MDEx.Document do
     |> IO.iodata_to_binary()
   end
 
-  defp merge_with_existing(%{nodes: nodes, buffer: buffer}, existing_markdown) do
+  defp merge_with_existing(%{nodes: nodes, buffer: buffer} = document, existing_markdown) do
     last_node = List.last(nodes)
-    MDEx.FragmentParser.merge_stream_buffer(existing_markdown, buffer, last_node)
+    state = Document.get_private(document, :fragment_state)
+    MDEx.FragmentParser.merge_stream_buffer(existing_markdown, buffer, last_node, state)
   end
 
   @deprecated "Use MDEx.parse_document/2 or MDEx.Document.put_markdown/1 instead"
