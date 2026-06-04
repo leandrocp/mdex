@@ -1,6 +1,6 @@
 ### Pre-compilation
 
-Pre-compiled binaries are available for the following targets, so you don't need to have Rust installed to compile and use this library:
+MDEx uses the `:mdex_native` dependency for its Rust-backed Markdown parser, HTML sanitizer, and syntax highlighter. Precompiled binaries are available for these targets, so Rust is not required in the common case:
 
 - `aarch64-apple-darwin`
 - `aarch64-unknown-linux-gnu`
@@ -18,7 +18,7 @@ Pre-compiled binaries are available for the following targets, so you don't need
 
 ### Compile manually
 
-But in case you need or want to compile it yourself, you can do the following:
+If you need to compile the native dependency yourself:
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
 
@@ -29,18 +29,16 @@ It depends on your OS, for example in Ubuntu you can install the `build-essentia
 3. Run:
 
 ```sh
-export MDEX_BUILD=1
+export MDEX_NATIVE_BUILD=1
 mix deps.get
 mix compile
 ```
 
 ### Legacy CPUs
 
-Modern CPU features are enabled by default but if your environment has an older CPU,
+Modern CPU features are enabled by default in `:mdex_native`. If your environment has an older CPU,
 you can use legacy artifacts by adding the following configuration to your `config.exs`:
 
 ```elixir
-config :mdex, use_legacy_artifacts: true
+config :mdex_native, use_legacy_artifacts: true
 ```
-
-

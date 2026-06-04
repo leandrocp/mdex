@@ -658,8 +658,8 @@ defmodule MDEx.Document do
 
   @behaviour Access
   alias __MODULE__
-  alias MDEx.Native
-  alias Lumis
+  alias MDEx.ComrakConverter
+  alias MDExNative.Native
 
   @built_in_options [
     :extension,
@@ -1062,6 +1062,7 @@ defmodule MDEx.Document do
         "bdo" => ~w(dir),
         "blockquote" => ~w(cite),
         "code" => ~w(class translate tabindex),
+        "div" => ~w(class style data-line),
         "col" => ~w(align char charoff span),
         "colgroup" => ~w(align char charoff span),
         "del" => ~w(cite datetime),
@@ -2200,7 +2201,8 @@ defmodule MDEx.Document do
       end
 
     case Native.parse_document(buffer, rust_options!(document.options)) do
-      {:ok, %{nodes: nodes}} -> %{document | nodes: nodes, buffer: []}
+      %{nodes: nodes} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
+      {:ok, %{nodes: nodes}} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:error, error} -> halt(document, error)
     end
   end
@@ -2208,7 +2210,8 @@ defmodule MDEx.Document do
   defp render_existing_nodes(document) do
     document = %{document | buffer: [], current_steps: [], steps: []}
 
-    case Native.document_to_commonmark_with_options(document, rust_options!(document.options)) do
+    case Native.document_to_commonmark_with_options(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
+      markdown when is_binary(markdown) -> {:ok, markdown}
       {:ok, markdown} -> {:ok, markdown}
       {:error, error} -> {:error, halt(document, error)}
     end
@@ -2573,38 +2576,23 @@ defmodule MDEx.Document do
     {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
     render = Keyword.put_new(render, :unsafe, unsafe)
 
-    syntax_highlight =
-      case options[:syntax_highlight] do
-        nil ->
-          nil
-
-        options ->
-          options
-          |> Lumis.validate_options!()
-          |> Lumis.rust_options!()
-      end
-
-    sanitize =
-      case options[:sanitize] do
-        nil -> nil
-        opts -> adapt_sanitize_options(opts)
-      end
-
-    codefence_renderer_langs =
-      options
-      |> Keyword.get(:codefence_renderers, %{})
-      |> Map.keys()
-
     extension = migrate_header_ids(options[:extension])
 
     %{
       extension: Map.new(extension),
       parse: Map.new(options[:parse]),
       render: Map.new(render),
-      syntax_highlight: syntax_highlight,
-      sanitize: sanitize,
-      codefence_renderer_langs: codefence_renderer_langs
+      syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
+      sanitize: adapt_sanitize_options(options[:sanitize])
     }
+  end
+
+  defp syntax_highlight_options(nil), do: nil
+
+  defp syntax_highlight_options(options) do
+    options
+    |> Lumis.validate_options!()
+    |> Lumis.rust_options!()
   end
 
   defp migrate_header_ids(extension) do

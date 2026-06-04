@@ -6,11 +6,6 @@ updates:
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "cargo"
-    directory: "/native/comrak_nif"
-    schedule:
-      interval: "weekly"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

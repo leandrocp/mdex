@@ -50,10 +50,6 @@ defmodule MDEx.MixProject do
       files: ~w[
         lib/mdex.ex
         lib/mdex
-        native/comrak_nif/src
-        native/comrak_nif/.cargo
-        native/comrak_nif/Cargo.*
-        native/comrak_nif/Cross.toml
         examples
         guides
         mix.exs
@@ -62,7 +58,6 @@ defmodule MDEx.MixProject do
         LICENSE.md
         CHANGELOG.md
         usage-rules.md
-        checksum-Elixir.MDEx.Native.exs
       ]
     ]
   end
@@ -171,8 +166,7 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.32", optional: true},
-      {:rustler_precompiled, "~> 0.7"},
+      {:mdex_native, "~> 0.1"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:lumis, "~> 0.1"},
@@ -185,11 +179,7 @@ defmodule MDEx.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "compile"],
-      "gen.checksum": "rustler_precompiled.download MDEx.Native --all --print",
-      "gen.samples": "mdex.generate_samples",
-      "format.all": ["format", "rust.fmt"],
-      "rust.lint": ["cmd cargo clippy --manifest-path=native/comrak_nif/Cargo.toml -- -Dwarnings"],
-      "rust.fmt": ["cmd cargo fmt --manifest-path=native/comrak_nif/Cargo.toml --all"]
+      "gen.samples": "mdex.generate_samples"
     ]
   end
 end
