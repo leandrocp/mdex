@@ -555,6 +555,21 @@ defmodule MDEx.HTMLFormatTest do
       assert html1 == html2
     end
 
+    test "non-empty codefence_renderers map is not treated as empty" do
+      md = "```custom\nhello\n```"
+
+      html =
+        MDEx.to_html!(md,
+          render: [unsafe: true],
+          syntax_highlight: nil,
+          codefence_renderers: %{
+            "custom" => fn _lang, _meta, code -> "<mark>#{String.trim(code)}</mark>" end
+          }
+        )
+
+      assert html == "<mark>hello</mark>"
+    end
+
     test "works with Document pipeline" do
       doc = MDEx.parse_document!("```custom\nhello\n```", syntax_highlight: nil)
 

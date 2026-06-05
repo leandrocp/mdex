@@ -651,10 +651,9 @@ defmodule MDExTest do
           ]
         )
 
-      assert html =~ ~s(<div class="line" style="background-color:)
-      assert html =~ ~s(data-line="2">)
-      refute html =~ ~s(style="background-color:) <> ~s( data-line="1")
-      refute html =~ ~s(style="background-color:) <> ~s( data-line="3")
+      assert html =~ ~s(<div class="line" style="background-color: #3b4252;" data-line="2">)
+      refute html =~ ~s(<div class="line" style="background-color: #3b4252;" data-line="1">)
+      refute html =~ ~s(<div class="line" style="background-color: #3b4252;" data-line="3">)
     end
   end
 
@@ -869,7 +868,7 @@ defmodule MDExTest do
         """,
         ~S"""
         <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">"~&gt; 0.1"</span><span style="color: #c678dd;">&rbrace;</span>
         </div></code></pre>
         """,
         sanitize: MDEx.Document.default_sanitize_options()

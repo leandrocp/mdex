@@ -33,10 +33,11 @@ defmodule MDEx do
              |> Enum.fetch!(1)
              |> Kernel.<>(@inner_moduledoc)
 
-  alias MDEx.Native
+  alias MDEx.ComrakConverter
   alias MDEx.Document
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
+  alias MDExNative.Native
 
   import MDEx.Document, only: [is_fragment: 1]
 
@@ -1036,6 +1037,7 @@ defmodule MDEx do
   def traverse_and_update(ast, acc, fun), do: Document.Traversal.traverse_and_update(ast, acc, fun)
 
   defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
+  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
 
   defp run_pipeline(document, options, converter) do
@@ -1047,35 +1049,39 @@ defmodule MDEx do
     |> Document.run()
     |> then(fn document ->
       document
+      |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
+      |> ComrakConverter.from_mdex()
       |> converter.(Document.rust_options!(document.options))
-      |> apply_codefence_renderers(document.options[:codefence_renderers])
       |> maybe_trim()
     end)
   end
 
-  defp apply_codefence_renderers({:ok, html}, renderers) when renderers == %{} do
-    {:ok, html}
+  defp apply_codefence_renderers_to_document(document, renderers) when renderers in [nil, %{}] do
+    document
   end
 
-  defp apply_codefence_renderers({:ok, html, _collected = []}, _renderers) do
-    {:ok, html}
+  defp apply_codefence_renderers_to_document(document, renderers) do
+    update_codefence_nodes(document, renderers)
   end
 
-  defp apply_codefence_renderers({:ok, html, collected}, renderers) do
-    html =
-      collected
-      |> Enum.with_index()
-      |> Enum.reduce(html, fn {{lang, meta, code}, idx}, acc ->
-        case Map.get(renderers, lang) do
-          nil -> acc
-          fun -> String.replace(acc, "<!--mdex:cfr:#{idx}-->", fun.(lang, meta, code))
-        end
-      end)
+  defp update_codefence_nodes(%MDEx.CodeBlock{info: info, literal: code, nodes: nodes, sourcepos: sourcepos} = node, renderers) do
+    %{language: lang, metadata: meta} = MDExNative.Comrak.parse_code_fence_info(info)
 
-    {:ok, html}
+    case Map.get(renderers, lang) do
+      nil -> %{node | nodes: update_codefence_nodes(nodes, renderers)}
+      fun -> %MDEx.Raw{literal: fun.(lang, meta, code), sourcepos: sourcepos}
+    end
   end
 
-  defp apply_codefence_renderers(error, _renderers), do: error
+  defp update_codefence_nodes(%{nodes: nodes} = node, renderers) do
+    %{node | nodes: update_codefence_nodes(nodes, renderers)}
+  end
+
+  defp update_codefence_nodes(nodes, renderers) when is_list(nodes) do
+    Enum.map(nodes, &update_codefence_nodes(&1, renderers))
+  end
+
+  defp update_codefence_nodes(node, _renderers), do: node
 
   @doc """
   Utility function to sanitize and escape HTML.
@@ -1130,7 +1136,13 @@ defmodule MDEx do
 
     escape_content = opt(options, [:escape, :content], true)
     escape_curly_braces_in_code = opt(options, [:escape, :curly_braces_in_code], true)
-    Native.safe_html(unsafe_html, sanitize, escape_content, escape_curly_braces_in_code)
+
+    MDExNative.Ammonia.safe_html(
+      unsafe_html,
+      sanitize: sanitize,
+      escape_content: escape_content,
+      escape_curly_braces_in_code: escape_curly_braces_in_code
+    )
   end
 
   defp opt(options, keys, default) do
