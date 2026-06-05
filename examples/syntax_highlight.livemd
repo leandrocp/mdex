@@ -1,6 +1,6 @@
 <!-- livebook:{"persist_outputs":true} -->
 
-# Syntax Highlight
+# Syntax highlighting
 
 ```elixir
 Mix.install([
@@ -9,11 +9,29 @@ Mix.install([
 ])
 ```
 
-## Intro
+## How it works
 
-MDEx provides built-in syntax highlighting powered by [Lumis](https://hex.pm/packages/lumis). Use inline themes (styles embedded in the HTML) for simplicity, or class-based themes when you need external CSS control for features like light/dark mode switching.
+MDEx highlights fenced code blocks with [Lumis](https://hex.pm/packages/lumis). Lumis parses code with Tree-sitter, applies a theme converted from Neovim colorschemes, and returns HTML that MDEx inserts into the rendered document.
 
-## Example
+Pass a Lumis formatter through the `:syntax_highlight` option:
+
+<!-- livebook:{"break_markdown":true} -->
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+```
+
+<!-- livebook:{"break_markdown":true} -->
+
+If you do not pass anything, MDEx uses `{:html_inline, theme: "onedark"}`. Set `syntax_highlight: nil` to leave code blocks untouched.
+
+## Inline styles
+
+The inline formatter writes colors directly into the generated HTML. This is the easiest option for docs, feeds, emails, or any place where carrying an extra stylesheet is annoying.
+
+Each fenced block still gets its language from the Markdown fence. You do not need one formatter per language.
 
 ````elixir
 options = [
@@ -21,10 +39,9 @@ options = [
 ]
 
 """
-# Elixir
-```elixir
-# elixir example
+# Inline formatter
 
+```elixir
 def fib(n), do: fib(n, 1, 1)
 
 def fib(0, _a, _b), do: []
@@ -34,20 +51,14 @@ def fib(n, a, b) when n > 0 do
 end
 ```
 
-# Ruby
 ```ruby
-# ruby example
-
 def fibonacci(n)
   return n if (0..1).include?(n)
   (fibonacci(n - 1) + fibonacci(n - 2))
 end
 ```
 
-# Rust
 ```rust
-// rust example
-
 fn fibonacci(n: u32) -> u32 {
   match n {
     0 => 1,
@@ -60,3 +71,50 @@ fn fibonacci(n: u32) -> u32 {
 |> MDEx.to_html!(options)
 |> Kino.HTML.new()
 ````
+
+## Linked CSS
+
+Use `:html_linked` when your app owns the CSS. The generated HTML uses classes instead of inline token colors, so you can serve one Lumis stylesheet, cache it, and swap it if your site changes themes.
+
+In a Phoenix app, Lumis can expose its packaged CSS files from `priv/static/css`.
+
+````elixir
+theme_css =
+  :lumis
+  |> :code.priv_dir()
+  |> Path.join("static/css/github_light.css")
+  |> File.read!()
+
+options = [
+  syntax_highlight: [formatter: :html_linked]
+]
+
+html =
+  ~S|
+  # Linked formatter
+
+  ```elixir
+  def render(assigns) do
+    ~H"""
+    <pre><code>{@body}</code></pre>
+    """
+  end
+  ```
+  |
+  |> MDEx.to_html!(options)
+
+Kino.HTML.new("""
+<style>#{theme_css}</style>
+#{html}
+""")
+````
+
+## Choosing a formatter
+
+* `:html_inline` is the default and needs no external CSS.
+* `:html_linked` emits CSS classes and expects a Lumis theme stylesheet.
+* `:html_multi_themes` emits CSS variables for cases like light/dark mode.
+
+For automatic light/dark mode, see `examples/light_dark_theme.livemd`. For custom theme structs, see `examples/custom_theme.livemd`.
+
+Theme names such as `github_light`, `github_dark`, and `catppuccin_latte` come from Lumis. You can inspect them with `Lumis.available_themes/0`.
