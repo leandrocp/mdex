@@ -1258,6 +1258,16 @@ defmodule MDEx.StreamingTest do
                )
     end
 
+    test "preserves incomplete html across multiple flushes" do
+      assert [
+               %HtmlBlock{literal: "<div>foo</div>"}
+             ] =
+               multi_flush_nodes(
+                 ["<div", ">foo<", "/div>"],
+                 MDEx.new(streaming: true)
+               )
+    end
+
     test "continues trailing title" do
       assert [
                %Heading{nodes: [%Text{literal: "Title"}]}
