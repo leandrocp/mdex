@@ -1,11 +1,18 @@
 # Changelog
 
-## Unreleased
+## [0.12.3](https://github.com/leandrocp/mdex/compare/v0.12.2...v0.12.3) (2026-06-05)
 
-### Fixed
 
-- [Streaming] Preserve chunk boundaries without synthetic newlines across flushes.
-- [Streaming] Preserve incomplete HTML across multiple flushes.
+### Features
+
+* extract mdex native into mdex_native ([#351](https://github.com/leandrocp/mdex/issues/351)) ([6ed94d9](https://github.com/leandrocp/mdex/commit/6ed94d905f97af188323f042698ae841c02293b4))
+
+
+### Bug Fixes
+
+* [Streaming] Preserve chunk boundaries without synthetic newlines across flushes ([#348](https://github.com/leandrocp/mdex/issues/348)) by @martosaur
+* [Streaming] Preserve incomplete HTML across flushes ([#347](https://github.com/leandrocp/mdex/issues/347)) by @martosaur
+* ~MD outside modules ([#352](https://github.com/leandrocp/mdex/issues/352)) ([a203937](https://github.com/leandrocp/mdex/commit/a203937d8e3ea687d4d0d58dfd360a7c7a2a4a2d))
 
 ## [0.12.2](https://github.com/leandrocp/mdex/compare/v0.12.1...v0.12.2) (2026-04-22)
 
