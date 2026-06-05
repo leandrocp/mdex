@@ -7,6 +7,21 @@ defmodule MDEx.SigilTest do
     assert Jason.decode!(json) == expected
   end
 
+  test "works outside a module" do
+    assert {
+             %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   nodes: [
+                     %MDEx.Text{literal: "Hello"}
+                   ]
+                 }
+               ]
+             },
+             _
+           } = Elixir.Code.eval_string("import MDEx.Sigil\n~MD\"\"\"\n# Hello\n\"\"\"")
+  end
+
   describe "sigil_MD with assigns" do
     test "to html" do
       assigns = %{lang: "Elixir"}

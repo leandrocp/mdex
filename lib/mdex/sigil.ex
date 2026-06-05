@@ -216,7 +216,7 @@ defmodule MDEx.Sigil do
   """
   defmacro sigil_MD({:<<>>, _meta, [expr]}, modifiers) do
     expr = expr(expr, __CALLER__)
-    user_opts = Module.get_attribute(__CALLER__.module, :__mdex_opts__) || []
+    user_opts = caller_mdex_opts(__CALLER__)
     opts = MDEx.merge_options(@opts, user_opts)
 
     case modifiers do
@@ -300,6 +300,12 @@ defmodule MDEx.Sigil do
       _ ->
         raise "unsupported modifier #{inspect(modifiers)} for sigil_MD"
     end
+  end
+
+  defp caller_mdex_opts(%Macro.Env{module: nil}), do: []
+
+  defp caller_mdex_opts(%Macro.Env{module: module}) do
+    Module.get_attribute(module, :__mdex_opts__) || []
   end
 
   @deprecated "Use the ~MD sigil instead"
