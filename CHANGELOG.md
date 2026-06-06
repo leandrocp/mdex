@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.12.4](https://github.com/leandrocp/mdex/compare/v0.12.3...v0.12.4) (2026-06-06)
+
+
+### Features
+
+* add syntect engine on syntax highlighting ([#358](https://github.com/leandrocp/mdex/issues/358)) ([7aa8a0a](https://github.com/leandrocp/mdex/commit/7aa8a0afcf44a7f16d59eea2838ec59a931762b7))
+* support :engine in syntax highlighter ([#357](https://github.com/leandrocp/mdex/issues/357)) ([9a18f3f](https://github.com/leandrocp/mdex/commit/9a18f3f54e5fb7d1f50e071429c41b445873de7a))
+
+
+### Bug Fixes
+
+* disable syntax highlight with `syntax_highlight: false` ([#355](https://github.com/leandrocp/mdex/issues/355)) ([c5d28bb](https://github.com/leandrocp/mdex/commit/c5d28bb1ca41394842d1858ed5bd834e3041b0f8))
+
+
+### Documentation
+
+* improve syntax highlight example ([cf5f5a6](https://github.com/leandrocp/mdex/commit/cf5f5a6361cdb01458bccf8187d4f2ff0a7a8eeb))
+* syntax highlight options in example ([#356](https://github.com/leandrocp/mdex/issues/356)) ([16c555a](https://github.com/leandrocp/mdex/commit/16c555a25075b30f0289695f974cc9a03b4242e1))
+
 ## [0.12.3](https://github.com/leandrocp/mdex/compare/v0.12.2...v0.12.3) (2026-06-05)
 
 
