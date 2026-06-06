@@ -103,9 +103,12 @@ spawn(fn -> send(current, {self(), 1 + 2}) end)
 MDEx.new(
   markdown: markdown,
   syntax_highlight: [
-    formatter: {:html_multi_themes,
-      themes: [light: "github_light", dark: "github_dark"],
-      default_theme: "light-dark()"}
+    engine: :lumis,
+    opts: [
+      formatter: {:html_multi_themes,
+        themes: [light: "github_light", dark: "github_dark"],
+        default_theme: "light-dark()"}
+    ]
   ]
 )
 |> MDExGFM.attach()

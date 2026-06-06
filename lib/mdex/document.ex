@@ -1014,12 +1014,22 @@ defmodule MDEx.Document do
   ]
 
   @syntax_highlight_options_schema [
+    engine: [
+      type: {:in, [:lumis]},
+      default: :lumis,
+      doc: "Syntax highlighting engine. Currently only `:lumis` is supported."
+    ],
+    opts: [
+      type: :keyword_list,
+      type_spec: quote(do: Lumis.options()),
+      default: [formatter: {:html_inline, theme: "onedark"}],
+      doc: "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0`."
+    ],
     formatter: [
-      type: {:custom, Lumis, :formatter_type, []},
+      type: :any,
       type_spec: quote(do: Lumis.formatter()),
       type_doc: "`t:Lumis.formatter/0`",
-      default: {:html_inline, theme: "onedark"},
-      doc: "Syntax highlight code blocks using this formatter. See the type doc for more info."
+      doc: "Legacy Lumis formatter option. Prefer `opts: [formatter: ...]`."
     ]
   ]
 
@@ -1233,15 +1243,17 @@ defmodule MDEx.Document do
     syntax_highlight: [
       type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil, {:in, [false]}]},
       type_spec: quote(do: syntax_highlight_options() | nil | false),
-      default: [formatter: {:html_inline, theme: "onedark"}],
+      default: [engine: :lumis, opts: [formatter: {:html_inline, theme: "onedark"}]],
       doc: """
         Apply syntax highlighting to code blocks.
 
         Examples:
 
-            syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
+            syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_dark"}]]
 
             syntax_highlight: [formatter: :html_linked]
+
+            # legacy Lumis formatter syntax is still supported
 
             syntax_highlight: nil
 
@@ -2440,7 +2452,7 @@ defmodule MDEx.Document do
       ...> ```elixir
       ...> {:mdex, "~> 0.1"}
       ...> ```
-      ...> \""", syntax_highlight: [formatter: {:html_inline, theme: "nord"}])
+      ...> \""", syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "nord"}]])
       #=> <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
       #=> </span></code></pre>
   """
@@ -2485,7 +2497,8 @@ defmodule MDEx.Document do
       ```
       \""",
       syntax_highlight: [
-        formatter: {:html_inline, theme: "github_light"}
+        engine: :lumis,
+        opts: [formatter: {:html_inline, theme: "github_light"}]
       ])
       ````
 
@@ -2613,9 +2626,26 @@ defmodule MDEx.Document do
   defp syntax_highlight_options(false), do: nil
 
   defp syntax_highlight_options(options) do
+    options = NimbleOptions.validate!(options, @syntax_highlight_options_schema)
+
+    {formatter, options} = Keyword.pop(options, :formatter)
+    {engine, options} = Keyword.pop(options, :engine)
+    {opts, _options} = Keyword.pop(options, :opts)
+
+    opts = if formatter, do: Keyword.put(opts, :formatter, formatter), else: opts
+    opts = lumis_syntax_highlight_options(opts)
+
+    if legacy_native_syntax_highlight_options?(), do: opts, else: %{engine: engine, opts: opts}
+  end
+
+  defp lumis_syntax_highlight_options(options) do
     options
     |> Lumis.validate_options!()
     |> Lumis.rust_options!()
+  end
+
+  defp legacy_native_syntax_highlight_options? do
+    Code.ensure_loaded?(MDExNative.Lumis)
   end
 
   defp migrate_header_ids(extension) do

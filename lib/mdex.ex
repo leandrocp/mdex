@@ -58,7 +58,7 @@ defmodule MDEx do
   defmodule MyApp.CustomMarkdown do
     use MDEx,
       extension: [strikethrough: false],
-      syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_latte"}],
+      syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "catppuccin_latte"}]],
       plugins: [MyApp.MarkdownPlugin]
 
     def render do
