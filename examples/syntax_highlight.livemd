@@ -13,7 +13,7 @@ Mix.install([
 
 MDEx highlights fenced code blocks with [Lumis](https://hex.pm/packages/lumis). Lumis parses code with Tree-sitter, applies a theme converted from Neovim colorschemes, and returns HTML that MDEx inserts into the rendered document.
 
-Pass a Lumis formatter through the `:syntax_highlight` option:
+To change syntax highlighting options, you should pass a [Lumis formatter](https://lumis.hexdocs.pm/Lumis.html#t:formatter/0) through the `:syntax_highlight` option:
 
 <!-- livebook:{"break_markdown":true} -->
 
@@ -25,7 +25,40 @@ syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
 
 <!-- livebook:{"break_markdown":true} -->
 
-If you do not pass anything, MDEx uses `{:html_inline, theme: "onedark"}`. Set `syntax_highlight: nil` or `syntax_highlight: false` to disable built-in syntax highlighting.
+If you do not pass anything, MDEx uses `{:html_inline, theme: "onedark"}` by default.
+
+Set `syntax_highlight: nil` or `syntax_highlight: false` to disable built-in syntax highlighting.
+
+## Options
+
+Syntax highlighting is configured through regular MDEx options:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+MDEx.to_html!(markdown,
+  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+)
+```
+
+If another library calls MDEx for you, pass the same option through that library's MDEx configuration.
+
+Tableau exposes this under `config :tableau, :config, markdown: [mdex: ...]`:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+config :tableau, :config,
+  markdown: [
+    mdex: [
+      syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+    ]
+  ]
+```
+
+The value under `:syntax_highlight` is passed to Lumis. Use the formatter to choose how HTML is emitted, then pass formatter-specific options such as `:theme`, `:pre_class`, `:highlight_lines`, or `:include_highlights`.
+
+For the full list, see [Lumis formatter docs](https://lumis.hexdocs.pm/Lumis.html#t:formatter/0).
 
 ## Inline styles
 
