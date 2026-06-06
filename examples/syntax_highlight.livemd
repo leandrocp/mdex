@@ -43,20 +43,6 @@ MDEx.to_html!(markdown,
 
 If another library calls MDEx for you, pass the same option through that library's MDEx configuration.
 
-NimblePublisher exposes this as `:mdex_options`:
-
-<!-- livebook:{"force_markdown":true} -->
-
-```elixir
-use NimblePublisher,
-  build: Article,
-  from: "posts/**/*.md",
-  as: :posts,
-  mdex_options: [
-    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
-  ]
-```
-
 Tableau exposes this under `config :tableau, :config, markdown: [mdex: ...]`:
 
 <!-- livebook:{"force_markdown":true} -->
