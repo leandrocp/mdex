@@ -27,25 +27,7 @@ syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
 
 If you do not pass anything, MDEx uses `{:html_inline, theme: "onedark"}` by default.
 
-Or to disable syntax highlighting, pass `syntax_highlight: nil` or `syntax_highlight: false`:
-
-<!-- livebook:{"force_markdown":true} -->
-
-````elixir
-MDEx.to_html!("""
-  ```elixir
-  String.trim(" MDEx ")
-  ```
-  """,
-  syntax_highlight: nil
-)
-
-#=> """
-#=> <pre><code class="language-elixir">String.trim(&quot; MDEx &quot;)
-#=> </code></pre>
-#=> """
-```
-````
+Set `syntax_highlight: nil` or `syntax_highlight: false` to disable built-in syntax highlighting.
 
 ## Options
 
@@ -171,6 +153,26 @@ html =
 Kino.HTML.new("""
 <style>#{theme_css}</style>
 #{html}
+""")
+````
+
+## Disabling highlighting
+
+When syntax highlighting is disabled, MDEx still renders fenced code blocks as regular Markdown code blocks. The language from the fence remains as a `language-*` class, but there are no Lumis wrappers, token spans, or inline styles.
+
+````elixir
+html =
+  ~S"""
+  ```elixir
+  def hello(name), do: "Hello, #{name}!"
+  ```
+  """
+  |> MDEx.to_html!(syntax_highlight: nil)
+
+Kino.Markdown.new("""
+```html
+#{html}
+```
 """)
 ````
 

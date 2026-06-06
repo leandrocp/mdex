@@ -1231,8 +1231,8 @@ defmodule MDEx.Document do
       keys: @render_options_schema
     ],
     syntax_highlight: [
-      type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil]},
-      type_spec: quote(do: syntax_highlight_options() | nil),
+      type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil, {:in, [false]}]},
+      type_spec: quote(do: syntax_highlight_options() | nil | false),
       default: [formatter: {:html_inline, theme: "onedark"}],
       doc: """
         Apply syntax highlighting to code blocks.
@@ -1241,7 +1241,11 @@ defmodule MDEx.Document do
 
             syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
 
-            syntax_highlight: [formatter: {:html_linked, theme: "github_light"}]
+            syntax_highlight: [formatter: :html_linked]
+
+            syntax_highlight: nil
+
+            syntax_highlight: false
 
         See [Lumis](https://hexdocs.pm/lumis) for more info and examples.
       """
@@ -1715,7 +1719,7 @@ defmodule MDEx.Document do
       :html_linked
 
   """
-  @spec put_syntax_highlight_options(t(), syntax_highlight_options()) :: t()
+  @spec put_syntax_highlight_options(t(), syntax_highlight_options() | nil | false) :: t()
   def put_syntax_highlight_options(%MDEx.Document{} = document, nil = _options) do
     %{
       document
@@ -1724,6 +1728,10 @@ defmodule MDEx.Document do
             nil
           end)
     }
+  end
+
+  def put_syntax_highlight_options(%MDEx.Document{} = document, false = _options) do
+    put_syntax_highlight_options(document, nil)
   end
 
   def put_syntax_highlight_options(%MDEx.Document{} = document, options) when is_list(options) do
@@ -2602,6 +2610,7 @@ defmodule MDEx.Document do
   end
 
   defp syntax_highlight_options(nil), do: nil
+  defp syntax_highlight_options(false), do: nil
 
   defp syntax_highlight_options(options) do
     options

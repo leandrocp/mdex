@@ -1496,6 +1496,11 @@ defmodule MDEx.DocumentTest do
       refute get_in(document.options, [:syntax_highlight])
     end
 
+    test "can disable with false" do
+      document = Document.put_syntax_highlight_options(%Document{}, false)
+      refute get_in(document.options, [:syntax_highlight])
+    end
+
     test "accept short config" do
       document = Document.put_syntax_highlight_options(%Document{}, formatter: :html_inline)
       assert get_in(document.options, [:syntax_highlight, :formatter]) == :html_inline

@@ -61,6 +61,36 @@ defmodule MDExTest do
       )
     end
 
+    test "syntax highlighting can be disabled with nil" do
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        </code></pre>
+        """,
+        syntax_highlight: nil
+      )
+    end
+
+    test "syntax highlighting can be disabled with false" do
+      assert_output(
+        ~S"""
+        ```elixir
+        {:mdex, "~> 0.1"}
+        ```
+        """,
+        ~S"""
+        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        </code></pre>
+        """,
+        syntax_highlight: false
+      )
+    end
+
     test "custom syntax highlight theme" do
       assert_output(
         ~S"""
