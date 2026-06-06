@@ -1,0 +1,133 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Lumis syntax highlighting
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.12"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## What Lumis does
+
+[Lumis](https://hex.pm/packages/lumis) highlights code with Tree-sitter. It ships themes converted from Neovim colorschemes and gives you a few HTML formatters.
+
+Lumis is MDEx's default syntax highlighting engine:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
+```
+
+The older Lumis API is still supported for existing code, but it is no longer recommended:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+```
+
+For new code, pass Lumis options under `:opts` and set the engine explicitly when useful.
+
+The language still comes from the Markdown fence. One formatter can handle different languages in the same document.
+
+## Inline styles
+
+Use `:html_inline` when the generated HTML needs to stand on its own. This is useful for docs, feeds, emails, or anything where carrying a stylesheet around is a hassle.
+
+````elixir
+options = [
+  syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "catppuccin_latte"}]]
+]
+
+"""
+# Inline formatter
+
+```elixir
+def fib(n), do: fib(n, 1, 1)
+
+def fib(0, _a, _b), do: []
+
+def fib(n, a, b) when n > 0 do
+  [a | fib(n - 1, b, a + b)]
+end
+```
+
+```ruby
+def fibonacci(n)
+  return n if (0..1).include?(n)
+  (fibonacci(n - 1) + fibonacci(n - 2))
+end
+```
+
+```rust
+fn fibonacci(n: u32) -> u32 {
+  match n {
+    0 => 1,
+    1 => 1,
+    _ => fibonacci(n - 1) + fibonacci(n - 2),
+  }
+}
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````
+
+## Linked CSS
+
+Use `:html_linked` when your app owns the CSS. Lumis writes token classes, and your stylesheet supplies the colors.
+
+````elixir
+theme_css =
+  :lumis
+  |> :code.priv_dir()
+  |> Path.join("static/css/github_light.css")
+  |> File.read!()
+
+options = [
+  syntax_highlight: [engine: :lumis, opts: [formatter: :html_linked]]
+]
+
+html =
+  ~S|
+  # Linked formatter
+
+  ```elixir
+  def render(assigns) do
+    ~H"""
+    <pre><code>{@body}</code></pre>
+    """
+  end
+  ```
+  |
+  |> MDEx.to_html!(options)
+
+Kino.HTML.new("""
+<style>#{theme_css}</style>
+#{html}
+""")
+````
+
+## Formatter options
+
+Lumis formatter options live under `opts: [formatter: ...]`. See the [Lumis formatter type](https://lumis.hexdocs.pm/Lumis.html#t:formatter/0) for the full shape:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [
+  engine: :lumis,
+  opts: [
+    formatter: {:html_inline, theme: "github_light", pre_class: "code", include_highlights: true}
+  ]
+]
+```
+
+For automatic light/dark mode, see `examples/light_dark_theme.livemd`. For custom theme structs, see `examples/custom_theme.livemd`.
+
+Code fence decorators such as `highlight_lines`, `theme`, and `pre_class` are Lumis options too. See `examples/code_block_decorators.livemd`.
+
+Theme names such as `github_light`, `github_dark`, and `catppuccin_latte` come from Lumis. You can inspect them with `Lumis.available_themes/0`.

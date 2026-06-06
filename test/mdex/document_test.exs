@@ -1525,10 +1525,21 @@ defmodule MDEx.DocumentTest do
       assert formatter_opts[:pre_class] == "code-block-example"
     end
 
+    test "accept syntect engine and opts" do
+      document =
+        Document.put_syntax_highlight_options(%Document{},
+          engine: :syntect,
+          opts: [theme: "Catppuccin Macchiato"]
+        )
+
+      assert get_in(document.options, [:syntax_highlight, :engine]) == :syntect
+      assert get_in(document.options, [:syntax_highlight, :opts, :theme]) == "Catppuccin Macchiato"
+    end
+
     test "converts legacy formatter options to lumis opts" do
       options = Document.rust_options!(syntax_highlight: [formatter: {:html_inline, theme: "github_light"}])
 
-      assert %{formatter: {:html_inline, formatter_opts}} = options.syntax_highlight
+      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
       assert formatter_opts.theme == {:string, "github_light"}
     end
 
@@ -1541,9 +1552,24 @@ defmodule MDEx.DocumentTest do
           ]
         )
 
-      assert %{formatter: {:html_inline, formatter_opts}} = options.syntax_highlight
+      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
       assert formatter_opts.theme == {:string, "github_light"}
       assert formatter_opts.pre_class == "code-block-example"
+    end
+
+    test "converts syntect engine and opts to native syntax highlight options" do
+      options =
+        Document.rust_options!(syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]])
+
+      assert options.syntax_highlight == %{engine: :syntect, opts: %{theme: "Catppuccin Macchiato"}}
+    end
+
+    test "does not support legacy formatter syntax with syntect" do
+      assert_raise ArgumentError,
+                   "legacy :formatter syntax is only supported with syntax_highlight engine :lumis",
+                   fn ->
+                     Document.rust_options!(syntax_highlight: [engine: :syntect, formatter: :html_inline])
+                   end
     end
   end
 

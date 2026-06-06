@@ -1,4 +1,4 @@
-# Light Dark Theme
+# Lumis light/dark theme
 
 ```elixir
 Mix.install([
@@ -9,7 +9,7 @@ Mix.install([
 
 ## Intro
 
-MDEx supports automatic light/dark mode switching for syntax highlighting using the `:html_multi_themes` formatter. This generates CSS that responds to the user's system color scheme preference, showing different themes without JavaScript.
+Lumis supports automatic light/dark mode switching with the `:html_multi_themes` formatter. It generates CSS that responds to the user's system color scheme preference, so you can switch themes without JavaScript.
 
 ## Example
 
@@ -17,11 +17,14 @@ MDEx supports automatic light/dark mode switching for syntax highlighting using 
 options = [
   render: [unsafe: true],
   syntax_highlight: [
-    formatter: {
-      :html_multi_themes,
-      themes: [light: "github_light", dark: "github_dark"],
-      default_theme: "light-dark()"
-    }
+    engine: :lumis,
+    opts: [
+      formatter: {
+        :html_multi_themes,
+        themes: [light: "github_light", dark: "github_dark"],
+        default_theme: "light-dark()"
+      }
+    ]
   ]
 ]
 

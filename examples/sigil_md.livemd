@@ -47,7 +47,7 @@ You can pass options to `use MDEx` to customize the sigil behavior. Options are 
 defmodule CustomOptsExample do
   use MDEx,
     extension: [strikethrough: false],
-    syntax_highlight: [formatter: {:html_inline, theme: "gruvbox_light"}]
+    syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "gruvbox_light"}]]
 
   def render do
     ~MD"""

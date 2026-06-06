@@ -1015,15 +1015,16 @@ defmodule MDEx.Document do
 
   @syntax_highlight_options_schema [
     engine: [
-      type: {:in, [:lumis]},
+      type: {:in, [:lumis, :syntect]},
       default: :lumis,
-      doc: "Syntax highlighting engine. Currently only `:lumis` is supported."
+      doc: "Syntax highlighting engine. Supported engines are `:lumis` and `:syntect`."
     ],
     opts: [
       type: :keyword_list,
-      type_spec: quote(do: Lumis.options()),
+      type_spec: quote(do: Lumis.options() | [theme: String.t()]),
       default: [formatter: {:html_inline, theme: "onedark"}],
-      doc: "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0`."
+      doc:
+        "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0`. For `:syntect`, accepts `theme: String.t()` from supported two-face themes."
     ],
     formatter: [
       type: :any,
@@ -1251,15 +1252,18 @@ defmodule MDEx.Document do
 
             syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_dark"}]]
 
-            syntax_highlight: [formatter: :html_linked]
+            syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
 
-            # legacy Lumis formatter syntax is still supported
+            syntax_highlight: [engine: :lumis, opts: [formatter: :html_linked]]
 
             syntax_highlight: nil
 
             syntax_highlight: false
 
-        See [Lumis](https://hexdocs.pm/lumis) for more info and examples.
+            # Still supported for MDEx <= v0.12.3 but not recommended
+            syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
+
+        See [Lumis](https://hexdocs.pm/lumis) and [Syntect](https://docs.rs/syntect) for more info and examples.
       """
     ],
     sanitize: [
@@ -2626,16 +2630,29 @@ defmodule MDEx.Document do
   defp syntax_highlight_options(false), do: nil
 
   defp syntax_highlight_options(options) do
+    raw_options = options
     options = NimbleOptions.validate!(options, @syntax_highlight_options_schema)
 
     {formatter, options} = Keyword.pop(options, :formatter)
     {engine, options} = Keyword.pop(options, :engine)
     {opts, _options} = Keyword.pop(options, :opts)
 
-    opts = if formatter, do: Keyword.put(opts, :formatter, formatter), else: opts
-    opts = lumis_syntax_highlight_options(opts)
+    opts = syntax_highlight_engine_options(engine, opts, formatter, raw_options)
 
     if legacy_native_syntax_highlight_options?(), do: opts, else: %{engine: engine, opts: opts}
+  end
+
+  defp syntax_highlight_engine_options(:lumis, opts, formatter, _raw_options) do
+    opts = if formatter, do: Keyword.put(opts, :formatter, formatter), else: opts
+    lumis_syntax_highlight_options(opts)
+  end
+
+  defp syntax_highlight_engine_options(:syntect, opts, nil, raw_options) do
+    if Keyword.has_key?(raw_options, :opts), do: Map.new(opts), else: %{}
+  end
+
+  defp syntax_highlight_engine_options(:syntect, _opts, _formatter, _raw_options) do
+    raise ArgumentError, "legacy :formatter syntax is only supported with syntax_highlight engine :lumis"
   end
 
   defp lumis_syntax_highlight_options(options) do

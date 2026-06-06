@@ -1,6 +1,6 @@
 <!-- livebook:{"persist_outputs":true} -->
 
-# Custom Theme
+# Lumis custom theme
 
 ```elixir
 Mix.install([
@@ -11,7 +11,7 @@ Mix.install([
 
 ## Intro
 
-MDEx uses [Lumis](https://hex.pm/packages/lumis) for syntax highlighting, which supports customizable themes. This example shows how to modify an existing theme by changing styles for specific syntax elements like function calls.
+Lumis themes are Elixir structs, so you can edit one before passing it to MDEx. This example changes the style used for function calls.
 
 ## Customization
 
@@ -133,7 +133,7 @@ new_theme = put_in(
 
 ````elixir
 options = [
-  syntax_highlight: [formatter: {:html_inline, theme: new_theme}]
+  syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: new_theme}]]
 ]
 
 """
