@@ -408,6 +408,23 @@ defmodule MDExTest do
       assert html =~ ~s(<pre class="lumis my-code-block")
     end
 
+    test "with engine and opts" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          :ok
+          ```
+          """,
+          syntax_highlight: [
+            engine: :lumis,
+            opts: [formatter: {:html_inline, theme: "github_light", pre_class: "code-block-example"}]
+          ]
+        )
+
+      assert html =~ ~s(<pre class="lumis code-block-example")
+    end
+
     test "with italic" do
       {:ok, html} =
         MDEx.to_html(

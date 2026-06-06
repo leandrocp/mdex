@@ -1511,6 +1511,40 @@ defmodule MDEx.DocumentTest do
       assert {:html_inline, formatter_opts} = get_in(document.options, [:syntax_highlight, :formatter])
       assert formatter_opts[:theme] == "github_light"
     end
+
+    test "accept engine and opts" do
+      document =
+        Document.put_syntax_highlight_options(%Document{},
+          engine: :lumis,
+          opts: [formatter: {:html_inline, theme: "github_light", pre_class: "code-block-example"}]
+        )
+
+      assert get_in(document.options, [:syntax_highlight, :engine]) == :lumis
+      assert {:html_inline, formatter_opts} = get_in(document.options, [:syntax_highlight, :opts, :formatter])
+      assert formatter_opts[:theme] == "github_light"
+      assert formatter_opts[:pre_class] == "code-block-example"
+    end
+
+    test "converts legacy formatter options to lumis opts" do
+      options = Document.rust_options!(syntax_highlight: [formatter: {:html_inline, theme: "github_light"}])
+
+      assert %{formatter: {:html_inline, formatter_opts}} = options.syntax_highlight
+      assert formatter_opts.theme == {:string, "github_light"}
+    end
+
+    test "converts engine and opts to native syntax highlight options" do
+      options =
+        Document.rust_options!(
+          syntax_highlight: [
+            engine: :lumis,
+            opts: [formatter: {:html_inline, theme: "github_light", pre_class: "code-block-example"}]
+          ]
+        )
+
+      assert %{formatter: {:html_inline, formatter_opts}} = options.syntax_highlight
+      assert formatter_opts.theme == {:string, "github_light"}
+      assert formatter_opts.pre_class == "code-block-example"
+    end
   end
 
   describe "put_node_in_document_root" do
@@ -1949,7 +1983,7 @@ defmodule MDEx.DocumentTest do
       assert %MDEx.Document{options: options} = MDEx.new() |> Document.run()
 
       refute options[:sanitize]
-      assert [formatter: {:html_inline, _}] = options[:syntax_highlight]
+      assert [engine: :lumis, opts: [formatter: {:html_inline, _}]] = options[:syntax_highlight]
     end
 
     test "preserves custom options" do
