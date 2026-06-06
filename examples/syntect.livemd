@@ -1,0 +1,72 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Syntect syntax highlighting
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.12"},
+  {:kino, "~> 0.16"}
+])
+```
+
+## What Syntect does
+
+[Syntect](https://crates.io/crates/syntect) highlights code with Sublime Text grammars. MDEx exposes it as a syntax highlighting engine:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
+```
+
+Theme names come from the supported [two-face](https://crates.io/crates/two-face) themes.
+
+## Inline themed output
+
+When you pass a theme, Syntect writes inline styles into the generated HTML.
+
+````elixir
+options = [
+  syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
+]
+
+~S"""
+# Syntect theme
+
+```rust
+fn main() {
+  println!("hello from syntect");
+}
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````
+
+## Multiple languages
+
+The language comes from the Markdown fence, the same as with Lumis.
+
+````elixir
+options = [
+  syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
+]
+
+~S"""
+# Syntect with a few languages
+
+```elixir
+Enum.map([1, 2, 3], &(&1 * 2))
+```
+
+```javascript
+const doubled = [1, 2, 3].map((n) => n * 2)
+```
+
+```rust
+let doubled: Vec<_> = [1, 2, 3].iter().map(|n| n * 2).collect();
+```
+"""
+|> MDEx.to_html!(options)
+|> Kino.HTML.new()
+````

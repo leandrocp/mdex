@@ -72,6 +72,8 @@ defmodule MDEx.MixProject do
         "CHANGELOG.md",
         "examples/gfm.livemd",
         "examples/syntax_highlight.livemd",
+        "examples/lumis.livemd",
+        "examples/syntect.livemd",
         "examples/light_dark_theme.livemd",
         "examples/custom_theme.livemd",
         "examples/code_block_decorators.livemd",
@@ -141,6 +143,8 @@ defmodule MDEx.MixProject do
         Examples: [
           "examples/gfm.livemd",
           "examples/syntax_highlight.livemd",
+          "examples/lumis.livemd",
+          "examples/syntect.livemd",
           "examples/light_dark_theme.livemd",
           "examples/custom_theme.livemd",
           "examples/code_block_decorators.livemd",
@@ -166,7 +170,7 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:mdex_native, "~> 0.1"},
+      {:mdex_native, ">= 0.1.4"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:lumis, "~> 0.1"},

@@ -55,7 +55,7 @@ You can either use the [mdex_gfm](https://hex.pm/packages/mdex_gfm) plugin or se
 ```elixir
 MDEx.new(markdown: markdown)
 |> MDExGFM.attach()
-|> MDEx.to_html!(syntax_highlight: [formatter: {:html_inline, theme: "github_light"}])
+|> MDEx.to_html!(syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]])
 |> Kino.HTML.new()
 
 ```

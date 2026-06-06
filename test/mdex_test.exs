@@ -1031,6 +1031,38 @@ defmodule MDExTest do
     end
   end
 
+  describe "syntax highlighting - syntect" do
+    test "with default syntect output" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```rust
+          fn main() {}
+          ```
+          """,
+          syntax_highlight: [engine: :syntect]
+        )
+
+      assert html =~ ~s(<pre class="syntax-highlighting"><code class="language-rust">)
+      assert html =~ ~s(<span class="source rust">)
+    end
+
+    test "with syntect theme" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```rust
+          fn main() {}
+          ```
+          """,
+          syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
+        )
+
+      assert html =~ ~s(<pre style="background-color:)
+      assert html =~ ~s(<span style=)
+    end
+  end
+
   describe "html_inline: code block decorators" do
     test "pre_class" do
       assert_output(

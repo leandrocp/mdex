@@ -1,4 +1,4 @@
-Code block decorators allow you to customize the appearance and behavior of individual code blocks by adding special attributes to the info string (the part after the opening backticks).
+Code block decorators are Lumis syntax highlighting options for individual code blocks. Add them to the info string, the part after the opening backticks.
 
 ### Prerequisites
 
@@ -13,7 +13,7 @@ render: [
 
 ### Available Decorators
 
-| Decorator | Description | Supported Formatters | Example |
+| Decorator | Description | Supported Lumis Formatters | Example |
 |-----------|-------------|---------------------|---------|
 | `theme` | Override the syntax highlighting theme | All | `theme=github_dark` |
 | `pre_class` | Add custom CSS classes to `<pre>` element | All | `pre_class="my-class"` |

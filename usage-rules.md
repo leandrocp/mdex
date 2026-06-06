@@ -99,7 +99,7 @@ You can pass default sigil options:
 defmodule MyApp.Content do
   use MDEx,
     extension: [strikethrough: true],
-    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+    syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
 end
 ```
 
@@ -187,7 +187,7 @@ doc =
   MDEx.new(
     markdown: markdown,
     extension: [table: true],
-    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+    syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
   )
 ```
 
@@ -393,11 +393,11 @@ render: [
 
 ### `syntax_highlight:`
 
-Use built-in lumis highlighting or disable it.
+Use Lumis, use Syntect, or disable highlighting.
 
 ```elixir
-syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
-syntax_highlight: [formatter: {:html_linked, theme: "onedark"}]
+syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
+syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
 syntax_highlight: nil
 ```
 

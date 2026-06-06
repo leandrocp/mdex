@@ -111,7 +111,7 @@ MDEx.new(
   streaming: true,
   extension: [strikethrough: true, table: true, tasklist: true],
   render: [unsafe: true],
-  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+  syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
 )
 ```
 
