@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.5](https://github.com/leandrocp/mdex/compare/v0.12.4...v0.12.5) (2026-06-08)
+
+
+### Features
+
+* mdex_native with syntect build ([#359](https://github.com/leandrocp/mdex/issues/359)) ([42728ee](https://github.com/leandrocp/mdex/commit/42728eeb75459d7d9910f2105137650925331c1d))
+
 ## [0.12.4](https://github.com/leandrocp/mdex/compare/v0.12.3...v0.12.4) (2026-06-06)
 
 
