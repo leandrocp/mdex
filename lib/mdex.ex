@@ -37,7 +37,7 @@ defmodule MDEx do
   alias MDEx.Document
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
-  alias MDExNative.Native
+  alias MDExNative.Comrak
 
   import MDEx.Document, only: [is_fragment: 1]
 
@@ -399,7 +399,7 @@ defmodule MDEx do
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Native.document_to_html_with_options/2)
+    run_pipeline(document, options, &Comrak.document_to_html/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -635,12 +635,12 @@ defmodule MDEx do
     options = Document.put_options(MDEx.new(), options).options
 
     markdown
-    |> Native.markdown_to_xml_with_options(Document.rust_options!(options))
+    |> Comrak.markdown_to_xml(Document.rust_options!(options))
     |> maybe_trim()
   end
 
   def to_xml(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Native.document_to_xml_with_options/2)
+    run_pipeline(document, options, &Comrak.document_to_xml/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -929,7 +929,7 @@ defmodule MDEx do
   """
   @spec to_markdown(Document.t(), MDEx.Document.options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_markdown(%Document{} = document, options \\ []) do
-    run_pipeline(document, options, fn doc, _opts -> Native.document_to_commonmark(doc) end)
+    run_pipeline(document, options, &Comrak.document_to_commonmark/2)
   end
 
   @doc """
@@ -1289,7 +1289,7 @@ defmodule MDEx do
       "你好世界"
   """
   @spec anchorize(String.t()) :: String.t()
-  def anchorize(text), do: Native.text_to_anchor(text)
+  def anchorize(text), do: Comrak.anchorize(text)
 
   # TODO: remove in v1.0
   defp pop_deprecated_document_option(options) do

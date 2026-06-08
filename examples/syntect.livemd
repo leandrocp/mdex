@@ -2,11 +2,29 @@
 
 # Syntect syntax highlighting
 
+## Section
+
 ```elixir
+Application.put_env(:mdex_native, :syntax_highlighter, :syntect)
+
 Mix.install([
   {:mdex, "~> 0.12"},
   {:kino, "~> 0.16"}
 ])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+MDEx uses Lumis by default in its own project. To use Syntect, configure [mdex_native](https://mdex-native.hexdocs.pm/MDExNative.html) before dependencies compile:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+config :mdex_native, syntax_highlighter: :syntect
 ```
 
 ## What Syntect does
