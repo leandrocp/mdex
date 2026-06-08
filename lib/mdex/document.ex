@@ -659,7 +659,7 @@ defmodule MDEx.Document do
   @behaviour Access
   alias __MODULE__
   alias MDEx.ComrakConverter
-  alias MDExNative.Native
+  alias MDExNative.Comrak
 
   @built_in_options [
     :extension,
@@ -1263,7 +1263,10 @@ defmodule MDEx.Document do
             # Still supported for MDEx <= v0.12.3 but not recommended
             syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
 
-        See [Lumis](https://hexdocs.pm/lumis) and [Syntect](https://docs.rs/syntect) for more info and examples.
+        Note that only Lumis is enabled by default,
+        but Syntect is also available, see the [Syntect](https://mdex.hexdocs.pm/syntect.html) guide to enable it.
+
+        See [Lumis](https://mdex.hexdocs.pm/lumis.html) and [Syntect](https://mdex.hexdocs.pm/syntect.html) for more info and examples.
       """
     ],
     sanitize: [
@@ -2225,7 +2228,7 @@ defmodule MDEx.Document do
         {buffer, document}
       end
 
-    case Native.parse_document(buffer, rust_options!(document.options)) do
+    case Comrak.parse_document(buffer, rust_options!(document.options)) do
       %{nodes: nodes} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:ok, %{nodes: nodes}} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:error, error} -> halt(document, error)
@@ -2235,7 +2238,7 @@ defmodule MDEx.Document do
   defp render_existing_nodes(document) do
     document = %{document | buffer: [], current_steps: [], steps: []}
 
-    case Native.document_to_commonmark_with_options(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
+    case Comrak.document_to_commonmark(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
       markdown when is_binary(markdown) -> {:ok, markdown}
       {:ok, markdown} -> {:ok, markdown}
       {:error, error} -> {:error, halt(document, error)}

@@ -34,6 +34,25 @@ mix deps.get
 mix compile
 ```
 
+MDEx configures `:mdex_native` with Lumis by default for local builds:
+
+```elixir
+config :mdex_native, syntax_highlighter: :lumis
+```
+
+To use Syntect instead, configure `:mdex_native` before compiling dependencies:
+
+```elixir
+config :mdex_native, syntax_highlighter: :syntect
+```
+
+Disable with `nil` to save resources if syntax highlighting is not needed:
+
+
+```elixir
+config :mdex_native, syntax_highlighter: nil
+```
+
 ### Legacy CPUs
 
 Modern CPU features are enabled by default in `:mdex_native`. If your environment has an older CPU,
