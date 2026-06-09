@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## [0.13.0](https://github.com/leandrocp/mdex/compare/v0.12.5...v0.13.0) (2026-06-09)
 
-### Breaking Changes
 
-* disable syntax highlighting by default; config `:mdex_native` and pass `:syntax_highlight` options to enable Lumis or Syntect
+### ⚠ BREAKING CHANGES
+
+* optional lumis and disable syntax highlighting by default ([#362](https://github.com/leandrocp/mdex/issues/362))
 
 #### Syntax Highlighting Migration Guide
 
@@ -58,6 +59,12 @@ For `~MD`, pass the same options to `use MDEx`, and the old Lumis-only shape sti
 ```
 
 To keep syntax highlighting disabled, remove `:syntax_highlight` or set it to `nil` or `false`.
+
+### Documentation
+
+* fix examples ([94a879d](https://github.com/leandrocp/mdex/commit/94a879dc5e7843c4038e03c0c53e4debc924d6e2))
+
+
 
 ## [0.12.5](https://github.com/leandrocp/mdex/compare/v0.12.4...v0.12.5) (2026-06-08)
 
