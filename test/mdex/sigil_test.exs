@@ -3,6 +3,18 @@ defmodule MDEx.SigilTest do
   import MDEx.Sigil
   alias MDEx.Code
 
+  defmodule WithLegacyLumis do
+    use MDEx, syntax_highlight: [formatter: :html_inline]
+
+    def render do
+      ~MD|```elixir highlight_lines=2
+      defmodule Test do
+        @langs [:elixir, :rust]
+      end
+      ```|HTML
+    end
+  end
+
   defp assert_json(json, expected) do
     assert Jason.decode!(json) == expected
   end
@@ -133,11 +145,7 @@ defmodule MDEx.SigilTest do
 
   describe "sigil_MD with code block decorators" do
     test "highlight_lines" do
-      html = ~MD|```elixir highlight_lines=2
-      defmodule Test do
-        @langs [:elixir, :rust]
-      end
-      ```|HTML
+      html = WithLegacyLumis.render()
 
       assert html =~ "<div class=\"line\" data-line=\"1\">"
       assert html =~ "<div class=\"line\" style=\"background-color: #3b4252;\" data-line=\"2\">"

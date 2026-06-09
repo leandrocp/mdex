@@ -5,33 +5,52 @@
 ```elixir
 Mix.install([
   {:mdex, "~> 0.12"},
+  {:lumis, "~> 0.1"},
   {:kino, "~> 0.16"}
-])
+],
+  config: [mdex_native: [syntax_highlighter: :lumis]]
+)
 ```
 
 ## Pick an engine
 
-MDEx can highlight fenced code blocks with [Lumis](https://hex.pm/packages/lumis) or [Syntect](https://crates.io/crates/syntect).
+MDEx can highlight fenced code blocks with [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html).
 
-Lumis is the default. It uses Tree-sitter and Neovim themes:
+You must opt in to the syntax highlighter you want before `:mdex_native` is compiled.
 
-<!-- livebook:{"force_markdown":true} -->
+If no highlighter is configured, fenced code blocks render normally without syntax highlighting and a language class which is useful to apply syntax highlighting after the document generation, for example to highlight using Makeup or Shiki.
 
-```elixir
-syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
-```
+## Lumis
 
-Syntect uses Sublime Text grammars and themes from [two-face](https://crates.io/crates/two-face):
+Add Lumis to your deps if you want to use `engine: :lumis`:
 
 <!-- livebook:{"force_markdown":true} -->
 
 ```elixir
-syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
+{:lumis, "~> 0.1"}
 ```
 
-If you do not pass `:syntax_highlight`, MDEx uses Lumis with inline HTML and the `onedark` theme by default.
+And configure `:mdex_native` to download the Lumis NIF:
 
-Set `syntax_highlight: nil` or `syntax_highlight: false` to disable built-in highlighting.
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+import Config
+
+config :mdex_native, syntax_highlighter: :lumis
+```
+
+## Syntect
+
+Configure `:mdex_native` to download the Syntect NIF:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+import Config
+
+config :mdex_native, syntax_highlighter: :syntect
+```
 
 ## Passing options
 
@@ -67,5 +86,3 @@ See the [Lumis syntax highlighting](https://mdex.hexdocs.pm/lumis.html) guide fo
 See the [Syntect syntax highlighting](https://mdex.hexdocs.pm/syntect.html) to enable it and examples.
 
 Note that Code fence decorators such as `highlight_lines` and per-block `theme` are exclusive Lumis options. See `examples/code_block_decorators.livemd` for those.
-
-<!-- livebook:{"offset":2007,"stamp":{"token":"XCP.bcWnx6fAZWGuScVhshK3xafiTuDAANb16_QPV0ICYhduJ-YuvTkbRVeLJf_ZT0eimhIIxnw90bwjoiGmHeeuoh7I76-JAjwsdnzYFSE3mG4cMVrcQ4081b7i0tw","version":2}} -->

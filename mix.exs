@@ -173,8 +173,8 @@ defmodule MDEx.MixProject do
       {:mdex_native, ">= 0.1.5"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
-      {:lumis, "~> 0.1"},
       {:jason, "~> 1.0"},
+      {:lumis, "~> 0.1", optional: true},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
