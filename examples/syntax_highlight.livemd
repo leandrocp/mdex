@@ -13,7 +13,7 @@ Mix.install([
 
 MDEx can highlight fenced code blocks with [Lumis](https://hex.pm/packages/lumis) or [Syntect](https://crates.io/crates/syntect).
 
-Lumis is the default. It uses Tree-sitter and Lumis themes:
+Lumis is the default. It uses Tree-sitter and Neovim themes:
 
 <!-- livebook:{"force_markdown":true} -->
 
@@ -21,7 +21,7 @@ Lumis is the default. It uses Tree-sitter and Lumis themes:
 syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]]
 ```
 
-Syntect uses Sublime Text grammars and can use themes from [two-face](https://crates.io/crates/two-face):
+Syntect uses Sublime Text grammars and themes from [two-face](https://crates.io/crates/two-face):
 
 <!-- livebook:{"force_markdown":true} -->
 
@@ -29,36 +29,9 @@ Syntect uses Sublime Text grammars and can use themes from [two-face](https://cr
 syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
 ```
 
-If you do not pass `:syntax_highlight`, MDEx uses Lumis with inline HTML and the `onedark` theme.
+If you do not pass `:syntax_highlight`, MDEx uses Lumis with inline HTML and the `onedark` theme by default.
 
 Set `syntax_highlight: nil` or `syntax_highlight: false` to disable built-in highlighting.
-
-## Side by side
-
-````elixir
-markdown = ~S"""
-# Same code, different engine
-
-```elixir
-def hello(name), do: "Hello, #{name}!"
-```
-"""
-
-lumis_html =
-  MDEx.to_html!(markdown,
-    syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "catppuccin_frappe"}]]
-  )
-
-syntect_html =
-  MDEx.to_html!(markdown,
-    syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Frappe"]]
-  )
-
-Kino.Layout.grid([
-  Kino.HTML.new("<h3>Lumis</h3>#{lumis_html}"),
-  Kino.HTML.new("<h3>Syntect</h3>#{syntect_html}")
-])
-````
 
 ## Passing options
 
@@ -74,7 +47,7 @@ MDEx.to_html!(markdown,
 
 If another library calls MDEx for you, pass the same option through that library's MDEx configuration.
 
-For Tableau:
+For example in Tableau:
 
 <!-- livebook:{"force_markdown":true} -->
 
@@ -89,10 +62,10 @@ config :tableau, :config,
 
 ## More examples
 
-Use [Lumis syntax highlighting](https://mdex.hexdocs.pm/lumis.html) for Lumis formatters, linked CSS, line highlights, light/dark themes, and code fence decorators.
+See the [Lumis syntax highlighting](https://mdex.hexdocs.pm/lumis.html) guide for formatters, linked CSS, line highlights, light/dark themes, and code fence decorators.
 
-Use [Syntect syntax highlighting](https://mdex.hexdocs.pm/syntect.html) for Syntect themes and output shape.
+See the [Syntect syntax highlighting](https://mdex.hexdocs.pm/syntect.html) to enable it and examples.
 
-Code fence decorators such as `highlight_lines` and per-block `theme` are Lumis options. See `examples/code_block_decorators.livemd` for those.
+Note that Code fence decorators such as `highlight_lines` and per-block `theme` are exclusive Lumis options. See `examples/code_block_decorators.livemd` for those.
 
-<!-- livebook:{"offset":2505,"stamp":{"token":"XCP.78XMwA6R3sfW4n2tgYulKMOWf1JzbvC_WRMx4PaNB6fSjkxKsBDbipxe9svjvBZCLmWsqnZxBnYzWADPgAJaQbvp1nmUwNk7XV1DfL9ea0jI8vvVMDjfCN2PE0w","version":2}} -->
+<!-- livebook:{"offset":2007,"stamp":{"token":"XCP.bcWnx6fAZWGuScVhshK3xafiTuDAANb16_QPV0ICYhduJ-YuvTkbRVeLJf_ZT0eimhIIxnw90bwjoiGmHeeuoh7I76-JAjwsdnzYFSE3mG4cMVrcQ4081b7i0tw","version":2}} -->
