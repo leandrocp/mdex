@@ -11,7 +11,7 @@
   </a>
 
   <a href="https://hexdocs.pm/mdex">
-    <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
+    <img alt="Hex Docs" src="https://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
   </a>
 
   <a href="https://opensource.org/licenses/MIT">
