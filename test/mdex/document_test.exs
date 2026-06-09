@@ -2009,7 +2009,7 @@ defmodule MDEx.DocumentTest do
       assert %MDEx.Document{options: options} = MDEx.new() |> Document.run()
 
       refute options[:sanitize]
-      assert [engine: :lumis, opts: [formatter: {:html_inline, _}]] = options[:syntax_highlight]
+      refute options[:syntax_highlight]
     end
 
     test "preserves custom options" do

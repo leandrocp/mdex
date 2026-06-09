@@ -42,7 +42,7 @@
 - Phoenix HEEx components and expressions
 - [Streaming](https://hexdocs.pm/mdex/streaming.html) incomplete fragments
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
-- Built-in [Syntax Highlighting](https://lumis.sh) for code blocks
+- Built-in Syntax Highlighting with [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html)
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
 - HTML sanitization
 - [~MD Sigil](https://hexdocs.pm/mdex/MDEx.Sigil.html) for Markdown, HTML, HEEx, JSON, XML, and Quill Delta
@@ -63,7 +63,7 @@ Add `:mdex` dependency:
 ```elixir
 def deps do
   [
-    {:mdex, "~> 0.11"}
+    {:mdex, "~> 0.12"}
   ]
 end
 ```
@@ -80,6 +80,24 @@ mix igniter.install mdex
 ```elixir
 iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 "<h1>Hello 😄</h1>"
+```
+
+#### Syntax Highlighting
+
+Syntax highlight code blocks using either [Lumis](https://mdex.hexdocs.pm/lumis.html]) or [Syntect](https://mdex.hexdocs.pm/syntect.html),
+for example to use Lumis:
+
+```elixir
+def deps do
+  [
+    {:mdex, "~> 0.12"},
+    {:lumis, "~> 0.1"}
+  ]
+end
+```
+
+```elixir
+config :mdex_native, syntax_highlighter: :lumis
 ```
 
 #### GitHub Flavored Markdown (GFM)

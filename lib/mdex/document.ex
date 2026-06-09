@@ -1016,21 +1016,23 @@ defmodule MDEx.Document do
   @syntax_highlight_options_schema [
     engine: [
       type: {:in, [:lumis, :syntect]},
+      type_spec: quote(do: :lumis | :syntect),
       default: :lumis,
-      doc: "Syntax highlighting engine. Supported engines are `:lumis` and `:syntect`."
+      doc:
+        "Syntax highlighting engine. Supported engines are `:lumis` and `:syntect`. See the [Lumis](https://mdex.hexdocs.pm/lumis.html) and [Syntect](https://mdex.hexdocs.pm/syntect.html) guides."
     ],
     opts: [
       type: :keyword_list,
-      type_spec: quote(do: Lumis.options() | [theme: String.t()]),
+      type_spec: quote(do: Lumis.options() | syntect_options()),
       default: [formatter: {:html_inline, theme: "onedark"}],
       doc:
-        "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0`. For `:syntect`, accepts `theme: String.t()` from supported two-face themes."
+        "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0` and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
     ],
     formatter: [
       type: :any,
       type_spec: quote(do: Lumis.formatter()),
       type_doc: "`t:Lumis.formatter/0`",
-      doc: "Legacy Lumis formatter option. Prefer `opts: [formatter: ...]`."
+      doc: false
     ]
   ]
 
@@ -1244,29 +1246,15 @@ defmodule MDEx.Document do
     syntax_highlight: [
       type: {:or, [{:keyword_list, @syntax_highlight_options_schema}, nil, {:in, [false]}]},
       type_spec: quote(do: syntax_highlight_options() | nil | false),
-      default: [engine: :lumis, opts: [formatter: {:html_inline, theme: "onedark"}]],
+      default: nil,
       doc: """
         Apply syntax highlighting to code blocks.
 
-        Examples:
+        Defaults to `nil` (disabled).
 
-            syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_dark"}]]
+        See `t:syntax_highlight_options/0` for options and examples,
+        or check the [Syntax Highlight](https://mdex.hexdocs.pm/syntax_highlight.html) guide for more info.
 
-            syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
-
-            syntax_highlight: [engine: :lumis, opts: [formatter: :html_linked]]
-
-            syntax_highlight: nil
-
-            syntax_highlight: false
-
-            # Still supported for MDEx <= v0.12.3 but not recommended
-            syntax_highlight: [formatter: {:html_inline, theme: "github_dark"}]
-
-        Note that only Lumis is enabled by default,
-        but Syntect is also available, see the [Syntect](https://mdex.hexdocs.pm/syntect.html) guide to enable it.
-
-        See [Lumis](https://mdex.hexdocs.pm/lumis.html) and [Syntect](https://mdex.hexdocs.pm/syntect.html) for more info and examples.
       """
     ],
     sanitize: [
@@ -1504,11 +1492,11 @@ defmodule MDEx.Document do
   Returns the default `:syntax_highlight` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @syntax_highlight_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  nil
   ```
   """
-  @spec default_syntax_highlight_options() :: syntax_highlight_options()
-  def default_syntax_highlight_options, do: NimbleOptions.validate!([], @syntax_highlight_options_schema)
+  @spec default_syntax_highlight_options() :: nil
+  def default_syntax_highlight_options, do: nil
 
   @doc """
   Returns the default `:sanitize` options.
@@ -2451,9 +2439,14 @@ defmodule MDEx.Document do
   @type render_options() :: [unquote(NimbleOptions.option_typespec(@render_options_schema))]
 
   @typedoc """
-  Syntax Highlight code blocks using [lumis](https://hexdocs.pm/lumis).
+  Syntax highlight code blocks using [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html).
 
-  ## Example
+  - `:engine` - syntax highlighting engine, either `:lumis` or `:syntect`
+  - `:opts` - engine-specific options, either `t:Lumis.options/0` or `t:syntect_options/0`
+
+  ## Examples
+
+  **Lumis**
 
       MDEx.to_html!(\"""
       ...> ```elixir
@@ -2462,8 +2455,28 @@ defmodule MDEx.Document do
       ...> \""", syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "nord"}]])
       #=> <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
       #=> </span></code></pre>
+
+  **Syntect**
+
+      MDEx.to_html!(\"\"\"
+      ...> ```elixir
+      ...> {:mdex, "~> 0.1"}
+      ...> ```
+      ...> \"\"\", syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]])
+      #=> <pre class="syntax-highlighting"><code class="language-elixir"><span class="source elixir">...</span></code></pre>
+
   """
-  @type syntax_highlight_options() :: [unquote(NimbleOptions.option_typespec(@syntax_highlight_options_schema))]
+  @type syntax_highlight_options() :: [
+          engine: :lumis | :syntect,
+          opts: Lumis.options() | syntect_options()
+        ]
+
+  @typedoc """
+  Syntect syntax highlighting options.
+
+  - `:theme` - theme name from [two-face](https://crates.io/crates/two-face) crate.
+  """
+  @type syntect_options() :: [theme: String.t()]
 
   @typedoc """
   List of [ammonia options](https://docs.rs/ammonia/latest/ammonia/struct.Builder.html).
@@ -2642,7 +2655,7 @@ defmodule MDEx.Document do
 
     opts = syntax_highlight_engine_options(engine, opts, formatter, raw_options)
 
-    if legacy_native_syntax_highlight_options?(), do: opts, else: %{engine: engine, opts: opts}
+    %{engine: engine, opts: opts}
   end
 
   defp syntax_highlight_engine_options(:lumis, opts, formatter, _raw_options) do
@@ -2658,14 +2671,27 @@ defmodule MDEx.Document do
     raise ArgumentError, "legacy :formatter syntax is only supported with syntax_highlight engine :lumis"
   end
 
-  defp lumis_syntax_highlight_options(options) do
-    options
-    |> Lumis.validate_options!()
-    |> Lumis.rust_options!()
-  end
+  if Code.ensure_loaded?(Lumis) do
+    defp lumis_syntax_highlight_options(options) do
+      options
+      |> Lumis.validate_options!()
+      |> Lumis.rust_options!()
+    end
+  else
+    defp lumis_syntax_highlight_options(_options) do
+      raise ArgumentError, """
+      Lumis syntax highlighting requires the :lumis dependency.
 
-  defp legacy_native_syntax_highlight_options? do
-    Code.ensure_loaded?(MDExNative.Lumis)
+      Add it to your deps:
+
+          {:lumis, "~> 0.1"}
+
+      And configure :mdex_native before compiling dependencies:
+
+          config :mdex_native, syntax_highlighter: :lumis
+
+      """
+    end
   end
 
   defp migrate_header_ids(extension) do

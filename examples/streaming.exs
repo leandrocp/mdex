@@ -1,7 +1,11 @@
-Mix.install([
-  {:mdex, "~> 0.10"},
-  {:phoenix_playground, "~> 0.1"}
-])
+Mix.install(
+  [
+    {:mdex, "~> 0.10"},
+    {:lumis, "~> 0.1"},
+    {:phoenix_playground, "~> 0.1"}
+  ],
+  config: [mdex_native: [syntax_highlighter: :lumis]]
+)
 
 defmodule DemoLayout do
   use Phoenix.Component

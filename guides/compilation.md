@@ -34,24 +34,34 @@ mix deps.get
 mix compile
 ```
 
-MDEx configures `:mdex_native` with Lumis by default for local builds:
+To enable syntax highlighting with Lumis, add `:lumis` to your deps:
+
+```elixir
+{:lumis, "~> 0.1"}
+```
+
+Then configure `:mdex_native` before compiling dependencies:
 
 ```elixir
 config :mdex_native, syntax_highlighter: :lumis
 ```
 
-To use Syntect instead, configure `:mdex_native` before compiling dependencies:
+To use Syntect instead:
 
 ```elixir
 config :mdex_native, syntax_highlighter: :syntect
 ```
 
-Disable with `nil` to save resources if syntax highlighting is not needed:
+Disable with `nil` to download a minimal NIF without any syntax highlighter:
 
 
 ```elixir
 config :mdex_native, syntax_highlighter: nil
 ```
+
+Syntax highlighting is disabled by default in MDEx. Even after compiling `:mdex_native` with Lumis or Syntect, pass `:syntax_highlight` options to enable highlighting for a render.
+
+With `syntax_highlight: nil`, MDEx still adds the language class for code blocks but does not syntax highlight them.
 
 ### Legacy CPUs
 

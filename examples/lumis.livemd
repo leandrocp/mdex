@@ -5,15 +5,20 @@
 ```elixir
 Mix.install([
   {:mdex, "~> 0.12"},
+  {:lumis, "~> 0.1"},
   {:kino, "~> 0.16"}
-])
+],
+  config: [mdex_native: [syntax_highlighter: :lumis]]
+)
 ```
 
 ## What Lumis does
 
 [Lumis](https://hex.pm/packages/lumis) highlights code with Tree-sitter. It ships themes converted from Neovim colorschemes and gives you a few HTML formatters.
 
-Lumis is MDEx's default syntax highlighting engine:
+To use Lumis, add `{:lumis, "~> 0.1"}` to your deps and configure `:mdex_native` with `syntax_highlighter: :lumis` before compiling dependencies. This notebook does both in `Mix.install/2` above.
+
+Then use `engine: :lumis` to enable Lumis for a render:
 
 <!-- livebook:{"force_markdown":true} -->
 
@@ -29,7 +34,7 @@ The older Lumis API is still supported for existing code, but it is no longer re
 syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
 ```
 
-For new code, pass Lumis options under `:opts` and set the engine explicitly when useful.
+For new code, pass Lumis options under `:opts` and set the engine explicitly.
 
 The language still comes from the Markdown fence. One formatter can handle different languages in the same document.
 

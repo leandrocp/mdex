@@ -2,6 +2,18 @@ Code block decorators are Lumis syntax highlighting options for individual code 
 
 ### Prerequisites
 
+Code block decorators require Lumis. Add it to your deps:
+
+```elixir
+{:lumis, "~> 0.1"}
+```
+
+Configure `:mdex_native` before compiling dependencies:
+
+```elixir
+config :mdex_native, syntax_highlighter: :lumis
+```
+
 To use code block decorators, you must enable both `:render` options:
 
 ```elixir
@@ -9,6 +21,12 @@ render: [
   github_pre_lang: true,
   full_info_string: true
 ]
+```
+
+And enable Lumis for the render:
+
+```elixir
+syntax_highlight: [engine: :lumis, opts: [formatter: :html_inline]]
 ```
 
 ### Available Decorators

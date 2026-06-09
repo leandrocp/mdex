@@ -1,5 +1,64 @@
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+* disable syntax highlighting by default; config `:mdex_native` and pass `:syntax_highlight` options to enable Lumis or Syntect
+
+#### Syntax Highlighting Migration Guide
+
+Syntax highlighting is no longer enabled by default. If you use Lumis, add it in deps and opt in before compiling dependencies:
+
+```elixir
+# mix.exs
+defp deps do
+  [
+    {:lumis, "~> 0.1"}
+  ]
+end
+
+# config/config.exs
+import Config
+config :mdex_native, syntax_highlighter: :lumis
+```
+
+The old Lumis-only `:syntax_highlight` API still works but is no longer recommended:
+
+```elixir
+MDEx.to_html!(markdown,
+  syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+)
+```
+
+For new code, prefer `engine: :lumis` and move Lumis options under `opts:`:
+
+```diff
+- MDEx.to_html!(markdown,
+-   syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
+- )
++ MDEx.to_html!(markdown,
++   syntax_highlight: [
++     engine: :lumis,
++     opts: [formatter: {:html_inline, theme: "github_light"}]
++   ]
++ )
+```
+
+For `~MD`, pass the same options to `use MDEx`, and the old Lumis-only shape still works:
+
+```diff
+- use MDEx,
+-   syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
++ use MDEx,
++   syntax_highlight: [
++     engine: :lumis,
++     opts: [formatter: {:html_inline, theme: "github_light"}]
++   ]
+```
+
+To keep syntax highlighting disabled, remove `:syntax_highlight` or set it to `nil` or `false`.
+
 ## [0.12.5](https://github.com/leandrocp/mdex/compare/v0.12.4...v0.12.5) (2026-06-08)
 
 
