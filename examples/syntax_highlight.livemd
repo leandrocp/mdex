@@ -2,16 +2,6 @@
 
 # Syntax highlighting
 
-```elixir
-Mix.install([
-  {:mdex, "~> 0.12"},
-  {:lumis, "~> 0.1"},
-  {:kino, "~> 0.16"}
-],
-  config: [mdex_native: [syntax_highlighter: :lumis]]
-)
-```
-
 ## Pick an engine
 
 MDEx can highlight fenced code blocks with [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html).
