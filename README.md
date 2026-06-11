@@ -84,7 +84,7 @@ iex> MDEx.to_html!("# Hello :smile:", extension: [shortcodes: true])
 
 #### Syntax Highlighting
 
-Syntax highlight code blocks using either [Lumis](https://mdex.hexdocs.pm/lumis.html]) or [Syntect](https://mdex.hexdocs.pm/syntect.html),
+Syntax highlight code blocks using either [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html),
 for example to use Lumis:
 
 ```elixir
