@@ -194,6 +194,7 @@ The library is built on top of:
 - [Jido](https://github.com/agentjido/jido)
 - [Loomkin](https://github.com/bleuropa/loomkin)
 - [Phoenix SEO](https://github.com/dbernheisel/phoenix_seo)
+- [Phoenix Storybook](https://github.com/phenixdigital/phoenix_storybook)
 - [Plural Console](https://github.com/pluralsh/console)
 - [Prosody](https://github.com/halostatue/prosody)
 - [Reposit](https://github.com/reposit-bot/reposit)
