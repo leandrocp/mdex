@@ -238,7 +238,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |Feature|MDEx|Earmark|md|cmark|
 | --- | --- | --- | --- | --- |
 |Active|✅|✅|✅|❌|
-|Pure Elixir|❌|✅|✅|❌|
+|Pure Elixir|⚠️¹|✅|✅|❌|
 |Extensible|✅|✅|✅|❌|
 |Syntax Highlighting|✅|❌|❌|❌|
 |Code Block Decorators|✅|❌|❌|❌|
@@ -255,13 +255,14 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |Emoji|✅|❌|❌|❌|
 |GFM³|✅|✅|❌|❌|
 |GLFM⁴|✅|❌|❌|❌|
-|Discord⁵|⚠️¹|❌|❌|❌|
+|Discord⁵|⚠️⁶|❌|❌|❌|
 
-1. Partial support
+1. MDEx depends on [mdex_native](https://hex.pm/packages/mdex_native) which uses Rustler
 2. Possible with [earmark_reversal](https://hex.pm/packages/earmark_reversal)
 3. GitHub Flavored Markdown
 4. GitLab Flavored Markdown
 5. Discord Flavored Markdown
+6. Partial support
 
 ## Benchmark
 
