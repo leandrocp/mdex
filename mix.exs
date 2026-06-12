@@ -170,7 +170,7 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:mdex_native, ">= 0.1.5"},
+      {:mdex_native, "~> 0.2"},
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
