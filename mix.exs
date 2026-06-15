@@ -170,7 +170,7 @@ defmodule MDEx.MixProject do
 
   defp deps do
     [
-      {:mdex_native, "~> 0.2"},
+      mdex_native_dep(),
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
@@ -178,6 +178,14 @@ defmodule MDEx.MixProject do
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
+  end
+
+  defp mdex_native_dep do
+    if path = System.get_env("MDEX_NATIVE_PATH") do
+      {:mdex_native, path: path}
+    else
+      {:mdex_native, "~> 0.2"}
+    end
   end
 
   defp aliases do
