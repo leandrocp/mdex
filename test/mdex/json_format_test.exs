@@ -82,4 +82,41 @@ defmodule MDEx.JsonFormatTest do
              ]
            } = to_json("-# Some Subtext\n", subtext: true)
   end
+
+  describe "parse_document" do
+    test "does not create atoms from invalid node_type values" do
+      try do
+        MDEx.parse_document({:json, ~s|{"node_type":"MDEx.Unknown","nodes":[]}|})
+      rescue
+        _ -> :ok
+      end
+
+      before = :erlang.system_info(:atom_count)
+
+      prefix = "AtomDoS#{System.unique_integer([:positive])}"
+
+      payload =
+        Enum.reduce(1..100, "", fn i, nodes ->
+          ~s|{"node_type":"#{prefix}#{i}","nodes":[#{nodes}]}|
+        end)
+
+      try do
+        MDEx.parse_document({:json, payload})
+      rescue
+        _ -> :ok
+      end
+
+      assert :erlang.system_info(:atom_count) - before == 0
+    end
+
+    test "reuses atoms for valid node_type values" do
+      payload =
+        ~s|{"node_type":"MDEx.Document","nodes":[{"node_type":"MDEx.Paragraph","nodes":[{"node_type":"MDEx.Text","literal":"one"}]},{"node_type":"MDEx.Paragraph","nodes":[{"node_type":"MDEx.Text","literal":"two"}]}]}|
+
+      assert {:ok, %MDEx.Document{nodes: [%MDEx.Paragraph{}, %MDEx.Paragraph{}]}} = MDEx.parse_document({:json, payload})
+      before = :erlang.system_info(:atom_count)
+      assert {:ok, %MDEx.Document{nodes: [%MDEx.Paragraph{}, %MDEx.Paragraph{}]}} = MDEx.parse_document({:json, payload})
+      assert :erlang.system_info(:atom_count) - before == 0
+    end
+  end
 end

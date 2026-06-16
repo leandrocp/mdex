@@ -278,7 +278,7 @@ defmodule MDEx do
 
   defp json_to_node(json) do
     {node_type, node} = Map.pop!(json, :node_type)
-    node_type = Module.concat([node_type])
+    node_type = Module.safe_concat([node_type])
     node = map_nodes(node)
     struct(node_type, node)
   end
