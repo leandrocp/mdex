@@ -44,6 +44,10 @@ Earmark renders raw HTML by default but MDEx removes it by default for security 
 
 See the [Safety guide](https://mdex.hexdocs.pm/safety.html) for more info.
 
+## MDExNative
+
+This guide covers MDEx only but anyone looking for a pure Markdown converter without all the extra features provided by MDEx you can look into [mdex_native](https://hex.pm/packages/mdex_native) that expose the underlying NIFs used by MDEx.
+
 ## HTML
 
 **Earmark**
