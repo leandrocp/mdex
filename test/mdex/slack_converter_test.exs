@@ -65,7 +65,9 @@ defmodule MDEx.SlackConverterTest do
 
     test "code block becomes triple-backtick block without language tag" do
       input = %Document{
-        nodes: [%MDEx.CodeBlock{literal: "def hello do\n  :world\nend\n", info: "elixir", fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0}]
+        nodes: [
+          %MDEx.CodeBlock{literal: "def hello do\n  :world\nend\n", info: "elixir", fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0}
+        ]
       }
 
       {:ok, result} = SlackConverter.convert(input, [])
