@@ -955,6 +955,12 @@ defmodule MDEx do
 
     parse_options = Keyword.drop(options, [:custom_converters])
 
+    # Slack mrkdwn renders strikethrough as ~text~, so enable the GFM
+    # strikethrough extension by default when parsing. A caller can still
+    # disable it explicitly via `extension: [strikethrough: false]`.
+    extension = Keyword.merge([strikethrough: true], parse_options[:extension] || [])
+    parse_options = Keyword.put(parse_options, :extension, extension)
+
     with {:ok, document} <- parse_document(source, parse_options) do
       to_slack(document, options)
     end
