@@ -1,0 +1,373 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Earmark to MDEx Migration
+
+```elixir
+Mix.install([
+  {:earmark, "~> 1.4"},
+  {:mdex, "~> 0.13"},
+  {:mdex_gfm, "~> 0.1"}
+])
+```
+
+## Intro
+
+For anyone looking into MDEx after Earmark was deprecated, here's a short guide with examples to migrate from Earmark syntax and options to MDEx.
+
+## Markdown sample
+
+````elixir
+markdown = """
+# Hello
+
+This is **bold**!
+
+- [x] Ship it
+
+```elixir
+child = spawn(fn -> send(current, {self(), 1 + 2}) end)
+```
+
+<strong>trusted HTML</strong>
+"""
+````
+
+<!-- livebook:{"output":true} -->
+
+````
+"# Hello\n\nThis is **bold**!\n\n- [x] Ship it\n\n```elixir\nchild = spawn(fn -> send(current, {self(), 1 + 2}) end)\n```\n\n<strong>trusted HTML</strong>\n"
+````
+
+## Safety
+
+Earmark renders raw HTML by default but MDEx removes it by default for security reasons. To keep the comparison similar, MDEx will use `render: [unsafe: true]` on examples.
+
+See the [Safety guide](https://mdex.hexdocs.pm/safety.html) for more info.
+
+## HTML
+
+**Earmark**
+
+```elixir
+{:ok, html, _messages} = Earmark.as_html(markdown)
+IO.puts(html)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>
+Hello</h1>
+<p>
+This is <strong>bold</strong>!</p>
+<ul>
+  <li>
+[x] Ship it  </li>
+</ul>
+<pre><code class="elixir">child = spawn(fn -&gt; send(current, {self(), 1 + 2}) end)</code></pre>
+<strong>trusted HTML</strong>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+**MDEx**
+
+```elixir
+{:ok, html} = MDEx.to_html(markdown, render: [unsafe: true])
+IO.puts(html)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>Hello</h1>
+<p>This is <strong>bold</strong>!</p>
+<ul>
+<li>[x] Ship it</li>
+</ul>
+<pre><code class="language-elixir">child = spawn(fn -&gt; send(current, &lbrace;self(), 1 + 2&rbrace;) end)
+</code></pre>
+<p><strong>trusted HTML</strong></p>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## GFM - GitHub Flavored Markdown
+
+**Earmark**
+
+```elixir
+Earmark.as_html!(markdown, gfm: true)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>
+Hello</h1>
+<p>
+This is <strong>bold</strong>!</p>
+<ul>
+  <li>
+[x] Ship it  </li>
+</ul>
+<pre><code class="elixir">child = spawn(fn -&gt; send(current, {self(), 1 + 2}) end)</code></pre>
+<strong>trusted HTML</strong>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+**MDEx**
+
+<!-- livebook:{"break_markdown":true} -->
+
+Use the [MDExGFM plugin](https://github.com/leandrocp/mdex_gfm) or enable options individually.
+
+```elixir
+MDEx.to_html!(markdown,
+  plugins: [MDExGFM],
+  render: [unsafe: true]
+)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>Hello</h1>
+<p>This is <strong>bold</strong>!</p>
+<ul>
+<li><input type="checkbox" checked="" disabled="" /> Ship it</li>
+</ul>
+<pre lang="elixir"><code>child = spawn(fn -&gt; send(current, &lbrace;self(), 1 + 2&rbrace;) end)
+</code></pre>
+<p><strong>trusted HTML</strong></p>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Options
+
+A small sample of some differences on options.
+
+<!-- livebook:{"break_markdown":true} -->
+
+**Earmark**
+
+```elixir
+Earmark.as_html!(markdown, breaks: true)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>
+Hello</h1>
+<p>
+This is <strong>bold</strong>!</p>
+<ul>
+  <li>
+[x] Ship it  </li>
+</ul>
+<pre><code class="elixir">child = spawn(fn -&gt; send(current, {self(), 1 + 2}) end)</code></pre>
+<strong>trusted HTML</strong>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+```elixir
+Earmark.as_html!(markdown, smartypants: true)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>
+Hello</h1>
+<p>
+This is <strong>bold</strong>!</p>
+<ul>
+  <li>
+[x] Ship it  </li>
+</ul>
+<pre><code class="elixir">child = spawn(fn -&gt; send(current, {self(), 1 + 2}) end)</code></pre>
+<strong>trusted HTML</strong>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+**MDEx**
+
+```elixir
+MDEx.to_html!(markdown,
+  render: [
+    hardbreaks: true,
+    unsafe: true
+  ]
+)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>Hello</h1>
+<p>This is <strong>bold</strong>!</p>
+<ul>
+<li>[x] Ship it</li>
+</ul>
+<pre><code class="language-elixir">child = spawn(fn -&gt; send(current, &lbrace;self(), 1 + 2&rbrace;) end)
+</code></pre>
+<p><strong>trusted HTML</strong></p>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+```elixir
+MDEx.to_html!(markdown,
+  parse: [smart: true],
+  render: [unsafe: true]
+)
+|> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+<h1>Hello</h1>
+<p>This is <strong>bold</strong>!</p>
+<ul>
+<li>[x] Ship it</li>
+</ul>
+<pre><code class="language-elixir">child = spawn(fn -&gt; send(current, &lbrace;self(), 1 + 2&rbrace;) end)
+</code></pre>
+<p><strong>trusted HTML</strong></p>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## AST
+
+**Earmark**
+
+```elixir
+Earmark.Parser.as_ast(markdown)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   {"h1", [], ["Hello"], %{}},
+   {"p", [], ["This is ", {"strong", [], ["bold"], %{}}, "!"], %{}},
+   {"ul", [], [{"li", [], ["[x] Ship it"], %{}}], %{}},
+   {"pre", [],
+    [
+      {"code", [{"class", "elixir"}], ["child = spawn(fn -> send(current, {self(), 1 + 2}) end)"],
+       %{}}
+    ], %{}},
+   {"strong", [], ["trusted HTML"], %{verbatim: true}}
+ ], []}
+```
+
+**MDEx**
+
+```elixir
+Application.put_env(:mdex, :inspect_format, :struct)
+MDEx.parse_document(markdown, render: [unsafe: true])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ %MDEx.Document{
+   nodes: [
+     %MDEx.Heading{
+       nodes: [%MDEx.Text{literal: "Hello", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}],
+       level: 1,
+       setext: false,
+       closed: false,
+       sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}
+     },
+     %MDEx.Paragraph{
+       nodes: [
+         %MDEx.Text{literal: "This is ", sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 8}}},
+         %MDEx.Strong{
+           nodes: [
+             %MDEx.Text{literal: "bold", sourcepos: %MDEx.Sourcepos{start: {3, 11}, end: {3, 14}}}
+           ],
+           sourcepos: %MDEx.Sourcepos{start: {3, 9}, end: {3, 16}}
+         },
+         %MDEx.Text{literal: "!", sourcepos: %MDEx.Sourcepos{start: {3, 17}, end: {3, 17}}}
+       ],
+       sourcepos: %MDEx.Sourcepos{start: {3, 1}, end: {3, 17}}
+     },
+     %MDEx.List{
+       nodes: [
+         %MDEx.ListItem{
+           nodes: [
+             %MDEx.Paragraph{
+               nodes: [
+                 %MDEx.Text{
+                   literal: "[x] Ship it",
+                   sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 13}}
+                 }
+               ],
+               sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 13}}
+             }
+           ],
+           list_type: :bullet,
+           marker_offset: 0,
+           padding: 2,
+           start: 1,
+           delimiter: :period,
+           bullet_char: "-",
+           tight: false,
+           is_task_list: false,
+           sourcepos: %MDEx.Sourcepos{...}
+         }
+       ],
+       ...
+     },
+     ...
+   ],
+   ...
+ }}
+```

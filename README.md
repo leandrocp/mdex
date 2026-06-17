@@ -237,7 +237,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 
 |Feature|MDEx|Earmark|md|cmark|
 | --- | --- | --- | --- | --- |
-|Active|✅|✅|✅|❌|
+|Active|✅|❌|✅|❌|
 |Pure Elixir|⚠️¹|✅|✅|❌|
 |Extensible|✅|✅|✅|❌|
 |Syntax Highlighting|✅|❌|❌|❌|

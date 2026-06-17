@@ -87,6 +87,7 @@ defmodule MDEx.MixProject do
         {"guides/plugins.md", title: "Plugins"},
         {"guides/heex.md", title: "HEEx Integration"},
         {"guides/compilation.md", title: "Compilation"},
+        {"guides/earmark_to_mdex.livemd", title: "Earmark to MDEx Migration"},
         {"guides/safety.md", title: "Safety"},
         {"guides/code_block_decorators.md", title: "Code Block Decorators"}
       ],
@@ -160,6 +161,7 @@ defmodule MDEx.MixProject do
           "guides/plugins.md",
           "guides/heex.md",
           "guides/compilation.md",
+          "guides/earmark_to_mdex.livemd",
           "guides/safety.md",
           "guides/code_block_decorators.md"
         ]
