@@ -5,6 +5,7 @@ defmodule MDEx.SlackConverter do
 
   @typedoc "Conversion options"
   @type options :: keyword()
+  @typep conversion_result :: {:ok, String.t()} | {:error, term()}
 
   @doc """
   Convert an MDEx document to Slack mrkdwn format.
@@ -18,32 +19,26 @@ defmodule MDEx.SlackConverter do
   """
   @spec convert(Document.t(), options()) :: {:ok, String.t()} | {:error, term()}
   def convert(%Document{nodes: nodes}, options) do
-    try do
-      result = convert_nodes(nodes, options)
-      {:ok, result}
-    rescue
-      error -> {:error, error}
-    catch
-      error -> {:error, error}
-    end
+    convert_nodes(nodes, options)
   end
 
-  @spec convert_nodes([term()], options()) :: String.t()
+  @spec convert_nodes([term()], options()) :: conversion_result()
   defp convert_nodes(nodes, options) do
-    Enum.map_join(nodes, "", fn node -> convert_node(node, options) end)
+    reduce_text(nodes, fn node -> convert_node(node, options) end)
   end
 
-  @spec convert_node(term(), options()) :: String.t()
+  @spec convert_node(term(), options()) :: conversion_result()
   defp convert_node(node, options) do
     custom_converters = Keyword.get(options, :custom_converters, %{})
+    node_type = if is_map(node), do: Map.get(node, :__struct__)
 
-    case Map.get(custom_converters, node.__struct__) do
+    case Map.get(custom_converters, node_type) do
       converter when is_function(converter, 2) ->
         case converter.(node, options) do
-          :skip -> ""
-          {:error, reason} -> throw({:custom_converter_error, reason})
-          text when is_binary(text) -> text
-          other -> throw({:custom_converter_error, "Custom converter returned invalid value: #{inspect(other)}"})
+          :skip -> {:ok, ""}
+          {:error, reason} -> {:error, {:custom_converter_error, reason}}
+          text when is_binary(text) -> {:ok, text}
+          other -> {:error, {:custom_converter_error, "Custom converter returned invalid value: #{inspect(other)}"}}
         end
 
       nil ->
@@ -51,7 +46,22 @@ defmodule MDEx.SlackConverter do
     end
   end
 
-  @spec default_convert_node(term(), options()) :: String.t()
+  @spec reduce_text(Enumerable.t(), (term() -> conversion_result())) :: conversion_result()
+  defp reduce_text(items, converter) do
+    items
+    |> Enum.reduce_while([], fn item, acc ->
+      case converter.(item) do
+        {:ok, text} -> {:cont, [text | acc]}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:error, _reason} = error -> error
+      parts -> {:ok, parts |> Enum.reverse() |> IO.iodata_to_binary()}
+    end
+  end
+
+  @spec default_convert_node(term(), options()) :: conversion_result()
   defp default_convert_node(node, options)
 
   # Document
@@ -61,60 +71,74 @@ defmodule MDEx.SlackConverter do
 
   # Paragraph
   defp default_convert_node(%MDEx.Paragraph{nodes: nodes}, options) do
-    convert_nodes(nodes, options) <> "\n"
+    with {:ok, text} <- convert_nodes(nodes, options) do
+      {:ok, text <> "\n"}
+    end
   end
 
   # Text
   defp default_convert_node(%MDEx.Text{literal: text}, _options) do
-    text
+    {:ok, text}
   end
 
   # Strong (bold) -> *text*
   defp default_convert_node(%MDEx.Strong{nodes: nodes}, options) do
-    "*" <> convert_nodes(nodes, options) <> "*"
+    with {:ok, text} <- convert_nodes(nodes, options) do
+      {:ok, "*" <> text <> "*"}
+    end
   end
 
   # Emph (italic) -> _text_
   defp default_convert_node(%MDEx.Emph{nodes: nodes}, options) do
-    "_" <> convert_nodes(nodes, options) <> "_"
+    with {:ok, text} <- convert_nodes(nodes, options) do
+      {:ok, "_" <> text <> "_"}
+    end
   end
 
   # Inline code -> `code`
   defp default_convert_node(%MDEx.Code{literal: code}, _options) do
-    "`" <> code <> "`"
+    {:ok, "`" <> code <> "`"}
   end
 
   # Code block -> triple backtick, no language tag
   defp default_convert_node(%MDEx.CodeBlock{literal: code}, _options) do
-    "```\n" <> String.trim_trailing(code, "\n") <> "\n```\n"
+    {:ok, "```\n" <> String.trim_trailing(code, "\n") <> "\n```\n"}
   end
 
   # Headings -> *bold text* (Slack ignores # headings)
   defp default_convert_node(%MDEx.Heading{nodes: nodes}, options) do
-    "*" <> convert_nodes(nodes, options) <> "*\n"
+    with {:ok, text} <- convert_nodes(nodes, options) do
+      {:ok, "*" <> text <> "*\n"}
+    end
   end
 
   # Link -> <url|label>
   defp default_convert_node(%MDEx.Link{url: url, nodes: nodes}, options) do
-    label = convert_nodes(nodes, options)
-    "<" <> url <> "|" <> label <> ">"
+    with {:ok, label} <- convert_nodes(nodes, options) do
+      {:ok, "<" <> url <> "|" <> label <> ">"}
+    end
   end
 
   # Strikethrough -> ~text~
   defp default_convert_node(%MDEx.Strikethrough{nodes: nodes}, options) do
-    "~" <> convert_nodes(nodes, options) <> "~"
+    with {:ok, text} <- convert_nodes(nodes, options) do
+      {:ok, "~" <> text <> "~"}
+    end
   end
 
   # BlockQuote -> > text
   defp default_convert_node(%MDEx.BlockQuote{nodes: nodes}, options) do
-    inner = convert_nodes(nodes, options)
+    with {:ok, inner} <- convert_nodes(nodes, options) do
+      text =
+        inner
+        |> String.split("\n")
+        |> Enum.map_join("\n", fn
+          "" -> ""
+          line -> "> " <> line
+        end)
 
-    inner
-    |> String.split("\n")
-    |> Enum.map_join("\n", fn
-      "" -> ""
-      line -> "> " <> line
-    end)
+      {:ok, text}
+    end
   end
 
   # Unordered list
@@ -126,9 +150,7 @@ defmodule MDEx.SlackConverter do
   defp default_convert_node(%MDEx.List{list_type: :ordered, tight: _tight, nodes: items}, options) do
     items
     |> Enum.with_index(1)
-    |> Enum.map_join("", fn {item, index} ->
-      convert_list_item(item, "#{index}. ", options)
-    end)
+    |> reduce_text(fn {item, index} -> convert_list_item(item, "#{index}. ", options) end)
   end
 
   # Generic list fallback
@@ -148,60 +170,60 @@ defmodule MDEx.SlackConverter do
 
   # SoftBreak -> space
   defp default_convert_node(%MDEx.SoftBreak{}, _options) do
-    " "
+    {:ok, " "}
   end
 
   # LineBreak -> newline
   defp default_convert_node(%MDEx.LineBreak{}, _options) do
-    "\n"
+    {:ok, "\n"}
   end
 
   # ThematicBreak -> horizontal separator text
   defp default_convert_node(%MDEx.ThematicBreak{}, _options) do
-    "---\n"
+    {:ok, "---\n"}
   end
 
   # Image -> <url|alt>
   defp default_convert_node(%MDEx.Image{url: url, title: title}, _options) do
     label = if title && title != "", do: title, else: url
-    "<" <> url <> "|" <> label <> ">"
+    {:ok, "<" <> url <> "|" <> label <> ">"}
   end
 
   # HtmlBlock and HtmlInline -> strip tags, pass through text
   defp default_convert_node(%MDEx.HtmlBlock{literal: html}, _options) do
-    strip_html(html) <> "\n"
+    {:ok, strip_html(html) <> "\n"}
   end
 
   defp default_convert_node(%MDEx.HtmlInline{literal: html}, _options) do
-    strip_html(html)
+    {:ok, strip_html(html)}
   end
 
   # Raw -> pass through
   defp default_convert_node(%MDEx.Raw{literal: content}, _options) do
-    content
+    {:ok, content}
   end
 
   # ShortCode (emoji)
   defp default_convert_node(%MDEx.ShortCode{emoji: emoji}, _options) do
-    emoji
+    {:ok, emoji}
   end
 
   # FrontMatter -> skip
   defp default_convert_node(%MDEx.FrontMatter{}, _options) do
-    ""
+    {:ok, ""}
   end
 
   # Fallback for unknown node types
   defp default_convert_node(node, options) do
     cond do
       is_map(node) && Map.has_key?(node, :literal) && is_binary(node.literal) ->
-        node.literal
+        {:ok, node.literal}
 
       is_map(node) && Map.has_key?(node, :nodes) && is_list(node.nodes) ->
         convert_nodes(node.nodes, options)
 
       true ->
-        ""
+        {:ok, ""}
     end
   end
 
@@ -211,20 +233,14 @@ defmodule MDEx.SlackConverter do
     {paragraph_nodes, nested_lists} =
       Enum.split_with(children, fn node -> not match?(%MDEx.List{}, node) end)
 
-    text =
-      Enum.map_join(paragraph_nodes, "", fn
-        %MDEx.Paragraph{nodes: p_nodes} -> convert_nodes(p_nodes, options)
-        node -> convert_node(node, options)
-      end)
-
-    item_line = prefix <> text <> "\n"
-
-    nested =
-      Enum.map_join(nested_lists, "", fn nested_list ->
-        convert_node(nested_list, options)
-      end)
-
-    item_line <> nested
+    with {:ok, text} <-
+           reduce_text(paragraph_nodes, fn
+             %MDEx.Paragraph{nodes: p_nodes} -> convert_nodes(p_nodes, options)
+             node -> convert_node(node, options)
+           end),
+         {:ok, nested} <- convert_nodes(nested_lists, options) do
+      {:ok, prefix <> text <> "\n" <> nested}
+    end
   end
 
   # Helper: strip HTML tags
