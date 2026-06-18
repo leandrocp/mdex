@@ -226,6 +226,103 @@ MDEx.to_heex!(markdown, assigns: assigns)
 |> MDEx.to_html!()
 ```
 
+## Moving from Earmark
+
+Most Earmark ports are direct, but do not copy options blindly. Earmark renders raw HTML by default; MDEx drops it unless you opt in with `render: [unsafe: true]`. For untrusted content, pair that with `sanitize:` instead of matching Earmark's default behavior.
+
+```elixir
+# Earmark
+{:ok, html, _messages} = Earmark.as_html(markdown)
+
+# MDEx
+{:ok, html} = MDEx.to_html(markdown)
+```
+
+Use bang functions the same way:
+
+```elixir
+# Earmark
+html = Earmark.as_html!(markdown)
+
+# MDEx
+html = MDEx.to_html!(markdown)
+```
+
+If the old code expected raw HTML to survive, make the choice explicit:
+
+```elixir
+MDEx.to_html!(markdown, render: [unsafe: true])
+```
+
+For user content, prefer sanitizing:
+
+```elixir
+MDEx.to_html!(markdown,
+  render: [unsafe: true],
+  sanitize: MDEx.Document.default_sanitize_options()
+)
+```
+
+### GFM options
+
+Replace `gfm: true` with the `MDExGFM` plugin when you want GitHub Flavored Markdown behavior such as task lists:
+
+```elixir
+# Earmark
+Earmark.as_html!(markdown, gfm: true)
+
+# MDEx
+MDEx.to_html!(markdown,
+  plugins: [MDExGFM],
+  render: [unsafe: true]
+)
+```
+
+If you only need one feature, enable the MDEx option directly:
+
+```elixir
+MDEx.to_html!(markdown, extension: [table: true, strikethrough: true, tasklist: true])
+```
+
+### Common option replacements
+
+| Earmark | MDEx |
+| --- | --- |
+| `breaks: true` | `render: [hardbreaks: true]` |
+| `smartypants: true` | `parse: [smart: true]` |
+| `gfm: true` | `plugins: [MDExGFM]` or explicit `extension:` options |
+| raw HTML by default | `render: [unsafe: true]`, plus `sanitize:` for untrusted content |
+
+### AST ports
+
+Earmark's AST is HTML-shaped tuples. MDEx returns a `%MDEx.Document{}` with typed nodes, source positions, options, and pipeline state.
+
+```elixir
+# Earmark
+{:ok, ast, _messages} = Earmark.Parser.as_ast(markdown)
+
+# MDEx
+{:ok, document} = MDEx.parse_document(markdown)
+```
+
+For structural changes, rewrite tuple-walking code with `MDEx.Document.update_nodes/3` or `MDEx.traverse_and_update/2`.
+
+```elixir
+document =
+  markdown
+  |> MDEx.parse_document!()
+  |> MDEx.Document.update_nodes(MDEx.Text, fn node ->
+    %{node | literal: String.upcase(node.literal)}
+  end)
+```
+
+### Output differences to expect
+
+- MDEx emits compact CommonMark-style HTML, so whitespace will differ from Earmark.
+- Code block classes differ: Earmark commonly emits `class="elixir"`; MDEx emits `class="language-elixir"` unless a plugin or renderer changes it.
+- Task lists need GFM support in MDEx. Without it, `- [x] Ship it` is plain list text.
+- Raw HTML is wrapped according to CommonMark parsing rules and is still controlled by `render: [unsafe: true]`.
+
 ## Document API
 
 `MDEx.Document` is the right abstraction when the agent needs to manipulate or inspect Markdown structurally.
@@ -531,4 +628,5 @@ Parse to `MDEx.Document`, change nodes structurally, then render.
 - HEEx guide: https://hexdocs.pm/mdex/heex.html
 - Streaming guide: https://hexdocs.pm/mdex/streaming.html
 - Safety guide: https://hexdocs.pm/mdex/safety.html
+- Earmark migration guide: https://hexdocs.pm/mdex/earmark_to_mdex.html
 - Code block decorators guide: https://hexdocs.pm/mdex/code_block_decorators.html
