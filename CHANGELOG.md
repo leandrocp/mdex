@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.1](https://github.com/leandrocp/mdex/compare/v0.13.0...v0.13.1) (2026-06-19)
+
+
+### Features
+
+* add Slack mrkdwn converter (to_slack/2) ([#366](https://github.com/leandrocp/mdex/issues/366)) ([0be090a](https://github.com/leandrocp/mdex/commit/0be090a78dbe587a90814a7481b039d10996863c)), closes [#333](https://github.com/leandrocp/mdex/issues/333)
+
+
+### Documentation
+
+* earmark migration guide ([d35ef3d](https://github.com/leandrocp/mdex/commit/d35ef3d5bee03d32143b648f6a273b22b047da95))
+* migration instructions on usage-rules.md ([8f7c556](https://github.com/leandrocp/mdex/commit/8f7c556730a510e7aa7c9b9792c909f9d3bd61ff))
+* remove unused install block from syntax highlight ([2e44278](https://github.com/leandrocp/mdex/commit/2e442787525ed640d6a79e7ef8bc8e3852208273))
+
 ## [0.13.0](https://github.com/leandrocp/mdex/compare/v0.12.5...v0.13.0) (2026-06-09)
 
 
