@@ -993,7 +993,7 @@ defmodule MDEx do
   end
 
   def to_slack(source, options) do
-    if is_fragment(source) do
+    if fragment?(source) do
       source
       |> Document.wrap()
       |> to_slack(options)
