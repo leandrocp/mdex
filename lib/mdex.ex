@@ -37,6 +37,7 @@ defmodule MDEx do
   alias MDEx.Document
   alias MDEx.DecodeError
   alias MDEx.InvalidInputError
+  alias MDEx.SlackConverter
   alias MDExNative.Comrak
 
   import MDEx.Document, only: [fragment?: 1]
@@ -912,6 +913,101 @@ defmodule MDEx do
   @spec to_delta!(source(), keyword()) :: [map()]
   def to_delta!(source, options \\ []) do
     case to_delta(source, options) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Convert Markdown or `MDEx.Document` to Slack mrkdwn format.
+
+  Slack uses its own mrkdwn dialect that differs from CommonMark:
+  bold uses `*text*`, italic uses `_text_`, links use `<url|label>`,
+  and headings are not supported (rendered as bold text).
+
+  ## Examples
+
+      iex> MDEx.to_slack("**Hello** _world_")
+      {:ok, "*Hello* _world_\\n"}
+
+      iex> MDEx.to_slack("# Title\\n[link](https://example.com)")
+      {:ok, "*Title*\\n<https://example.com|link>\\n"}
+
+  ## Options
+
+    * `t:MDEx.Document.options/0` - options passed to the parser and document processing
+    * `:custom_converters` - map of node types to converter functions for custom behavior
+
+  ## Custom Converters
+
+  Custom converters allow you to override the default behavior for any node type.
+  The converter function receives `(node, options)` and must return a binary string,
+  `:skip` to skip the node, or `{:error, reason}` to signal an error.
+
+  """
+  @spec to_slack(source(), keyword()) ::
+          {:ok, String.t()} | {:error, MDEx.DecodeError.t()} | {:error, MDEx.InvalidInputError.t()}
+  def to_slack(source, options \\ [])
+
+  def to_slack(source, options) when is_binary(source) and is_list(options) do
+    {_deprecated_document, options} = pop_deprecated_document_option(options)
+
+    parse_options = Keyword.drop(options, [:custom_converters])
+
+    # Slack mrkdwn renders strikethrough as ~text~, so enable the GFM
+    # strikethrough extension by default when parsing. A caller can still
+    # disable it explicitly via `extension: [strikethrough: false]`.
+    extension = Keyword.merge([strikethrough: true], parse_options[:extension] || [])
+    parse_options = Keyword.put(parse_options, :extension, extension)
+
+    with {:ok, document} <- parse_document(source, parse_options) do
+      to_slack(document, options)
+    end
+  end
+
+  def to_slack(%Document{} = document, options) when is_list(options) do
+    {document_opt, options} = pop_deprecated_document_option(options)
+
+    validated_options =
+      options
+      |> Keyword.take([:custom_converters])
+      |> NimbleOptions.validate!(custom_converters: [type: :map, default: %{}])
+
+    document_options = Keyword.drop(options, [:custom_converters])
+
+    document
+    |> Document.put_options(document_options)
+    |> maybe_apply_document_option(document_opt)
+    |> Document.run()
+    |> then(fn document ->
+      document
+      |> SlackConverter.convert(validated_options)
+      |> case do
+        {:ok, text} ->
+          {:ok, text}
+
+        {:error, reason} ->
+          {:error, %DecodeError{document: document, error: reason}}
+      end
+    end)
+  end
+
+  def to_slack(source, options) do
+    if is_fragment(source) do
+      source
+      |> Document.wrap()
+      |> to_slack(options)
+    else
+      {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  @doc """
+  Same as `to_slack/2` but raises on error.
+  """
+  @spec to_slack!(source(), keyword()) :: String.t()
+  def to_slack!(source, options \\ []) do
+    case to_slack(source, options) do
       {:ok, result} -> result
       {:error, error} -> raise error
     end
