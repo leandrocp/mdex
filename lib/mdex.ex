@@ -921,9 +921,11 @@ defmodule MDEx do
   @doc """
   Convert Markdown or `MDEx.Document` to Slack mrkdwn format.
 
-  Slack uses its own mrkdwn dialect that differs from CommonMark:
-  bold uses `*text*`, italic uses `_text_`, links use `<url|label>`,
-  and headings are not supported (rendered as bold text).
+  Slack uses its own Markdown dialect named mrkdwn that differs from CommonMark
+  described at https://docs.slack.dev/messaging/formatting-message-text
+
+  Dangerous link and image URLs are omitted by default. Pass
+  `render: [unsafe: true]` only for trusted input if you need to preserve them.
 
   ## Examples
 
@@ -936,13 +938,6 @@ defmodule MDEx do
   ## Options
 
     * `t:MDEx.Document.options/0` - options passed to the parser and document processing
-    * `:custom_converters` - map of node types to converter functions for custom behavior
-
-  ## Custom Converters
-
-  Custom converters allow you to override the default behavior for any node type.
-  The converter function receives `(node, options)` and must return a binary string,
-  `:skip` to skip the node, or `{:error, reason}` to signal an error.
 
   """
   @spec to_slack(source(), keyword()) ::
@@ -952,13 +947,11 @@ defmodule MDEx do
   def to_slack(source, options) when is_binary(source) and is_list(options) do
     {_deprecated_document, options} = pop_deprecated_document_option(options)
 
-    parse_options = Keyword.drop(options, [:custom_converters])
-
     # Slack mrkdwn renders strikethrough as ~text~, so enable the GFM
     # strikethrough extension by default when parsing. A caller can still
     # disable it explicitly via `extension: [strikethrough: false]`.
-    extension = Keyword.merge([strikethrough: true], parse_options[:extension] || [])
-    parse_options = Keyword.put(parse_options, :extension, extension)
+    extension = Keyword.merge([strikethrough: true], options[:extension] || [])
+    parse_options = Keyword.put(options, :extension, extension)
 
     with {:ok, document} <- parse_document(source, parse_options) do
       to_slack(document, options)
@@ -967,29 +960,13 @@ defmodule MDEx do
 
   def to_slack(%Document{} = document, options) when is_list(options) do
     {document_opt, options} = pop_deprecated_document_option(options)
-
-    validated_options =
-      options
-      |> Keyword.take([:custom_converters])
-      |> NimbleOptions.validate!(custom_converters: [type: :map, default: %{}])
-
-    document_options = Keyword.drop(options, [:custom_converters])
+    unsafe = get_in(options, [:render, :unsafe]) || false
 
     document
-    |> Document.put_options(document_options)
+    |> Document.put_options(options)
     |> maybe_apply_document_option(document_opt)
     |> Document.run()
-    |> then(fn document ->
-      document
-      |> SlackConverter.convert(validated_options)
-      |> case do
-        {:ok, text} ->
-          {:ok, text}
-
-        {:error, reason} ->
-          {:error, %DecodeError{document: document, error: reason}}
-      end
-    end)
+    |> SlackConverter.convert(unsafe: unsafe)
   end
 
   def to_slack(source, options) do
