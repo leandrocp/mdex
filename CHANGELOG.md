@@ -5,7 +5,7 @@
 
 ### Features
 
-* add Slack mrkdwn converter (to_slack/2) ([#366](https://github.com/leandrocp/mdex/issues/366)) ([0be090a](https://github.com/leandrocp/mdex/commit/0be090a78dbe587a90814a7481b039d10996863c)), closes [#333](https://github.com/leandrocp/mdex/issues/333)
+* add Slack mrkdwn converter (to_slack/2) ([#366](https://github.com/leandrocp/mdex/issues/366)) ([0be090a](https://github.com/leandrocp/mdex/commit/0be090a78dbe587a90814a7481b039d10996863c)), closes [#333](https://github.com/leandrocp/mdex/issues/333) by @mvanhorn
 
 
 ### Documentation
