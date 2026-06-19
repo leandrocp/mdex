@@ -7,16 +7,18 @@ defmodule MDEx.ComrakConverter do
   defp convert(nodes, from, to) when is_list(nodes), do: Enum.map(nodes, &convert(&1, from, to))
 
   defp convert(%module{} = node, from, to) do
-    with {:ok, target} <- convert_module(module, from, to) do
-      node
-      |> Map.from_struct()
-      |> Map.new(fn
-        {key, value} when key in [:nodes, :sourcepos] -> {key, convert(value, from, to)}
-        {key, value} -> {key, value}
-      end)
-      |> Map.put(:__struct__, target)
-    else
-      :error -> raise ArgumentError, "cannot convert #{inspect(module)}"
+    case convert_module(module, from, to) do
+      {:ok, target} ->
+        node
+        |> Map.from_struct()
+        |> Map.new(fn
+          {key, value} when key in [:nodes, :sourcepos] -> {key, convert(value, from, to)}
+          {key, value} -> {key, value}
+        end)
+        |> Map.put(:__struct__, target)
+
+      :error ->
+        raise ArgumentError, "cannot convert #{inspect(module)}"
     end
   end
 

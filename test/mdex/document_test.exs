@@ -1002,7 +1002,7 @@ defmodule MDEx.DocumentTest do
     end
 
     test "enumeration with large document" do
-      large_content = Enum.map(1..10, fn i -> "# Heading #{i}\nContent #{i}\n" end) |> Enum.join("\n")
+      large_content = Enum.map_join(1..10, "\n", fn i -> "# Heading #{i}\nContent #{i}\n" end)
       large_doc = MDEx.parse_document!(large_content)
 
       count = Enum.count(large_doc)

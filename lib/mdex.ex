@@ -39,7 +39,7 @@ defmodule MDEx do
   alias MDEx.InvalidInputError
   alias MDExNative.Comrak
 
-  import MDEx.Document, only: [is_fragment: 1]
+  import MDEx.Document, only: [fragment?: 1]
 
   @doc """
   Sets up MDEx in the calling module.
@@ -415,7 +415,7 @@ defmodule MDEx do
   end
 
   def to_html(source, options) do
-    if is_fragment(source) do
+    if fragment?(source) do
       source
       |> Document.wrap()
       |> to_html(options)
@@ -647,7 +647,7 @@ defmodule MDEx do
   end
 
   def to_xml(source, options) do
-    if is_fragment(source) do
+    if fragment?(source) do
       to_xml(%Document{nodes: List.wrap(source)}, options)
     else
       {:error, %InvalidInputError{found: source}}
@@ -699,9 +699,8 @@ defmodule MDEx do
   def to_json(source, options) when is_binary(source) do
     {_document_opt, options} = pop_deprecated_document_option(options)
 
-    with {:ok, document} <- parse_document(source, options),
-         {:ok, json} <- Jason.encode(document) do
-      {:ok, json}
+    with {:ok, document} <- parse_document(source, options) do
+      Jason.encode(document)
     end
   end
 
@@ -723,7 +722,7 @@ defmodule MDEx do
   end
 
   def to_json(source, options) do
-    if is_fragment(source) do
+    if fragment?(source) do
       source
       |> Document.wrap()
       |> to_json(options)
@@ -898,7 +897,7 @@ defmodule MDEx do
   end
 
   def to_delta(source, options) do
-    if is_fragment(source) do
+    if fragment?(source) do
       source
       |> Document.wrap()
       |> to_delta(options)

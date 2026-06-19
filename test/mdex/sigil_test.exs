@@ -45,6 +45,15 @@ defmodule MDEx.SigilTest do
       assert ~MD|# <%= @lang %>|MD == "# Elixir"
     end
 
+    test "evaluates assigns from the caller at compile time" do
+      assert {"<h1>Elixir</h1>", _bindings} =
+               Elixir.Code.eval_string(~S'''
+               import MDEx.Sigil
+               assigns = %{lang: "Elixir"}
+               ~MD|# <%= @lang %>|HTML
+               ''')
+    end
+
     # test "markdown to heex" do
     #   assigns = %{lang: ":elixir"}
     #   assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX
@@ -97,6 +106,24 @@ defmodule MDEx.SigilTest do
     test "markdown to delta" do
       assert ~MD|`lang = :elixir`|DELTA ==
                [%{"insert" => "lang = :elixir", "attributes" => %{"code" => true}}, %{"insert" => "\n"}]
+    end
+
+    test "heex requires assigns in the caller" do
+      assert_raise RuntimeError, "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map", fn ->
+        Elixir.Code.eval_string(~S'''
+        import MDEx.Sigil
+        ~MD|Hello|HEEX
+        ''')
+      end
+    end
+
+    test "unsupported modifier raises with modifier details" do
+      assert_raise RuntimeError, "unsupported modifier ~c\"BAD\" for sigil_MD", fn ->
+        Elixir.Code.eval_string(~S'''
+        import MDEx.Sigil
+        ~MD|Hello|BAD
+        ''')
+      end
     end
 
     test "document to markdown" do

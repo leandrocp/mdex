@@ -219,87 +219,77 @@ defmodule MDEx.Sigil do
     user_opts = caller_mdex_opts(__CALLER__)
     opts = MDEx.merge_options(@opts, user_opts)
 
-    case modifiers do
-      [] ->
-        expr
-        |> MDEx.parse_document!(opts)
-        |> Macro.escape()
+    sigil_md_result(modifiers, expr, opts, __CALLER__)
+  end
 
-      ~c"HTML" ->
-        if Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
-          expr
-          |> MDEx.to_html!(opts)
-          |> EEx.compile_string(
-            engine: EEx.SmartEngine,
-            file: __CALLER__.file,
-            line: __CALLER__.line + 1,
-            indentation: 0
-          )
-        else
-          MDEx.to_html!(expr, opts)
-        end
+  defp sigil_md_result([], expr, opts, _caller) do
+    expr
+    |> MDEx.parse_document!(opts)
+    |> Macro.escape()
+  end
 
-      ~c"HEEX" ->
-        if Code.ensure_loaded?(Phoenix.LiveView) do
-          if not Macro.Env.has_var?(__CALLER__, {:assigns, nil}) do
-            raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
-          end
-
-          heex_opts =
-            opts
-            |> Keyword.update(:extension, [phoenix_heex: true], &Keyword.put(&1, :phoenix_heex, true))
-            |> Keyword.update(:render, [unsafe: true], &Keyword.put(&1, :unsafe, true))
-
-          expr
-          |> MDEx.to_html!(heex_opts)
-          |> EEx.compile_string(
-            engine: Phoenix.LiveView.TagEngine,
-            file: __CALLER__.file,
-            line: __CALLER__.line + 1,
-            caller: __CALLER__,
-            indentation: 0,
-            source: expr,
-            tag_handler: Phoenix.LiveView.HTMLEngine
-          )
-        else
-          IO.warn("Phoenix LiveView is required to use the HEEX modifier with ~MD sigil")
-        end
-
-      ~c"MD" ->
-        cond do
-          is_binary(expr) && Macro.Env.has_var?(__CALLER__, {:assigns, nil}) ->
-            EEx.compile_string(expr,
-              engine: EEx.SmartEngine,
-              file: __CALLER__.file,
-              line: __CALLER__.line + 1,
-              indentation: 0
-            )
-
-          is_binary(expr) ->
-            expr
-
-          :else ->
-            MDEx.to_markdown!(expr, opts)
-        end
-
-      ~c"JSON" ->
-        expr
-        |> MDEx.to_json!(opts)
-        |> Macro.escape()
-
-      ~c"XML" ->
-        expr
-        |> MDEx.to_xml!(opts)
-        |> Macro.escape()
-
-      ~c"DELTA" ->
-        expr
-        |> MDEx.to_delta!(opts)
-        |> Macro.escape()
-
-      _ ->
-        raise "unsupported modifier #{inspect(modifiers)} for sigil_MD"
+  defp sigil_md_result(~c"HTML", expr, opts, caller) do
+    if Macro.Env.has_var?(caller, {:assigns, nil}) do
+      compile_eex(MDEx.to_html!(expr, opts), caller)
+    else
+      MDEx.to_html!(expr, opts)
     end
+  end
+
+  defp sigil_md_result(~c"HEEX", expr, opts, caller) do
+    if Code.ensure_loaded?(Phoenix.LiveView) do
+      compile_heex(expr, opts, caller)
+    else
+      IO.warn("Phoenix LiveView is required to use the HEEX modifier with ~MD sigil")
+    end
+  end
+
+  defp sigil_md_result(~c"MD", expr, opts, caller) do
+    cond do
+      is_binary(expr) && Macro.Env.has_var?(caller, {:assigns, nil}) -> compile_eex(expr, caller)
+      is_binary(expr) -> expr
+      :else -> MDEx.to_markdown!(expr, opts)
+    end
+  end
+
+  defp sigil_md_result(~c"JSON", expr, opts, _caller), do: expr |> MDEx.to_json!(opts) |> Macro.escape()
+  defp sigil_md_result(~c"XML", expr, opts, _caller), do: expr |> MDEx.to_xml!(opts) |> Macro.escape()
+  defp sigil_md_result(~c"DELTA", expr, opts, _caller), do: expr |> MDEx.to_delta!(opts) |> Macro.escape()
+
+  defp sigil_md_result(modifiers, _expr, _opts, _caller) do
+    raise "unsupported modifier #{inspect(modifiers)} for sigil_MD"
+  end
+
+  defp compile_eex(html, caller) do
+    EEx.compile_string(html,
+      engine: EEx.SmartEngine,
+      file: caller.file,
+      line: caller.line + 1,
+      indentation: 0
+    )
+  end
+
+  defp compile_heex(expr, opts, caller) do
+    if not Macro.Env.has_var?(caller, {:assigns, nil}) do
+      raise "~MD[...]HEEX requires a variable named \"assigns\" to exist and be set to a map"
+    end
+
+    heex_opts =
+      opts
+      |> Keyword.update(:extension, [phoenix_heex: true], &Keyword.put(&1, :phoenix_heex, true))
+      |> Keyword.update(:render, [unsafe: true], &Keyword.put(&1, :unsafe, true))
+
+    expr
+    |> MDEx.to_html!(heex_opts)
+    |> EEx.compile_string(
+      engine: Phoenix.LiveView.TagEngine,
+      file: caller.file,
+      line: caller.line + 1,
+      caller: caller,
+      indentation: 0,
+      source: expr,
+      tag_handler: Phoenix.LiveView.HTMLEngine
+    )
   end
 
   defp caller_mdex_opts(%Macro.Env{module: nil}), do: []

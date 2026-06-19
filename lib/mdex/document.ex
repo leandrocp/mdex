@@ -1975,13 +1975,19 @@ defmodule MDEx.Document do
   @doc """
   Returns `true` if the document has the `:sanitize` option set, otherwise `false`.
   """
-  @spec is_sanitize_enabled(t()) :: boolean()
-  def is_sanitize_enabled(%MDEx.Document{} = document) do
+  @spec sanitize_enabled?(t()) :: boolean()
+  def sanitize_enabled?(%MDEx.Document{} = document) do
     case get_option(document, :sanitize) do
       nil -> false
       _ -> true
     end
   end
+
+  @doc false
+  @deprecated "Use sanitize_enabled?/1 instead"
+  @spec is_sanitize_enabled(t()) :: boolean()
+  # credo:disable-for-next-line Credo.Check.Readability.PredicateFunctionNames
+  def is_sanitize_enabled(%MDEx.Document{} = document), do: sanitize_enabled?(document)
 
   @doc """
   Retrieves a private value from the document.
@@ -2295,7 +2301,7 @@ defmodule MDEx.Document do
   def put_node_in_document_root(document, node, position \\ :top)
 
   def put_node_in_document_root(%MDEx.Document{} = document, node, :top = _position) do
-    case is_fragment(node) do
+    case fragment?(node) do
       true ->
         nodes = [node | document.nodes]
         %{document | nodes: nodes}
@@ -2306,7 +2312,7 @@ defmodule MDEx.Document do
   end
 
   def put_node_in_document_root(%MDEx.Document{} = document, node, :bottom = _position) do
-    case is_fragment(node) do
+    case fragment?(node) do
       true ->
         nodes = document.nodes ++ [node]
         %{document | nodes: nodes}
@@ -2546,9 +2552,9 @@ defmodule MDEx.Document do
   def options_schema, do: @options_schema
 
   @doc false
-  def is_fragment([fragment | _]), do: is_fragment(fragment)
+  def fragment?([fragment | _]), do: fragment?(fragment)
 
-  def is_fragment(%node{}) do
+  def fragment?(%node{}) do
     node in [
       MDEx.FrontMatter,
       MDEx.BlockQuote,
@@ -2598,7 +2604,7 @@ defmodule MDEx.Document do
     ]
   end
 
-  def is_fragment(_), do: false
+  def fragment?(_), do: false
 
   @doc """
   Wraps nodes in a `MDEx.Document`.
@@ -2798,7 +2804,7 @@ defmodule MDEx.Document do
           |> MDEx.Document.wrap()
           |> MDEx.to_markdown!()
 
-        payload = if MDEx.Tree.is_block_node?(chunk), do: ["\n", markdown], else: markdown
+        payload = if MDEx.Tree.block_node?(chunk), do: ["\n", markdown], else: markdown
         MDEx.Document.put_markdown(doc, payload)
       end
 
@@ -2810,19 +2816,17 @@ defmodule MDEx.Document do
           {MDEx.Document.put_markdown(doc, chunk), :default}
 
         {doc, :skip_inline}, {:cont, chunk} ->
-          cond do
-            MDEx.Tree.is_block_node?(chunk) ->
-              {append_block.(doc, chunk), :skip_inline}
-
-            true ->
-              {doc, :skip_inline}
+          if MDEx.Tree.block_node?(chunk) do
+            {append_block.(doc, chunk), :skip_inline}
+          else
+            {doc, :skip_inline}
           end
 
         {doc, _mode}, {:cont, chunk} when is_struct(chunk, MDEx.Text) ->
           {MDEx.Document.put_markdown(doc, chunk.literal), :default}
 
         {doc, _mode}, {:cont, chunk} when is_struct(chunk) ->
-          mode = if MDEx.Tree.is_block_node?(chunk), do: :skip_inline, else: :default
+          mode = if MDEx.Tree.block_node?(chunk), do: :skip_inline, else: :default
           {append_block.(doc, chunk), mode}
 
         {doc, _mode}, :done ->

@@ -76,7 +76,7 @@ defmodule MDEx.DeltaIntegrationTest do
 
       # Verify it produces valid ops
       assert is_list(ops)
-      assert length(ops) > 0
+      assert ops != []
 
       # Check for key structural elements
       assert Enum.any?(ops, fn op ->
@@ -158,8 +158,7 @@ defmodule MDEx.DeltaIntegrationTest do
       text_content =
         result
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
-        |> Enum.map(fn op -> Map.get(op, "insert") end)
-        |> Enum.join("")
+        |> Enum.map_join("", fn op -> Map.get(op, "insert") end)
 
       assert String.contains?(text_content, "Future of Web Development")
       assert String.contains?(text_content, "useState, useEffect")
@@ -251,8 +250,7 @@ defmodule MDEx.DeltaIntegrationTest do
       text_content =
         result
         |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
-        |> Enum.map(fn op -> Map.get(op, "insert") end)
-        |> Enum.join("")
+        |> Enum.map_join("", fn op -> Map.get(op, "insert") end)
 
       assert String.contains?(text_content, "All API requests")
       assert String.contains?(text_content, "1000 per hour")
