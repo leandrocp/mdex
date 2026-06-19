@@ -21,6 +21,7 @@ defmodule MDEx.InvalidInputError do
   end
 end
 
+# credo:disable-for-next-line Credo.Check.Consistency.ExceptionNames
 defmodule MDEx.DecodeError do
   @moduledoc """
   Failed to decode a Document.

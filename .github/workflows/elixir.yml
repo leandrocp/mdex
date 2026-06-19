@@ -14,3 +14,5 @@ jobs:
   lint:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
     uses: leandrocp/github-actions/.github/workflows/elixir-lint.yml@main
+    with:
+      credo: true

@@ -76,8 +76,7 @@ defmodule MDEx.DeltaPropertyTest do
         actual_text =
           ops
           |> Enum.filter(fn op -> is_binary(Map.get(op, "insert")) end)
-          |> Enum.map(fn op -> Map.get(op, "insert") end)
-          |> Enum.join("")
+          |> Enum.map_join("", fn op -> Map.get(op, "insert") end)
           # Remove trailing newline added by paragraph processing
           |> String.trim_trailing("\n")
 
@@ -99,7 +98,7 @@ defmodule MDEx.DeltaPropertyTest do
           Map.has_key?(op, "attributes") and is_binary(Map.get(op, "insert"))
         end)
 
-      assert length(attr_ops) > 0, "Should have at least one operation with attributes"
+      assert attr_ops != [], "Should have at least one operation with attributes"
 
       # Should have both bold and italic
       has_both =
@@ -131,7 +130,7 @@ defmodule MDEx.DeltaPropertyTest do
             Map.get(op, "insert") == "\n" and Map.has_key?(op, "attributes")
           end)
 
-        assert length(newline_ops) > 0,
+        assert newline_ops != [],
                "Should have newline with attributes for: #{input}"
 
         # Get the last newline
