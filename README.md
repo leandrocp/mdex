@@ -33,6 +33,7 @@
   - JSON
   - XML
   - [Quill Delta](https://quilljs.com/docs/delta/)
+  - [Slack mrkdwn](https://docs.slack.dev/messaging/formatting-message-text)
 - Floki-like [Document AST](https://hexdocs.pm/mdex/MDEx.Document.html)
 - Req-like [Document pipeline API](https://hexdocs.pm/mdex/MDEx.Document.html)
 - [GitHub Flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
@@ -249,6 +250,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |To HTML|✅|✅|✅|✅|
 |To JSON|✅|❌|❌|❌|
 |To XML|✅|❌|❌|✅|
+|To Slack|✅|❌|❌|❌|
 |To Manpage|❌|❌|❌|✅|
 |To LaTeX|❌|❌|❌|✅|
 |To Quill Delta|✅|❌|❌|❌|
