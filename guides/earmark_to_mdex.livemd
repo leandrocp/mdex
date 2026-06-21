@@ -12,7 +12,7 @@ Mix.install([
 
 ## Intro
 
-For anyone looking into MDEx after Earmark was deprecated, here's a short guide with examples to migrate from Earmark syntax and options to MDEx.
+For anyone looking into MDEx after Earmark was retired, here's a short guide with examples to migrate from Earmark syntax and options to MDEx.
 
 ## Markdown sample
 

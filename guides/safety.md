@@ -1,7 +1,8 @@
-MDEx employs 4 mechanisms to handle safety: omitting), escaping, sanitizing, and unsafe rendering.
+MDEx employs 4 mechanisms to handle safety: omitting, escaping, sanitizing, and unsafe rendering.
 
-TL;DR is if you trust the input then just use `render: [unsafe: true]` option to render raw HTML,
-otherwise consider using `render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options()` to be on the safe side.
+TL;DR is if you trust the input then just use the `render: [unsafe: true]` option to render raw HTML,
+otherwise consider using `render: [unsafe: true], sanitize: MDEx.Document.default_sanitize_options()` to allows untrusted data
+but sanitize it on rendering.
 
 ### Omitting/Removing unsafe content (default)
 

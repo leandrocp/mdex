@@ -238,33 +238,34 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 
 |Feature|MDEx|Earmark|md|cmark|
 | --- | --- | --- | --- | --- |
-|Active|✅|❌|✅|❌|
-|Pure Elixir|⚠️¹|✅|✅|❌|
+|Active|✅|⚠️¹|✅|❌|
+|Pure Elixir|⚠️²|✅|✅|❌|
 |Extensible|✅|✅|✅|❌|
 |Syntax Highlighting|✅|❌|❌|❌|
 |Code Block Decorators|✅|❌|❌|❌|
 |Streaming (fragments)|✅|❌|❌|❌|
 |Phoenix HEEx components|✅|❌|❌|❌|
 |AST|✅|✅|✅|❌|
-|AST to Markdown|✅|⚠️²|❌|❌|
+|AST to Markdown|✅|⚠️³|❌|❌|
 |To HTML|✅|✅|✅|✅|
 |To JSON|✅|❌|❌|❌|
 |To XML|✅|❌|❌|✅|
-|To Slack|✅|❌|❌|❌|
 |To Manpage|❌|❌|❌|✅|
 |To LaTeX|❌|❌|❌|✅|
 |To Quill Delta|✅|❌|❌|❌|
+|To Slack|✅|❌|❌|❌|
 |Emoji|✅|❌|❌|❌|
-|GFM³|✅|✅|❌|❌|
-|GLFM⁴|✅|❌|❌|❌|
-|Discord⁵|⚠️⁶|❌|❌|❌|
+|GFM⁴|✅|✅|❌|❌|
+|GLFM⁵|✅|❌|❌|❌|
+|Discord⁶|⚠️⁷|❌|❌|❌|
 
-1. MDEx depends on [mdex_native](https://hex.pm/packages/mdex_native) which uses Rustler
-2. Possible with [earmark_reversal](https://hex.pm/packages/earmark_reversal)
-3. GitHub Flavored Markdown
-4. GitLab Flavored Markdown
-5. Discord Flavored Markdown
-6. Partial support
+1. Earmark is currently marked as retired
+2. MDEx depends on [mdex_native](https://hex.pm/packages/mdex_native) which uses Rustler
+3. Possible with [earmark_reversal](https://hex.pm/packages/earmark_reversal)
+4. GitHub Flavored Markdown
+5. GitLab Flavored Markdown
+6. Discord Flavored Markdown
+7. Partial support
 
 ## Benchmark
 
