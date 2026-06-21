@@ -2,7 +2,7 @@ defmodule MDEx.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/leandrocp/mdex"
-  @version "0.13.1"
+  @version "0.13.2"
 
   def project do
     [
