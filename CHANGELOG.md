@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.2](https://github.com/leandrocp/mdex/compare/v0.13.1...v0.13.2) (2026-06-21)
+
+
+### Documentation
+
+* add slack in readme ([#371](https://github.com/leandrocp/mdex/issues/371)) ([67feca3](https://github.com/leandrocp/mdex/commit/67feca383e1ec1d08d4267d5e411d9c810578c3a))
+
 ## [0.13.1](https://github.com/leandrocp/mdex/compare/v0.13.0...v0.13.1) (2026-06-19)
 
 
