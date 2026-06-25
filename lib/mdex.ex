@@ -524,14 +524,10 @@ defmodule MDEx do
     assigns = options[:assigns] || %{}
 
     rendered =
-      EEx.compile_string(
-        html,
-        engine: Phoenix.LiveView.TagEngine,
+      Phoenix.LiveView.TagEngine.compile(html,
         file: caller.file,
         line: caller.line + 1,
         caller: caller,
-        indentation: 0,
-        source: html,
         tag_handler: Phoenix.LiveView.HTMLEngine
       )
 
