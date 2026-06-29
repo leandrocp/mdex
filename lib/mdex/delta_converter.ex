@@ -15,6 +15,8 @@ defmodule MDEx.DeltaConverter do
   @typedoc "Conversion options"
   @type options :: keyword()
 
+  @omitted_url ""
+
   @doc """
   Convert an MDEx document to Quill Delta format.
 
@@ -156,13 +158,13 @@ defmodule MDEx.DeltaConverter do
 
   # Link - add link attribute to children
   defp default_convert_node(%MDEx.Link{url: url, nodes: nodes}, current_attrs, options) do
-    new_attrs = [%{"link" => url} | current_attrs]
+    new_attrs = [%{"link" => render_url(url, options)} | current_attrs]
     convert_nodes(nodes, new_attrs, options)
   end
 
   # Image - use custom insert object
-  defp default_convert_node(%MDEx.Image{url: url, title: title}, _current_attrs, _options) do
-    image_data = %{"image" => url}
+  defp default_convert_node(%MDEx.Image{url: url, title: title}, _current_attrs, options) do
+    image_data = %{"image" => render_url(url, options)}
     image_data = if title, do: Map.put(image_data, "alt", title), else: image_data
     [%{"insert" => image_data}]
   end
@@ -326,7 +328,7 @@ defmodule MDEx.DeltaConverter do
 
   # WikiLinks - link with wikilink attribute
   defp default_convert_node(%MDEx.WikiLink{url: url, nodes: children}, current_attrs, options) do
-    new_attrs = [%{"link" => url, "wikilink" => true} | current_attrs]
+    new_attrs = [%{"link" => render_url(url, options), "wikilink" => true} | current_attrs]
     convert_nodes(children, new_attrs, options)
   end
 
@@ -413,6 +415,20 @@ defmodule MDEx.DeltaConverter do
   defp extract_text_content(_node, _current_attrs, _options) do
     # Unknown node structure - skip it
     []
+  end
+
+  defp render_url(url, options) when is_binary(url) do
+    if Keyword.get(options, :unsafe, false) or not dangerous_url?(url) do
+      url
+    else
+      @omitted_url
+    end
+  end
+
+  defp render_url(url, _options), do: url
+
+  defp dangerous_url?(url) do
+    MDExNative.Comrak.dangerous_url?(url)
   end
 
   # Helper function to convert table rows with proper IDs

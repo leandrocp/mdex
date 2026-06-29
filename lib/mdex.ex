@@ -803,6 +803,9 @@ defmodule MDEx do
   **Note**: Block-level attributes are applied to newline characters (`\\n`) following Quill Delta conventions.
   Inline attributes are applied directly to text content. Multiple attributes can be combined (e.g., bold + italic).
 
+  Dangerous link, wikilink, and image URLs are rendered as empty strings by default,
+  pass `render: [unsafe: true]` only for trusted input if you need to preserve those URLs.
+
   ## Options
 
     * `t:MDEx.Document.options/0` - options passed to the parser and document processing
@@ -877,6 +880,10 @@ defmodule MDEx do
       options
       |> Keyword.take([:custom_converters])
       |> NimbleOptions.validate!(custom_converters: [type: :map, default: %{}])
+
+    unsafe = get_in(options, [:render, :unsafe]) || false
+
+    validated_options = Keyword.put(validated_options, :unsafe, unsafe)
 
     document_options = Keyword.drop(options, [:custom_converters])
 

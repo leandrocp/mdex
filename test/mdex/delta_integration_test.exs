@@ -27,6 +27,49 @@ defmodule MDEx.DeltaIntegrationTest do
   end
 
   describe "real-world document conversion" do
+    test "renders dangerous URLs as empty strings by default" do
+      input = "[click me](javascript:alert(document.cookie))\n\n![pwn](javascript:alert(1))"
+
+      assert {:ok,
+              [
+                %{"insert" => "click me", "attributes" => %{"link" => ""}},
+                %{"insert" => "\n"},
+                %{"insert" => "\n"},
+                %{"insert" => %{"image" => ""}},
+                %{"insert" => "\n"}
+              ]} = MDEx.to_delta(input)
+    end
+
+    test "matches comrak dangerous URL scheme handling" do
+      input =
+        "[a](javascript:a) [b](Javascript:b) [c](jaVascript:c) [d](data:xyz) [e](Data:xyz) [f](vbscripT:f) [g](FILE:g) [h](data:image/png/x)"
+
+      assert {:ok, result} = MDEx.to_delta(input)
+
+      links =
+        result
+        |> Enum.filter(&match?(%{"attributes" => %{"link" => _}}, &1))
+        |> Enum.map(&get_in(&1, ["attributes", "link"]))
+
+      assert links == ["", "", "", "", "", "", "", "data:image/png/x"]
+    end
+
+    test "preserves dangerous URLs when unsafe rendering is enabled" do
+      input = "[click me](javascript:alert(document.cookie))\n\n![pwn](javascript:alert(1))"
+
+      assert {:ok,
+              [
+                %{
+                  "insert" => "click me",
+                  "attributes" => %{"link" => "javascript:alert(document.cookie)"}
+                },
+                %{"insert" => "\n"},
+                %{"insert" => "\n"},
+                %{"insert" => %{"image" => "javascript:alert(1)"}},
+                %{"insert" => "\n"}
+              ]} = MDEx.to_delta(input, render: [unsafe: true])
+    end
+
     test "converts complex README-style document" do
       input = """
       # Project Title

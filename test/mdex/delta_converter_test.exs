@@ -415,6 +415,36 @@ defmodule MDEx.DeltaConverterTest do
       assert result == [%{"insert" => "link text", "attributes" => %{"link" => "https://example.com"}}]
     end
 
+    test "renders dangerous link URLs as empty strings by default" do
+      input = %Document{
+        nodes: [%MDEx.Link{url: "javascript:alert(1)", nodes: [%MDEx.Text{literal: "link text"}]}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [%{"insert" => "link text", "attributes" => %{"link" => ""}}]
+    end
+
+    test "detects dangerous link URLs case-insensitively" do
+      input = %Document{
+        nodes: [%MDEx.Link{url: "jaVascript:alert(1)", nodes: [%MDEx.Text{literal: "link text"}]}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [%{"insert" => "link text", "attributes" => %{"link" => ""}}]
+    end
+
+    test "preserves dangerous link URLs when unsafe" do
+      input = %Document{
+        nodes: [%MDEx.Link{url: "javascript:alert(1)", nodes: [%MDEx.Text{literal: "link text"}]}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{}, unsafe: true)
+
+      assert result == [%{"insert" => "link text", "attributes" => %{"link" => "javascript:alert(1)"}}]
+    end
+
     test "converts images with title" do
       input = %Document{
         nodes: [%MDEx.Image{url: "https://example.com/image.png", title: "Alt text"}]
@@ -433,6 +463,26 @@ defmodule MDEx.DeltaConverterTest do
       {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => %{"image" => "https://example.com/image.png"}}]
+    end
+
+    test "renders dangerous image URLs as empty strings by default" do
+      input = %Document{
+        nodes: [%MDEx.Image{url: "data:text/html,<script>alert(1)</script>", title: "Alt text"}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [%{"insert" => %{"image" => "", "alt" => "Alt text"}}]
+    end
+
+    test "preserves comrak-allowed data image URLs" do
+      input = %Document{
+        nodes: [%MDEx.Image{url: "data:image/png;base64,AAAA", title: nil}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [%{"insert" => %{"image" => "data:image/png;base64,AAAA"}}]
     end
 
     test "converts blockquotes" do
@@ -706,6 +756,16 @@ defmodule MDEx.DeltaConverterTest do
       {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
 
       assert result == [%{"insert" => "Wiki Page", "attributes" => %{"link" => "WikiPage", "wikilink" => true}}]
+    end
+
+    test "renders dangerous wiki link URLs as empty strings by default" do
+      input = %Document{
+        nodes: [%MDEx.WikiLink{url: "vbscript:alert(1)", nodes: [%MDEx.Text{literal: "Wiki Page"}]}]
+      }
+
+      {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
+
+      assert result == [%{"insert" => "Wiki Page", "attributes" => %{"link" => "", "wikilink" => true}}]
     end
 
     test "converts simple table" do
