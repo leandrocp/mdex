@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.13.2](https://github.com/leandrocp/mdex/compare/v0.13.1...v0.13.2) (2026-06-29)
+
+
+### Features
+
+* **deps:** bump mdex_native ([34d68d4](https://github.com/leandrocp/mdex/commit/34d68d4da0eba380667d674ec87dbbb89a3e9da0))
+
+
+### Bug Fixes
+
+* **delta:** omit dangerous URL by default ([2817147](https://github.com/leandrocp/mdex/commit/2817147f5b87ce7186aa604c9ee72499485b8f2f))
+* **json:** safe parser_document with json input ([00fddf4](https://github.com/leandrocp/mdex/commit/00fddf444220a1f1cc0af0a1cab6738804878387))
+
+
+### Documentation
+
+* add slack in readme ([#371](https://github.com/leandrocp/mdex/issues/371)) ([67feca3](https://github.com/leandrocp/mdex/commit/67feca383e1ec1d08d4267d5e411d9c810578c3a))
+
 ## [0.13.1](https://github.com/leandrocp/mdex/compare/v0.13.0...v0.13.1) (2026-06-19)
 
 
