@@ -272,27 +272,39 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 A [benchmark](benchmark.exs) is available to compare existing libs:
 
 ```
-Name              ips        average  deviation         median         99th %
-mdex          8983.16       0.111 ms     ±6.52%       0.110 ms       0.144 ms
-md             461.00        2.17 ms     ±2.64%        2.16 ms        2.35 ms
-earmark        110.47        9.05 ms     ±3.17%        9.02 ms       10.01 ms
+Name                      ips        average  deviation         median         99th %
+cmark                 8681.81       0.115 ms    ±50.21%       0.111 ms       0.161 ms
+mdex_native           6560.90       0.152 ms     ±7.26%       0.149 ms       0.199 ms
+mdex                   395.26        2.53 ms    ±10.58%        2.49 ms        2.98 ms
+md                     278.94        3.59 ms     ±8.62%        3.55 ms        3.91 ms
+earmark                 69.86       14.32 ms     ±6.02%       14.24 ms       15.41 ms
+erlang-markdown          4.80      208.43 ms     ±0.75%      208.19 ms      213.13 ms
 
 Comparison:
-mdex          8983.16
-md             461.00 - 19.49x slower +2.06 ms
-earmark        110.47 - 81.32x slower +8.94 ms
+cmark                 8681.81
+mdex_native           6560.90 - 1.32x slower +0.0372 ms
+mdex                   395.26 - 21.96x slower +2.41 ms
+md                     278.94 - 31.12x slower +3.47 ms
+earmark                 69.86 - 124.28x slower +14.20 ms
+erlang-markdown          4.80 - 1809.56x slower +208.32 ms
 
 Memory usage statistics:
 
-Name            average  deviation         median         99th %
-mdex         0.00184 MB     ±0.00%     0.00184 MB     0.00184 MB
-md              6.45 MB     ±0.00%        6.45 MB        6.45 MB
-earmark         5.09 MB     ±0.00%        5.09 MB        5.09 MB
+Name                    average  deviation         median         99th %
+cmark                0.00006 MB     ±0.00%     0.00006 MB     0.00006 MB
+mdex_native          0.00008 MB     ±0.00%     0.00008 MB     0.00008 MB
+mdex                    2.36 MB     ±0.00%        2.36 MB        2.36 MB
+md                     11.77 MB     ±0.00%       11.77 MB       11.77 MB
+earmark                 7.91 MB     ±0.00%        7.91 MB        7.91 MB
+erlang-markdown       956.16 MB     ±0.00%      956.16 MB      956.16 MB
 
 Comparison:
-mdex         0.00184 MB
-md              6.45 MB - 3506.37x memory usage +6.45 MB
-earmark         5.09 MB - 2770.15x memory usage +5.09 MB
+cmark                0.00006 MB
+mdex_native          0.00008 MB - 1.38x memory usage +0.00002 MB
+mdex                    2.36 MB - 38615.38x memory usage +2.36 MB
+md                     11.77 MB - 192838.89x memory usage +11.77 MB
+earmark                 7.91 MB - 129581.63x memory usage +7.91 MB
+erlang-markdown       956.16 MB - 15665687.31x memory usage +956.16 MB
 ```
 
 The most performance gain is using the `~MD` sigil to compile the Markdown instead of parsing it at runtime,
