@@ -271,7 +271,7 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 
 A [benchmark](benchmark.exs) is available to compare existing libs:
 
-```
+```text
 Name                      ips        average  deviation         median         99th %
 cmark                 8681.81       0.115 ms    ±50.21%       0.111 ms       0.161 ms
 mdex_native           6560.90       0.152 ms     ±7.26%       0.149 ms       0.199 ms
