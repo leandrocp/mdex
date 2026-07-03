@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.3](https://github.com/leandrocp/mdex/compare/v0.13.2...v0.13.3) (2026-07-03)
+
+
+### Bug Fixes
+
+* preserve curly braces ([#374](https://github.com/leandrocp/mdex/issues/374)) ([73d9b52](https://github.com/leandrocp/mdex/commit/73d9b526f306e4c4a7e2641bb96ec11bbb6642c1))
+
 ## [0.13.2](https://github.com/leandrocp/mdex/compare/v0.13.1...v0.13.2) (2026-06-29)
 
 
