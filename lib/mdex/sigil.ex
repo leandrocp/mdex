@@ -279,15 +279,15 @@ defmodule MDEx.Sigil do
       |> Keyword.update(:extension, [phoenix_heex: true], &Keyword.put(&1, :phoenix_heex, true))
       |> Keyword.update(:render, [unsafe: true], &Keyword.put(&1, :unsafe, true))
 
-    expr
-    |> MDEx.to_html!(heex_opts)
-    |> EEx.compile_string(
+    html = MDEx.to_html!(expr, heex_opts)
+
+    EEx.compile_string(html,
       engine: Phoenix.LiveView.TagEngine,
       file: caller.file,
       line: caller.line + 1,
       caller: caller,
       indentation: 0,
-      source: expr,
+      source: html,
       tag_handler: Phoenix.LiveView.HTMLEngine
     )
   end

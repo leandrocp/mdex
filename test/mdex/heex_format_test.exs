@@ -134,6 +134,23 @@ defmodule MDEx.HeexFormatTest do
   end
 
   describe "mixed content" do
+    test "escapes curly braces in code" do
+      assert_format(
+        """
+        Inline `%{}`.
+
+        ```elixir
+        %{}
+        ```
+        """,
+        """
+        <p>Inline <code>%&lbrace;&rbrace;</code>.</p>
+        <pre><code class="language-elixir">%&lbrace;&rbrace;
+        </code></pre>
+        """
+      )
+    end
+
     test "markdown with heex components" do
       assert_format(
         """

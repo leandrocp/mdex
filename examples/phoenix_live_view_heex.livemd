@@ -1,11 +1,17 @@
 # Phoenix LiveView HEEx
 
 ```elixir
-Mix.install([
-  {:mdex, "~> 0.11"},
-  {:phoenix_playground, "~> 0.1"},
-  {:req_embed, "~> 0.3"}
-])
+Mix.install(
+  [
+    {:mdex, ">= 0.13.3"},
+    {:lumis, ">= 0.6.1"},
+    {:phoenix_playground, "~> 0.1"},
+    {:req_embed, "~> 0.3"}
+  ],
+  config: [
+    mdex_native: [syntax_highlighter: :lumis]
+  ]
+)
 ```
 
 ## Intro
@@ -14,21 +20,32 @@ MDEx integrates with Phoenix LiveView, allowing you to write Markdown that inclu
 
 ## Example
 
-```elixir
+````elixir
 defmodule MarkdownLive do
   use Phoenix.LiveView
-  import MDEx.Sigil
+
+  use MDEx,
+    syntax_highlight: [
+      engine: :lumis,
+      opts: [formatter: {:html_inline, theme: "github_light"}]
+    ]
 
   def mount(_params, _session, socket) do
     {:ok, assign(socket, message: "Have a nice day", count: 0)}
   end
 
   def render(assigns) do
-    ~MD"""
+    ~H"""
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
-    <div class="prose lg:prose-xl max-w-2xl mx-auto p-8">
+    <main class="prose prose-zinc max-w-3xl mx-auto px-6 py-10">
+      {markdown(assigns)}
+    </main>
+    """
+  end
 
+  defp markdown(assigns) do
+    ~MD"""
     # Demo
 
     Hello from MDEx :wave:
@@ -36,6 +53,18 @@ defmodule MarkdownLive do
     **Markdown** and **HEEx** together!
 
     Today is _{Calendar.strftime(DateTime.utc_now(), "%B %d, %Y")}_
+
+    ---
+
+    ## Code braces
+
+    Inline `%{}` should show as `%{}`.
+
+    ```elixir
+    %{}
+    {:ok, %{name: "MDEx"}}
+    fn = fn -> :ok end
+    ```
 
     ---
 
@@ -53,15 +82,13 @@ defmodule MarkdownLive do
     Built with:
     - <.link href="https://crates.io/crates/comrak">comrak</.link>
     - <.link href="https://hex.pm/packages/mdex">MDEx</.link>
-
-    </div>
     """HEEX
   end
 
   def handle_event("inc", _, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
   def handle_event("dec", _, socket), do: {:noreply, update(socket, :count, &(&1 - 1))}
 end
-```
+````
 
 ```elixir
 PhoenixPlayground.start(live: MarkdownLive, open_browser: true)

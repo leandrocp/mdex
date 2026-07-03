@@ -54,6 +54,23 @@ defmodule MDEx.SigilTest do
                ''')
     end
 
+    test "heex escapes code block braces" do
+      assigns = %{}
+
+      html =
+        ~MD'''
+        ```elixir
+        %{}
+        {:ok, %{name: "MDEx"}}
+        ```
+        '''HEEX
+        |> Phoenix.HTML.Safe.to_iodata()
+        |> IO.iodata_to_binary()
+
+      assert html =~ "%&lbrace;&rbrace;"
+      assert html =~ "&lbrace;:ok, %&lbrace;name: &quot;MDEx&quot;&rbrace;&rbrace;"
+    end
+
     # test "markdown to heex" do
     #   assigns = %{lang: ":elixir"}
     #   assert %Phoenix.LiveView.Rendered{} = ~MD|`lang = <%= @lang %>`|HEEX

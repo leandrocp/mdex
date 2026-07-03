@@ -39,7 +39,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "onedark"}]
@@ -54,7 +54,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span class="l-punctuation-bracket">&lbrace;</span><span class="l-string-special-symbol">:mdex</span><span class="l-punctuation-delimiter">,</span> <span class="l-string">&quot;~&gt; 0.1&quot;</span><span class="l-punctuation-bracket">&rbrace;</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span class="l-punctuation-bracket">{</span><span class="l-string-special-symbol">:mdex</span><span class="l-punctuation-delimiter">,</span> <span class="l-string">&quot;~&gt; 0.1&quot;</span><span class="l-punctuation-bracket">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_linked, []}]
@@ -69,7 +69,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre><code class="language-elixir">{:mdex, &quot;~&gt; 0.1&quot;}
         </code></pre>
         """,
         syntax_highlight: nil
@@ -84,7 +84,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre><code class="language-elixir">{:mdex, &quot;~&gt; 0.1&quot;}
         </code></pre>
         """,
         syntax_highlight: false
@@ -99,7 +99,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #f8f8f2;">&lbrace;</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">&rbrace;</span>
+        <pre class="lumis" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #f8f8f2;">{</span><span style="color: #bd93f9;">:mdex</span><span style="color: #f8f8f2;">,</span> <span style="color: #f1fa8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #f8f8f2;">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "Dracula"}]
@@ -121,6 +121,16 @@ defmodule MDExTest do
   end
 
   describe "to_html" do
+    test "preserves curly braces in code by default" do
+      assert MDEx.to_html!(~S|Inline `%{}`.|) == "<p>Inline <code>%{}</code>.</p>"
+
+      assert MDEx.to_html!(~S"""
+             ```elixir
+             %{}
+             ```
+             """) == "<pre><code class=\"language-elixir\">%{}\n</code></pre>"
+    end
+
     test "wrap fragment in root document" do
       assert MDEx.to_html(%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "mdex"}]}) == {:ok, "<p>mdex</p>"}
     end
@@ -269,7 +279,7 @@ defmodule MDExTest do
     test "disabled by default" do
       expected =
         String.trim(~S"""
-        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre><code class="language-elixir">{:mdex, &quot;~&gt; 0.1&quot;}
         </code></pre>
         """)
 
@@ -299,7 +309,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre><code class="language-elixir">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre><code class="language-elixir">{:mdex, &quot;~&gt; 0.1&quot;}
         </code></pre>
         """,
         syntax_highlight: nil
@@ -314,7 +324,7 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="l-line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="l-line" data-line="1">{:mdex, &quot;~&gt; 0.1&quot;}
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline]
@@ -329,7 +339,7 @@ defmodule MDExTest do
         ```
         """,
         ~s"""
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="l-line" data-line="1">&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-plaintext" translate="no" tabindex="0"><div class="l-line" data-line="1">{:mdex, &quot;~&gt; 0.1&quot;}
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline]
@@ -346,7 +356,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #c678dd;">&lbrace;</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">&rbrace;</span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline]
@@ -361,7 +371,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
+        <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #88c0d0;">{</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
@@ -392,7 +402,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #1f2328;">&lbrace;</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">&rbrace;</span>
+        <pre class="lumis" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span style="color: #1f2328;">{</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: {:html_inline, theme: custom_theme}]
@@ -507,7 +517,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span class="l-punctuation-bracket">&lbrace;</span><span class="l-string-special-symbol">:mdex</span><span class="l-punctuation-delimiter">,</span> <span class="l-string">&quot;~&gt; 0.1&quot;</span><span class="l-punctuation-bracket">&rbrace;</span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span class="l-punctuation-bracket">{</span><span class="l-string-special-symbol">:mdex</span><span class="l-punctuation-delimiter">,</span> <span class="l-string">&quot;~&gt; 0.1&quot;</span><span class="l-punctuation-bracket">}</span>
         </div></code></pre>
         """,
         syntax_highlight: [formatter: :html_linked]
@@ -904,7 +914,7 @@ defmodule MDExTest do
         `{:mdex, "~> 0.1"}`
         """,
         ~S"""
-        <p><code>&lbrace;:mdex, &quot;~&gt; 0.1&quot;&rbrace;</code></p>
+        <p><code>{:mdex, &quot;~&gt; 0.1&quot;}</code></p>
         """
       )
     end
@@ -919,8 +929,8 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <p><code>&lbrace;:mdex, "~&gt; 0.1"&rbrace;</code></p>
-        <pre><code class="language-elixir">&lbrace;:mdex, "~&gt; 0.1"&rbrace;
+        <p><code>{:mdex, "~&gt; 0.1"}</code></p>
+        <pre><code class="language-elixir">{:mdex, "~&gt; 0.1"}
         </code></pre>
         """,
         sanitize: MDEx.Document.default_sanitize_options()
@@ -939,11 +949,11 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <h1>{Title} <code>&lbrace;:code&rbrace;</code></h1>
+        <h1>{Title} <code>{:code}</code></h1>
         <ul>
         <li>Elixir {:ex}</li>
         </ul>
-        <pre><code class="language-elixir">&lbrace;:ok, &quot;code&quot;&rbrace;
+        <pre><code class="language-elixir">{:ok, &quot;code&quot;}
         </code></pre>
         """
       )

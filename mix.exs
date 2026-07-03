@@ -187,7 +187,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.3"}
+      {:mdex_native, ">= 0.2.4"}
     end
   end
 
