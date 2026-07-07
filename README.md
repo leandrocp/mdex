@@ -245,8 +245,8 @@ MDEx was born out of the necessity of parsing CommonMark files, to parse hundred
 |Code Block Decorators|✅|❌|❌|❌|❌|❌|
 |Streaming (fragments)|✅|❌|❌|❌|❌|❌|
 |Phoenix HEEx components|✅|❌|❌|❌|❌|❌|
-|MDX|❌|❌|❌|❌|❌|✅|
-|Kramdown IAL attributes|❌|❌|✅⁸|❌|❌|❌|
+|MDX (JS)|❌|❌|❌|❌|❌|✅|
+|Kramdown attributes|❌|❌|✅⁸|❌|❌|❌|
 |EEx support|✅|❌|✅|❌|❌|❌|
 |Custom syntax DSL|❌|❌|❌|✅|❌|❌|
 |AST|✅|✅|✅|✅|❌|✅|
