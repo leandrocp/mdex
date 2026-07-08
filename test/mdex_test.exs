@@ -595,6 +595,23 @@ defmodule MDExTest do
       assert html =~ ~s(--lumis-dark: #e6edf3)
     end
 
+    test "preserves generated pre attributes" do
+      {:ok, html} =
+        MDEx.to_html(
+          ~S"""
+          ```elixir
+          IO.puts(:hello)
+          ```
+          """,
+          syntax_highlight: [
+            formatter: {:html_multi_themes, themes: [light: "catppuccin_latte", dark: "catppuccin_mocha"], default_theme: "light-dark()"}
+          ]
+        )
+
+      assert html =~
+               ~r'<pre class="lumis lumis-themes (?:light dark|dark light)" style="color: light-dark\(#4c4f69, #cdd6f4\); background-color: light-dark\(#eff1f5, #1e1e2e\);">'
+    end
+
     test "with theme structs" do
       light_theme = Lumis.Theme.get("github_light")
       dark_theme = Lumis.Theme.get("github_dark")
@@ -662,7 +679,7 @@ defmodule MDExTest do
           ]
         )
 
-      assert html =~ ~s(<pre class="lumis multi-theme-code")
+      assert html =~ ~s(<pre class="lumis lumis-themes multi-theme-code)
     end
 
     test "with italic" do
