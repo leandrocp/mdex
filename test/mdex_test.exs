@@ -118,6 +118,22 @@ defmodule MDExTest do
     test "unsafe_" do
       assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true]) == "<script>hello</script>"
     end
+
+    test "LaTeX-style math delimiters" do
+      assert MDEx.to_html!(~S"Inline \(1 + 2\) and display \[x = y\]", extension: [math_latex: true]) ==
+               ~S'<p>Inline <span data-math-style="inline">1 + 2</span> and display <span data-math-style="display">x = y</span></p>'
+    end
+
+    test "semantic alert HTML" do
+      assert MDEx.to_html!("> [!note]\n> Something of note",
+               extension: [alerts: true],
+               render: [alert_style: :semantic]
+             ) ==
+               "<aside class=\"admonition note\">\n" <>
+                 "<p class=\"admonition-title\">Note</p>\n" <>
+                 "<p>Something of note</p>\n" <>
+                 "</aside>"
+    end
   end
 
   describe "to_html" do
@@ -762,12 +778,89 @@ defmodule MDExTest do
                """)
     end
 
+    test "node attributes" do
+      markdown = ~S"""
+      # Heading {#title .primary data-level=1}
+
+      ```elixir {#sample .wide data-ratio=100%}
+      :ok
+      ```
+
+      `code`{.language-elixir}
+
+      [link](https://example.com){#docs .external rel=nofollow} ![image](image.png){width=100%}
+      """
+
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   attrs: %MDEx.Attributes{
+                     id: "title",
+                     classes: ["primary"],
+                     pairs: [{"data-level", "1"}]
+                   }
+                 },
+                 %MDEx.CodeBlock{
+                   info: "elixir",
+                   attrs: %MDEx.Attributes{
+                     id: "sample",
+                     classes: ["wide"],
+                     pairs: [{"data-ratio", "100%"}]
+                   }
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [%MDEx.Code{attrs: %MDEx.Attributes{classes: ["language-elixir"]}}]
+                 },
+                 %MDEx.Paragraph{
+                   nodes: [
+                     %MDEx.Link{
+                       attrs: %MDEx.Attributes{
+                         id: "docs",
+                         classes: ["external"],
+                         pairs: [{"rel", "nofollow"}]
+                       }
+                     },
+                     _,
+                     %MDEx.Image{attrs: %MDEx.Attributes{pairs: [{"width", "100%"}]}}
+                   ]
+                 }
+               ]
+             } =
+               MDEx.parse_document!(markdown,
+                 extension: [
+                   header_attributes: true,
+                   fenced_code_attributes: true,
+                   inline_code_attributes: true,
+                   link_attributes: true
+                 ]
+               )
+    end
+
     test "json" do
       json = MDEx.to_json!("# Test")
 
       assert %MDEx.Document{
                nodes: [%MDEx.Heading{level: 1, setext: false, nodes: [%MDEx.Text{literal: "Test"}]}]
              } = MDEx.parse_document!({:json, json})
+    end
+
+    test "JSON with node attributes" do
+      document =
+        MDEx.parse_document!("# Test {#title .primary data-level=1}",
+          extension: [header_attributes: true]
+        )
+
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Heading{
+                   attrs: %MDEx.Attributes{
+                     id: "title",
+                     classes: ["primary"],
+                     pairs: [{"data-level", "1"}]
+                   }
+                 }
+               ]
+             } = MDEx.parse_document!({:json, MDEx.to_json!(document)})
     end
   end
 

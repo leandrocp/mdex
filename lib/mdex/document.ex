@@ -15,6 +15,21 @@ defmodule MDEx.Sourcepos do
   defstruct start: {0, 0}, end: {0, 0}
 end
 
+defmodule MDEx.Attributes do
+  @moduledoc """
+  Attributes attached to supported Markdown nodes.
+
+  Attribute extensions can add an ID, CSS classes, and arbitrary key-value pairs.
+  """
+
+  @type t :: %__MODULE__{
+          id: String.t() | nil,
+          classes: [String.t()],
+          pairs: [{String.t(), String.t()}]
+        }
+  defstruct id: nil, classes: [], pairs: []
+end
+
 defmodule MDEx.Document do
   @moduledoc """
   Document is the core structure to store, manipulate, and render Markdown documents.
@@ -754,6 +769,11 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables math using dollar syntax."
     ],
+    math_latex: [
+      type: :boolean,
+      default: false,
+      doc: "Enables math using LaTeX-style `\(...)` and `\[...]` delimiters."
+    ],
     math_code: [
       type: :boolean,
       default: false,
@@ -855,6 +875,26 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Recognizes many emphasis that appear in CJK contexts but are not recognized by plain CommonMark."
+    ],
+    header_attributes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables attributes on headings."
+    ],
+    fenced_code_attributes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables attributes on fenced code blocks."
+    ],
+    inline_code_attributes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables attributes on inline code spans."
+    ],
+    link_attributes: [
+      type: :boolean,
+      default: false,
+      doc: "Enables attributes on links and images."
     ],
     phoenix_heex: [
       type: :boolean,
@@ -1010,6 +1050,11 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Suppress newlines in pretty-printing"
+    ],
+    alert_style: [
+      type: {:in, [:specific, :semantic]},
+      default: :specific,
+      doc: "Controls whether alerts render using specific or semantic HTML elements."
     ]
   ]
 
@@ -2992,7 +3037,8 @@ defmodule MDEx.CodeBlock do
           fence_offset: non_neg_integer(),
           info: String.t(),
           literal: String.t(),
-          closed: boolean()
+          closed: boolean(),
+          attrs: MDEx.Attributes.t() | nil
         }
   defstruct nodes: [],
             fenced: true,
@@ -3002,6 +3048,7 @@ defmodule MDEx.CodeBlock do
             info: "",
             literal: "",
             closed: true,
+            attrs: nil,
             sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
@@ -3041,8 +3088,14 @@ defmodule MDEx.Heading do
   Spec: https://github.github.com/gfm/#atx-headings and https://github.github.com/gfm/#setext-headings
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], level: pos_integer(), setext: boolean(), closed: boolean()}
-  defstruct nodes: [], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          level: pos_integer(),
+          setext: boolean(),
+          closed: boolean(),
+          attrs: MDEx.Attributes.t() | nil
+        }
+  defstruct nodes: [], level: 1, setext: false, closed: false, attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3175,8 +3228,12 @@ defmodule MDEx.Code do
   Spec: https://github.github.com/gfm/#code-spans
   """
 
-  @type t :: %__MODULE__{num_backticks: non_neg_integer(), literal: String.t()}
-  defstruct num_backticks: 0, literal: "", sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{
+          num_backticks: non_neg_integer(),
+          literal: String.t(),
+          attrs: MDEx.Attributes.t() | nil
+        }
+  defstruct num_backticks: 0, literal: "", attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3279,8 +3336,13 @@ defmodule MDEx.Link do
   Spec: https://github.github.com/gfm/#links
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t(), title: String.t() | nil}
-  defstruct nodes: [], url: "", title: nil, sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          url: String.t(),
+          title: String.t() | nil,
+          attrs: MDEx.Attributes.t() | nil
+        }
+  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3291,8 +3353,13 @@ defmodule MDEx.Image do
   Spec: https://github.github.com/gfm/#images
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t(), title: String.t() | nil}
-  defstruct nodes: [], url: "", title: nil, sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          url: String.t(),
+          title: String.t() | nil,
+          attrs: MDEx.Attributes.t() | nil
+        }
+  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3658,6 +3725,13 @@ end
 defimpl Jason.Encoder, for: MDEx.Sourcepos do
   def encode(%MDEx.Sourcepos{start: {sl, sc}, end: {el, ec}}, opts) do
     Jason.Encode.map(%{"start" => [sl, sc], "end" => [el, ec]}, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: MDEx.Attributes do
+  def encode(%MDEx.Attributes{id: id, classes: classes, pairs: pairs}, opts) do
+    pairs = Enum.map(pairs, &Tuple.to_list/1)
+    Jason.Encode.map(%{"id" => id, "classes" => classes, "pairs" => pairs}, opts)
   end
 end
 

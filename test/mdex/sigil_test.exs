@@ -104,6 +104,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [1, 1], "end" => [1, 16]}
@@ -165,6 +166,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [0, 0], "end" => [0, 0]}
@@ -220,6 +222,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [1, 1], "end" => [1, 16]}
@@ -258,6 +261,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [0, 0], "end" => [0, 0]}
@@ -299,6 +303,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [1, 1], "end" => [1, 16]}
@@ -337,6 +342,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [0, 0], "end" => [0, 0]}
@@ -380,6 +386,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [1, 1], "end" => [1, 16]}
@@ -418,6 +425,7 @@ defmodule MDEx.SigilTest do
               "nodes" => [
                 %{
                   "node_type" => "MDEx.Code",
+                  "attrs" => nil,
                   "num_backticks" => 1,
                   "literal" => "lang = :elixir",
                   "sourcepos" => %{"start" => [0, 0], "end" => [0, 0]}

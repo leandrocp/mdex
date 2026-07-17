@@ -284,10 +284,21 @@ defmodule MDEx do
   end
 
   defp map_nodes(%{nodes: nodes} = node) do
-    %{node | nodes: Enum.map(nodes, &json_to_node/1)}
+    node
+    |> Map.put(:nodes, Enum.map(nodes, &json_to_node/1))
+    |> map_attrs()
   end
 
-  defp map_nodes(node), do: node
+  defp map_nodes(node), do: map_attrs(node)
+
+  defp map_attrs(%{attrs: nil} = node), do: node
+
+  defp map_attrs(%{attrs: attrs} = node) do
+    attrs = Map.update(attrs, :pairs, [], &Enum.map(&1, fn [key, value] -> {key, value} end))
+    %{node | attrs: struct(MDEx.Attributes, attrs)}
+  end
+
+  defp map_attrs(node), do: node
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
