@@ -80,6 +80,15 @@ defmodule MDEx.ComrakConverterTest do
              MDEx.ComrakConverter.to_mdex(document)
   end
 
+  test "defaults missing attrs to nil" do
+    native_code =
+      %MDExNative.Comrak.Code{literal: "elixir"}
+      |> Map.delete(:attrs)
+
+    assert %MDEx.Code{literal: "elixir", attrs: nil} =
+             MDEx.ComrakConverter.to_mdex(native_code)
+  end
+
   test "converts mdex document structs to native structs" do
     document = %MDEx.Document{
       nodes: [
@@ -89,9 +98,18 @@ defmodule MDEx.ComrakConverterTest do
       ]
     }
 
+    native_document = MDEx.ComrakConverter.from_mdex(document)
+
     assert %MDExNative.Comrak.Document{
-             nodes: [%MDExNative.Comrak.Paragraph{nodes: [%MDExNative.Comrak.Code{literal: "elixir"}]}]
-           } = MDEx.ComrakConverter.from_mdex(document)
+             nodes: [
+               %MDExNative.Comrak.Paragraph{nodes: [%MDExNative.Comrak.Code{literal: "elixir"}]}
+             ]
+           } = native_document
+
+    assert native_document |> Map.from_struct() |> Map.keys() |> Enum.sort() == [
+             :nodes,
+             :sourcepos
+           ]
   end
 
   test "raises on non-convertible structs" do

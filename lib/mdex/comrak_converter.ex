@@ -9,13 +9,18 @@ defmodule MDEx.ComrakConverter do
   defp convert(%module{} = node, from, to) do
     case convert_module(module, from, to) do
       {:ok, target} ->
-        node
-        |> Map.from_struct()
-        |> Map.new(fn
-          {key, value} when key in [:nodes, :sourcepos] -> {key, convert(value, from, to)}
-          {key, value} -> {key, value}
-        end)
-        |> Map.put(:__struct__, target)
+        fields =
+          node
+          |> Map.from_struct()
+          |> Map.new(fn
+            {key, value} when key in [:nodes, :sourcepos, :attrs] ->
+              {key, convert(value, from, to)}
+
+            {key, value} ->
+              {key, value}
+          end)
+
+        struct(target, fields)
 
       :error ->
         raise ArgumentError, "cannot convert #{inspect(module)}"
