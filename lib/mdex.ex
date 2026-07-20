@@ -534,17 +534,14 @@ defmodule MDEx do
   def __to_heex__({:html, html}, options, caller) do
     assigns = options[:assigns] || %{}
 
+    opts = [file: caller.file, line: caller.line + 1, caller: caller, tag_handler: Phoenix.LiveView.HTMLEngine]
+
     rendered =
-      EEx.compile_string(
-        html,
-        engine: Phoenix.LiveView.TagEngine,
-        file: caller.file,
-        line: caller.line + 1,
-        caller: caller,
-        indentation: 0,
-        source: html,
-        tag_handler: Phoenix.LiveView.HTMLEngine
-      )
+      if Code.ensure_loaded?(Phoenix.LiveView.TagEngine) and function_exported?(Phoenix.LiveView.TagEngine, :compile, 2) do
+        Phoenix.LiveView.TagEngine.compile(html, opts)
+      else
+        EEx.compile_string(html, opts)
+      end
 
     {rendered, _} = Code.eval_quoted(rendered, [assigns: assigns], Macro.Env.prune_compile_info(caller))
     {:ok, rendered}
