@@ -2,6 +2,14 @@
 
 ### Changes
 
+## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
+
+
+### Bug Fixes
+
+* LiveView 1.2 deprecation warnings( EEx.compile ) ([#380](https://github.com/leandrocp/mdex/issues/380)) ([b4c8247](https://github.com/leandrocp/mdex/commit/b4c8247666c0f521bf459aee02f8f74e9b4bc2bc))
+* relax phoenix_live_view version ([572d30d](https://github.com/leandrocp/mdex/commit/572d30df5f343497a8169c04943a89501d92f3ca))
+
 ## [0.13.4](https://github.com/leandrocp/mdex/compare/v0.13.3...v0.13.4) (2026-07-17)
 
 ### Changes
