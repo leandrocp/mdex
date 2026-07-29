@@ -417,7 +417,7 @@ defmodule MDEx do
       {:error, %DecodeError{document: document}}
   end
 
-  if Code.ensure_loaded?(Phoenix.LiveView) do
+  if Code.ensure_loaded?(Phoenix.LiveView.Rendered) do
     def to_html(%Phoenix.LiveView.Rendered{} = rendered, _options) do
       {:ok,
        rendered
@@ -497,7 +497,7 @@ defmodule MDEx do
   """
   @spec to_heex(source(), Document.options()) :: struct()
   defmacro to_heex(source, options \\ []) do
-    if Code.ensure_loaded?(Phoenix.LiveView) do
+    if MDEx.__live_view_available__?() do
       caller = Macro.escape(__CALLER__)
 
       quote do
@@ -505,7 +505,7 @@ defmodule MDEx do
       end
     else
       quote do
-        IO.warn("Phoenix LiveView is required to use to_heex/2")
+        IO.warn("Phoenix LiveView with HEEx support is required to use to_heex/2")
         :ok
       end
     end
@@ -516,7 +516,7 @@ defmodule MDEx do
   """
   @spec to_heex!(source(), MDEx.Document.options()) :: struct()
   defmacro to_heex!(source, options \\ []) do
-    if Code.ensure_loaded?(Phoenix.LiveView) do
+    if MDEx.__live_view_available__?() do
       caller = Macro.escape(__CALLER__)
 
       quote do
@@ -524,9 +524,32 @@ defmodule MDEx do
       end
     else
       quote do
-        IO.warn("Phoenix LiveView is required to use to_heex!/2")
+        IO.warn("Phoenix LiveView with HEEx support is required to use to_heex!/2")
         :ok
       end
+    end
+  end
+
+  @doc false
+  def __live_view_available__? do
+    Code.ensure_loaded?(Phoenix.LiveView.TagEngine)
+  end
+
+  @doc false
+  def __compile_heex__(html, caller) do
+    opts = [file: caller.file, line: caller.line + 1, caller: caller, tag_handler: Phoenix.LiveView.HTMLEngine]
+
+    if function_exported?(Phoenix.LiveView.TagEngine, :compile, 2) do
+      apply(Phoenix.LiveView.TagEngine, :compile, [html, opts])
+    else
+      EEx.compile_string(
+        html,
+        Keyword.merge(opts,
+          engine: Phoenix.LiveView.TagEngine,
+          indentation: 0,
+          source: html
+        )
+      )
     end
   end
 
@@ -534,14 +557,7 @@ defmodule MDEx do
   def __to_heex__({:html, html}, options, caller) do
     assigns = options[:assigns] || %{}
 
-    opts = [file: caller.file, line: caller.line + 1, caller: caller, tag_handler: Phoenix.LiveView.HTMLEngine]
-
-    rendered =
-      if Code.ensure_loaded?(Phoenix.LiveView.TagEngine) and function_exported?(Phoenix.LiveView.TagEngine, :compile, 2) do
-        Phoenix.LiveView.TagEngine.compile(html, opts)
-      else
-        EEx.compile_string(html, opts)
-      end
+    rendered = __compile_heex__(html, caller)
 
     {rendered, _} = Code.eval_quoted(rendered, [assigns: assigns], Macro.Env.prune_compile_info(caller))
     {:ok, rendered}

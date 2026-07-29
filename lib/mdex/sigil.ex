@@ -237,10 +237,10 @@ defmodule MDEx.Sigil do
   end
 
   defp sigil_md_result(~c"HEEX", expr, opts, caller) do
-    if Code.ensure_loaded?(Phoenix.LiveView) do
+    if MDEx.__live_view_available__?() do
       compile_heex(expr, opts, caller)
     else
-      IO.warn("Phoenix LiveView is required to use the HEEX modifier with ~MD sigil")
+      IO.warn("Phoenix LiveView with HEEx support is required to use the HEEX modifier with ~MD sigil")
     end
   end
 
@@ -280,16 +280,7 @@ defmodule MDEx.Sigil do
       |> Keyword.update(:render, [unsafe: true], &Keyword.put(&1, :unsafe, true))
 
     html = MDEx.to_html!(expr, heex_opts)
-
-    EEx.compile_string(html,
-      engine: Phoenix.LiveView.TagEngine,
-      file: caller.file,
-      line: caller.line + 1,
-      caller: caller,
-      indentation: 0,
-      source: html,
-      tag_handler: Phoenix.LiveView.HTMLEngine
-    )
+    MDEx.__compile_heex__(html, caller)
   end
 
   defp caller_mdex_opts(%Macro.Env{module: nil}), do: []
