@@ -1,0 +1,16 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    uses: leandrocp/github-actions/.github/workflows/elixir-release.yml@main
+    secrets:
+      release_token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
