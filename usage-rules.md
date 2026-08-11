@@ -618,6 +618,7 @@ Parse to `MDEx.Document`, change nodes structurally, then render.
 - `mdex_video_embed` - privacy-respecting video embeds
 - `mdex_custom_heading_id` - custom heading IDs
 - `mdex_mermex` - server-side Mermaid rendering with Mermex
+- `mdex_multiline_cells` - multi-line cells in Markdown tables
 
 ## Reference Links
 
