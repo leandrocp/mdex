@@ -1,6 +1,16 @@
 # Changelog
 
+## [0.13.6](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.13.6) (2026-08-13)
+
 ### Changes
+
+### Documentation
+
+- Add plugin mdex_multiline_cells by @leandrocp
+
+### Other Changes
+
+- Bump mdex_native and fix tests by @leandrocp in [#389](https://github.com/leandrocp/mdex/pull/389)
 
 ## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
 
