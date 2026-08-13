@@ -607,8 +607,8 @@ defmodule MDExTest do
           syntax_highlight: [formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"]}]
         )
 
-      assert html =~ ~s(--lumis-light: #1f2328)
-      assert html =~ ~s(--lumis-dark: #e6edf3)
+      assert html =~ ~s(--lumis-light:#1f2328)
+      assert html =~ ~s(--lumis-dark:#e6edf3)
     end
 
     test "preserves generated pre attributes" do
