@@ -26,7 +26,7 @@ render: [
 And enable Lumis for the render:
 
 ```elixir
-syntax_highlight: [engine: :lumis, opts: [formatter: :html_inline]]
+syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "onedark"}]]
 ```
 
 ### Available Decorators

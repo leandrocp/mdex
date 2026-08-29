@@ -1058,6 +1058,8 @@ defmodule MDEx.Document do
     ]
   ]
 
+  @default_lumis_formatter {:html_inline, theme: "onedark"}
+
   @syntax_highlight_options_schema [
     engine: [
       type: {:in, [:lumis, :syntect]},
@@ -1069,7 +1071,7 @@ defmodule MDEx.Document do
     opts: [
       type: :keyword_list,
       type_spec: quote(do: Lumis.options() | syntect_options()),
-      default: [formatter: {:html_inline, theme: "onedark"}],
+      default: [formatter: @default_lumis_formatter],
       doc:
         "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0` and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
     ],
@@ -2710,7 +2712,7 @@ defmodule MDEx.Document do
   end
 
   defp syntax_highlight_engine_options(:lumis, opts, formatter, _raw_options) do
-    opts = if formatter, do: Keyword.put(opts, :formatter, formatter), else: opts
+    opts = if formatter, do: Keyword.put(opts, :formatter, legacy_lumis_formatter(formatter)), else: opts
     lumis_syntax_highlight_options(opts)
   end
 
@@ -2721,6 +2723,17 @@ defmodule MDEx.Document do
   defp syntax_highlight_engine_options(:syntect, _opts, _formatter, _raw_options) do
     raise ArgumentError, "legacy :formatter syntax is only supported with syntax_highlight engine :lumis"
   end
+
+  # Lumis 0.7 removed its default theme, but the legacy MDEx formatter shape
+  # historically inherited MDEx's onedark default.
+  defp legacy_lumis_formatter(:html_inline), do: @default_lumis_formatter
+
+  defp legacy_lumis_formatter({:html_inline, options}) when is_list(options) do
+    {:html_inline, default_options} = @default_lumis_formatter
+    {:html_inline, Keyword.merge(default_options, options)}
+  end
+
+  defp legacy_lumis_formatter(formatter), do: formatter
 
   if Code.ensure_loaded?(Lumis) do
     defp lumis_syntax_highlight_options(options) do
