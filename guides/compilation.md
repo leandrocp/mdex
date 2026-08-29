@@ -34,8 +34,9 @@ mix deps.get
 mix compile
 ```
 
-To enable syntax highlighting with Lumis, add `:lumis` to your deps. MDEx uses
-that dependency automatically when `engine: :lumis` is selected:
+With a bridge-capable `:mdex_native` release, enable syntax highlighting with
+Lumis by adding `:lumis` to your deps. MDEx uses that dependency automatically
+when `engine: :lumis` is selected:
 
 ```elixir
 {:lumis, "~> 0.1"}
