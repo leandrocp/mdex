@@ -8,12 +8,6 @@ Code block decorators require Lumis. Add it to your deps:
 {:lumis, "~> 0.1"}
 ```
 
-Configure `:mdex_native` before compiling dependencies:
-
-```elixir
-config :mdex_native, syntax_highlighter: :lumis
-```
-
 To use code block decorators, you must enable both `:render` options:
 
 ```elixir

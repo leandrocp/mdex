@@ -2735,26 +2735,31 @@ defmodule MDEx.Document do
 
   defp legacy_lumis_formatter(formatter), do: formatter
 
-  if Code.ensure_loaded?(Lumis) do
+  if Code.ensure_loaded?(Lumis) and function_exported?(Lumis, :__mdex_bridge__, 0) do
     defp lumis_syntax_highlight_options(options) do
       options
       |> Lumis.validate_options!()
       |> Lumis.rust_options!()
+      |> Map.put(:mdex_bridge, apply(Lumis, :__mdex_bridge__, []))
     end
   else
-    defp lumis_syntax_highlight_options(_options) do
-      raise ArgumentError, """
-      Lumis syntax highlighting requires the :lumis dependency.
+    if Code.ensure_loaded?(Lumis) do
+      defp lumis_syntax_highlight_options(options) do
+        options
+        |> Lumis.validate_options!()
+        |> Lumis.rust_options!()
+      end
+    else
+      defp lumis_syntax_highlight_options(_options) do
+        raise ArgumentError, """
+        Lumis syntax highlighting requires the :lumis dependency.
 
-      Add it to your deps:
+        Add it to your deps:
 
-          {:lumis, "~> 0.1"}
+            {:lumis, "~> 0.1"}
 
-      And configure :mdex_native before compiling dependencies:
-
-          config :mdex_native, syntax_highlighter: :lumis
-
-      """
+        """
+      end
     end
   end
 

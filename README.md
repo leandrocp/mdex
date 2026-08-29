@@ -98,10 +98,6 @@ def deps do
 end
 ```
 
-```elixir
-config :mdex_native, syntax_highlighter: :lumis
-```
-
 #### GitHub Flavored Markdown (GFM)
 
 _Using the `:html_multi_themes` syntax highlighting formatter is not required but you get light/dark using it._

@@ -1541,6 +1541,7 @@ defmodule MDEx.DocumentTest do
 
       assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
       assert formatter_opts.theme == {:string, "github_light"}
+      assert_lumis_bridge(options.syntax_highlight.opts)
     end
 
     test "preserves the MDEx theme for legacy html_inline formatter defaults" do
@@ -1575,6 +1576,7 @@ defmodule MDEx.DocumentTest do
       assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
       assert formatter_opts.theme == {:string, "github_light"}
       assert formatter_opts.pre_class == "code-block-example"
+      assert_lumis_bridge(options.syntax_highlight.opts)
     end
 
     test "converts syntect engine and opts to native syntax highlight options" do
@@ -1590,6 +1592,14 @@ defmodule MDEx.DocumentTest do
                    fn ->
                      Document.rust_options!(syntax_highlight: [engine: :syntect, formatter: :html_inline])
                    end
+    end
+  end
+
+  defp assert_lumis_bridge(options) do
+    if function_exported?(Lumis, :__mdex_bridge__, 0) do
+      assert is_reference(options.mdex_bridge)
+    else
+      refute Map.has_key?(options, :mdex_bridge)
     end
   end
 
