@@ -1596,7 +1596,7 @@ defmodule MDEx.DocumentTest do
   end
 
   defp assert_lumis_bridge(options) do
-    if function_exported?(Lumis, :__mdex_bridge__, 0) do
+    if Code.ensure_loaded?(Lumis) and function_exported?(Lumis, :__mdex_bridge__, 0) do
       assert is_reference(options.mdex_bridge)
     else
       refute Map.has_key?(options, :mdex_bridge)

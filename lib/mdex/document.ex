@@ -2735,21 +2735,25 @@ defmodule MDEx.Document do
 
   defp legacy_lumis_formatter(formatter), do: formatter
 
-  if Code.ensure_loaded?(Lumis) and function_exported?(Lumis, :__mdex_bridge__, 0) do
-    defp lumis_syntax_highlight_options(options) do
-      options
-      |> Lumis.validate_options!()
-      |> Lumis.rust_options!()
-      |> Map.put(:mdex_bridge, apply(Lumis, :__mdex_bridge__, []))
-    end
-  else
-    if Code.ensure_loaded?(Lumis) do
+  cond do
+    Code.ensure_loaded?(Lumis) and function_exported?(Lumis, :__mdex_bridge__, 0) ->
+      defp lumis_syntax_highlight_options(options) do
+        options
+        |> Lumis.validate_options!()
+        |> Lumis.rust_options!()
+        |> Map.put(:mdex_bridge, Lumis.__mdex_bridge__())
+      end
+
+    # A Lumis without the bridge pairs with an mdex_native that still embeds
+    # its own copy, so highlighting works without one.
+    Code.ensure_loaded?(Lumis) ->
       defp lumis_syntax_highlight_options(options) do
         options
         |> Lumis.validate_options!()
         |> Lumis.rust_options!()
       end
-    else
+
+    true ->
       defp lumis_syntax_highlight_options(_options) do
         raise ArgumentError, """
         Lumis syntax highlighting requires the :lumis dependency.
@@ -2760,7 +2764,6 @@ defmodule MDEx.Document do
 
         """
       end
-    end
   end
 
   defp migrate_header_ids(extension) do
