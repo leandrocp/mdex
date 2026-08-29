@@ -1543,6 +1543,26 @@ defmodule MDEx.DocumentTest do
       assert formatter_opts.theme == {:string, "github_light"}
     end
 
+    test "preserves the MDEx theme for legacy html_inline formatter defaults" do
+      options = Document.rust_options!(syntax_highlight: [formatter: :html_inline])
+
+      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
+      assert formatter_opts.theme == {:string, "onedark"}
+
+      options = Document.rust_options!(syntax_highlight: [formatter: {:html_inline, pre_class: "code"}])
+
+      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
+      assert formatter_opts.theme == {:string, "onedark"}
+      assert formatter_opts.pre_class == "code"
+    end
+
+    test "allows theme-less html_inline output through explicit Lumis opts" do
+      options = Document.rust_options!(syntax_highlight: [engine: :lumis, opts: [formatter: :html_inline]])
+
+      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
+      assert formatter_opts.theme == nil
+    end
+
     test "converts engine and opts to native syntax highlight options" do
       options =
         Document.rust_options!(
