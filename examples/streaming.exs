@@ -1,144 +1,21 @@
+mdex_path = System.get_env("MDEX_PATH", Path.expand("..", __DIR__))
+
 Mix.install(
   [
-    {:mdex, "~> 0.10"},
-    {:lumis, "~> 0.1"},
-    {:phoenix_playground, "~> 0.1"}
+    {:mdex, path: mdex_path},
+    {:lumis, "~> 0.6"},
+    {:phoenix_playground, "~> 0.1.9"},
+    {:req, "~> 0.7.4"}
   ],
   config: [mdex_native: [syntax_highlighter: :lumis]]
 )
 
-defmodule DemoLayout do
-  use Phoenix.Component
-
-  def render("root.html", assigns) do
-    ~H"""
-    <!DOCTYPE html>
-    <html lang="en" class="h-full">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>MDEx Streaming Demo</title>
-        <link rel="icon" type="image/png" href="../assets/images/mdex_favicon.png">
-      </head>
-      <body>
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-        <script src="/assets/phoenix/phoenix.js"></script>
-        <script src="/assets/phoenix_live_view/phoenix_live_view.js"></script>
-
-        <script>
-          let liveSocket =
-            new window.LiveView.LiveSocket(
-              "/live",
-              window.Phoenix.Socket
-            )
-          liveSocket.connect()
-
-          window.addEventListener("phx:live_reload:attached", ({detail: reloader}) => {
-            reloader.enableServerLogs()
-            window.liveReloader = reloader
-          })
-
-          window.addEventListener("phx:update", () => {
-            const chunksContainer = document.getElementById("chunks-container")
-            const renderedContainer = document.getElementById("rendered-container")
-            if (chunksContainer) {
-              chunksContainer.scrollTop = chunksContainer.scrollHeight
-            }
-            if (renderedContainer) {
-              renderedContainer.scrollTop = renderedContainer.scrollHeight
-            }
-          })
-        </script>
-
-        <%= @inner_content %>
-      </body>
-    </html>
-    """
-  end
-end
-
-defmodule RenderPanel do
-  use Phoenix.LiveComponent
-
-  def render(assigns) do
-    ~H"""
-    <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden">
-      <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
-        <h3 class="text-base font-bold text-slate-900 dark:text-white">Rendered Output</h3>
-      </div>
-      <div class="p-6">
-        <div id="rendered-container" class="max-h-[50vh] overflow-y-auto">
-          <%= if @html == "" do %>
-            <div class="text-slate-500 dark:text-slate-400 text-center py-12">
-              Rendered output will appear here
-            </div>
-          <% else %>
-            <div class={"prose prose-slate dark:prose-invert max-w-none
-                         [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h1]:text-slate-900 dark:[&_h1]:text-white
-                         [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h2]:text-slate-900 dark:[&_h2]:text-white
-                         [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-slate-900 dark:[&_h3]:text-white
-                         [&_p]:mb-4 [&_p]:leading-7 [&_p]:text-slate-700 dark:[&_p]:text-slate-300
-                         [&_ul]:my-4 [&_ul]:pl-6 [&_ul]:list-disc [&_ul]:space-y-2
-                         [&_ol]:my-4 [&_ol]:pl-6 [&_ol]:list-decimal [&_ol]:space-y-2
-                         [&_li]:text-slate-700 dark:[&_li]:text-slate-300
-                         [&_a]:text-blue-600 [&_a]:hover:text-blue-700 [&_a]:underline [&_a]:decoration-blue-300 [&_a]:underline-offset-2 dark:[&_a]:text-blue-400 dark:[&_a]:hover:text-blue-300
-                         [&_code]:bg-slate-100 [&_code]:dark:bg-slate-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_code]:text-sm [&_code]:font-mono [&_code]:text-slate-900 dark:[&_code]:text-slate-100
-                         [&_pre]:bg-slate-900 dark:[&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:rounded-xl [&_pre]:overflow-x-auto
-                         [&_pre]:font-mono [&_pre]:text-sm [&_pre]:leading-6
-                         [&_pre_code]:block [&_pre_code]:whitespace-pre [&_pre_code]:bg-transparent [&_pre_code]:p-0
-                         [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-600 dark:[&_blockquote]:text-slate-400 [&_blockquote]:my-4
-                         [&_strong]:font-bold [&_strong]:text-slate-900 dark:[&_strong]:text-white
-                         [&_em]:italic
-                         [&_table]:w-full [&_table]:my-6 [&_table]:border-collapse
-                         [&_thead]:bg-slate-100 dark:[&_thead]:bg-slate-800
-                         [&_th]:px-4 [&_th]:py-3 [&_th]:font-bold [&_th]:text-left [&_th]:border-b-2 [&_th]:border-slate-300 dark:[&_th]:border-slate-600 [&_th]:text-slate-900 dark:[&_th]:text-white
-                         [&_td]:px-4 [&_td]:py-3 [&_td]:border-b [&_td]:border-slate-200 dark:[&_td]:border-slate-700 [&_td]:text-slate-700 dark:[&_td]:text-slate-300
-                         [&_tr:hover]:bg-slate-50 dark:[&_tr:hover]:bg-slate-800/50
-                         [&_hr]:my-8 [&_hr]:border-slate-300 dark:[&_hr]:border-slate-700
-                         [&_img]:rounded-xl [&_img]:shadow-lg
-                         [&_span[data-math-style='display']]:block [&_span[data-math-style='display']]:my-6 [&_span[data-math-style='display']]:text-center [&_span[data-math-style='display']]:text-lg [&_span[data-math-style='display']]:font-serif [&_span[data-math-style='display']]:italic [&_span[data-math-style='display']]:text-slate-800 dark:[&_span[data-math-style='display']]:text-slate-200
-                         [&_span[data-math-style='inline']]:font-serif [&_span[data-math-style='inline']]:italic [&_span[data-math-style='inline']]:text-slate-800 dark:[&_span[data-math-style='inline']]:text-slate-200 [&_span[data-math-style='inline']]:mx-0.5"}>
-              {Phoenix.HTML.raw(@html)}
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    """
-  end
-end
-
-defmodule ChunksPanel do
-  use Phoenix.LiveComponent
-
-  def render(assigns) do
-    ~H"""
-    <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden">
-      <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
-        <h3 class="text-base font-bold text-slate-900 dark:text-white">Markdown Chunks</h3>
-      </div>
-      <div class="p-6">
-        <div id="chunks-container" class="max-h-[50vh] overflow-y-auto">
-          <%= if @chunks == [] do %>
-            <div class="text-slate-500 dark:text-slate-400 text-center py-12">
-              No chunks yet
-            </div>
-          <% else %>
-            <div class="flex flex-wrap gap-1">
-              <%= for chunk <- @chunks do %>
-                <span class="inline-flex items-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border border-blue-200 dark:border-blue-700/50 rounded-lg text-xs text-slate-700 dark:text-blue-300 font-mono px-2 py-1.5 shadow-sm"><%= String.slice(inspect(chunk), 1..-2//1) %></span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    """
-  end
-end
-
-defmodule StreamingDemo do
+defmodule MDExStreamingDemo do
   use Phoenix.LiveView
+
+  @default_url "https://raw.githubusercontent.com/leandrocp/mdex/main/README.md"
+  @display_chunk_bytes 64
+  @max_body_bytes 2_000_000
 
   @mdex_options [
     extension: [
@@ -148,434 +25,515 @@ defmodule StreamingDemo do
       shortcodes: true,
       strikethrough: true,
       table: true,
-      tagfilter: true,
-      tasklist: true,
-      math_dollars: true
+      tasklist: true
     ],
-    parse: [
-      relaxed_autolinks: true,
-      relaxed_tasklist_matching: true
-    ],
-    render: [
-      github_pre_lang: true,
-      full_info_string: true,
-      unsafe: true
-    ],
-    syntax_highlight: [formatter: {:html_inline, theme: "github_light"}],
-    streaming: true
+    parse: [relaxed_autolinks: true, relaxed_tasklist_matching: true],
+    syntax_highlight: [
+      engine: :lumis,
+      opts: [
+        formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"], default_theme: "light-dark()"}
+      ]
+    ]
   ]
 
-  def mount(_params, _session, socket) do
+  @pipeline_markdown """
+  ```elixir
+  Req.get!(url, into: :self).body
+  |> MDEx.stream(options)
+  |> Enum.each(&send(live_view, {:markdown_chunk, &1}))
+
+  # In the LiveView process:
+  stream_insert(socket, :markdown, chunk)
+  ```
+  """
+
+  @impl Phoenix.LiveView
+  def mount(params, _session, socket) do
+    url = Map.get(params, "url", @default_url)
+    live_view_memory = process_memory()
+
     {:ok,
-     assign(socket,
-       document: MDEx.new(@mdex_options),
-       chunks: [],
-       html: "",
-       streaming: false,
-       speed: 80,
-       current_chunk: 0,
-       total_chunks: 0,
-       stream_ref: nil
+     socket
+     |> stream_configure(:markdown, dom_id: fn {id, _document} -> "markdown-#{id}" end)
+     |> stream(:markdown, [])
+     |> assign(
+       url: url,
+       delay_ms: 25,
+       auto_scroll: true,
+       status: :idle,
+       error: nil,
+       run_id: nil,
+       received_bytes: 0,
+       received_chunks: 0,
+       markdown_updates: 0,
+       rendered_chunks: 0,
+       producer_memory: 0,
+       producer_peak_memory: 0,
+       live_view_memory: live_view_memory,
+       live_view_peak_memory: live_view_memory,
+       display_chunk_bytes: @display_chunk_bytes,
+       pipeline_html: MDEx.to_html!(@pipeline_markdown, @mdex_options)
      )}
   end
 
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div class="max-w-7xl mx-auto px-6 py-12">
-        <!-- Header -->
-        <div class="text-center mb-8">
-          <h1 class="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 dark:from-white dark:via-blue-400 dark:to-white bg-clip-text text-transparent">
-            MDEx Streaming
-          </h1>
-        </div>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
 
-        <!-- Controls -->
-        <div class="mb-8">
-          <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 p-5">
-            <div class="flex items-center gap-6 flex-wrap">
-              <!-- Demo Actions -->
-              <div class="flex gap-3">
-                <button phx-click="start_demo" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none" disabled={@streaming}>
-                  Start
-                </button>
-                <button phx-click="clear" class="px-6 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all">
-                  Clear
-                </button>
-              </div>
+      body { margin: 0; background: #f5f7fb; color: #172033; }
+      * { box-sizing: border-box; }
+      button, input { font: inherit; }
+      code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 
-              <!-- Speed Control -->
-              <div class="flex items-center gap-4 flex-1 min-w-[240px]">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                  Speed
-                </label>
-                <form phx-change="update_speed" class="flex-1">
-                  <input
-                    type="range"
-                    name="speed"
-                    min="1"
-                    max="1000"
-                    step="1"
-                    value={1001 - @speed}
-                    disabled={@streaming}
-                    class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:cursor-pointer"
-                  />
-                </form>
-                <span class="text-sm font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
-                  <%= @speed %>ms
-                </span>
-              </div>
+      .page { min-height: 100vh; padding: 2rem 1rem 4rem; }
+      .shell { width: min(1040px, 100%); margin: 0 auto; }
+      .hero { margin-bottom: 1.25rem; }
+      .hero h1 { margin: 0 0 .4rem; font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -.05em; }
+      .hero p { margin: 0; color: #5d667a; font-size: 1.05rem; }
 
-              <!-- Progress -->
-              <div class="flex items-center gap-3">
-                <%= if @total_chunks == 0 do %>
-                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                    Waiting
-                  </span>
-                  <span class="text-sm font-mono font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                    - / -
-                  </span>
-                <% else %>
-                  <span :if={@streaming} class="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full animate-pulse">
-                    Streaming
-                  </span>
-                  <span class="text-sm font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                    <%= @current_chunk %> / <%= @total_chunks %>
-                  </span>
-                <% end %>
-              </div>
-            </div>
+      .card { background: #fff; border: 1px solid #dfe4ee; border-radius: 16px; box-shadow: 0 14px 40px rgba(25, 38, 71, .08); }
+      .controls { padding: 1rem; margin-bottom: 1rem; }
+      .url-form { display: grid; grid-template-columns: 1fr auto auto; gap: .65rem; }
+      .url-input { width: 100%; min-width: 0; border: 1px solid #cbd3e1; border-radius: 10px; padding: .72rem .85rem; background: #fff; color: #172033; }
+      .button { border: 0; border-radius: 10px; padding: .72rem 1rem; cursor: pointer; font-weight: 700; }
+      .button-primary { color: #fff; background: #4f46e5; }
+      .button-secondary { color: #313a4d; background: #e9edf5; }
+      .button[disabled] { cursor: not-allowed; opacity: .5; }
+
+      .pace { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .8rem; margin-top: 1rem; }
+      .pace label { color: #465066; font-weight: 650; }
+      .pace input[type="range"] { width: 100%; accent-color: #4f46e5; }
+      .pace output { min-width: 7.5rem; text-align: right; color: #465066; font-variant-numeric: tabular-nums; }
+      .auto-scroll { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: .55rem; width: fit-content; cursor: pointer; }
+      .auto-scroll input { width: 1rem; height: 1rem; accent-color: #4f46e5; }
+
+      .telemetry { margin-bottom: 1rem; padding: 1rem; color: #5d667a; }
+      .status { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; font-size: .9rem; }
+      .status strong { color: #172033; }
+      .status-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #98a2b4; }
+      .status-dot.streaming { background: #16a34a; box-shadow: 0 0 0 .3rem rgba(22, 163, 74, .13); animation: pulse 1.2s infinite; }
+      .status-dot.complete { background: #4f46e5; }
+      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; margin: 1rem 0 0; }
+      .metric { min-width: 0; padding: .75rem; border: 1px solid #e3e7ef; border-radius: 10px; background: #f8f9fc; }
+      .metric dt { margin-bottom: .25rem; color: #737d90; font-size: .72rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+      .metric dd { margin: 0; color: #172033; font-size: 1rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+      .metric small { display: block; margin-top: .18rem; color: #737d90; font-size: .75rem; }
+      .metrics-note { margin: .8rem 0 0; font-size: .78rem; }
+      .error { padding: .8rem 1rem; margin-bottom: 1rem; border: 1px solid #fecaca; border-radius: 12px; background: #fef2f2; color: #991b1b; }
+
+      .output { padding: clamp(1.1rem, 4vw, 2.5rem); min-height: 24rem; overflow-wrap: anywhere; }
+      .empty { display: grid; place-items: center; min-height: 20rem; color: #7a8498; text-align: center; }
+      .markdown-chunk { display: contents; }
+      .markdown-body { line-height: 1.7; }
+      .markdown-body h1, .markdown-body h2, .markdown-body h3 { line-height: 1.25; letter-spacing: -.025em; margin: 1.5em 0 .55em; }
+      .markdown-body h1:first-child, .markdown-body h2:first-child { margin-top: 0; }
+      .markdown-body a { color: #4338ca; }
+      .markdown-body img { max-width: 100%; }
+      .markdown-body blockquote { margin-left: 0; padding-left: 1rem; border-left: 4px solid #a5b4fc; color: #566078; }
+      .markdown-body code { padding: .12rem .35rem; border-radius: 5px; background: #eef1f7; }
+      .markdown-body pre { overflow-x: auto; padding: 1rem; border-radius: 10px; background: #111827; color: #e5e7eb; }
+      .markdown-body pre code { padding: 0; background: transparent; }
+      .markdown-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+      .markdown-body th, .markdown-body td { padding: .5rem .7rem; border: 1px solid #d7dce6; text-align: left; }
+      .markdown-body hr { margin: 2rem 0; border: 0; border-top: 1px solid #d7dce6; }
+
+      .how-it-works { margin-top: 1rem; padding: 1.25rem; color: #5d667a; }
+      .how-it-works h2 { margin: 0; color: #313a4d; font-size: 1.2rem; }
+      .how-it-works p { margin: .35rem 0 1rem; }
+      .how-it-works pre { overflow-x: auto; margin: 0; }
+
+      @keyframes pulse { 50% { opacity: .55; } }
+
+      @media (max-width: 720px) {
+        .url-form { grid-template-columns: 1fr auto; }
+        .url-input { grid-column: 1 / -1; }
+        .pace { grid-template-columns: 1fr auto; }
+        .pace label { grid-column: 1 / -1; }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body { background: #0d1320; color: #e7eaf0; }
+        .hero p, .telemetry, .pace label, .pace output, .how-it-works { color: #aeb6c7; }
+        .card { background: #151d2c; border-color: #2a3447; box-shadow: none; }
+        .url-input { background: #0f1726; border-color: #354057; color: #e7eaf0; }
+        .button-secondary { color: #d8dce5; background: #2a3447; }
+        .status strong, .metric dd, .how-it-works h2 { color: #e7eaf0; }
+        .metric { border-color: #303b50; background: #101827; }
+        .metric dt, .metric small { color: #98a3b7; }
+        .error { border-color: #7f1d1d; background: #3b1118; color: #fecaca; }
+        .markdown-body a { color: #a5b4fc; }
+        .markdown-body blockquote { color: #b5bdcd; }
+        .markdown-body code { background: #273145; }
+        .markdown-body th, .markdown-body td { border-color: #3a4559; }
+        .markdown-body hr { border-color: #3a4559; }
+        .empty { color: #8f99ac; }
+      }
+    </style>
+
+    <main class="page">
+      <div class="shell">
+        <header class="hero">
+          <h1>MDEx streaming playground</h1>
+          <p>Stream a remote Markdown document through Req, MDEx, and Phoenix LiveView.</p>
+        </header>
+
+        <section class="card controls">
+          <form id="url-form" phx-submit="start" class="url-form">
+            <input
+              class="url-input"
+              type="url"
+              name="url"
+              value={@url}
+              aria-label="Markdown URL"
+              placeholder="https://example.com/document.md"
+              required
+            />
+            <button class="button button-primary" type="submit">
+              {if @status == :streaming, do: "Restart", else: "Stream URL"}
+            </button>
+            <button
+              class="button button-secondary"
+              type="button"
+              phx-click="stop"
+              disabled={@status != :streaming}
+            >
+              Stop
+            </button>
+          </form>
+
+          <form id="pace-form" phx-change="pace" class="pace">
+            <label for="delay-ms">Playback delay per {@display_chunk_bytes}-byte chunk</label>
+            <input
+              id="delay-ms"
+              type="range"
+              name="delay_ms"
+              min="0"
+              max="1000"
+              step="10"
+              value={@delay_ms}
+            />
+            <output for="delay-ms">{@delay_ms} ms</output>
+            <label class="auto-scroll" for="auto-scroll">
+              <input type="hidden" name="auto_scroll" value="false" />
+              <input
+                id="auto-scroll"
+                type="checkbox"
+                name="auto_scroll"
+                value="true"
+                checked={@auto_scroll}
+              />
+              Auto-scroll as chunks arrive
+            </label>
+          </form>
+        </section>
+
+        <section id="stream-metrics" class="card telemetry" aria-live="polite">
+          <div class="status">
+            <span class={["status-dot", Atom.to_string(@status)]}></span>
+            <strong>{status_label(@status)}</strong>
+            <span>Run data</span>
           </div>
+
+          <dl class="metrics">
+            <div class="metric">
+              <dt>Req source</dt>
+              <dd id="source-metrics">{format_bytes(@received_bytes)}</dd>
+              <small>{@received_chunks} chunks · paced at {@display_chunk_bytes} bytes</small>
+            </div>
+            <div class="metric">
+              <dt>MDEx</dt>
+              <dd id="mdex-metrics">{@markdown_updates} updates</dd>
+              <small>{max(@markdown_updates - @rendered_chunks, 0)} replacements</small>
+            </div>
+            <div class="metric">
+              <dt>LiveView DOM</dt>
+              <dd id="dom-metrics">{@rendered_chunks} chunks</dd>
+              <small>
+                {stable_chunks(@status, @rendered_chunks)} stable · {mutable_chunks(@status, @rendered_chunks)} open
+              </small>
+            </div>
+            <div class="metric">
+              <dt>Producer memory</dt>
+              <dd id="producer-memory">{format_bytes(@producer_memory)}</dd>
+              <small>peak {format_bytes(@producer_peak_memory)}</small>
+            </div>
+            <div class="metric">
+              <dt>LiveView memory</dt>
+              <dd id="live-view-memory">{format_bytes(@live_view_memory)}</dd>
+              <small>peak {format_bytes(@live_view_peak_memory)}</small>
+            </div>
+          </dl>
+
+          <p class="metrics-note">
+            Memory is measured for each BEAM process. The browser keeps stable chunks. MDEx keeps only the source that may still change.
+          </p>
+        </section>
+
+        <div :if={@error} class="error" role="alert">{@error}</div>
+
+        <div :if={@status == :idle} class="card empty">
+          <p>Press <strong>Stream URL</strong> to fetch the MDEx README, or enter another Markdown URL.</p>
         </div>
 
-        <!-- Panels -->
-        <div class="space-y-6">
-          <.live_component module={RenderPanel} id="render-panel" html={@html} />
-          <.live_component module={ChunksPanel} id="chunks-panel" chunks={Enum.take(@chunks, @current_chunk)} />
-        </div>
+        <article
+          :if={@status != :idle}
+          id="markdown-output"
+          class="card output markdown-body"
+          phx-update="stream"
+          phx-hook="AutoScroll"
+          data-auto-scroll={to_string(@auto_scroll)}
+        >
+          <div
+            :for={{dom_id, {_id, document}} <- @streams.markdown}
+            id={dom_id}
+            class="markdown-chunk"
+          >
+            {Phoenix.HTML.raw(MDEx.to_html!(document))}
+          </div>
+        </article>
+
+        <section id="how-it-works" class="card how-it-works">
+          <h2>How it works</h2>
+          <p>Req reads the source. MDEx parses each chunk. LiveView updates the matching DOM child.</p>
+          <div class="markdown-body">{Phoenix.HTML.raw(@pipeline_html)}</div>
+        </section>
       </div>
-    </div>
+    </main>
+
+    <script phx-no-curly-interpolation>
+      window.hooks.AutoScroll = {
+        mounted() { this.scrollToLatest() },
+        updated() { this.scrollToLatest() },
+        scrollToLatest() {
+          if (this.el.dataset.autoScroll === "true") {
+            window.requestAnimationFrame(() => {
+              window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })
+            })
+          }
+        }
+      }
+    </script>
     """
   end
 
-  def handle_event("start_demo", _params, socket) do
-    content = """
-    # Streaming Music App with Phoenix LiveView
+  @impl Phoenix.LiveView
+  def handle_event("pace", params, socket) do
+    {:noreply,
+     assign(socket,
+       delay_ms: parse_delay(params["delay_ms"]),
+       auto_scroll: params["auto_scroll"] == "true"
+     )}
+  end
 
-    :rocket: Launch a collaborative listening room with real-time diffs driven by `Phoenix LiveView`.
+  def handle_event("start", %{"url" => raw_url}, socket) do
+    url = String.trim(raw_url)
 
-    ## Why LiveView Fits
+    case validate_url(url) do
+      :ok ->
+        live_view = self()
+        live_view_memory = process_memory()
+        run_id = make_ref()
 
-    Phoenix LiveView keeps the render pipeline on the server, letting state changes push efficient patches into the session. This means listeners enjoy responsive updates without custom JavaScript, yet you retain declarative Elixir code.
+        socket =
+          socket
+          |> cancel_async(:markdown_fetch)
+          |> stream(:markdown, [], reset: true)
+          |> assign(
+            url: url,
+            run_id: run_id,
+            status: :streaming,
+            error: nil,
+            received_bytes: 0,
+            received_chunks: 0,
+            markdown_updates: 0,
+            rendered_chunks: 0,
+            producer_memory: 0,
+            producer_peak_memory: 0,
+            live_view_memory: live_view_memory,
+            live_view_peak_memory: live_view_memory
+          )
+          |> start_async(:markdown_fetch, fn -> stream_url(url, live_view, run_id) end)
 
-    ### Experience Goals
+        {:noreply, socket}
 
-    - :notes: Seamless streaming controls
-    - :headphones: Shared queue awareness
-    - :sparkles: Animated feedback without page reload
-    - :musical_keyboard: Keyboard shortcuts for power users
-
-    ## Task Board
-
-    - [x] Initialize project scaffolding
-    - [ ] Wire up LiveView routes
-      - [x] Create router
-      - [ ] Add authentication
-    - [ ] Connect to the audio backend
-    - [ ] Style the listening room
-    - [ ] Publish real-time metrics dashboard
-
-    ## Architecture Snapshot
-
-    | Layer | Responsibility | LiveView Hook |
-    | --- | --- | --- |
-    | LiveView | Stateful UI process | mount / handle_event |
-    | PubSub | Broadcast track events | Phoenix.PubSub |
-    | Context | Business logic | StreamMusic.Library |
-    | Presence | Listener roster tracking | Phoenix.Presence |
-    | Data | Persistent playlists | Ecto schemas |
-
-    ## Setup Command
-
-    ```bash
-    mix phx.new stream_music --live
-    cd stream_music
-    mix deps.get
-    ```
-
-    ## LiveView Outline
-
-    ```elixir
-    defmodule StreamMusicWeb.PlayerLive do
-      use StreamMusicWeb, :live_view
-      alias Phoenix.PubSub
-
-      @topic "stream_music:queue"
-
-      def mount(_params, _session, socket) do
-        if connected?(socket) do
-          Phoenix.PubSub.subscribe(StreamMusic.PubSub, @topic)
-        end
-        {:ok, assign(socket, playlist: [], now_playing: nil, search: "", volume: 60, listeners: %{})}
-      end
-
-      def handle_event("search", %{"query" => query}, socket) do
-        {:noreply, assign(socket, search: query)}
-      end
-
-      def handle_event("queue", %{"track" => track}, socket) do
-        Phoenix.PubSub.broadcast(StreamMusic.PubSub, @topic, {:queue, track})
-        {:noreply, update(socket, :playlist, fn list -> list ++ [track] end)}
-      end
-
-      def handle_event("play", %{"track" => track}, socket) do
-        Phoenix.PubSub.broadcast(StreamMusic.PubSub, @topic, {:play, track})
-        {:noreply, assign(socket, now_playing: track)}
-      end
-
-      def handle_info({:queue, track}, socket) do
-        {:noreply, update(socket, :playlist, fn list -> list ++ [track] end)}
-      end
-
-      def handle_info({:play, track}, socket) do
-        {:noreply, assign(socket, now_playing: track)}
-      end
+      {:error, message} ->
+        {:noreply, assign(socket, error: message, status: :error)}
     end
-    ```
-
-    ### Progressive Streaming
-
-    LiveViews start with a static render before upgrading to the persistent connection, so first meaningful paint stays fast while future updates travel over a single channel.
-
-    ### Performance Metrics
-
-    The connection latency can be modeled as:
-
-    $$
-    L = \\frac{RTT}{2} + P_{server}
-    $$
-
-    Where $L$ is total latency, $RTT$ is round-trip time, and $P_{server}$ is server processing time.
-
-    For optimal user experience, aim for $L < 100ms$ to maintain the illusion of instantaneous updates.
-
-    ## Interaction Flow
-
-    1. Visitor opens the lobby and receives the rendered `PlayerLive`.
-    2. `mount/3` seeds assigns with playlist snapshots.
-    3. Track searches call `handle_event/3` to refine results.
-    4. Queue updates broadcast through PubSub and hydrate everyone.
-    5. Presence diff pushes listener join or leave events.
-
-    ### Playlist Signals
-
-    - **Now Playing**: highlight the active track and waveform
-    - **Queue**: show pending entries with avatars
-    - **History**: list completed tracks for replay fans
-
-    ### Commands for Library Context
-
-    Run the generator to scaffold data boundaries:
-
-    - `mix phx.gen.live Library Track tracks title:string artist:string duration:integer source_url:string`
-    - `mix phx.gen.schema Library.Room rooms slug:string theme:string description:text`
-
-    ### Queue Feedback
-
-    | Event | LiveView Callback | Outcome |
-    | --- | --- | --- |
-    | :mag: Search query | `handle_event "search"` | Update suggestions |
-    | :heavy_plus_sign: Queue track | `handle_event "queue"` | Append playlist |
-    | :arrow_forward: Play track | `handle_event "play"` | Change headline state |
-    | :busts_in_silhouette: Presence diff | `handle_info {:presence_diff, diff}` | Refresh listener list |
-    | :checkered_flag: Track finished | `handle_info {:playback_done, track}` | Rotate playlist |
-
-    ### Listener Journey
-
-    - Enter lobby and see :headphones: welcome banner
-    - Use instant search to find a favorite song
-    - Add the track to the collaborative queue
-    - Watch :rocket: transitions as the now playing card updates
-    - React with inline emoji to celebrate the vibe
-    - Share with friends via <hello@example.com> or https://streammusic.app
-
-    ![App Screenshot](https://placehold.co/600x300/6366f1/white?text=Stream+Music+App)
-
-    ## Real-Time Considerations
-
-    > **Important**: Keep these best practices in mind when building real-time features.
-    >
-    > Performance is critical for user experience in collaborative apps.
-
-    - Keep assigns minimal to avoid large diffs
-    - Stream lists with `Phoenix.LiveView.stream/4` for scalable queues
-    - Push events with `push_event/3` for waveform animations
-    - Use `temporary_assigns` to discard transient payloads
-    - ~~Avoid polling~~ Use LiveView for real-time updates
-    - Balance updates between server broadcasts and client hooks
-
-    ### Client Integration
-
-    ```javascript
-    // Subscribe to live updates
-    const socket = new Socket("/socket", {params: {token: userToken}})
-    socket.connect()
-
-    const channel = socket.channel("room:lobby", {})
-    channel.join()
-      .receive("ok", resp => { console.log("Joined successfully", resp) })
-      .receive("error", resp => { console.log("Unable to join", resp) })
-
-    channel.on("new_track", payload => {
-      updateNowPlaying(payload.track)
-    })
-    ```
-
-    ### Deployment Notes
-
-    :package: Infrastructure Requirements
-
-    - Configure [CDN edge caching](https://docs.example.com/cdn) for artwork
-    - Enable `live_session` routes for authentication
-    - Tune WebSocket pool size for expected rooms
-    - Leverage clustered nodes for resilient PubSub
-
-    <p>
-      <small class="text-blue-600 dark:text-blue-300 font-medium">
-        💡 Pro Tip: Start with a single node and scale horizontally as your user base grows.
-        Monitor metrics at https://metrics.streammusic.app
-      </small>
-    </p>
-
-    ## Next Steps
-
-    1. Finalize UI polish in Tailwind components
-    2. Integrate payment tiers for premium rooms
-    3. Add offline fallbacks when connection drops
-    4. Extend analytics pipeline for retention insights
-
-    ## Celebration
-
-    Wrap the launch with :tada: playlists and a :musical_note: release party!
-
-    ---
-
-    *Built with :purple_heart: using [Elixir](https://elixir-lang.org) and [MDEx](https://hex.pm/packages/mdex)*
-    """
-
-    chunks = chunk_for_ai_streaming(content)
-    simulate_streaming(socket, chunks)
   end
 
-  def handle_event("clear", _params, socket) do
-    socket
-    |> assign(
-      document: MDEx.new(@mdex_options),
-      chunks: [],
-      html: "",
-      streaming: false,
-      current_chunk: 0,
-      total_chunks: 0,
-      stream_ref: nil
-    )
-    |> then(&{:noreply, &1})
+  def handle_event("stop", _params, socket) do
+    {:noreply,
+     socket
+     |> cancel_async(:markdown_fetch)
+     |> assign(status: :stopped, run_id: nil)}
   end
 
-  def handle_event("update_speed", %{"speed" => speed}, socket) do
-    actual_speed = 1001 - String.to_integer(speed)
-    {:noreply, assign(socket, :speed, actual_speed)}
+  @impl Phoenix.LiveView
+  def handle_info(
+        {:pace_chunk, run_id, producer, bytes, producer_memory},
+        %{assigns: %{run_id: run_id}} = socket
+      ) do
+    send(producer, {:continue, run_id, socket.assigns.delay_ms})
+
+    {:noreply,
+     socket
+     |> update(:received_bytes, &(&1 + bytes))
+     |> update(:received_chunks, &(&1 + 1))
+     |> put_memory(:producer, producer_memory)
+     |> put_memory(:live_view, process_memory())}
   end
 
-  def handle_info({:stream_chunk, ref, chunk}, %{assigns: %{stream_ref: ref}} = socket) do
-    document = Enum.into([chunk], socket.assigns.document)
-    html = html_from(document)
+  def handle_info({:pace_chunk, _run_id, _producer, _bytes, _memory}, socket), do: {:noreply, socket}
 
-    socket =
-      socket
-      |> update(:chunks, fn chunks -> chunks ++ [chunk] end)
-      |> assign(:document, document)
-      |> assign(:html, html)
-      |> update(:current_chunk, &(&1 + 1))
-
-    {:noreply, socket}
+  def handle_info(
+        {:markdown_chunk, run_id, {id, _document} = chunk, producer_memory},
+        %{assigns: %{run_id: run_id}} = socket
+      ) do
+    {:noreply,
+     socket
+     |> stream_insert(:markdown, chunk)
+     |> update(:markdown_updates, &(&1 + 1))
+     |> update(:rendered_chunks, &max(&1, id + 1))
+     |> put_memory(:producer, producer_memory)
+     |> put_memory(:live_view, process_memory())}
   end
 
-  def handle_info({:stream_chunk, _ref, _chunk}, socket), do: {:noreply, socket}
+  def handle_info({:markdown_chunk, _run_id, _chunk, _memory}, socket), do: {:noreply, socket}
 
-  def handle_info({:streaming_complete, ref}, %{assigns: %{stream_ref: ref}} = socket) do
-    {:noreply, assign(socket, :streaming, false)}
+  @impl Phoenix.LiveView
+  def handle_async(:markdown_fetch, {:ok, {run_id, _status}}, %{assigns: %{run_id: run_id}} = socket) do
+    {:noreply, assign(socket, status: :complete, run_id: nil)}
   end
 
-  def handle_info({:streaming_complete, _ref}, socket), do: {:noreply, socket}
+  def handle_async(:markdown_fetch, {:ok, {_run_id, _status}}, socket), do: {:noreply, socket}
 
-  defp simulate_streaming(socket, chunks) do
-    speed = socket.assigns.speed
-    total_chunks = Enum.count(chunks)
-    stream_ref = make_ref()
-    parent = self()
+  def handle_async(:markdown_fetch, {:exit, {:shutdown, :cancel}}, socket), do: {:noreply, socket}
 
-    Task.start(fn ->
-      chunks
-      |> Stream.each(fn chunk ->
-        Process.sleep(speed)
-        send(parent, {:stream_chunk, stream_ref, chunk})
-      end)
-      |> Stream.run()
+  def handle_async(:markdown_fetch, {:exit, reason}, socket) do
+    {:noreply, assign(socket, status: :error, run_id: nil, error: exception_message(reason))}
+  end
 
-      send(parent, {:streaming_complete, stream_ref})
+  defp stream_url(url, live_view, run_id) do
+    response = Req.get!(url, into: :self, raw: true, redirect: true)
+
+    unless response.status in 200..299 do
+      Req.cancel_async_response(response)
+      raise "request returned HTTP #{response.status}"
+    end
+
+    response.body
+    |> rechunk(@display_chunk_bytes)
+    |> enforce_body_limit()
+    |> pace_with_live_view(live_view, run_id)
+    |> MDEx.stream(@mdex_options)
+    |> Enum.each(fn chunk ->
+      send(live_view, {:markdown_chunk, run_id, chunk, process_memory()})
     end)
 
-    updated_socket =
-      assign(socket, %{
-        document: MDEx.new(@mdex_options),
-        chunks: [],
-        html: "",
-        streaming: true,
-        speed: speed,
-        current_chunk: 0,
-        total_chunks: total_chunks,
-        stream_ref: stream_ref
-      })
-
-    {:noreply, updated_socket}
+    {run_id, response.status}
   end
 
-  defp html_from(%MDEx.Document{} = document), do: MDEx.to_html!(document, @mdex_options)
-
-  defp chunk_for_ai_streaming(text) do
-    text
-    |> String.graphemes()
-    |> do_random_chunk([])
+  defp rechunk(chunks, bytes) do
+    Stream.flat_map(chunks, &split_binary(&1, bytes, []))
   end
 
-  defp do_random_chunk([], acc), do: Enum.reverse(acc)
+  defp split_binary("", _bytes, chunks), do: Enum.reverse(chunks)
 
-  defp do_random_chunk(graphemes, acc) do
-    chunk_size = Enum.random(3..20)
-    {chunk, rest} = Enum.split(graphemes, chunk_size)
+  defp split_binary(binary, bytes, chunks) when byte_size(binary) <= bytes do
+    Enum.reverse([binary | chunks])
+  end
 
-    case chunk do
-      [] -> Enum.reverse(acc)
-      _ -> do_random_chunk(rest, [Enum.join(chunk) | acc])
+  defp split_binary(binary, bytes, chunks) do
+    <<chunk::binary-size(^bytes), rest::binary>> = binary
+    split_binary(rest, bytes, [chunk | chunks])
+  end
+
+  defp enforce_body_limit(chunks) do
+    Stream.transform(chunks, 0, fn chunk, total ->
+      total = total + byte_size(chunk)
+
+      if total > @max_body_bytes do
+        raise "response exceeded the #{div(@max_body_bytes, 1_000_000)} MB demo limit"
+      end
+
+      {[chunk], total}
+    end)
+  end
+
+  defp pace_with_live_view(chunks, live_view, run_id) do
+    Stream.map(chunks, fn chunk ->
+      send(live_view, {:pace_chunk, run_id, self(), byte_size(chunk), process_memory()})
+
+      receive do
+        {:continue, ^run_id, delay_ms} -> Process.sleep(delay_ms)
+      after
+        5_000 -> raise "LiveView did not acknowledge the source chunk"
+      end
+
+      chunk
+    end)
+  end
+
+  defp validate_url(url) do
+    case URI.new(url) do
+      {:ok, %URI{scheme: scheme, host: host}} when scheme in ["http", "https"] and is_binary(host) -> :ok
+      _ -> {:error, "Enter an absolute http:// or https:// URL."}
     end
   end
-end
 
-defmodule DemoRouter do
-  use Phoenix.Router
-  import Phoenix.LiveView.Router
-
-  pipeline :browser do
-    plug(:accepts, ["html"])
-    plug(:fetch_session)
-    plug(:put_root_layout, html: {DemoLayout, :root})
-    plug(:put_secure_browser_headers)
+  defp parse_delay(value) do
+    value
+    |> String.to_integer()
+    |> min(1000)
+    |> max(0)
+  rescue
+    ArgumentError -> 25
   end
 
-  scope "/" do
-    pipe_through(:browser)
-    live("/", StreamingDemo)
+  defp status_label(:idle), do: "Ready"
+  defp status_label(:streaming), do: "Streaming"
+  defp status_label(:complete), do: "Complete"
+  defp status_label(:stopped), do: "Stopped"
+  defp status_label(:error), do: "Error"
+
+  defp stable_chunks(status, chunks), do: chunks - mutable_chunks(status, chunks)
+
+  defp mutable_chunks(:complete, _chunks), do: 0
+  defp mutable_chunks(_status, 0), do: 0
+  defp mutable_chunks(_status, _chunks), do: 1
+
+  defp put_memory(socket, :producer, bytes) do
+    socket
+    |> assign(:producer_memory, bytes)
+    |> update(:producer_peak_memory, &max(&1, bytes))
   end
+
+  defp put_memory(socket, :live_view, bytes) do
+    socket
+    |> assign(:live_view_memory, bytes)
+    |> update(:live_view_peak_memory, &max(&1, bytes))
+  end
+
+  defp process_memory do
+    {:memory, bytes} = Process.info(self(), :memory)
+    bytes
+  end
+
+  defp format_bytes(bytes) when bytes < 1_000, do: "#{bytes} B"
+  defp format_bytes(bytes) when bytes < 1_000_000, do: "#{Float.round(bytes / 1_000, 1)} kB"
+  defp format_bytes(bytes), do: "#{Float.round(bytes / 1_000_000, 1)} MB"
+
+  defp exception_message({exception, _stacktrace}) when is_exception(exception), do: Exception.message(exception)
+  defp exception_message(exception) when is_exception(exception), do: Exception.message(exception)
+  defp exception_message(reason), do: "Streaming failed: #{inspect(reason)}"
 end
 
-PhoenixPlayground.start(plug: DemoRouter, open_browser: true)
+unless System.get_env("MDEX_STREAMING_EXAMPLE_NO_SERVER") == "1" do
+  open_browser? = System.get_env("MDEX_STREAMING_EXAMPLE_NO_BROWSER") != "1"
+  PhoenixPlayground.start(live: MDExStreamingDemo, open_browser: open_browser?)
+end

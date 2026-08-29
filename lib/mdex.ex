@@ -1270,34 +1270,36 @@ defmodule MDEx do
   @type plugins :: [module() | {module(), keyword()} | (MDEx.Document.t() -> MDEx.Document.t())]
 
   @doc """
-  Builds a new `MDEx.Document` instance.
+  Creates an `MDEx.Document`.
 
-  `MDEx.Document` is the core data structure used across MDEx. It holds the full CommonMark AST and
-  exposes rich `Access`, `Enumerable`, and pipeline APIs so you can traverse, manipulate, and enrich
-  Markdown before turning it into HTML/JSON/XML/Markdown/Delta.
+  A document stores the CommonMark AST, options, and pipeline steps. Use it to
+  read or change nodes before rendering.
 
-  * Pass `:markdown` to include Markdown into the buffer or call `MDEx.Document.put_markdown/2` to add more later.
-  * Pass any built-in options (`:extension`, `:parse`, `:render`, `:syntax_highlight`, `:sanitize`) to
-    shape how the document will be parsed and rendered.
-  * Chain pipeline helpers such as `MDEx.Document.append_steps/2`, `MDEx.Document.update_nodes/3`, or your own plugin
-    modules to programmatically modify the AST.
-  * Set `streaming: true` to buffer complete or incomplete Markdown fragments.
+  - Pass `:markdown` to add source when the document is created.
+  - Call `MDEx.Document.put_markdown/3` to add more source later.
+  - Pass MDEx options to control parsing and rendering.
+  - Add pipeline steps or plugins to change the AST.
+  - Use `MDEx.stream/2` instead when the source is an Enumerable of chunks.
 
-  Once you finish manipulating the document, call one of the `MDEx.to_*` functions to output the final result to a format
-  or `MDEx.Document.run/1` to finalize the document and get the updated AST.
+  Call an `MDEx.to_*` function to render the document. Call
+  `MDEx.Document.run/1` when you need the parsed AST.
 
   ## Options
 
-    - `:markdown` (`t:String.t/0`)  Raw Markdown to parse into the document. Defaults to `""`
-    - `:plugins` - (`t:plugins/0`) Attach [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to the document pipeline. Defaults to `[]`
-    - `:extension` (`t:MDEx.Document.extension_options/0`) Enable extensions. Defaults to `MDEx.Document.default_extension_options/0`
-    - `:parse` - (`t:MDEx.Document.parse_options/0`) Modify parsing behavior. Defaults to `MDEx.Document.default_parse_options/0`
-    - `:render` - (`t:MDEx.Document.render_options/0`) Modify rendering behavior. Defaults to `MDEx.Document.default_render_options/0`
-    - `:syntax_highlight` - (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) Modify syntax highlighting behavior or `nil` to disable. Defaults to `MDEx.Document.default_syntax_highlight_options/0`
-    - `:sanitize` - (`t:sanitize_options/0` | `nil`) Modify sanitization behavior  or `nil` to disable sanitization. Use `MDEx.Document.default_sanitize_options/0` to enable a default set of sanitization options. Defaults to `nil`.
-    - `:assigns` - (`t:map/0`) A map of assigns for use in pipelines, plugins, and HEEx rendering. Can also be set with `MDEx.Document.assign/2`. Defaults to `%{}`.
+    - `:markdown` (`t:String.t/0`) - Markdown source. Defaults to `""`.
+    - `:plugins` (`t:plugins/0`) - Plugins for the document pipeline. Defaults to `[]`.
+    - `:extension` (`t:MDEx.Document.extension_options/0`) - Markdown extensions.
+    - `:parse` (`t:MDEx.Document.parse_options/0`) - Parser options.
+    - `:render` (`t:MDEx.Document.render_options/0`) - Render options.
+    - `:syntax_highlight` (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) - Syntax highlight options, or `nil` to turn it off.
+    - `:sanitize` (`t:sanitize_options/0` | `nil`) - HTML cleaning options, or `nil` to turn it off. Defaults to `nil`.
+    - `:assigns` (`t:map/0`) - Values for pipelines, plugins, and HEEx. Defaults to `%{}`.
 
-  Note that `:sanitize` and `:unsafe` are disabled by default. See [Safety](https://hexdocs.pm/mdex/safety.html) for more info.
+  The `:streaming` option is deprecated. Pass an Enumerable of Markdown chunks
+  to `MDEx.stream/2`.
+
+  `:sanitize` and `:unsafe` are off by default. See the
+  [Safety guide](https://hexdocs.pm/mdex/safety.html).
 
   ## Examples
 
@@ -1315,7 +1317,7 @@ defmodule MDEx do
       ...> |> MDEx.to_html!(render: [unsafe: true])
       "<h1>Intro</h1>\\n<section>Injected</section>"
 
-  Using `MDEx.Document.run/1` to process buffered markdown and get the AST:
+  Parse buffered Markdown and return the AST with `MDEx.Document.run/1`:
 
       iex> doc = MDEx.new(markdown: "# First\\n")
       ...> |> MDEx.Document.put_markdown("# Second")
@@ -1325,13 +1327,6 @@ defmodule MDEx do
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "First", sourcepos: %MDEx.Sourcepos{start: {1, 3}, end: {1, 7}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 7}}},
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "Second", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 8}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 8}}}
       ]
-
-  Enabling streaming to render partial input as it arrives:
-
-      iex> MDEx.new(streaming: true, extension: [strikethrough: true])
-      ...> |> MDEx.Document.put_markdown("~~deprec")
-      ...> |> MDEx.to_html!()
-      "<p><del>deprec</del></p>"
 
   Attach [plugins](plugins.html) three different ways:
 
@@ -1350,6 +1345,10 @@ defmodule MDEx do
   """
   @spec new(keyword()) :: Document.t()
   def new(options \\ []) do
+    if Keyword.has_key?(options, :streaming) do
+      IO.warn("the :streaming option is deprecated; pass an Enumerable of Markdown chunks to MDEx.stream/2")
+    end
+
     # TODO: remove :document in v1.0
     {document, options} = Keyword.pop(options, :document, nil)
     {markdown, options} = Keyword.pop(options, :markdown, nil)
@@ -1362,6 +1361,236 @@ defmodule MDEx do
     @document
     |> Document.put_markdown(markdown)
     |> Document.put_options(options)
+  end
+
+  @doc """
+  Returns a lazy Stream of parsed Markdown chunks.
+
+  The input must be an Enumerable of binaries. The output is a native Elixir
+  `Stream` of `{id, %MDEx.Document{}}` pairs.
+
+  Insert a chunk when its id is new. Replace it when the id repeats. After a
+  higher id appears, all lower ids are stable and will not appear again. EOF
+  emits the last chunk with a normal parse, then ends the Stream.
+
+  A file or network read may split a UTF-8 code point. MDEx holds the incomplete
+  bytes until the next chunk.
+
+  ## Examples
+
+      iex> ["# Hel", "lo\\n\\nNow **wri", "ting**"]
+      ...> |> MDEx.stream()
+      ...> |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+      [
+        {0, "<h1>Hel</h1>"},
+        {0, "<h1>Hello</h1>"},
+        {1, "<p>Now <strong>wri</strong></p>"},
+        {1, "<p>Now <strong>writing</strong></p>"},
+        {1, "<p>Now <strong>writing</strong></p>"}
+      ]
+
+  `File.stream!/1` and other Enumerables work without an adapter:
+
+      "README.md"
+      |> File.stream!([], 2048)
+      |> MDEx.stream(extension: [table: true])
+      |> Enum.each(fn {id, document} ->
+        cache({id, :html}, MDEx.to_html!(document))
+      end)
+
+  See the [Streaming guide](streaming.html) for the id rules, Req, and Phoenix
+  LiveView.
+
+  > #### Experimental {: .warning}
+  >
+  > This function may change before its first stable release.
+
+  """
+  @spec stream(Enumerable.t(), Document.options()) :: Enumerable.t()
+  def stream(chunks, options \\ []) when is_list(options) do
+    chunks
+    |> Stream.transform(
+      fn ->
+        %{
+          options: Keyword.drop(options, [:document, :markdown, :streaming]),
+          source: "",
+          utf8_suffix: "",
+          tail_id: nil,
+          next_id: 0
+        }
+      end,
+      &stream_chunk/2,
+      &finish_stream/1,
+      fn _state -> :ok end
+    )
+    # Stream.transform/5 provides lifecycle callbacks through an Enumerable
+    # function. This no-op native transform keeps the public value a %Stream{}.
+    |> Stream.map(& &1)
+  end
+
+  defp stream_chunk(chunk, state) when is_binary(chunk) do
+    {valid, utf8_suffix} = split_incomplete_utf8(state.utf8_suffix <> chunk)
+    state = %{state | utf8_suffix: utf8_suffix}
+
+    case valid do
+      "" -> {[], state}
+      _ -> emit_stream_source(state.source <> valid, state)
+    end
+  end
+
+  defp stream_chunk(chunk, _state) do
+    raise ArgumentError, "MDEx.stream/2 expected a binary chunk, got: #{inspect(chunk)}"
+  end
+
+  defp finish_stream(%{utf8_suffix: suffix}) when suffix != "" do
+    raise ArgumentError,
+          "MDEx.stream/2 reached end-of-input with incomplete UTF-8: #{inspect(suffix)}"
+  end
+
+  defp finish_stream(%{source: ""} = state), do: {[], state}
+
+  defp finish_stream(state) do
+    id = state.tail_id || state.next_id
+    {[{id, stream_document(state.source, state.options, false)}], state}
+  end
+
+  defp emit_stream_source(source, state) do
+    {stable_source, mutable_source} = partition_stream_source(source, state.options)
+
+    case stable_source do
+      "" ->
+        id = state.tail_id || state.next_id
+        next_id = if state.tail_id, do: state.next_id, else: state.next_id + 1
+        chunks = if mutable_source == "", do: [], else: [{id, stream_document(mutable_source, state.options, true)}]
+        {chunks, %{state | source: mutable_source, tail_id: id, next_id: next_id}}
+
+      _ ->
+        stable_id = state.tail_id || state.next_id
+        next_id = if state.tail_id, do: state.next_id, else: state.next_id + 1
+        tail_id = next_id
+
+        chunks = [
+          {stable_id, stream_document(stable_source, state.options, false)},
+          {tail_id, stream_document(mutable_source, state.options, true)}
+        ]
+
+        {chunks, %{state | source: mutable_source, tail_id: tail_id, next_id: next_id + 1}}
+    end
+  end
+
+  defp stream_document(source, options, streaming?) do
+    document = new(options)
+    document = if streaming?, do: Document.put_private(document, :fragment_completion, true), else: document
+
+    document
+    |> Document.put_markdown(source)
+    |> Document.run()
+  end
+
+  defp partition_stream_source("", _options), do: {"", ""}
+
+  defp partition_stream_source(source, options) do
+    boundary_options = Keyword.drop(options, [:assigns, :plugins])
+    rust_options = Document.rust_options!(boundary_options)
+
+    case Comrak.parse_document_with_metadata(source, rust_options) do
+      {%{nodes: native_nodes}, metadata} ->
+        nodes = ComrakConverter.to_mdex(native_nodes)
+        blocks = stream_source_blocks(source, nodes, metadata)
+        {stable, mutable} = Enum.split_while(blocks, &elem(&1, 1))
+        {Enum.map_join(stable, &elem(&1, 0)), Enum.map_join(mutable, &elem(&1, 0))}
+
+      _ ->
+        {"", source}
+    end
+  end
+
+  defp stream_source_blocks(source, [], _metadata), do: [{source, false}]
+
+  defp stream_source_blocks(source, nodes, metadata) do
+    starts = stream_line_starts(source)
+
+    positions = stream_node_positions(nodes)
+
+    offsets =
+      positions
+      |> tl()
+      |> Enum.map(fn {start_line, _end_line} -> stream_byte_at(starts, start_line) end)
+
+    boundaries =
+      positions
+      |> Enum.zip(tl(positions) ++ [nil])
+      |> Enum.map(fn
+        {{_start_line, end_line}, {next_start_line, _next_end_line}} -> next_start_line > end_line + 1
+        {_position, nil} -> false
+      end)
+
+    [0 | offsets]
+    |> Enum.zip(offsets ++ [byte_size(source)])
+    |> Enum.zip(boundaries)
+    |> Enum.map(fn {{from, to}, stable?} ->
+      {binary_part(source, from, to - from), stable?}
+    end)
+    |> hold_stream_reference_block(positions, metadata)
+  end
+
+  defp stream_node_positions(nodes) do
+    nodes
+    |> Enum.reduce([], fn node, positions ->
+      {start_line, _start_column} = node.sourcepos.start
+      {end_line, _end_column} = node.sourcepos.end
+
+      case positions do
+        [{^start_line, previous_end_line} | rest] ->
+          [{start_line, max(end_line, previous_end_line)} | rest]
+
+        _other ->
+          [{start_line, end_line} | positions]
+      end
+    end)
+    |> Enum.reverse()
+  end
+
+  defp hold_stream_reference_block(blocks, _positions, %{reference_link_block_start: nil}),
+    do: blocks
+
+  defp hold_stream_reference_block(blocks, positions, %{reference_link_block_start: start_line}) do
+    first_reference =
+      Enum.find_index(positions, fn {block_start_line, _end_line} ->
+        block_start_line >= start_line
+      end) || 0
+
+    blocks
+    |> Enum.with_index()
+    |> Enum.map(fn
+      {{source, _stable?}, index} when index >= first_reference -> {source, false}
+      {block, _index} -> block
+    end)
+  end
+
+  defp stream_line_starts(source) do
+    source
+    |> :binary.matches("\n")
+    |> Enum.map(fn {offset, length} -> offset + length end)
+    |> then(&[0 | &1])
+    |> List.to_tuple()
+  end
+
+  defp stream_byte_at(starts, line) do
+    elem(starts, min(max(line - 1, 0), tuple_size(starts) - 1))
+  end
+
+  defp split_incomplete_utf8(binary) do
+    case :unicode.characters_to_binary(binary, :utf8, :utf8) do
+      valid when is_binary(valid) ->
+        {valid, ""}
+
+      {:incomplete, valid, suffix} ->
+        {valid, suffix}
+
+      {:error, _valid, invalid} ->
+        raise ArgumentError, "MDEx.stream/2 received invalid UTF-8: #{inspect(invalid)}"
+    end
   end
 
   @doc """

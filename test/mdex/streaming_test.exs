@@ -18,7 +18,13 @@ defmodule MDEx.StreamingTest do
   # alias MDEx.TaskItem
   alias MDEx.Text
 
-  defp nodes(chunks, document \\ MDEx.new(streaming: true)) do
+  defp streaming_document(options \\ []) do
+    options
+    |> MDEx.new()
+    |> MDEx.Document.put_private(:fragment_completion, true)
+  end
+
+  defp nodes(chunks, document \\ streaming_document()) do
     Enum.reduce(chunks, document, fn chunk, doc -> Enum.into([chunk], doc) end)
     |> MDEx.Document.run()
     |> Map.get(:nodes)
@@ -371,7 +377,7 @@ defmodule MDEx.StreamingTest do
                  %Strikethrough{nodes: [%Text{literal: "deleted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [strikethrough: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [strikethrough: true]))
   end
 
   test "simple insert" do
@@ -386,7 +392,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [insert: true]))
   end
 
   test "simple highlight" do
@@ -401,7 +407,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [highlight: true]))
   end
 
   test "incomplete insert across chunks" do
@@ -416,7 +422,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [insert: true]))
   end
 
   test "incomplete highlight across chunks" do
@@ -431,7 +437,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [highlight: true]))
   end
 
   test "simple subtext" do
@@ -446,7 +452,7 @@ defmodule MDEx.StreamingTest do
                  %Text{literal: "Some Subtext"}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [subtext: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [subtext: true]))
   end
 
   test "bold emphasis across chunks" do
@@ -833,7 +839,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 1,
                num_nonempty_cells: 2
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   test "table with incomplete header separator" do
@@ -858,7 +864,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 1,
                num_nonempty_cells: 2
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   test "table with incomplete row" do
@@ -891,7 +897,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 2,
                num_nonempty_cells: 4
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   # FIXME
@@ -927,8 +933,7 @@ defmodule MDEx.StreamingTest do
 
     options = [
       extension: [tasklist: true],
-      parse: [relaxed_tasklist_matching: true],
-      streaming: true
+      parse: [relaxed_tasklist_matching: true]
     ]
 
     assert [
@@ -961,14 +966,13 @@ defmodule MDEx.StreamingTest do
                  }
                ]
              }
-           ] = nodes(chunks, MDEx.new(options))
+           ] = nodes(chunks, streaming_document(options))
   end
 
   test "task list retains emphasis across chunks" do
     options = [
       extension: [tasklist: true],
-      parse: [relaxed_tasklist_matching: true],
-      streaming: true
+      parse: [relaxed_tasklist_matching: true]
     ]
 
     chunks = [
@@ -1045,7 +1049,7 @@ defmodule MDEx.StreamingTest do
                  %Text{literal: " for specs"}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [autolink: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [autolink: true]))
   end
 
   test "line breaks with trailing spaces" do
@@ -1198,7 +1202,7 @@ defmodule MDEx.StreamingTest do
     end
 
     test "fragment state tracks unclosed token across flushes" do
-      doc = MDEx.new(streaming: true)
+      doc = streaming_document()
 
       # First flush: ** opens bold, FragmentParser completes it
       doc = Enum.into(["**bold "], doc) |> MDEx.Document.run()
@@ -1212,7 +1216,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["[click](https://example.com) ", "more text"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
 
       assert %MDEx.Link{url: "https://example.com"} = hd(nodes)
@@ -1225,7 +1229,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["```\nhello\n```\n", "after"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1235,7 +1239,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["Hello ", "world ", "!"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
 
       text =
@@ -1254,7 +1258,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["<div>foo", "bar</div>"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1264,7 +1268,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["<div", ">foo<", "/div>"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1274,7 +1278,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["# Tit", "le"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
   end

@@ -41,7 +41,7 @@
 - Discord Flavored Markdown (Partial)
 - Wiki-style links
 - Phoenix HEEx components and expressions
-- [Streaming](https://hexdocs.pm/mdex/streaming.html) incomplete fragments
+- Native Elixir [Stream](https://hexdocs.pm/mdex/streaming.html) for Markdown chunks
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in Syntax Highlighting with [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html)
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
@@ -160,12 +160,23 @@ iex> ~MD[# Hello :smile:]
 ```
 
 #### Streaming
+
 ```elixir
-iex> MDEx.new(streaming: true)
-...> |> MDEx.Document.put_markdown("**Install")
-...> |> MDEx.to_html!()
-"<p><strong>Install</strong></p>"
+iex> ["# Hel", "lo\n\nNow **wri", "ting**"]
+...> |> MDEx.stream()
+...> |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+[
+  {0, "<h1>Hel</h1>"},
+  {0, "<h1>Hello</h1>"},
+  {1, "<p>Now <strong>wri</strong></p>"},
+  {1, "<p>Now <strong>writing</strong></p>"},
+  {1, "<p>Now <strong>writing</strong></p>"}
+]
 ```
+
+Insert a chunk when its id is new. Replace it when the id repeats. See the
+[Streaming guide](https://hexdocs.pm/mdex/streaming.html) for files, Req, and
+Phoenix LiveView.
 
 ## Examples and Guides
 

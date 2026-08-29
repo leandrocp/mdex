@@ -104,16 +104,11 @@ defmodule MDEx.Document do
 
   ## Streaming
 
-  Pass `streaming: true` to buffer Markdown fragments and get valid output at every render,
-  even when chunks arrive with unclosed syntax. Useful for rendering LLM responses as they stream in.
+  Use `MDEx.stream/2` for an Enumerable of Markdown chunks. Use
+  `put_markdown/3` to build one document in steps.
 
-      iex> doc = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("**Fol")
-      iex> MDEx.to_html!(doc)
-      "<p><strong>Fol</strong></p>"
-      iex> doc |> MDEx.Document.put_markdown("low**") |> MDEx.to_html!()
-      "<p><strong>Follow</strong></p>"
-
-  See the [Streaming guide](streaming.html) for details on LiveView integration, fragment completion, and a full demo.
+  See the [Streaming guide](streaming.html) for partial Markdown, Req, and
+  Phoenix LiveView.
 
   ## Protocols
 
@@ -1327,11 +1322,6 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
-    streaming: [
-      type: :boolean,
-      default: false,
-      doc: "Enables streaming. See the [Streaming guide](streaming.html) for details."
-    ],
     assigns: [
       type: :map,
       default: %{},
@@ -1642,7 +1632,9 @@ defmodule MDEx.Document do
         put_sanitize_options(acc, options)
 
       {:streaming, value}, acc ->
-        %{acc | options: Keyword.put(acc.options || [], :streaming, value)}
+        acc
+        |> Map.update!(:options, &Keyword.put(&1 || [], :streaming, value))
+        |> Document.put_private(:fragment_completion, value)
 
       {:assigns, value}, acc ->
         %{acc | options: Keyword.put(acc.options || [], :assigns, value)}
@@ -2152,7 +2144,7 @@ defmodule MDEx.Document do
   1. Processes buffered markdown: If there are any markdown chunks in the buffer (added via `put_markdown/3` for example),
      they are parsed and added to the document. If the document already has nodes, they are combined with the buffer.
 
-  2. Completes any buffered fragments: If streaming is enabled, it completes any buffered fragments to ensure valid Markdown.
+  2. Closes partial syntax when called by `MDEx.stream/2`.
 
   3. Executes pipeline steps: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
      executed in order. Steps can transform the document or halt the pipeline.
@@ -2184,15 +2176,6 @@ defmodule MDEx.Document do
       ...>   |> MDEx.Document.run()
       iex> document.nodes
       [%MDEx.Heading{nodes: [%MDEx.Text{literal: "Intro"}], level: 1, setext: false}]
-
-  Streaming:
-
-      iex> document =
-      ...>   MDEx.new(streaming: true, markdown: "```elixir\\n")
-      ...>   |> MDEx.Document.put_markdown("IO.inspect(:mdex)")
-      ...>   |> MDEx.Document.run()
-      iex> document.nodes
-      [%MDEx.CodeBlock{nodes: [], fenced: true, fence_char: "`", fence_length: 3, fence_offset: 0, info: "elixir", literal: "IO.inspect(:mdex)\\n", closed: true, sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {3, 3}}}]
 
   """
   @spec run(t()) :: t()
@@ -2261,7 +2244,7 @@ defmodule MDEx.Document do
 
   defp flush_buffer(document, buffer) do
     {buffer, document} =
-      if Document.get_option(document, :streaming) do
+      if Document.get_private(document, :fragment_completion, false) do
         state = Document.get_private(document, :fragment_state)
         {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state)
         {completed, Document.put_private(document, :fragment_state, new_state)}
@@ -2377,7 +2360,7 @@ defmodule MDEx.Document do
   end
 
   @doc """
-  Adds `markdown` chunks into the `document` buffer.
+  Adds Markdown to the document buffer.
 
   ## Examples
 
@@ -2401,7 +2384,7 @@ defmodule MDEx.Document do
         %MDEx.Heading{nodes: [%MDEx.Text{literal: "Last", sourcepos: %MDEx.Sourcepos{start: {2, 3}, end: {2, 6}}}], level: 1, setext: false, closed: false, sourcepos: %MDEx.Sourcepos{start: {2, 1}, end: {2, 6}}}
       ]
 
-      iex> document = MDEx.new(streaming: true) |> MDEx.Document.put_markdown("`let x =")
+      iex> document = MDEx.new() |> MDEx.Document.put_markdown("`let x =`")
       iex> MDEx.to_html!(document)
       "<p><code>let x =</code></p>"
 
@@ -2738,8 +2721,8 @@ defmodule MDEx.Document do
   if Code.ensure_loaded?(Lumis) do
     defp lumis_syntax_highlight_options(options) do
       options
-      |> Lumis.validate_options!()
-      |> Lumis.rust_options!()
+      |> then(&apply(Lumis, :validate_options!, [&1]))
+      |> then(&apply(Lumis, :rust_options!, [&1]))
     end
   else
     defp lumis_syntax_highlight_options(_options) do
