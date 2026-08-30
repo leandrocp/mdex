@@ -674,6 +674,7 @@ defmodule MDEx.Document do
   @behaviour Access
   alias __MODULE__
   alias MDEx.ComrakConverter
+  alias MDEx.Document.Traversal
   alias MDExNative.Comrak
 
   @built_in_options [
@@ -2445,7 +2446,7 @@ defmodule MDEx.Document do
   def update_nodes(%MDEx.Document{} = document, selector, fun) when is_function(fun, 1) do
     # document = maybe_resolve_document(document)
 
-    MDEx.Document.Traversal.traverse_and_update(document, fn node ->
+    Traversal.traverse_and_update(document, fn node ->
       if match_selector?(node, selector) do
         fun.(node)
       else
@@ -3826,6 +3827,9 @@ defimpl Inspect, for: MDEx.Document do
               field != :__exception__,
               do: map
 
+        # credo:disable-for-lines:12 Credo.Check.Refactor.Apply
+        # `apply/3` is what keeps this compiling against the Elixir versions
+        # that export only one of these two private Inspect helpers.
         if function_exported?(Inspect.Map, :inspect, 4) do
           apply(Inspect.Map, :inspect, [document, inspect(document.__struct__), infos, opts])
         else

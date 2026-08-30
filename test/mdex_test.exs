@@ -1094,7 +1094,7 @@ defmodule MDExTest do
 
     test "enable all by default" do
       assert MDEx.safe_html(
-               "<span>{:example} <code class=\"lang-ex\" data-foo=\"{:val}\">{:ok, 'foo'}</code></span><script>console.log('hello')</script>"
+               ~s|<span>{:example} <code class="lang-ex" data-foo="{:val}">{:ok, 'foo'}</code></span><script>console.log('hello')</script>|
              ) ==
                "&lt;span&gt;{:example} &lt;code class=&quot;lang-ex&quot;&gt;&lbrace;:ok, &#x27;foo&#x27;&rbrace;&lt;&#x2f;code&gt;&lt;&#x2f;span&gt;"
     end

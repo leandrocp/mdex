@@ -16,3 +16,4 @@ jobs:
     uses: leandrocp/github-actions/.github/workflows/elixir-lint.yml@main
     with:
       credo: true
+      credo_args: '--strict'

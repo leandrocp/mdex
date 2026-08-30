@@ -138,7 +138,7 @@ defmodule MDEx.DeltaConverterTest do
                %{"insert" => "\n"},
                # Extra spacing before empty paragraph
                %{"insert" => "\n"},
-               # Empty paragraph 
+               # Empty paragraph
                %{"insert" => "\n"},
                # Extra spacing before next paragraph
                %{"insert" => "\n"},
