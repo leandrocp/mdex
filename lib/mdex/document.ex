@@ -107,8 +107,8 @@ defmodule MDEx.Document do
   Use `MDEx.stream/2` for an Enumerable of Markdown chunks. Use
   `put_markdown/3` to build one document in steps.
 
-  See the [Streaming guide](streaming.html) for partial Markdown, Req, and
-  Phoenix LiveView.
+  See the [Streaming guide](streaming.html) for partial Markdown in HTTP
+  requests and LiveView.
 
   ## Protocols
 
@@ -2721,8 +2721,8 @@ defmodule MDEx.Document do
   if Code.ensure_loaded?(Lumis) do
     defp lumis_syntax_highlight_options(options) do
       options
-      |> then(&apply(Lumis, :validate_options!, [&1]))
-      |> then(&apply(Lumis, :rust_options!, [&1]))
+      |> Lumis.validate_options!()
+      |> Lumis.rust_options!()
     end
   else
     defp lumis_syntax_highlight_options(_options) do

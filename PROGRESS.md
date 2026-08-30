@@ -163,8 +163,8 @@ Verified with Phoenix LiveView 1.2.11:
 `examples/streaming.exs` runs:
 
 ```text
-Req callback-backed source
-  -> bounded 64-byte display chunks
+Req.Response.Async Enumerable
+  -> 64-byte display chunks
   -> MDEx.stream/2
   -> LiveView messages
   -> stream_insert/4
@@ -174,9 +174,7 @@ Req callback-backed source
 The Playground includes:
 
 - a URL field that defaults to the raw MDEx README
-- public URL and redirect checks
-- a 2 MB response limit
-- backpressure from the paced consumer to Req
+- direct Req streaming through `into: :self`
 - a delay slider from 0 to 1000 ms
 - an auto-scroll checkbox
 - Lumis highlighting for partial code fences
@@ -189,8 +187,8 @@ The Playground includes:
 Current proof:
 
 - the standalone Phoenix Playground script compiles
-- the default raw GitHub URL fetched 12,157 bytes through the callback-backed
-  Req source
+- the default raw GitHub URL produced 201 MDEx updates through
+  `Req.Response.Async`
 - the final keyed HTML matched a normal full-source parse
 - an incomplete Elixir fence rendered Lumis spans
 

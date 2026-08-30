@@ -10,217 +10,11 @@ Mix.install(
   config: [mdex_native: [syntax_highlighter: :lumis]]
 )
 
-defmodule MDExStreamingDemo.HTTPStream do
-  @moduledoc false
-
-  import Bitwise
-
-  @redirect_statuses [301, 302, 303, 307, 308]
-
-  def new(url, options) do
-    max_bytes = Keyword.fetch!(options, :max_bytes)
-    max_redirects = Keyword.get(options, :max_redirects, 5)
-
-    Stream.resource(
-      fn -> start_producer(url, max_bytes, max_redirects) end,
-      &next_chunk/1,
-      &stop_producer/1
-    )
-  end
-
-  defp start_producer(url, max_bytes, max_redirects) do
-    consumer = self()
-    ref = make_ref()
-
-    {producer, monitor} =
-      spawn_monitor(fn -> produce(url, max_bytes, max_redirects, consumer, ref) end)
-
-    %{producer: producer, monitor: monitor, ref: ref, continue?: false, done?: false}
-  end
-
-  defp next_chunk(%{continue?: true} = state) do
-    send(state.producer, {:continue, state.ref})
-    next_chunk(%{state | continue?: false})
-  end
-
-  defp next_chunk(state) do
-    receive do
-      {:http_chunk, ref, chunk} when ref == state.ref ->
-        {[chunk], %{state | continue?: true}}
-
-      {:http_done, ref} when ref == state.ref ->
-        {:halt, %{state | done?: true}}
-
-      {:http_error, ref, kind, reason, stacktrace} when ref == state.ref ->
-        :erlang.raise(kind, reason, stacktrace)
-
-      {:DOWN, monitor, :process, producer, reason}
-      when monitor == state.monitor and producer == state.producer ->
-        raise "HTTP stream stopped unexpectedly: #{inspect(reason)}"
-    end
-  end
-
-  defp stop_producer(state) do
-    if not state.done? and Process.alive?(state.producer) do
-      Process.exit(state.producer, :kill)
-    end
-
-    Process.demonitor(state.monitor, [:flush])
-  end
-
-  defp produce(url, max_bytes, max_redirects, consumer, ref) do
-    consumer_monitor = Process.monitor(consumer)
-
-    try do
-      fetch(url, max_bytes, max_redirects, consumer, consumer_monitor, ref)
-      send(consumer, {:http_done, ref})
-    rescue
-      exception ->
-        send(consumer, {:http_error, ref, :error, exception, __STACKTRACE__})
-    catch
-      kind, reason ->
-        send(consumer, {:http_error, ref, kind, reason, __STACKTRACE__})
-    after
-      Process.demonitor(consumer_monitor, [:flush])
-    end
-  end
-
-  defp fetch(url, max_bytes, redirects_left, consumer, consumer_monitor, ref) do
-    url = validate_public_url!(url)
-
-    response =
-      Req.get!(url,
-        redirect: false,
-        retry: false,
-        into: fn {:data, data}, {request, response} ->
-          if response.status in 200..299 do
-            stream_data(
-              data,
-              max_bytes,
-              consumer,
-              consumer_monitor,
-              ref,
-              request,
-              response
-            )
-          else
-            {:cont, {request, response}}
-          end
-        end
-      )
-
-    cond do
-      response.status in 200..299 ->
-        :ok
-
-      response.status in @redirect_statuses and redirects_left > 0 ->
-        fetch(
-          redirect_url!(url, response),
-          max_bytes,
-          redirects_left - 1,
-          consumer,
-          consumer_monitor,
-          ref
-        )
-
-      response.status in @redirect_statuses ->
-        raise "request exceeded the redirect limit"
-
-      true ->
-        raise "request returned HTTP #{response.status}"
-    end
-  end
-
-  defp stream_data(data, max_bytes, consumer, consumer_monitor, ref, request, response) do
-    total = Req.Request.get_private(request, :mdex_streaming_bytes, 0) + byte_size(data)
-
-    if total > max_bytes do
-      raise "response exceeded the #{div(max_bytes, 1_000_000)} MB demo limit"
-    end
-
-    send(consumer, {:http_chunk, ref, data})
-    request = Req.Request.put_private(request, :mdex_streaming_bytes, total)
-
-    receive do
-      {:continue, ^ref} -> {:cont, {request, response}}
-      {:DOWN, ^consumer_monitor, :process, ^consumer, _reason} -> {:halt, {request, response}}
-    end
-  end
-
-  defp redirect_url!(url, response) do
-    case Req.Response.get_header(response, "location") do
-      [location | _] -> url |> URI.merge(location) |> URI.to_string()
-      [] -> raise "redirect response did not include a location"
-    end
-  rescue
-    ArgumentError -> raise "redirect response included an invalid location"
-  end
-
-  defp validate_public_url!(url) do
-    uri = URI.new!(url)
-
-    unless uri.scheme in ["http", "https"] and is_binary(uri.host) and uri.host != "" and
-             is_nil(uri.userinfo) do
-      raise "Enter a public http:// or https:// URL without credentials."
-    end
-
-    addresses = resolve(uri.host)
-
-    if addresses == [] do
-      raise "URL host could not be resolved."
-    end
-
-    unless Enum.all?(addresses, &public_ip?/1) do
-      raise "URL resolves to a private or reserved network address."
-    end
-
-    URI.to_string(uri)
-  end
-
-  defp resolve(host) do
-    host = String.to_charlist(host)
-
-    [:inet, :inet6]
-    |> Enum.flat_map(fn family ->
-      case :inet.getaddrs(host, family) do
-        {:ok, addresses} -> addresses
-        {:error, _reason} -> []
-      end
-    end)
-    |> Enum.uniq()
-  end
-
-  defp public_ip?({a, b, _c, _d} = address) do
-    address != {168, 63, 129, 16} and
-      a != 0 and
-      a != 10 and
-      a != 127 and
-      not (a == 100 and b in 64..127) and
-      not (a == 169 and b == 254) and
-      not (a == 172 and b in 16..31) and
-      not (a == 192 and b == 168) and
-      not (a == 198 and b in 18..19) and
-      a < 224
-  end
-
-  defp public_ip?({0, 0, 0, 0, 0, 0xFFFF, g, h}) do
-    public_ip?({g >>> 8, g &&& 0xFF, h >>> 8, h &&& 0xFF})
-  end
-
-  defp public_ip?({a, b, _c, _d, _e, _f, _g, _h}) do
-    (a &&& 0xE000) == 0x2000 and
-      not (a == 0x2001 and b in [0, 0x0DB8]) and
-      a != 0x2002
-  end
-end
-
 defmodule MDExStreamingDemo do
   use Phoenix.LiveView
 
   @default_url "https://raw.githubusercontent.com/leandrocp/mdex/main/README.md"
   @display_chunk_bytes 64
-  @max_body_bytes 2_000_000
-
   @mdex_options [
     extension: [
       alerts: true,
@@ -242,7 +36,7 @@ defmodule MDExStreamingDemo do
 
   @pipeline_markdown """
   ```elixir
-  MDExStreamingDemo.HTTPStream.new(url, max_bytes: 2_000_000)
+  Req.get!(url, into: :self).body
   |> MDEx.stream(options)
   |> Enum.each(&send(live_view, {:markdown_chunk, &1}))
 
@@ -534,41 +328,31 @@ defmodule MDExStreamingDemo do
 
   def handle_event("start", %{"url" => raw_url}, socket) do
     url = String.trim(raw_url)
+    live_view = self()
+    live_view_memory = process_memory()
+    run_id = make_ref()
 
-    case validate_url(url) do
-      :ok ->
-        live_view = self()
-        live_view_memory = process_memory()
-        run_id = make_ref()
+    socket =
+      socket
+      |> cancel_async(:markdown_fetch)
+      |> stream(:markdown, [], reset: true)
+      |> assign(
+        url: url,
+        run_id: run_id,
+        status: :streaming,
+        error: nil,
+        received_bytes: 0,
+        received_chunks: 0,
+        markdown_updates: 0,
+        rendered_chunks: 0,
+        producer_memory: 0,
+        producer_peak_memory: 0,
+        live_view_memory: live_view_memory,
+        live_view_peak_memory: live_view_memory
+      )
+      |> start_async(:markdown_fetch, fn -> stream_url(url, live_view, run_id) end)
 
-        socket =
-          socket
-          |> cancel_async(:markdown_fetch)
-          |> stream(:markdown, [], reset: true)
-          |> assign(
-            url: url,
-            run_id: run_id,
-            status: :streaming,
-            error: nil,
-            received_bytes: 0,
-            received_chunks: 0,
-            markdown_updates: 0,
-            rendered_chunks: 0,
-            producer_memory: 0,
-            producer_peak_memory: 0,
-            live_view_memory: live_view_memory,
-            live_view_peak_memory: live_view_memory
-          )
-          |> start_async(:markdown_fetch, fn -> stream_url(url, live_view, run_id) end)
-
-        {:noreply, socket}
-
-      {:error, message} ->
-        {:noreply,
-         socket
-         |> cancel_async(:markdown_fetch)
-         |> assign(error: message, status: :error, run_id: nil)}
-    end
+    {:noreply, socket}
   end
 
   def handle_event("stop", _params, socket) do
@@ -620,12 +404,13 @@ defmodule MDExStreamingDemo do
   def handle_async(:markdown_fetch, {:exit, {:shutdown, :cancel}}, socket), do: {:noreply, socket}
 
   def handle_async(:markdown_fetch, {:exit, reason}, socket) do
-    {:noreply, assign(socket, status: :error, run_id: nil, error: exception_message(reason))}
+    {:noreply, assign(socket, status: :error, run_id: nil, error: Exception.format_exit(reason))}
   end
 
   defp stream_url(url, live_view, run_id) do
-    url
-    |> MDExStreamingDemo.HTTPStream.new(max_bytes: @max_body_bytes)
+    response = Req.get!(url, into: :self)
+
+    response.body
     |> rechunk(@display_chunk_bytes)
     |> pace_with_live_view(live_view, run_id)
     |> MDEx.stream(@mdex_options)
@@ -657,23 +442,10 @@ defmodule MDExStreamingDemo do
 
       receive do
         {:continue, ^run_id, delay_ms} -> Process.sleep(delay_ms)
-      after
-        5_000 -> raise "LiveView did not acknowledge the source chunk"
       end
 
       chunk
     end)
-  end
-
-  defp validate_url(url) do
-    case URI.new(url) do
-      {:ok, %URI{scheme: scheme, host: host, userinfo: nil}}
-      when scheme in ["http", "https"] and is_binary(host) ->
-        :ok
-
-      _ ->
-        {:error, "Enter an absolute http:// or https:// URL."}
-    end
   end
 
   defp parse_delay(value) do
@@ -681,8 +453,6 @@ defmodule MDExStreamingDemo do
     |> String.to_integer()
     |> min(1000)
     |> max(0)
-  rescue
-    ArgumentError -> 25
   end
 
   defp status_label(:idle), do: "Ready"
@@ -711,10 +481,6 @@ defmodule MDExStreamingDemo do
   defp format_bytes(bytes) when bytes < 1_000, do: "#{bytes} B"
   defp format_bytes(bytes) when bytes < 1_000_000, do: "#{Float.round(bytes / 1_000, 1)} kB"
   defp format_bytes(bytes), do: "#{Float.round(bytes / 1_000_000, 1)} MB"
-
-  defp exception_message({exception, _stacktrace}) when is_exception(exception), do: Exception.message(exception)
-  defp exception_message(exception) when is_exception(exception), do: Exception.message(exception)
-  defp exception_message(reason), do: "Streaming failed: #{inspect(reason)}"
 end
 
 unless System.get_env("MDEX_STREAMING_EXAMPLE_NO_SERVER") == "1" do
