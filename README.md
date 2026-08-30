@@ -58,6 +58,12 @@
 - [mdex_mermex](https://hex.pm/packages/mdex_mermex) - Render [Mermaid](https://mermaid.js.org) diagrams server-side using Mermex (Rust NIF)
 - [mdex_multiline_cells](https://hex.pm/packages/mdex_multiline_cells) - Multi-line cells in Markdown tables with inline/block Markdown rendering
 
+Plugins can be passed to `MDEx.stream/2`, but each plugin step receives one
+keyed document rather than the full Markdown response. See the
+[streaming plugin rules](https://hexdocs.pm/mdex/streaming.html#plugins) before
+using plugins that inject assets, generate document-wide IDs, or preprocess
+Markdown source.
+
 ## Installation
 
 Add `:mdex` dependency:

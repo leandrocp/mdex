@@ -61,6 +61,92 @@ document that it already emitted.
 
 If the consumer stops early, MDEx does not parse input it has not read.
 
+## Change the AST before rendering
+
+Each emitted `%MDEx.Document{}` contains a parsed AST. You can change its nodes
+before rendering it. Do not call `MDEx.parse_document!/2` again.
+
+This example sends external links through a redirect service:
+
+```elixir
+def rewrite_links(document) do
+  MDEx.Document.update_nodes(document, MDEx.Link, fn link ->
+    url = "https://example.test/redirect?to=" <> URI.encode_www_form(link.url)
+    %{link | url: url}
+  end)
+end
+
+chunks
+|> MDEx.stream()
+|> Stream.map(fn {id, document} ->
+  document = rewrite_links(document)
+  {id, MDEx.to_html!(document)}
+end)
+|> Enum.each(&update_output/1)
+```
+
+Apply the transform to every emitted chunk, including repeated ids. A partial
+link may become a complete link in a later update with the same id. A reference
+link may also become available after its definition arrives.
+
+### Whole-document limit
+
+The document in `{id, document}` is one keyed chunk, not the full Markdown
+response. A transform that only needs nodes in that chunk, such as rewriting a
+link or adding attributes, works directly.
+
+A transform that needs all content may produce a different result. Examples
+include a table of contents, heading ids that must be unique across the whole
+response, and numbering shared by several chunks. For those transforms, either
+wait for the full source or keep state outside MDEx and account for repeated
+tail ids.
+
+## Plugins
+
+Pass plugins through the normal `:plugins` option:
+
+```elixir
+chunks
+|> MDEx.stream(plugins: [MDExGFM])
+|> Stream.map(fn {id, document} ->
+  {id, MDEx.to_html!(document)}
+end)
+```
+
+MDEx attaches each plugin once when Stream enumeration starts. Extension,
+parse, and render options set by `attach/2` apply to every parse. Plugin
+pipeline steps then run on every emitted document, including updates with a
+repeated id.
+
+Each run starts from the prepared plugin configuration. Changes that a plugin
+makes to one emitted document are not carried into the next update.
+
+The keyed document limit still applies:
+
+- An AST transform that only needs the current chunk works directly.
+- Assets injected at the document root may appear in more than one keyed
+  chunk.
+- Sequence numbers and generated IDs restart for each keyed chunk. They are not
+  unique across the full response.
+- A plugin cannot build a table of contents or other full-response result
+  without external state.
+- `attach/2` runs before MDEx reads source chunks, so it receives a document
+  with an empty Markdown buffer. A plugin that preprocesses the raw Markdown
+  buffer is not compatible with `MDEx.stream/2`; use the one-document API.
+
+For the plugins listed in the MDEx README, this means:
+
+- `mdex_gfm` parser options apply normally.
+- `mdex_custom_heading_id` processes headings within each keyed chunk.
+- `mdex_mermaid`, `mdex_katex`, `mdex_video_embed`, and `mdex_mermex` process
+  each keyed chunk separately. Configure document-wide assets and globally
+  unique IDs outside the Markdown stream when needed.
+- `mdex_multiline_cells` preprocesses the Markdown buffer and should be used
+  after the complete Markdown response is available.
+
+See the [Plugins guide](plugins.html#streaming-plugins) for the plugin-author
+contract.
+
 ## Lists and generated streams
 
 ```elixir

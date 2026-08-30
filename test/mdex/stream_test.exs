@@ -1,5 +1,5 @@
 defmodule MDEx.StreamTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   import ExUnit.CaptureIO
 
@@ -226,6 +226,115 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!(final_next) == "<p>Next</p>"
   end
 
+  test "reuses the metadata AST for stable chunks and EOF" do
+    source = "First **bold**\n\nSecond `code`\n\n- Third\n  - nested **strong**"
+
+    {calls, events} =
+      trace_parser_calls(fn ->
+        Enum.to_list(MDEx.stream([source]))
+      end)
+
+    assert calls == [:parse_document_with_metadata, :parse_document]
+    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert stable.nodes == MDEx.parse_document!("First **bold**\n\nSecond `code`\n\n").nodes
+    assert final.nodes == MDEx.parse_document!("- Third\n  - nested **strong**").nodes
+  end
+
+  test "allows each streamed AST to be changed before rendering" do
+    chunks = [
+      "Intro [site](https://example.com/a",
+      ").\n\nRead [the docs].\n\n",
+      "[the docs]: https://example.com/docs\n"
+    ]
+
+    rewrite_links = fn document ->
+      Document.update_nodes(document, MDEx.Link, fn link ->
+        %{link | url: "https://proxy.test/?target=" <> URI.encode_www_form(link.url)}
+      end)
+    end
+
+    transformed_events =
+      chunks
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, rewrite_links.(document)} end)
+
+    expected =
+      chunks
+      |> Enum.join()
+      |> MDEx.parse_document!()
+      |> rewrite_links.()
+      |> MDEx.to_html!()
+
+    assert final_html(transformed_events) == expected
+
+    assert Enum.any?(transformed_events, fn {_id, document} ->
+             MDEx.to_html!(document) =~ "https://proxy.test/?target=https%3A%2F%2Fexample.com%2Fdocs"
+           end)
+  end
+
+  test "runs document plugins on reused stable and EOF ASTs" do
+    rewrite_links = fn document ->
+      Document.append_steps(document,
+        rewrite_links: fn document ->
+          Document.update_nodes(document, MDEx.Link, fn link ->
+            %{link | url: "https://proxy.test/?target=" <> URI.encode_www_form(link.url)}
+          end)
+        end
+      )
+    end
+
+    events =
+      Enum.to_list(
+        MDEx.stream(
+          ["[one](https://example.com/one)\n\n[two](https://example.com/two)"],
+          plugins: [rewrite_links]
+        )
+      )
+
+    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert MDEx.to_html!(stable) =~ "target=https%3A%2F%2Fexample.com%2Fone"
+    assert MDEx.to_html!(final) =~ "target=https%3A%2F%2Fexample.com%2Ftwo"
+  end
+
+  test "attaches plugins once and applies their parser options before parsing" do
+    test_process = self()
+
+    plugin = fn document ->
+      send(test_process, :plugin_attached)
+
+      document
+      |> Document.put_extension_options(table: true)
+      |> Document.append_steps(
+        plugin_step: fn document ->
+          send(test_process, :plugin_step_ran)
+          document
+        end
+      )
+    end
+
+    stream =
+      MDEx.stream(
+        ["| A |\n| --- |\n| B |\n\nTail"],
+        plugins: [plugin]
+      )
+
+    refute_received :plugin_attached
+    events = Enum.to_list(stream)
+
+    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert MDEx.to_html!(stable) =~ "<table>"
+    assert MDEx.to_html!(final) == "<p>Tail</p>"
+
+    assert_received :plugin_attached
+    refute_received :plugin_attached
+
+    for _event <- events do
+      assert_received :plugin_step_ran
+    end
+
+    refute_received :plugin_step_ran
+  end
+
   defp final_html(events) do
     {ids, documents} =
       Enum.reduce(events, {[], %{}}, fn {id, document}, {ids, documents} ->
@@ -234,5 +343,42 @@ defmodule MDEx.StreamTest do
       end)
 
     Enum.map_join(ids, "\n", fn id -> documents |> Map.fetch!(id) |> MDEx.to_html!() end)
+  end
+
+  defp trace_parser_calls(fun) do
+    Code.ensure_loaded!(MDExNative.Comrak)
+    tracee = self()
+    tracer = spawn_link(fn -> collect_parser_calls([]) end)
+
+    :erlang.trace(tracee, true, [:call, {:tracer, tracer}])
+    :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, true, [:local])
+    :erlang.trace_pattern({MDExNative.Comrak, :parse_document_with_metadata, 2}, true, [:local])
+
+    try do
+      result = fun.()
+      reference = :erlang.trace_delivered(tracee)
+      assert_receive {:trace_delivered, ^tracee, ^reference}
+      send(tracer, {:get_calls, self()})
+      assert_receive {:parser_calls, calls}
+      {calls, result}
+    after
+      :erlang.trace(tracee, false, [:call])
+      :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, false, [:local])
+      :erlang.trace_pattern({MDExNative.Comrak, :parse_document_with_metadata, 2}, false, [:local])
+
+      if Process.alive?(tracer) do
+        Process.exit(tracer, :normal)
+      end
+    end
+  end
+
+  defp collect_parser_calls(calls) do
+    receive do
+      {:trace, _pid, :call, {MDExNative.Comrak, name, _args}} ->
+        collect_parser_calls([name | calls])
+
+      {:get_calls, caller} ->
+        send(caller, {:parser_calls, Enum.reverse(calls)})
+    end
   end
 end

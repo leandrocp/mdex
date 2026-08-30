@@ -1376,6 +1376,28 @@ defmodule MDEx do
   A file or network read may split a UTF-8 code point. MDEx holds the incomplete
   bytes until the next chunk.
 
+  Each document contains a parsed AST. It can be changed before rendering:
+
+      markdown_chunks
+      |> MDEx.stream()
+      |> Stream.map(fn {id, document} ->
+        document =
+          MDEx.Document.update_nodes(document, MDEx.Link, fn link ->
+            %{link | url: rewrite_url(link.url)}
+          end)
+
+        {id, MDEx.to_html!(document)}
+      end)
+
+  The transform sees one keyed document, not the full Markdown response. A
+  transform that needs all content must wait for the full source or keep its
+  own state across chunks and repeated ids.
+
+  Plugins are attached once when the Stream starts. Parser options configured
+  by a plugin apply to every parse. The plugin pipeline runs on every emitted
+  document, including replacements with the same id. Plugins must not expect an
+  emitted document or its buffer to contain the full Markdown response.
+
   ## Examples
 
       iex> ["# Hel", "lo\\n\\nNow **wri", "ting**"]
@@ -1411,10 +1433,17 @@ defmodule MDEx do
     chunks
     |> Stream.transform(
       fn ->
+        document =
+          options
+          |> Keyword.drop([:document, :markdown, :streaming])
+          |> new()
+
         %{
-          options: Keyword.drop(options, [:document, :markdown, :streaming]),
+          document: document,
+          rust_options: Document.rust_options!(document.options),
           source: "",
           utf8_suffix: "",
+          tail_nodes: nil,
           tail_id: nil,
           next_id: 0
         }
@@ -1451,18 +1480,34 @@ defmodule MDEx do
 
   defp finish_stream(state) do
     id = state.tail_id || state.next_id
-    {[{id, stream_document(state.source, state.options, false)}], state}
+    document = stream_final_document(state.source, state.tail_nodes, state.document)
+    {[{id, document}], state}
   end
 
   defp emit_stream_source(source, state) do
-    {stable_source, mutable_source} = partition_stream_source(source, state.options)
+    partition = partition_stream_source(source, state.rust_options)
 
-    case stable_source do
+    case partition.stable_source do
       "" ->
         id = state.tail_id || state.next_id
         next_id = if state.tail_id, do: state.next_id, else: state.next_id + 1
-        chunks = if mutable_source == "", do: [], else: [{id, stream_document(mutable_source, state.options, true)}]
-        {chunks, %{state | source: mutable_source, tail_id: id, next_id: next_id}}
+
+        chunks =
+          if partition.tail_source == "" do
+            []
+          else
+            [{id, stream_fragment_document(partition.tail_source, state.document)}]
+          end
+
+        new_state = %{
+          state
+          | source: partition.tail_source,
+            tail_nodes: partition.tail_nodes,
+            tail_id: id,
+            next_id: next_id
+        }
+
+        {chunks, new_state}
 
       _ ->
         stable_id = state.tail_id || state.next_id
@@ -1470,47 +1515,78 @@ defmodule MDEx do
         tail_id = next_id
 
         chunks = [
-          {stable_id, stream_document(stable_source, state.options, false)},
-          {tail_id, stream_document(mutable_source, state.options, true)}
+          {stable_id, stream_parsed_document(partition.stable_nodes, state.document)},
+          {tail_id, stream_fragment_document(partition.tail_source, state.document)}
         ]
 
-        {chunks, %{state | source: mutable_source, tail_id: tail_id, next_id: next_id + 1}}
+        new_state = %{
+          state
+          | source: partition.tail_source,
+            tail_nodes: partition.tail_nodes,
+            tail_id: tail_id,
+            next_id: next_id + 1
+        }
+
+        {chunks, new_state}
     end
   end
 
-  defp stream_document(source, options, streaming?) do
-    document = new(options)
-    document = if streaming?, do: Document.put_private(document, :fragment_completion, true), else: document
+  defp stream_fragment_document(source, document) do
+    document
+    |> Document.put_private(:fragment_completion, true)
+    |> Document.put_markdown(source)
+    |> Document.run()
+  end
 
+  defp stream_source_document(source, document) do
     document
     |> Document.put_markdown(source)
     |> Document.run()
   end
 
-  defp partition_stream_source("", _options), do: {"", ""}
+  defp stream_parsed_document(nodes, document) do
+    document
+    |> Map.put(:nodes, nodes)
+    |> Document.run()
+  end
 
-  defp partition_stream_source(source, options) do
-    boundary_options = Keyword.drop(options, [:assigns, :plugins])
-    rust_options = Document.rust_options!(boundary_options)
+  defp stream_final_document(source, nil, document), do: stream_source_document(source, document)
+  defp stream_final_document(_source, nodes, document), do: stream_parsed_document(nodes, document)
 
+  defp partition_stream_source("", _rust_options) do
+    %{stable_source: "", stable_nodes: [], tail_source: "", tail_nodes: []}
+  end
+
+  defp partition_stream_source(source, rust_options) do
     case Comrak.parse_document_with_metadata(source, rust_options) do
       {%{nodes: native_nodes}, metadata} ->
         nodes = ComrakConverter.to_mdex(native_nodes)
         blocks = stream_source_blocks(source, nodes, metadata)
-        {stable, mutable} = Enum.split_while(blocks, &elem(&1, 1))
-        {Enum.map_join(stable, &elem(&1, 0)), Enum.map_join(mutable, &elem(&1, 0))}
+        {stable, tail} = Enum.split_while(blocks, &elem(&1, 1))
+        tail_line_offset = stream_tail_line_offset(tail)
+
+        %{
+          stable_source: Enum.map_join(stable, &elem(&1, 0)),
+          stable_nodes: Enum.flat_map(stable, &elem(&1, 2)),
+          tail_source: Enum.map_join(tail, &elem(&1, 0)),
+          tail_nodes:
+            tail
+            |> Enum.flat_map(&elem(&1, 2))
+            |> rebase_stream_nodes(tail_line_offset)
+        }
 
       _ ->
-        {"", source}
+        %{stable_source: "", stable_nodes: [], tail_source: source, tail_nodes: nil}
     end
   end
 
-  defp stream_source_blocks(source, [], _metadata), do: [{source, false}]
+  defp stream_source_blocks(source, [], _metadata), do: [{source, false, [], 1}]
 
   defp stream_source_blocks(source, nodes, metadata) do
     starts = stream_line_starts(source)
 
-    positions = stream_node_positions(nodes)
+    groups = stream_node_groups(nodes)
+    positions = Enum.map(groups, fn {start_line, end_line, _nodes} -> {start_line, end_line} end)
 
     offsets =
       positions
@@ -1528,27 +1604,31 @@ defmodule MDEx do
     [0 | offsets]
     |> Enum.zip(offsets ++ [byte_size(source)])
     |> Enum.zip(boundaries)
-    |> Enum.map(fn {{from, to}, stable?} ->
-      {binary_part(source, from, to - from), stable?}
+    |> Enum.zip(groups)
+    |> Enum.map(fn {{{from, to}, stable?}, {start_line, _end_line, nodes}} ->
+      {binary_part(source, from, to - from), stable?, nodes, start_line}
     end)
     |> hold_stream_reference_block(positions, metadata)
   end
 
-  defp stream_node_positions(nodes) do
+  defp stream_node_groups(nodes) do
     nodes
-    |> Enum.reduce([], fn node, positions ->
+    |> Enum.reduce([], fn node, groups ->
       {start_line, _start_column} = node.sourcepos.start
       {end_line, _end_column} = node.sourcepos.end
 
-      case positions do
-        [{^start_line, previous_end_line} | rest] ->
-          [{start_line, max(end_line, previous_end_line)} | rest]
+      case groups do
+        [{^start_line, previous_end_line, grouped_nodes} | rest] ->
+          [{start_line, max(end_line, previous_end_line), [node | grouped_nodes]} | rest]
 
         _other ->
-          [{start_line, end_line} | positions]
+          [{start_line, end_line, [node]} | groups]
       end
     end)
     |> Enum.reverse()
+    |> Enum.map(fn {start_line, end_line, grouped_nodes} ->
+      {start_line, end_line, Enum.reverse(grouped_nodes)}
+    end)
   end
 
   defp hold_stream_reference_block(blocks, _positions, %{reference_link_block_start: nil}),
@@ -1563,9 +1643,42 @@ defmodule MDEx do
     blocks
     |> Enum.with_index()
     |> Enum.map(fn
-      {{source, _stable?}, index} when index >= first_reference -> {source, false}
-      {block, _index} -> block
+      {{source, _stable?, nodes, start_line}, index} when index >= first_reference ->
+        {source, false, nodes, start_line}
+
+      {block, _index} ->
+        block
     end)
+  end
+
+  defp stream_tail_line_offset([]), do: 0
+  defp stream_tail_line_offset([{_source, _stable?, _nodes, start_line} | _rest]), do: start_line - 1
+
+  defp rebase_stream_nodes(nodes, 0), do: nodes
+
+  defp rebase_stream_nodes(nodes, line_offset) do
+    Enum.map(nodes, &rebase_stream_node(&1, line_offset))
+  end
+
+  defp rebase_stream_node(node, line_offset) do
+    node = Map.update!(node, :sourcepos, &rebase_stream_sourcepos(&1, line_offset))
+
+    if Map.has_key?(node, :nodes) do
+      Map.update!(node, :nodes, &rebase_stream_nodes(&1, line_offset))
+    else
+      node
+    end
+  end
+
+  defp rebase_stream_sourcepos(sourcepos, line_offset) do
+    {start_line, start_column} = sourcepos.start
+    {end_line, end_column} = sourcepos.end
+
+    %{
+      sourcepos
+      | start: {max(start_line - line_offset, 1), start_column},
+        end: {max(end_line - line_offset, 1), end_column}
+    }
   end
 
   defp stream_line_starts(source) do

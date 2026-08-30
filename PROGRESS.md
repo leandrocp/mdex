@@ -1,6 +1,6 @@
 # MDEx streaming progress
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Goal
 
@@ -67,11 +67,15 @@ The Stream implementation:
 - starts parser state when enumeration starts
 - reads upstream only when downstream asks for a chunk
 - emits keyed `MDEx.Document` values
-- builds each document through `put_markdown/3`
+- runs every emitted document through the normal `MDEx.Document` plugin pipeline
 - holds an incomplete UTF-8 suffix between source chunks
 - keeps only the Markdown suffix that may still change
 - uses fragment parsing for that open suffix
-- uses normal parsing for stable chunks and EOF
+- emits stable AST nodes from the metadata parse without parsing them again
+- keeps the normal open AST for EOF instead of parsing it again
+- attaches plugins once per Stream enumeration
+- applies plugin parser options before metadata and fragment parsing
+- runs a fresh copy of the plugin pipeline for every emitted document
 - cleans up when the source ends, raises, or is stopped early
 - raises bad chunks, invalid UTF-8, and upstream errors during enumeration
 
@@ -102,7 +106,7 @@ out of link-reference metadata.
 
 MDEx uses the returned source line to keep only the required suffix open.
 
-MDEx now requires mdex_native 0.2.9. That version must be released before this
+MDEx now requires mdex_native 0.2.10. That version must be released before this
 MDEx branch can pass dependency setup without a local path.
 
 ## Phoenix LiveView findings
@@ -230,8 +234,8 @@ Completed:
 - mdex_native: 4 Rust tests and 56 Elixir tests (22 doctests and 34 tests)
 - mdex_native: Clippy with warnings denied, Rust format, Elixir format, and
   `git diff --check`
-- MDEx: 14 focused Stream tests
-- MDEx: 812 full tests (62 doctests and 750 tests)
+- MDEx: 18 focused Stream tests
+- MDEx: 818 full tests (62 doctests and 756 tests)
 - MDEx: compile with warnings denied, docs with warnings denied, format, and
   `git diff --check`
 - Phoenix example: 2 integration tests, including the raw GitHub README
@@ -252,10 +256,9 @@ The Ash AI `reuse` check was not run because `pipx` was not installed.
 
 ## Work before release
 
-- Define support for plugins that read or change the whole document.
 - Review whether the API is ready for MDEx 0.14.
-- Release mdex_native 0.2.9 and its precompiled files.
-- Run MDEx CI against mdex_native 0.2.9 from Hex.
+- Release mdex_native 0.2.10 and its precompiled files.
+- Run MDEx CI against mdex_native 0.2.10 from Hex.
 - Replace each client's local MDEx path with the released version.
 - Run each client's CI on its declared Elixir and OTP versions.
 - Open separate client pull requests only after those checks pass.

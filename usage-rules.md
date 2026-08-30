@@ -415,6 +415,15 @@ Use `MDEx.stream/2` for LLM, SSE, file, or HTTP response chunks.
 - Replace a chunk when its id repeats.
 - After a higher id appears, all lower ids are stable.
 - Render each document. MDEx closes partial syntax for the open chunk.
+- Change the emitted AST before rendering when the transform only needs one
+  keyed document.
+- Do not assume an emitted document contains the full Markdown response.
+- Plugins attach once when Stream enumeration starts. Their pipeline steps run
+  on every emitted document, including repeated ids.
+- Plugin parser options apply before parsing, but plugin steps remain local to
+  one keyed document.
+- Do not use a plugin that preprocesses `document.buffer` with
+  `MDEx.stream/2`. Use the one-document API after collecting the full source.
 - Use normal Stream completion as EOF.
 
 ```elixir

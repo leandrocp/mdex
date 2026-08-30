@@ -45,6 +45,26 @@ or read the AST.
 Each update contains a new immutable document. MDEx does not change an earlier
 document in place.
 
+The document is the parsed AST. Consumers can change it before rendering:
+
+```elixir
+chunks
+|> MDEx.stream()
+|> Stream.map(fn {id, document} ->
+  document =
+    MDEx.Document.update_nodes(document, MDEx.Link, fn link ->
+      %{link | url: rewrite_url(link.url)}
+    end)
+
+  {id, MDEx.to_html!(document)}
+end)
+```
+
+The transform runs for each emitted document. It does not receive the full
+response. Chunk-local transforms work directly. Transforms that need all
+chunks must wait for the full source or keep their own state, including state
+for a repeated open id.
+
 ## Basic use
 
 ```elixir
@@ -138,8 +158,10 @@ document =
 MDEx.to_html!(document)
 ```
 
-`MDEx.stream/2` uses `put_markdown/3` to build emitted documents. Fragment
-parsing is private and is enabled only for the open chunk.
+`MDEx.stream/2` uses the same parser options and document plugin pipeline as
+`put_markdown/3`. For the open chunk, it parses fragment-completed source. For
+stable chunks and EOF, it uses the normal AST returned by the metadata parse
+instead of parsing the same source again.
 
 Tests must keep these rules true:
 
@@ -163,6 +185,37 @@ The Stream uses `Stream.transform/5`:
 
 `Stream.transform/5` is available in Elixir 1.14. MDEx requires Elixir 1.15 or
 later.
+
+## Parser reuse
+
+The metadata parse returns both block facts and the normal AST. MDEx emits the
+parsed nodes for stable chunks and keeps the normal AST for EOF. It does not
+parse those sources again.
+
+The open chunk still needs one extra parse after fragment completion. That
+parse produces valid output for partial Markdown. At EOF, MDEx replaces it with
+the normal AST saved by the metadata parse.
+
+## Plugins
+
+Plugins use the normal `:plugins` option. MDEx attaches them once in the lazy
+Stream initializer and keeps the resulting document as an immutable template.
+This makes parser options configured by a plugin available to the metadata and
+fragment parses.
+
+For each emitted update, MDEx starts from the template, installs the parsed
+nodes, and runs the configured pipeline steps. The completed document is not
+used as the template for the next update. Plugin state from one update does not
+leak into a repeated id.
+
+This supports parser-configuration plugins and chunk-local AST transforms. It
+does not provide full-response plugin semantics. Root assets may be repeated,
+sequence IDs restart per keyed chunk, and a step cannot inspect stable chunks
+that were already emitted.
+
+Plugin attachment happens before the source Enumerable is read. A plugin that
+rewrites `document.buffer` in `attach/2` is not compatible with this API and
+must use the one-document pipeline after the full source is available.
 
 ## Phoenix LiveView
 
@@ -361,7 +414,7 @@ does not use regular expressions to parse blank lines, fences, or references.
 - [x] Add a Phoenix Playground example with Req and LiveView.
 - [x] Test local branches for Loopyard, phoenix_streamdown, and Ash AI.
 - [ ] Define support for plugins that read or change the whole document.
-- [ ] Release mdex_native 0.2.9 with the new parser metadata function.
+- [ ] Release mdex_native 0.2.10 with the new parser metadata function.
 - [ ] Run each client against the released MDEx package.
 
 ## Open question
