@@ -1006,7 +1006,7 @@ defmodule MDEx.StreamingTest do
                tight: true
              }
            ] =
-             nodes(chunks, MDEx.new(options))
+             nodes(chunks, streaming_document(options))
   end
 
   test "nested blockquotes with formatting" do

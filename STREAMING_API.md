@@ -90,7 +90,7 @@ end)
 Req can also provide the source:
 
 ```elixir
-response = Req.get!(url, into: :self, raw: true)
+response = Req.get!(url, into: :self)
 
 response.body
 |> MDEx.stream(options)

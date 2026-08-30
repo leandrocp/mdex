@@ -113,10 +113,10 @@ chunks
 end)
 ```
 
-MDEx attaches each plugin once when Stream enumeration starts. Extension,
-parse, and render options set by `attach/2` apply to every parse. Plugin
-pipeline steps then run on every emitted document, including updates with a
-repeated id.
+MDEx attaches each plugin once when Stream enumeration starts. Extension and
+parse options set by `attach/2` apply to every parse. Render options set by
+`attach/2` apply when each emitted document is rendered. Plugin pipeline steps
+then run on every emitted document, including updates with a repeated id.
 
 Each run starts from the prepared plugin configuration. Changes that a plugin
 makes to one emitted document are not carried into the next update.
@@ -201,7 +201,7 @@ bytes. An incomplete code point at EOF also raises.
 Req can return a response body that implements `Enumerable`:
 
 ```elixir
-response = Req.get!(url, into: :self, raw: true)
+response = Req.get!(url, into: :self)
 
 response.body
 |> MDEx.stream(extension: [table: true])

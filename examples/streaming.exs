@@ -419,7 +419,7 @@ defmodule MDExStreamingDemo do
   end
 
   defp stream_url(url, live_view, run_id) do
-    response = Req.get!(url, into: :self, raw: true, redirect: true)
+    response = Req.get!(url, into: :self)
 
     unless response.status in 200..299 do
       Req.cancel_async_response(response)
