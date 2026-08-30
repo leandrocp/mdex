@@ -143,7 +143,9 @@ Verified with Phoenix LiveView 1.2.11:
 The example runs this path:
 
 ```text
-Req async response
+Req callback-backed Stream
+  -> public URL and redirect checks
+  -> response body-size limit
   -> 64-byte display chunks
   -> MDEx.stream/2
   -> LiveView process messages
@@ -153,8 +155,10 @@ Req async response
 
 It includes:
 
-- a URL field that defaults to the raw MDEx README
-- a response body-size limit
+- a public URL field that defaults to the raw MDEx README
+- backpressure between Req and the paced consumer
+- public address checks for the initial URL and every redirect
+- a response body-size limit before chunks enter the paced pipeline
 - task cancellation and stale-message checks
 - a delay slider from 0 to 1000 ms
 - an auto-scroll checkbox

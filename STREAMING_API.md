@@ -87,15 +87,19 @@ end)
 |> Enum.each(&consume/1)
 ```
 
-Req can also provide the source:
+Req can also provide the source. For paced consumers, wrap Req's callback API
+in a Stream so the HTTP producer waits for demand:
 
 ```elixir
-response = Req.get!(url, into: :self)
-
-response.body
+url
+|> req_stream()
 |> MDEx.stream(options)
 |> Enum.each(&consume/1)
 ```
+
+See `MDExStreamingDemo.HTTPStream` in `examples/streaming.exs` for a complete
+adapter with backpressure, a body-size limit, redirect checks, and public URL
+validation.
 
 MDEx holds an incomplete UTF-8 suffix when a file or network read splits a
 code point. The caller does not need to fix those boundaries.

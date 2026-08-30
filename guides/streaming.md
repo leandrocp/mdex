@@ -198,18 +198,19 @@ bytes. An incomplete code point at EOF also raises.
 
 ## Req response streams
 
-Req can return a response body that implements `Enumerable`:
+Req can feed a Stream from its callback API. This keeps backpressure when the
+consumer deliberately slows down:
 
 ```elixir
-response = Req.get!(url, into: :self)
-
-response.body
+url
+|> req_stream()
 |> MDEx.stream(extension: [table: true])
 |> Enum.each(&consume/1)
 ```
 
-The body does not need to be joined first. The process that reads the response
-must also own its timeout, body-size limit, and cancellation rules.
+The body does not need to be joined first. The Phoenix example includes a
+complete `MDExStreamingDemo.HTTPStream` adapter with a body-size limit,
+redirect checks, public URL validation, and cancellation.
 
 ## Partial Markdown
 
@@ -352,7 +353,7 @@ is unique only within one Stream run.
 runs this path:
 
 ```text
-Req response body
+Req callback-backed Stream
   -> MDEx.stream/2
   -> one {id, document} chunk per message
   -> Phoenix.LiveView.stream_insert/4
@@ -365,9 +366,11 @@ Run it from the repository:
 elixir examples/streaming.exs
 ```
 
-The URL defaults to the raw MDEx README on GitHub. The example splits large
-network reads into 64-byte chunks so updates stay visible. The controls include
-a delay of up to 1000 ms and optional auto-scroll.
+The URL defaults to the raw MDEx README on GitHub. The example accepts public
+HTTP(S) URLs, validates every redirect, and enforces the body-size limit before
+chunks enter the paced pipeline. It splits large network reads into 64-byte
+chunks so updates stay visible. The controls include a delay of up to 1000 ms
+and optional auto-scroll.
 
 Lumis highlights partial code fences. The page also shows source counts, MDEx
 updates, DOM chunks, and current and peak memory for the producer and LiveView
