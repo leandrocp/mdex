@@ -39,6 +39,7 @@ defmodule MDEx do
   alias MDEx.InvalidInputError
   alias MDEx.SlackConverter
   alias MDExNative.Comrak
+  alias MDExNative.Native
 
   import MDEx.Document, only: [fragment?: 1]
 
@@ -1558,8 +1559,13 @@ defmodule MDEx do
   end
 
   defp partition_stream_source(source, rust_options) do
-    case Comrak.parse_document_with_metadata(source, rust_options) do
-      {%{nodes: native_nodes}, metadata} ->
+    case Native.parse_document_with_metadata(source, rust_options) do
+      {%{nodes: native_nodes}, unresolved_reference_link?, reference_link_block_start} ->
+        metadata = %{
+          unresolved_reference_link?: unresolved_reference_link?,
+          reference_link_block_start: reference_link_block_start
+        }
+
         nodes = ComrakConverter.to_mdex(native_nodes)
         blocks = stream_source_blocks(source, nodes, metadata)
         {stable, tail} = Enum.split_while(blocks, &elem(&1, 1))

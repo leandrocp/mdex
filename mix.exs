@@ -187,7 +187,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.10"}
+      {:mdex_native, github: "leandrocp/mdex_native", branch: "lp-mdex-stream-metadata"}
     end
   end
 

@@ -347,12 +347,13 @@ defmodule MDEx.StreamTest do
 
   defp trace_parser_calls(fun) do
     Code.ensure_loaded!(MDExNative.Comrak)
+    Code.ensure_loaded!(MDExNative.Native)
     tracee = self()
     tracer = spawn_link(fn -> collect_parser_calls([]) end)
 
     :erlang.trace(tracee, true, [:call, {:tracer, tracer}])
     :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, true, [:local])
-    :erlang.trace_pattern({MDExNative.Comrak, :parse_document_with_metadata, 2}, true, [:local])
+    :erlang.trace_pattern({MDExNative.Native, :parse_document_with_metadata, 2}, true, [:local])
 
     try do
       result = fun.()
@@ -364,7 +365,7 @@ defmodule MDEx.StreamTest do
     after
       :erlang.trace(tracee, false, [:call])
       :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, false, [:local])
-      :erlang.trace_pattern({MDExNative.Comrak, :parse_document_with_metadata, 2}, false, [:local])
+      :erlang.trace_pattern({MDExNative.Native, :parse_document_with_metadata, 2}, false, [:local])
 
       if Process.alive?(tracer) do
         Process.exit(tracer, :normal)
@@ -374,7 +375,8 @@ defmodule MDEx.StreamTest do
 
   defp collect_parser_calls(calls) do
     receive do
-      {:trace, _pid, :call, {MDExNative.Comrak, name, _args}} ->
+      {:trace, _pid, :call, {module, name, _args}}
+      when module in [MDExNative.Comrak, MDExNative.Native] ->
         collect_parser_calls([name | calls])
 
       {:get_calls, caller} ->

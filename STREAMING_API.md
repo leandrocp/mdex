@@ -414,7 +414,8 @@ does not use regular expressions to parse blank lines, fences, or references.
 - [x] Add a Phoenix Playground example with Req and LiveView.
 - [x] Test local branches for Loopyard, phoenix_streamdown, and Ash AI.
 - [ ] Define support for plugins that read or change the whole document.
-- [ ] Release mdex_native 0.2.10 with the new parser metadata function.
+- [ ] Merge mdex_native PR #60 and release 0.2.9 with the parser metadata function.
+- [ ] Replace the temporary mdex_native Git branch dependency with `>= 0.2.9`.
 - [ ] Run each client against the released MDEx package.
 
 ## Open question

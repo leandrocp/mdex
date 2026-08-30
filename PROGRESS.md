@@ -22,18 +22,19 @@ See these files for public details:
 
 ## Branches
 
-The MDEx branch is the pull request target. mdex_native and the three client
+The MDEx and mdex_native branches are pull request targets. The three client
 branches remain local and uncommitted.
 
 | Project | Branch | Base |
 | --- | --- | --- |
-| MDEx | `lp-loopyard-streaming` | `931cb825` |
+| MDEx | `lp-stream-api` | `5b535fb` |
 | mdex_native | `lp-mdex-stream-metadata` | `b3c77b2` |
 | Loopyard | `lp-mdex-native-stream` | `8bc934a5` |
 | phoenix_streamdown | `lp-mdex-native-stream` | `4757f76e` |
 | Ash AI | `lp-mdex-native-stream` | `043461cc` |
 
-Each client uses the local MDEx branch. MDEx uses the local mdex_native branch.
+Each client uses the local MDEx branch. MDEx temporarily uses the mdex_native
+PR branch from GitHub, with `MDEX_NATIVE_PATH` available as a local override.
 This tests the two unreleased APIs together.
 
 ## API
@@ -98,7 +99,8 @@ can change when more source arrives.
 
 ## mdex_native changes
 
-mdex_native adds `parse_document_with_metadata/2`.
+mdex_native adds an internal parser metadata NIF. It is hidden from the public
+`MDExNative.Comrak` API.
 
 It uses Comrak parser data to report the first top-level block that may use a
 later link definition. It uses Comrak task-list nodes to keep `[x]` task marks
@@ -106,8 +108,10 @@ out of link-reference metadata.
 
 MDEx uses the returned source line to keep only the required suffix open.
 
-MDEx now requires mdex_native 0.2.10. That version must be released before this
-MDEx branch can pass dependency setup without a local path.
+MDEx temporarily depends on the `lp-mdex-stream-metadata` branch from
+mdex_native PR #60. CI builds its NIF from source. After mdex_native 0.2.9 is
+released, replace the Git dependency with `mdex_native >= 0.2.9` and remove the
+temporary CI build settings.
 
 ## Phoenix LiveView findings
 
@@ -231,7 +235,7 @@ Final stored messages still use the normal static MDEx renderer.
 
 Completed:
 
-- mdex_native: 4 Rust tests and 56 Elixir tests (22 doctests and 34 tests)
+- mdex_native: 4 Rust tests and 54 Elixir tests (20 doctests and 34 tests)
 - mdex_native: Clippy with warnings denied, Rust format, Elixir format, and
   `git diff --check`
 - MDEx: 18 focused Stream tests
@@ -257,8 +261,11 @@ The Ash AI `reuse` check was not run because `pipx` was not installed.
 ## Work before release
 
 - Review whether the API is ready for MDEx 0.14.
-- Release mdex_native 0.2.10 and its precompiled files.
-- Run MDEx CI against mdex_native 0.2.10 from Hex.
+- Merge mdex_native PR #60, then regenerate and release mdex_native 0.2.9 with
+  its precompiled files.
+- Replace the temporary Git dependency and CI build settings with
+  `mdex_native >= 0.2.9`.
+- Run MDEx CI against mdex_native 0.2.9 from Hex.
 - Replace each client's local MDEx path with the released version.
 - Run each client's CI on its declared Elixir and OTP versions.
 - Open separate client pull requests only after those checks pass.
