@@ -63,7 +63,7 @@ end)
 The transform runs for each emitted document. It does not receive the full
 response. Chunk-local transforms work directly. Transforms that need all
 chunks must wait for the full source or keep their own state, including state
-for a repeated open id.
+for repeated ids.
 
 ## Basic use
 
@@ -106,7 +106,8 @@ code point. The caller does not need to fix those boundaries.
 
 ## Id rules
 
-There is at most one open chunk.
+There is one source range at the tail that has not reached a later block
+boundary. Earlier ranges keep their ids, but their ASTs may still change.
 
 For this input:
 
@@ -128,14 +129,14 @@ The exact number of updates is private. The id rules are public:
 1. Ids start at `0` for each Stream run.
 2. Ids increase in order.
 3. A repeated id replaces the earlier value for that id.
-4. After a higher id is emitted, every lower id is stable.
-5. Only the highest id may be emitted again.
+4. Any earlier id may be emitted again.
+5. An id keeps its original position when it is replaced.
 6. EOF emits the last chunk with a normal final parse, then ends the Stream.
 7. Empty input emits no chunks.
 
-One keyed document may hold several top-level Markdown blocks. This is needed
-when a later link definition or another document-wide rule may change a group
-of blocks.
+One keyed document may hold several top-level Markdown blocks. A later link or
+footnote definition can update an earlier keyed document after newer ids have
+already been emitted.
 
 The end of the Stream is the completion signal. There is no `done?` field or
 EOF value. If downstream stops early, MDEx does not finalize unread input.
@@ -163,9 +164,9 @@ MDEx.to_html!(document)
 ```
 
 `MDEx.stream/2` uses the same parser options and document plugin pipeline as
-`put_markdown/3`. For the open chunk, it parses fragment-completed source. For
-stable chunks and EOF, it uses the normal AST returned by the metadata parse
-instead of parsing the same source again.
+`put_markdown/3`. It parses the cumulative, fragment-completed source once per
+input chunk. At EOF it parses the original source once without temporary
+completion.
 
 Tests must keep these rules true:
 
@@ -192,20 +193,22 @@ later.
 
 ## Parser reuse
 
-The metadata parse returns both block facts and the normal AST. MDEx emits the
-parsed nodes for stable chunks and keeps the normal AST for EOF. It does not
-parse those sources again.
+Each source chunk causes one cumulative parse. MDEx derives keyed source ranges
+from CommonMark source positions, compares their AST nodes with the previous
+parse, and emits only new or changed ranges. It does not parse each keyed range
+again.
 
-The open chunk still needs one extra parse after fragment completion. That
-parse produces valid output for partial Markdown. At EOF, MDEx replaces it with
-the normal AST saved by the metadata parse.
+This keeps document-wide parser behavior. For example, a link definition at
+the end of the source can change a link node in an earlier range. MDEx emits
+that earlier id again. The implementation needs no link-specific parser
+metadata and no mdex_native API change.
 
 ## Plugins
 
 Plugins use the normal `:plugins` option. MDEx attaches them once in the lazy
 Stream initializer and keeps the resulting document as an immutable template.
-This makes parser options configured by a plugin available to the metadata and
-fragment parses.
+This makes parser options configured by a plugin available to cumulative and
+final parses.
 
 For each emitted update, MDEx starts from the template, installs the parsed
 nodes, and runs the configured pipeline steps. The completed document is not
@@ -214,7 +217,7 @@ leak into a repeated id.
 
 This supports parser-configuration plugins and chunk-local AST transforms. It
 does not provide full-response plugin semantics. Root assets may be repeated,
-sequence IDs restart per keyed chunk, and a step cannot inspect stable chunks
+sequence IDs restart per keyed chunk, and a step cannot inspect other chunks
 that were already emitted.
 
 Plugin attachment happens before the source Enumerable is read. A plugin that
@@ -321,7 +324,7 @@ end
 ```
 
 LiveView may keep only the newest value when one batch has several updates for
-the same id. This is safe because the newest value replaces the same open
+the same id. This is safe because the newest value replaces the same keyed
 chunk.
 
 The source and MDEx state stay in the producer. The LiveView stream only sends
@@ -354,21 +357,20 @@ Raw events still handle storage, tools, status, and final text. Parsed
 documents are shared with all viewers. The branch removes the custom Markdown
 split code and JavaScript update hook.
 
-The client's 100 ms buffer keeps the newest value for every id. It must keep
-more than the last emitted value because one source chunk can close one id and
-open the next id.
+Loopyard's existing 100 ms raw text coalescer remains for raw event state. It
+does not parse or buffer the keyed MDEx documents.
 
 ### phoenix_streamdown
 
 The released package repairs and splits a full Markdown string before it calls
-MDEx. Its local branch removes that parser-like code:
+MDEx. The local branch adds a separate chunk-source path:
 
 ```text
 source chunks -> MDEx.stream/2 -> LiveView stream -> component
 ```
 
-MDEx parses Markdown and owns ids. phoenix_streamdown keeps its components,
-styles, themes, and optional text animation.
+MDEx parses Markdown and owns ids on that path. The existing full-snapshot
+component, Remend, and Blocks remain for backward compatibility.
 
 ### Ash AI
 
@@ -378,18 +380,16 @@ lazy and sends text chunks through MDEx:
 ```elixir
 prompt_messages
 |> AshAi.ToolLoop.stream(options)
-|> Stream.each(&persist_event/1)
 |> Stream.flat_map(fn
   {:content, chunk} -> [chunk]
   _event -> []
 end)
 |> MDEx.stream(markdown_options())
-|> Enum.each(&broadcast_markdown/1)
+|> Enum.each(&consume_markdown/1)
 ```
 
-The generated job sends keyed documents through PubSub. LiveView and
-LiveComponent code insert them into a LiveView stream. Final stored messages
-still use normal static MDEx rendering.
+This validates the reusable ToolLoop and its provider cancellation. The local
+proof does not change Ash AI's generated Phoenix UI or persistence format.
 
 ## Parser requirements
 
@@ -400,8 +400,8 @@ The parser must keep these cases correct:
 - tilde fences and longer backtick fences use parser rules
 - partial emphasis, links, tables, math, HTML, and fences render as valid
   open chunks
-- a later link or footnote definition can keep several blocks under one id
-- a blank line at the current end of input does not always make a block stable
+- a later link or footnote definition re-emits every earlier id whose AST changed
+- a blank line at the current end of input does not always create a new id
 
 The implementation uses CommonMark source positions for block boundaries. It
 does not use regular expressions to parse blank lines, fences, or references.
@@ -410,21 +410,19 @@ does not use regular expressions to parse blank lines, fences, or references.
 
 - [x] Add `MDEx.stream/2` with `Stream.transform/5`.
 - [x] Keep all stream state private.
-- [x] Use `MDEx.Document.put_markdown/3` for input.
-- [x] Parse the open chunk with the MDEx fragment parser.
+- [x] Complete cumulative partial input with the existing fragment parser.
+- [x] Parse the cumulative source once per input chunk and once at EOF.
+- [x] Reuse parsed AST nodes instead of parsing each keyed range again.
 - [x] Handle UTF-8 code points split across chunks.
 - [x] Test errors, cleanup, early halt, and EOF.
 - [x] Test final output against full document parsing.
 - [x] Add a Phoenix Playground example with Req and LiveView.
 - [x] Test local branches for Loopyard, phoenix_streamdown, and Ash AI.
-- [ ] Define support for plugins that read or change the whole document.
-- [ ] Merge mdex_native PR #60 and release 0.2.9 with the parser metadata function.
-- [ ] Replace the temporary mdex_native Git branch dependency with `>= 0.2.9`.
+- [x] Document the keyed-document limit for plugin authors and users.
 - [ ] Run each client against the released MDEx package.
 
-## Open question
+## Known plugin limit
 
-The remaining API question is plugin support. A plugin that reads or changes
-the whole document may produce a different result when each keyed document is
-rendered on its own. Such plugins may need to keep the full open suffix under
-one id, or may not support streaming.
+A plugin that needs the whole response cannot treat one keyed document as the
+whole Markdown input. Use external state or run that plugin after collecting
+the complete source. The public id contract does not change for this case.

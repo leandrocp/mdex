@@ -39,7 +39,6 @@ defmodule MDEx do
   alias MDEx.InvalidInputError
   alias MDEx.SlackConverter
   alias MDExNative.Comrak
-  alias MDExNative.Native
 
   import MDEx.Document, only: [fragment?: 1]
 
@@ -1370,9 +1369,10 @@ defmodule MDEx do
   The input must be an Enumerable of binaries. The output is a native Elixir
   `Stream` of `{id, %MDEx.Document{}}` pairs.
 
-  Insert a chunk when its id is new. Replace it when the id repeats. After a
-  higher id appears, all lower ids are stable and will not appear again. EOF
-  emits the last chunk with a normal parse, then ends the Stream.
+  Insert a chunk when its id is new. Replace it when the id repeats. A later
+  source chunk may update any earlier id when document-wide Markdown changes
+  its AST, such as a link reference definition. An id always keeps its original
+  position. EOF emits the open chunk with a normal parse, then ends the Stream.
 
   A file or network read may split a UTF-8 code point. MDEx holds the incomplete
   bytes until the next chunk.
@@ -1444,9 +1444,10 @@ defmodule MDEx do
           rust_options: Document.rust_options!(document.options),
           source: "",
           utf8_suffix: "",
-          tail_nodes: nil,
-          tail_id: nil,
-          next_id: 0
+          ranges: [],
+          open_range: %{id: 0, start_line: 1},
+          next_id: 1,
+          segment_nodes: %{}
         }
       end,
       &stream_chunk/2,
@@ -1480,141 +1481,129 @@ defmodule MDEx do
   defp finish_stream(%{source: ""} = state), do: {[], state}
 
   defp finish_stream(state) do
-    id = state.tail_id || state.next_id
-    document = stream_final_document(state.source, state.tail_nodes, state.document)
-    {[{id, document}], state}
+    nodes = stream_parse_nodes!(state.source, state.rust_options)
+    segment_nodes = stream_segment_nodes(state, nodes)
+
+    changed_ids =
+      state.segment_nodes
+      |> stream_changed_ids(segment_nodes)
+      |> then(&[state.open_range.id | &1])
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    events = stream_document_events(changed_ids, segment_nodes, state.document)
+    {events, %{state | segment_nodes: segment_nodes}}
   end
 
   defp emit_stream_source(source, state) do
-    partition = partition_stream_source(source, state.rust_options)
+    nodes =
+      source
+      |> MDEx.FragmentParser.complete(preserve_pending_html: true)
+      |> stream_parse_nodes!(state.rust_options)
 
-    case partition.stable_source do
-      "" ->
-        id = state.tail_id || state.next_id
-        next_id = if state.tail_id, do: state.next_id, else: state.next_id + 1
+    state = state |> Map.put(:source, source) |> stream_maybe_finalize_open(nodes)
+    segment_nodes = stream_segment_nodes(state, nodes)
+    changed_ids = stream_changed_ids(state.segment_nodes, segment_nodes)
+    events = stream_document_events(changed_ids, segment_nodes, state.document)
 
-        chunks =
-          if partition.tail_source == "" do
-            []
-          else
-            [{id, stream_fragment_document(partition.tail_source, state.document)}]
-          end
+    {events, %{state | segment_nodes: segment_nodes}}
+  end
 
-        new_state = %{
-          state
-          | source: partition.tail_source,
-            tail_nodes: partition.tail_nodes,
-            tail_id: id,
-            next_id: next_id
-        }
-
-        {chunks, new_state}
-
-      _ ->
-        stable_id = state.tail_id || state.next_id
-        next_id = if state.tail_id, do: state.next_id, else: state.next_id + 1
-        tail_id = next_id
-
-        chunks = [
-          {stable_id, stream_parsed_document(partition.stable_nodes, state.document)},
-          {tail_id, stream_fragment_document(partition.tail_source, state.document)}
-        ]
-
-        new_state = %{
-          state
-          | source: partition.tail_source,
-            tail_nodes: partition.tail_nodes,
-            tail_id: tail_id,
-            next_id: next_id + 1
-        }
-
-        {chunks, new_state}
+  defp stream_parse_nodes!(source, rust_options) do
+    case Comrak.parse_document(source, rust_options) do
+      %{nodes: native_nodes} -> ComrakConverter.to_mdex(native_nodes)
+      {:ok, %{nodes: native_nodes}} -> ComrakConverter.to_mdex(native_nodes)
+      {:error, error} -> raise error
     end
   end
 
-  defp stream_fragment_document(source, document) do
-    document
-    |> Document.put_private(:fragment_completion, true)
-    |> Document.put_markdown(source)
-    |> Document.run()
-  end
+  defp stream_maybe_finalize_open(state, nodes) do
+    open_blocks =
+      nodes
+      |> stream_source_blocks()
+      |> Enum.drop_while(fn {_stable?, start_line} -> start_line < state.open_range.start_line end)
 
-  defp stream_source_document(source, document) do
-    document
-    |> Document.put_markdown(source)
-    |> Document.run()
-  end
+    {stable, tail} = Enum.split_while(open_blocks, &elem(&1, 0))
 
-  defp stream_parsed_document(nodes, document) do
-    document
-    |> Map.put(:nodes, nodes)
-    |> Document.run()
-  end
-
-  defp stream_final_document(source, nil, document), do: stream_source_document(source, document)
-  defp stream_final_document(_source, nodes, document), do: stream_parsed_document(nodes, document)
-
-  defp partition_stream_source("", _rust_options) do
-    %{stable_source: "", stable_nodes: [], tail_source: "", tail_nodes: []}
-  end
-
-  defp partition_stream_source(source, rust_options) do
-    case Native.parse_document_with_metadata(source, rust_options) do
-      {%{nodes: native_nodes}, unresolved_reference_link?, reference_link_block_start} ->
-        metadata = %{
-          unresolved_reference_link?: unresolved_reference_link?,
-          reference_link_block_start: reference_link_block_start
+    case {stable, tail} do
+      {[_ | _], [{_stable?, tail_start} | _rest]} ->
+        range = %{
+          id: state.open_range.id,
+          start_line: state.open_range.start_line,
+          end_line: tail_start
         }
-
-        nodes = ComrakConverter.to_mdex(native_nodes)
-        blocks = stream_source_blocks(source, nodes, metadata)
-        {stable, tail} = Enum.split_while(blocks, &elem(&1, 1))
-        tail_line_offset = stream_tail_line_offset(tail)
 
         %{
-          stable_source: Enum.map_join(stable, &elem(&1, 0)),
-          stable_nodes: Enum.flat_map(stable, &elem(&1, 2)),
-          tail_source: Enum.map_join(tail, &elem(&1, 0)),
-          tail_nodes:
-            tail
-            |> Enum.flat_map(&elem(&1, 2))
-            |> rebase_stream_nodes(tail_line_offset)
+          state
+          | ranges: state.ranges ++ [range],
+            open_range: %{id: state.next_id, start_line: tail_start},
+            next_id: state.next_id + 1
         }
 
-      _ ->
-        %{stable_source: "", stable_nodes: [], tail_source: source, tail_nodes: nil}
+      _other ->
+        state
     end
   end
 
-  defp stream_source_blocks(source, [], _metadata), do: [{source, false, [], 1}]
+  defp stream_segment_nodes(state, nodes) do
+    ranges =
+      Map.new(state.ranges, fn range ->
+        {range.id, stream_nodes_in_range(nodes, range.start_line, range.end_line)}
+      end)
 
-  defp stream_source_blocks(source, nodes, metadata) do
-    starts = stream_line_starts(source)
+    Map.put(
+      ranges,
+      state.open_range.id,
+      stream_nodes_in_range(nodes, state.open_range.start_line, :infinity)
+    )
+  end
 
-    groups = stream_node_groups(nodes)
-    positions = Enum.map(groups, fn {start_line, end_line, _nodes} -> {start_line, end_line} end)
+  defp stream_nodes_in_range(nodes, start_line, :infinity) do
+    Enum.filter(nodes, fn node -> elem(node.sourcepos.start, 0) >= start_line end)
+  end
 
-    offsets =
-      positions
-      |> tl()
-      |> Enum.map(fn {start_line, _end_line} -> stream_byte_at(starts, start_line) end)
+  defp stream_nodes_in_range(nodes, start_line, end_line) do
+    Enum.filter(nodes, fn node ->
+      line = elem(node.sourcepos.start, 0)
+      line >= start_line and line < end_line
+    end)
+  end
 
-    boundaries =
+  defp stream_changed_ids(previous, current) do
+    current
+    |> Enum.flat_map(fn {id, nodes} ->
+      if Map.get(previous, id) == nodes, do: [], else: [id]
+    end)
+    |> Enum.sort()
+  end
+
+  defp stream_document_events(ids, segment_nodes, document) do
+    Enum.map(ids, fn id ->
+      chunk_document =
+        document
+        |> Map.put(:nodes, Map.fetch!(segment_nodes, id))
+        |> Document.run()
+
+      {id, chunk_document}
+    end)
+  end
+
+  defp stream_source_blocks([]), do: [{false, 1}]
+
+  defp stream_source_blocks(nodes) do
+    nodes
+    |> stream_node_groups()
+    |> then(fn positions ->
       positions
       |> Enum.zip(tl(positions) ++ [nil])
       |> Enum.map(fn
-        {{_start_line, end_line}, {next_start_line, _next_end_line}} -> next_start_line > end_line + 1
-        {_position, nil} -> false
-      end)
+        {{start_line, end_line}, {next_start_line, _next_end_line}} ->
+          {next_start_line > end_line + 1, start_line}
 
-    [0 | offsets]
-    |> Enum.zip(offsets ++ [byte_size(source)])
-    |> Enum.zip(boundaries)
-    |> Enum.zip(groups)
-    |> Enum.map(fn {{{from, to}, stable?}, {start_line, _end_line, nodes}} ->
-      {binary_part(source, from, to - from), stable?, nodes, start_line}
+        {{start_line, _end_line}, nil} ->
+          {false, start_line}
+      end)
     end)
-    |> hold_stream_reference_block(positions, metadata)
   end
 
   defp stream_node_groups(nodes) do
@@ -1624,79 +1613,14 @@ defmodule MDEx do
       {end_line, _end_column} = node.sourcepos.end
 
       case groups do
-        [{^start_line, previous_end_line, grouped_nodes} | rest] ->
-          [{start_line, max(end_line, previous_end_line), [node | grouped_nodes]} | rest]
+        [{^start_line, previous_end_line} | rest] ->
+          [{start_line, max(end_line, previous_end_line)} | rest]
 
         _other ->
-          [{start_line, end_line, [node]} | groups]
+          [{start_line, end_line} | groups]
       end
     end)
     |> Enum.reverse()
-    |> Enum.map(fn {start_line, end_line, grouped_nodes} ->
-      {start_line, end_line, Enum.reverse(grouped_nodes)}
-    end)
-  end
-
-  defp hold_stream_reference_block(blocks, _positions, %{reference_link_block_start: nil}),
-    do: blocks
-
-  defp hold_stream_reference_block(blocks, positions, %{reference_link_block_start: start_line}) do
-    first_reference =
-      Enum.find_index(positions, fn {block_start_line, _end_line} ->
-        block_start_line >= start_line
-      end) || 0
-
-    blocks
-    |> Enum.with_index()
-    |> Enum.map(fn
-      {{source, _stable?, nodes, start_line}, index} when index >= first_reference ->
-        {source, false, nodes, start_line}
-
-      {block, _index} ->
-        block
-    end)
-  end
-
-  defp stream_tail_line_offset([]), do: 0
-  defp stream_tail_line_offset([{_source, _stable?, _nodes, start_line} | _rest]), do: start_line - 1
-
-  defp rebase_stream_nodes(nodes, 0), do: nodes
-
-  defp rebase_stream_nodes(nodes, line_offset) do
-    Enum.map(nodes, &rebase_stream_node(&1, line_offset))
-  end
-
-  defp rebase_stream_node(node, line_offset) do
-    node = Map.update!(node, :sourcepos, &rebase_stream_sourcepos(&1, line_offset))
-
-    if Map.has_key?(node, :nodes) do
-      Map.update!(node, :nodes, &rebase_stream_nodes(&1, line_offset))
-    else
-      node
-    end
-  end
-
-  defp rebase_stream_sourcepos(sourcepos, line_offset) do
-    {start_line, start_column} = sourcepos.start
-    {end_line, end_column} = sourcepos.end
-
-    %{
-      sourcepos
-      | start: {max(start_line - line_offset, 1), start_column},
-        end: {max(end_line - line_offset, 1), end_column}
-    }
-  end
-
-  defp stream_line_starts(source) do
-    source
-    |> :binary.matches("\n")
-    |> Enum.map(fn {offset, length} -> offset + length end)
-    |> then(&[0 | &1])
-    |> List.to_tuple()
-  end
-
-  defp stream_byte_at(starts, line) do
-    elem(starts, min(max(line - 1, 0), tuple_size(starts) - 1))
   end
 
   defp split_incomplete_utf8(binary) do

@@ -457,9 +457,7 @@ defmodule MDExStreamingDemo do
             <div class="metric">
               <dt>LiveView DOM</dt>
               <dd id="dom-metrics">{@rendered_chunks} chunks</dd>
-              <small>
-                {stable_chunks(@status, @rendered_chunks)} stable · {mutable_chunks(@status, @rendered_chunks)} open
-              </small>
+              <small>ordered ids · any id can be replaced</small>
             </div>
             <div class="metric">
               <dt>Producer memory</dt>
@@ -474,7 +472,7 @@ defmodule MDExStreamingDemo do
           </dl>
 
           <p class="metrics-note">
-            Memory is measured for each BEAM process. The browser keeps stable chunks. MDEx keeps only the source that may still change.
+            Memory is measured for each BEAM process. The browser keeps the latest value for each id. MDEx keeps the cumulative source and the latest keyed AST nodes.
           </p>
         </section>
 
@@ -503,7 +501,7 @@ defmodule MDExStreamingDemo do
 
         <section id="how-it-works" class="card how-it-works">
           <h2>How it works</h2>
-          <p>Req reads the source. MDEx parses each chunk. LiveView updates the matching DOM child.</p>
+          <p>Req reads source chunks. MDEx updates keyed AST chunks. LiveView inserts or replaces the matching DOM child.</p>
           <div class="markdown-body">{Phoenix.HTML.raw(@pipeline_html)}</div>
         </section>
       </div>
@@ -692,12 +690,6 @@ defmodule MDExStreamingDemo do
   defp status_label(:complete), do: "Complete"
   defp status_label(:stopped), do: "Stopped"
   defp status_label(:error), do: "Error"
-
-  defp stable_chunks(status, chunks), do: chunks - mutable_chunks(status, chunks)
-
-  defp mutable_chunks(:complete, _chunks), do: 0
-  defp mutable_chunks(_status, 0), do: 0
-  defp mutable_chunks(_status, _chunks), do: 1
 
   defp put_memory(socket, :producer, bytes) do
     socket

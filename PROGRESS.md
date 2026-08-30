@@ -4,40 +4,40 @@ Last updated: 2026-08-30
 
 ## Goal
 
-Add a lazy Elixir Stream API for Markdown chunks. MDEx should parse partial
-Markdown and decide which output can no longer change.
+Add one lazy Elixir Stream API for Markdown that arrives in chunks. MDEx owns
+partial parsing, final parsing, and keyed updates. Consumers use normal Stream
+functions and do not manage a parser state struct.
 
 Validate the API before release with:
 
-- a Req and Phoenix LiveView example in MDEx
+- a Req and Phoenix LiveView Playground in MDEx
 - Loopyard
 - phoenix_streamdown
 - Ash AI
 
-See these files for public details:
+Public documentation:
 
 - [`guides/streaming.md`](guides/streaming.md): user guide
-- [`STREAMING_API.md`](STREAMING_API.md): API contract and design notes
-- [`examples/streaming.exs`](examples/streaming.exs): runnable Phoenix example
+- [`guides/plugins.md`](guides/plugins.md): plugin author rules
+- [`STREAMING_API.md`](STREAMING_API.md): API contract and implementation notes
+- [`examples/streaming.exs`](examples/streaming.exs): runnable Phoenix Playground
 
-## Branches
+## Local branches
 
-The MDEx and mdex_native branches are pull request targets. The three client
-branches remain local and uncommitted.
+All client changes are local and uncommitted.
 
 | Project | Branch | Base |
 | --- | --- | --- |
-| MDEx | `lp-stream-api` | `5b535fb` |
-| mdex_native | `lp-mdex-stream-metadata` | `b3c77b2` |
-| Loopyard | `lp-mdex-native-stream` | `8bc934a5` |
-| phoenix_streamdown | `lp-mdex-native-stream` | `4757f76e` |
-| Ash AI | `lp-mdex-native-stream` | `043461cc` |
+| MDEx | `lp-stream-api` | `19248f5a03f3` |
+| Loopyard | `lp-mdex-stream-api` | `8bc934a5c041` |
+| phoenix_streamdown | `lp-mdex-stream-api` | `4757f76e809e` |
+| Ash AI | `lp-mdex-stream-api` | `043461cc2e56` |
 
-Each client uses the local MDEx branch. MDEx temporarily uses the mdex_native
-PR branch from GitHub, with `MDEX_NATIVE_PATH` available as a local override.
-This tests the two unreleased APIs together.
+The MDEx proof also runs against the unchanged mdex_native `main` at
+`1811a96148e6` and the released mdex_native 0.2.8 dependency. It does not call
+or require `parse_document_with_metadata/2`.
 
-## API
+## Public API
 
 ```elixir
 File.stream!(path)
@@ -45,240 +45,277 @@ File.stream!(path)
 |> Enum.each(&consume/1)
 ```
 
-`MDEx.stream/2` accepts an Enumerable of binary chunks and returns a lazy
-`%Stream{}`. It emits:
+`MDEx.stream/2` accepts an Enumerable of binary source chunks and returns a
+lazy `%Stream{}`. It emits:
 
 ```elixir
 {id, %MDEx.Document{}}
 ```
 
-An id may repeat while that chunk is still open. A higher id makes all lower
-ids stable. EOF emits the last chunk with a normal parse, then ends the Stream.
+The contract is:
 
-The API has no public parser state, frame, block, or `new/push/finish` type.
+1. Insert a document when its id is new.
+2. Replace the document when its id repeats.
+3. Keep documents in id order. Replacement does not move a document.
+4. Any earlier id may repeat when later Markdown changes its AST.
+5. Normal Stream completion is EOF. There is no custom EOF value.
+6. Empty input emits no documents.
 
-`MDEx.new/1` and `MDEx.Document.put_markdown/3` remain supported. Only
-`MDEx.new(streaming: true)` is deprecated. It warns and keeps its current
-behavior for now.
+The exact number of updates and the source range assigned to one id are
+private. One keyed document may contain several top-level Markdown blocks.
 
-## MDEx changes
+`MDEx.new/1` and `MDEx.Document.put_markdown/3` remain supported for one
+document. `MDEx.new(streaming: true)` is deprecated. It warns and keeps its
+current behavior for compatibility.
 
-The Stream implementation:
+## MDEx implementation
 
-- starts parser state when enumeration starts
-- reads upstream only when downstream asks for a chunk
-- emits keyed `MDEx.Document` values
-- runs every emitted document through the normal `MDEx.Document` plugin pipeline
-- holds an incomplete UTF-8 suffix between source chunks
-- keeps only the Markdown suffix that may still change
-- uses fragment parsing for that open suffix
-- emits stable AST nodes from the metadata parse without parsing them again
-- keeps the normal open AST for EOF instead of parsing it again
-- attaches plugins once per Stream enumeration
-- applies plugin parser options before metadata and fragment parsing
-- runs a fresh copy of the plugin pipeline for every emitted document
-- cleans up when the source ends, raises, or is stopped early
-- raises bad chunks, invalid UTF-8, and upstream errors during enumeration
+For each source chunk, MDEx:
 
-Covered Markdown cases include:
+1. joins any incomplete UTF-8 suffix
+2. appends the valid bytes to the cumulative source
+3. completes partial syntax with the existing `MDEx.FragmentParser`
+4. parses the cumulative source once with the existing
+   `MDExNative.Comrak.parse_document/2`
+5. derives keyed ranges from CommonMark source positions
+6. compares each range's AST nodes with the previous parse
+7. emits only new or changed ids
 
-- loose lists
-- partial tables
-- tilde and longer backtick fences
-- partial emphasis and links
-- link references
-- one-grapheme source chunks
+At EOF, MDEx parses the original cumulative source once without temporary
+fragment completion and emits the final open id. The final keyed documents
+reconstruct the same HTML as a normal full-source parse.
 
-Block boundaries come from CommonMark source positions. A gap between top-level
-node line ranges marks a blank-line boundary. No regular expression parses
-blank lines, fences, or link references.
+This design preserves document-wide behavior. A link or footnote definition
+near the end can change an earlier AST, so MDEx emits that earlier id again.
+No link-specific native metadata parser is needed.
 
-A link that may use a later definition keeps its block and all following blocks
-open. Partial tables have a separate guard because their temporary parser shape
-can change when more source arrives.
+The Stream lifecycle is lazy:
 
-## mdex_native changes
+- state and plugins are initialized on enumeration
+- upstream is read only when downstream asks for output
+- an early downstream halt stops the upstream Enumerable
+- cleanup runs on completion, halt, and error
+- invalid chunks and UTF-8 errors raise during enumeration
 
-mdex_native adds an internal parser metadata NIF. It is hidden from the public
-`MDExNative.Comrak` API.
+Current cost: MDEx retains the cumulative source and the latest keyed AST
+nodes, and it performs one cumulative parse per input chunk plus one final
+parse. A future parser optimization can change that implementation without
+changing the public Stream contract.
 
-It uses Comrak parser data to report the first top-level block that may use a
-later link definition. It uses Comrak task-list nodes to keep `[x]` task marks
-out of link-reference metadata.
+## AST transforms and plugins
 
-MDEx uses the returned source line to keep only the required suffix open.
+Each emitted value is a parsed document. A consumer can update its AST before
+rendering, for example to rewrite links:
 
-MDEx temporarily depends on the `lp-mdex-stream-metadata` branch from
-mdex_native PR #60. CI builds its NIF from source. After mdex_native 0.2.9 is
-released, replace the Git dependency with `mdex_native >= 0.2.9` and remove the
-temporary CI build settings.
+```elixir
+chunks
+|> MDEx.stream()
+|> Stream.map(fn {id, document} ->
+  document =
+    MDEx.Document.update_nodes(document, MDEx.Link, fn link ->
+      %{link | url: rewrite_url(link.url)}
+    end)
 
-## Phoenix LiveView findings
+  {id, MDEx.to_html!(document)}
+end)
+```
+
+The transform must run for every update, including repeated ids.
+
+Plugins use the normal `:plugins` option. MDEx attaches them once when Stream
+enumeration starts, applies their parser options before every parse, and runs
+their pipeline steps for every emitted document.
+
+An emitted document is one keyed chunk, not the whole response. Chunk-local
+transforms work. Full-response behavior needs a final full parse or external
+state. This includes tables of contents, global numbering, globally unique
+generated ids, shared root assets, collected footnotes, and raw Markdown
+preprocessing. The guide lists the behavior of every plugin linked from the
+README.
+
+## Phoenix LiveView integration
 
 Use this process split:
 
 ```text
 source Enumerable
-  -> MDEx.stream/2 in a task or process
-  -> finite {id, document} messages or lists
-  -> Phoenix.LiveView.stream_insert/4 or stream/4
-  -> keyed DOM children
+  -> MDEx.stream/2 in a task or producer process
+  -> one finite {id, document} message at a time
+  -> Phoenix.LiveView.stream_insert/4
+  -> keyed phx-update="stream" DOM children
 ```
 
 Verified with Phoenix LiveView 1.2.11:
 
-- `stream/4` reads the given Enumerable in the LiveView process.
-- A long-running MDEx Stream must not be passed directly to `stream/4`.
-- A `start_async/3` task may read MDEx and send finite updates while it runs.
-- `stream_async/4` waits for its task result before it calls `stream/4`.
-- `stream_insert/4` replaces an entry when its DOM id repeats.
-- The parent needs `phx-update="stream"`.
-- Each child must use the exact DOM id from LiveView.
-- LiveView removes streamed values from socket state after rendering.
-- A new response must reset the stream or add its own response id to each DOM
+- `stream/4` reads its Enumerable in the LiveView process, so it must not
+  receive a long-running network or LLM source directly.
+- `start_async/3` can read MDEx and send finite updates while it runs.
+- `stream_async/4` waits for the task result before passing it to `stream/4`.
+- `stream_insert/4` replaces an existing DOM id without moving it.
+- A lower id can be replaced after a higher id was inserted.
+- The parent needs `phx-update="stream"`, and each child uses LiveView's exact
+  DOM id.
+- A new response must reset the stream or include a response id in each DOM
   id.
 
-## Phoenix example
+## MDEx Playground
 
-The example runs this path:
+`examples/streaming.exs` runs:
 
 ```text
-Req callback-backed Stream
-  -> public URL and redirect checks
-  -> response body-size limit
-  -> 64-byte display chunks
+Req callback-backed source
+  -> bounded 64-byte display chunks
   -> MDEx.stream/2
-  -> LiveView process messages
+  -> LiveView messages
   -> stream_insert/4
-  -> LiveView stream DOM
+  -> keyed DOM children
 ```
 
-It includes:
+The Playground includes:
 
-- a public URL field that defaults to the raw MDEx README
-- backpressure between Req and the paced consumer
-- public address checks for the initial URL and every redirect
-- a response body-size limit before chunks enter the paced pipeline
-- task cancellation and stale-message checks
+- a URL field that defaults to the raw MDEx README
+- public URL and redirect checks
+- a 2 MB response limit
+- backpressure from the paced consumer to Req
 - a delay slider from 0 to 1000 ms
 - an auto-scroll checkbox
 - Lumis highlighting for partial code fences
 - a Lumis-highlighted "How it works" panel
 - source byte and chunk counts
 - MDEx update and replacement counts
-- stable and open DOM chunk counts
+- keyed DOM chunk counts
 - current and peak memory for the producer and LiveView processes
 
-## Loopyard validation
+Current proof:
 
-The old code parsed each viewer's full Markdown snapshots. It used blank-line
-and fence rules, plus a JavaScript hook for the open HTML tail.
+- the standalone Phoenix Playground script compiles
+- the default raw GitHub URL fetched 12,157 bytes through the callback-backed
+  Req source
+- the final keyed HTML matched a normal full-source parse
+- an incomplete Elixir fence rendered Lumis spans
 
-The old code failed 6 of 18 focused cases:
+The in-app browser was not connected for the MDEx Playground visual check in
+this run. The phoenix_streamdown client below provides the browser-level
+LiveView proof for the same keyed update path.
 
-- partial bold and links were not closed for display
-- tilde and four-backtick fences split at the wrong place
-- a loose list became several lists
-- a later link definition changed an earlier stable block
+## Loopyard proof
 
-The local branch reads the backend Enumerable once:
+The released Loopyard code has a custom blank-line and fence parser plus a
+JavaScript hook. The local branch removes both and removes the
+phoenix_streamdown dependency.
 
-```text
-backend stream
-  -> raw event handling
-  -> text chunks
-  -> MDEx.stream/2 once per agent turn
-  -> keyed Markdown updates
-  -> existing 100 ms buffer
-  -> LiveView stream inserts
-```
-
-Raw events still handle storage, tools, status, final text, timeouts, and stale
-stream checks. Parsed documents are shared through PubSub.
-
-The branch removes the custom Markdown parser, JavaScript hook, and
-phoenix_streamdown dependency. The 100 ms buffer keeps the newest value for
-each id, not only the last value it receives.
-
-## phoenix_streamdown validation
-
-The released code repairs and splits the full Markdown string before it calls
-MDEx. The local branch removes those parsing modules:
+The backend Enumerable is read once per agent turn:
 
 ```text
-source chunks -> MDEx.stream/2 -> LiveView stream -> component
-```
-
-MDEx owns Markdown parsing, partial syntax, ids, and EOF. phoenix_streamdown
-keeps static rendering, components, styles, themes, and optional animation.
-
-Its ReqLLM example now sends model text chunks through MDEx and inserts the
-keyed documents into a LiveView stream.
-
-## Ash AI validation
-
-Ash AI already uses MDEx for final HTML. Its generated UI used full text
-snapshots, and its tool loop built a list for each model step before yielding
-events.
-
-The local branch makes the tool loop lazy and stops the provider when
-downstream stops. The generated job:
-
-```text
-provider stream
-  -> persist raw events
-  -> text chunks
+backend events
+  -> raw event side effects and persistence
+  -> TextDelta source chunks
+  -> Loopyard.Markdown.stream/1
   -> MDEx.stream/2
-  -> conversation PubSub topic
-  -> LiveView or LiveComponent stream inserts
+  -> typed PubSub keyed documents
+  -> WorkspaceLive, OperatorLive, and MessageLive stream_insert/4
 ```
 
-Final stored messages still use the normal static MDEx renderer.
+MDEx owns Markdown parsing and partial syntax. Loopyard keeps domain work:
+stale-turn checks, persistence, tool events, status, and publishing one parsed
+update to all viewers. The existing raw text coalescer remains for raw event
+state; it does not parse Markdown.
 
-## Test results
+The proof covers:
 
-Completed:
+- partial inline syntax and code fences
+- lazy upstream reads
+- final HTML equal to a full parse
+- ids `[0, 1, 0, 1]` for a late reference definition
+- a real isolated LiveView replacing the earlier DOM child
+- finalized backend text preventing a later EOF update from recreating a
+  streaming bubble
+- switching agents clearing the previous agent's keyed Markdown stream
+- static showcase renders that do not have a LiveView stream assign
 
-- mdex_native: 4 Rust tests and 54 Elixir tests (20 doctests and 34 tests)
-- mdex_native: Clippy with warnings denied, Rust format, Elixir format, and
-  `git diff --check`
-- MDEx: 18 focused Stream tests
-- MDEx: 818 full tests (62 doctests and 756 tests)
-- MDEx: compile with warnings denied, docs with warnings denied, format, and
-  `git diff --check`
-- Phoenix example: 2 integration tests, including the raw GitHub README
-- Phoenix example: delay, auto-scroll, partial Lumis highlighting, the "How it
-  works" panel, and non-zero telemetry values
-- Loopyard: 1,901 tests passed; 122 environment tests excluded
-- Loopyard: focused stream tests, asset build, compile with warnings denied,
-  format, and `git diff --check`
-- phoenix_streamdown library: `mix ci`, 24 tests, Credo, and Dialyzer
-- phoenix_streamdown example: 8 tests and pre-commit checks on Elixir 1.19.3
-  with OTP 28.5
-- Ash AI: 351 tests passed; 28 excluded
-- Ash AI: compile, format, dependency audit, Credo, Sobelow, ExDoc, ExUnit, and
-  Dialyzer
-- all five worktrees: `git diff --check`
+`Loopyard.ChatAgent` remains below its enforced 1,700-line cap. Stream source
+orchestration lives in a small `Loopyard.ChatAgent.StreamTask` module.
 
-The Ash AI `reuse` check was not run because `pipx` was not installed.
+## phoenix_streamdown proof
 
-## Work before release
+The local branch adds:
 
-- Review whether the API is ready for MDEx 0.14.
-- Merge mdex_native PR #60, then regenerate and release mdex_native 0.2.9 with
-  its precompiled files.
-- Replace the temporary Git dependency and CI build settings with
-  `mdex_native >= 0.2.9`.
-- Run MDEx CI against mdex_native 0.2.9 from Hex.
-- Replace each client's local MDEx path with the released version.
-- Run each client's CI on its declared Elixir and OTP versions.
-- Open separate client pull requests only after those checks pass.
+- `PhoenixStreamdown.stream/2`, a thin options wrapper around `MDEx.stream/2`
+- `PhoenixStreamdown.markdown_chunk/1`, which renders an emitted document
+- a LiveView example using `start_async/3`, `stream_insert/4`, and exact keyed
+  DOM ids
 
-## Local test notes
+The existing `markdown/1`, `Remend`, and `Blocks` APIs remain for backward
+compatibility with full-snapshot callers. New chunk sources use MDEx as the
+Markdown source of truth.
 
-Ash AI database tests used a temporary PostgreSQL 17 server with pgvector. The
-server was stopped after the tests.
+The example consumes `ReqLLM.StreamResponse.tokens/1` directly. Its completed
+assistant message keeps the latest document for each id instead of running the
+raw response through the old block splitter.
 
-The exact Elixir and OTP versions pinned by the phoenix_streamdown example were
-not installed. Its checks passed on the nearest installed stable pair: Elixir
-1.19.3 and OTP 28.5.
+Browser tests verify:
+
+- the in-progress state is visible
+- incomplete code fences contain Lumis-highlighted spans before completion
+- a late link definition replaces an earlier chunk
+- the replacement remains correct after the response completes
+
+## Ash AI proof
+
+Ash AI's `ToolLoop.stream/2` previously converted each provider stream to a
+list before it emitted content events. The local branch uses the Enumerable
+suspension continuation so one provider chunk is pulled for each downstream
+demand.
+
+The tested composition is:
+
+```text
+ReqLLM provider Stream
+  -> AshAi.ToolLoop.stream/2
+  -> Stream.flat_map/2 for {:content, chunk}
+  -> MDEx.stream/2
+```
+
+Stopping after the first MDEx update closes and cancels the provider without
+reading its second source chunk. A full run emits ids `[0, 1, 0, 1]`, and its
+final keyed HTML matches a normal full parse.
+
+This proof changes the reusable ToolLoop only. It does not yet change Ash AI's
+generated Phoenix UI or persistence format.
+
+## Verified results
+
+- MDEx against unchanged mdex_native `main`: 820 passed (62 doctests and 758
+  tests)
+- MDEx against released mdex_native 0.2.8: 820 passed (62 doctests and 758
+  tests)
+- MDEx final checks: warnings-as-errors compile, formatting, CI-mode Credo,
+  docs with warnings as errors, and `git diff --check` passed
+- phoenix_streamdown `mix ci`: 71 passed, with Credo and Dialyzer passing
+- phoenix_streamdown example `mix precommit`: 8 browser tests passed
+- Ash AI `mix check`: 350 passed, 28 excluded; compiler, formatting, dependency
+  audit, Credo, Sobelow, docs, Dialyzer, and REUSE checks passed
+- Loopyard's full CI test selection on Elixir 1.19 and OTP 28: 1,905 passed,
+  122 excluded
+- Loopyard warnings-as-errors compile, formatting, locked frontend install,
+  asset build, and `git diff --check` passed
+- MDEx Playground: compile, real default URL, final equivalence, and partial
+  Lumis checks passed
+
+The validation changes described here remain local and uncommitted.
+
+## Release decision
+
+The Stream API does not need an mdex_native change or a new mdex_native
+release. [mdex_native PR #60](https://github.com/leandrocp/mdex_native/pull/60)
+was closed after the repository and client checks passed.
+
+Before an MDEx release:
+
+1. review the Stream contract for the next MDEx release
+2. commit and update MDEx PR #397
+3. run remote CI across the supported Elixir and OTP versions
+4. release MDEx without waiting for a new mdex_native release
+5. replace each client path dependency with the released MDEx version
+6. open separate client pull requests only after their declared-version CI is
+   green

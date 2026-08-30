@@ -40,21 +40,21 @@ An id may appear more than once:
 
 ```elixir
 {0, first_document}         # insert
-{1, partial_document}       # insert the open tail
-{1, updated_document}       # replace the tail
-{1, final_document}         # replace it with the EOF parse
+{1, partial_document}       # insert
+{0, updated_first_document} # replace an earlier chunk
+{1, final_document}         # replace the open chunk at EOF
 ```
 
 Apply these rules:
 
 1. Insert a chunk when its id is new.
 2. Replace a chunk when its id repeats.
-3. After MDEx emits a higher id, all lower ids are stable.
-4. Only the highest id may change.
+3. Keep chunks in id order. A replacement does not move its chunk.
+4. Any earlier id may repeat. Document-wide Markdown can change an earlier AST.
 5. Normal Stream completion is EOF. There is no custom EOF chunk.
 
-A chunk may contain more than one Markdown block. This can happen when a link
-reference or another document-wide rule may change several blocks together.
+A chunk may contain more than one Markdown block. MDEx groups top-level nodes
+by source range so consumers do not need to split Markdown themselves.
 
 MDEx emits a new immutable document for each update. It does not change a
 document that it already emitted.
@@ -98,8 +98,8 @@ link or adding attributes, works directly.
 A transform that needs all content may produce a different result. Examples
 include a table of contents, heading ids that must be unique across the whole
 response, and numbering shared by several chunks. For those transforms, either
-wait for the full source or keep state outside MDEx and account for repeated
-tail ids.
+wait for the full source or keep state outside MDEx and account for any
+repeated id.
 
 ## Plugins
 
@@ -214,8 +214,8 @@ redirect checks, public URL validation, and cancellation.
 
 ## Partial Markdown
 
-MDEx uses its fragment parser for the current chunk. This keeps partial output
-valid while more source is expected:
+MDEx uses its fragment parser on the cumulative source. This keeps partial
+output valid while more source is expected:
 
 ```elixir
 ["**Fol", "low**"]
@@ -247,8 +247,8 @@ MDEx.to_html!(document)
 #=> "<h1>Release notes</h1>\n<p>Version <strong>1.0</strong></p>"
 ```
 
-Use `MDEx.stream/2` for an Enumerable of chunks. It uses the same Markdown
-input path and enables fragment parsing only for the current chunk.
+Use `MDEx.stream/2` for an Enumerable of chunks. It uses the same parser
+options and enables fragment completion until EOF.
 
 `MDEx.new(streaming: true)` is deprecated. It still warns and works for now.
 
@@ -328,9 +328,10 @@ def handle_info({:markdown_chunks, chunks}, socket) do
 end
 ```
 
-When an id repeats, LiveView updates the same DOM child. A higher id adds a new
-child. LiveView drops streamed data from socket state after each render, so the
-source and MDEx parser state must stay in the producer.
+When an id repeats, LiveView updates the same DOM child without moving it. This
+also works when a lower id repeats after a higher id was inserted. LiveView
+drops streamed data from socket state after each render, so the source and
+MDEx state must stay in the producer.
 
 `stream_async/4` does not forward chunks while its task runs. It waits for the
 task result and then passes that result to `stream/4`.
@@ -388,7 +389,7 @@ The API has local test branches in three clients:
 - Ash AI sends its lazy tool-loop output through MDEx, then sends keyed
   documents through PubSub to LiveView or LiveComponent code.
 
-In each client, MDEx owns Markdown parsing, partial syntax, stable ids, and EOF.
+In each client, MDEx owns Markdown parsing, partial syntax, keyed ids, and EOF.
 The client owns transport, cancellation, pacing, and response ids.
 
 ## Push-only sources

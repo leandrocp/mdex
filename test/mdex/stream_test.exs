@@ -202,21 +202,40 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!(finalized) == "<p>First\nSecond</p>"
   end
 
-  test "uses parser metadata to hold unresolved reference links without holding task items" do
+  test "re-emits an earlier id when document-wide syntax changes its AST" do
     reference_events =
       Enum.to_list(
         MDEx.stream([
-          "Stable paragraph.\n\nRead [the docs].\n\n",
+          "Read [the docs].\n\nAnother paragraph.\n\nTail.\n\n",
           "[the docs]: https://example.com\n"
         ])
       )
 
-    assert [{0, stable}, {1, unresolved}, {1, linked}, {1, final_linked}] = reference_events
-    assert MDEx.to_html!(stable) == "<p>Stable paragraph.</p>"
-    assert MDEx.to_html!(unresolved) == "<p>Read [the docs].</p>"
+    assert [{0, unresolved}, {1, tail}, {0, linked}, {1, final_tail}] = reference_events
+    assert MDEx.to_html!(unresolved) =~ "<p>Read [the docs].</p>"
     assert MDEx.to_html!(linked) =~ ~s(<a href="https://example.com">the docs</a>)
-    assert MDEx.to_html!(final_linked) == MDEx.to_html!(linked)
+    assert MDEx.to_html!(tail) == "<p>Tail.</p>"
+    assert MDEx.to_html!(final_tail) == MDEx.to_html!(tail)
 
+    ids = Enum.map(reference_events, &elem(&1, 0))
+    assert ids == [0, 1, 0, 1]
+  end
+
+  test "preserves a late footnote definition across keyed documents" do
+    chunks = [
+      "Fact.[^note]\n\nAnother paragraph.\n\n",
+      "[^note]: More context.\n"
+    ]
+
+    options = [extension: [footnotes: true]]
+    events = Enum.to_list(MDEx.stream(chunks, options))
+
+    assert Enum.count(events, fn {id, _document} -> id == 0 end) == 2
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), options)
+    assert final_html(events) =~ ~s(<section class="footnotes")
+  end
+
+  test "does not treat task items as link references" do
     task_events =
       Enum.to_list(MDEx.stream(["- [x] done\n\nNext"], extension: [tasklist: true]))
 
@@ -226,7 +245,7 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!(final_next) == "<p>Next</p>"
   end
 
-  test "reuses the metadata AST for stable chunks and EOF" do
+  test "parses the cumulative source once per input chunk and once at EOF" do
     source = "First **bold**\n\nSecond `code`\n\n- Third\n  - nested **strong**"
 
     {calls, events} =
@@ -234,10 +253,11 @@ defmodule MDEx.StreamTest do
         Enum.to_list(MDEx.stream([source]))
       end)
 
-    assert calls == [:parse_document_with_metadata, :parse_document]
+    assert calls == [:parse_document, :parse_document]
     assert [{0, stable}, {1, _partial}, {1, final}] = events
     assert stable.nodes == MDEx.parse_document!("First **bold**\n\nSecond `code`\n\n").nodes
-    assert final.nodes == MDEx.parse_document!("- Third\n  - nested **strong**").nodes
+    assert MDEx.to_html!(final) == MDEx.to_html!("- Third\n  - nested **strong**")
+    assert [%MDEx.List{sourcepos: %{start: {5, 1}}}] = final.nodes
   end
 
   test "allows each streamed AST to be changed before rendering" do
@@ -347,13 +367,11 @@ defmodule MDEx.StreamTest do
 
   defp trace_parser_calls(fun) do
     Code.ensure_loaded!(MDExNative.Comrak)
-    Code.ensure_loaded!(MDExNative.Native)
     tracee = self()
     tracer = spawn_link(fn -> collect_parser_calls([]) end)
 
     :erlang.trace(tracee, true, [:call, {:tracer, tracer}])
     :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, true, [:local])
-    :erlang.trace_pattern({MDExNative.Native, :parse_document_with_metadata, 2}, true, [:local])
 
     try do
       result = fun.()
@@ -365,7 +383,6 @@ defmodule MDEx.StreamTest do
     after
       :erlang.trace(tracee, false, [:call])
       :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, false, [:local])
-      :erlang.trace_pattern({MDExNative.Native, :parse_document_with_metadata, 2}, false, [:local])
 
       if Process.alive?(tracer) do
         Process.exit(tracer, :normal)
@@ -375,8 +392,7 @@ defmodule MDEx.StreamTest do
 
   defp collect_parser_calls(calls) do
     receive do
-      {:trace, _pid, :call, {module, name, _args}}
-      when module in [MDExNative.Comrak, MDExNative.Native] ->
+      {:trace, _pid, :call, {MDExNative.Comrak, name, _args}} ->
         collect_parser_calls([name | calls])
 
       {:get_calls, caller} ->
