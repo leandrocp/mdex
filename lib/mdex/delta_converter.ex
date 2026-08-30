@@ -29,16 +29,14 @@ defmodule MDEx.DeltaConverter do
   """
   @spec convert(Document.t(), options()) :: {:ok, [delta_op()]} | {:error, term()}
   def convert(%Document{nodes: nodes}, options) do
-    try do
-      # Initialize list_depth if not provided
-      options = Keyword.put_new(options, :list_depth, 0)
-      ops = convert_nodes(nodes, [], options)
-      {:ok, ops}
-    rescue
-      error -> {:error, error}
-    catch
-      error -> {:error, error}
-    end
+    # Initialize list_depth if not provided
+    options = Keyword.put_new(options, :list_depth, 0)
+    ops = convert_nodes(nodes, [], options)
+    {:ok, ops}
+  rescue
+    error -> {:error, error}
+  catch
+    error -> {:error, error}
   end
 
   # Convert a list of nodes, accumulating operations and current formatting state

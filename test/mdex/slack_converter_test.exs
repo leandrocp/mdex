@@ -1,8 +1,8 @@
 defmodule MDEx.SlackConverterTest do
   use ExUnit.Case
 
-  alias MDEx.SlackConverter
   alias MDEx.Document
+  alias MDEx.SlackConverter
 
   describe "convert/2" do
     test "converts empty document" do

@@ -1,6 +1,8 @@
 defmodule MDEx.Document.Access do
   @moduledoc false
 
+  alias MDEx.Document.Traversal
+
   defmacro __using__(_opts) do
     quote do
       @doc false
@@ -48,7 +50,7 @@ defmodule MDEx.Document.Access do
 
   def get_and_update(document, selector, fun) when is_struct(selector) do
     {document, {_, old}} =
-      MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
+      Traversal.traverse_and_update(document, {:cont, nil}, fn
         node, {:halted, old} ->
           {node, {:halted, old}}
 
@@ -68,7 +70,7 @@ defmodule MDEx.Document.Access do
     selector = modulefy!(selector)
 
     {document, {_, old}} =
-      MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
+      Traversal.traverse_and_update(document, {:cont, nil}, fn
         node, {:halted, old} ->
           {node, {:halted, old}}
 
@@ -89,7 +91,7 @@ defmodule MDEx.Document.Access do
 
   def get_and_update(document, selector, fun) when is_function(selector) do
     {document, {_, old}} =
-      MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
+      Traversal.traverse_and_update(document, {:cont, nil}, fn
         node, {:halted, old} ->
           {node, {:halted, old}}
 
@@ -120,7 +122,7 @@ defmodule MDEx.Document.Access do
 
   def pop(document, key, default) when is_struct(key) do
     {new, {_, old}} =
-      MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
+      Traversal.traverse_and_update(document, {:cont, nil}, fn
         node, {:halted, old} ->
           {node, {:halted, old}}
 
@@ -139,7 +141,7 @@ defmodule MDEx.Document.Access do
     key = modulefy!(key)
 
     {new, {_, old}} =
-      MDEx.Document.Traversal.traverse_and_update(document, {:cont, nil}, fn
+      Traversal.traverse_and_update(document, {:cont, nil}, fn
         node, {:halted, old} ->
           {node, {:halted, old}}
 

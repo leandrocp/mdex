@@ -2,6 +2,7 @@ defmodule MDEx.SigilTest do
   use ExUnit.Case, async: true
   import MDEx.Sigil
   alias MDEx.Code
+  alias Phoenix.HTML.Safe
 
   defmodule WithLegacyLumis do
     use MDEx, syntax_highlight: [formatter: :html_inline]
@@ -31,7 +32,7 @@ defmodule MDEx.SigilTest do
                ]
              },
              _
-           } = Elixir.Code.eval_string("import MDEx.Sigil\n~MD\"\"\"\n# Hello\n\"\"\"")
+           } = Elixir.Code.eval_string(~s(import MDEx.Sigil\n~MD"""\n# Hello\n"""))
   end
 
   describe "sigil_MD with assigns" do
@@ -64,7 +65,7 @@ defmodule MDEx.SigilTest do
         {:ok, %{name: "MDEx"}}
         ```
         '''HEEX
-        |> Phoenix.HTML.Safe.to_iodata()
+        |> Safe.to_iodata()
         |> IO.iodata_to_binary()
 
       assert html =~ "%&lbrace;&rbrace;"

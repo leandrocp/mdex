@@ -34,8 +34,8 @@ defmodule MDEx do
              |> Kernel.<>(@inner_moduledoc)
 
   alias MDEx.ComrakConverter
-  alias MDEx.Document
   alias MDEx.DecodeError
+  alias MDEx.Document
   alias MDEx.InvalidInputError
   alias MDEx.SlackConverter
   alias MDExNative.Comrak
@@ -540,6 +540,9 @@ defmodule MDEx do
     opts = [file: caller.file, line: caller.line + 1, caller: caller, tag_handler: Phoenix.LiveView.HTMLEngine]
 
     if function_exported?(Phoenix.LiveView.TagEngine, :compile, 2) do
+      # `apply/3` is what keeps this compiling against the LiveView versions
+      # that do not export `compile/2`; a direct call would not.
+      # credo:disable-for-next-line Credo.Check.Refactor.Apply
       apply(Phoenix.LiveView.TagEngine, :compile, [html, opts])
     else
       EEx.compile_string(
