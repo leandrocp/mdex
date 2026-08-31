@@ -366,7 +366,8 @@ elixir examples/streaming.exs
 
 The URL defaults to the raw MDEx README on GitHub. The example splits large
 network reads into 64-byte chunks so updates stay visible. The controls include
-a delay of up to 1000 ms and optional auto-scroll.
+a delay of up to 1000 ms and optional auto-scroll. New keyed preview chunks use
+a short reveal animation unless the browser requests reduced motion.
 
 The example enables `render: [unsafe: true]` so raw HTML in the README is
 visible. Use trusted URLs when reusing this setting. Lumis highlights partial

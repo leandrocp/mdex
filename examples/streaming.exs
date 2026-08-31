@@ -284,6 +284,7 @@ defmodule MDExStreamingDemo do
               :for={{dom_id, {_id, document}} <- @streams.markdown}
               id={dom_id}
               class="markdown-chunk"
+              phx-hook="ChunkReveal"
             >
               {Phoenix.HTML.raw(MDEx.to_html!(document))}
             </div>
@@ -352,6 +353,22 @@ defmodule MDExStreamingDemo do
     </main>
 
     <script phx-no-curly-interpolation>
+      window.hooks.ChunkReveal = {
+        mounted() {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+
+          for (const element of this.el.children) {
+            element.animate(
+              [
+                { opacity: 0, transform: "translateY(4px)" },
+                { opacity: 1, transform: "translateY(0)" }
+              ],
+              { duration: 180, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" }
+            )
+          }
+        }
+      }
+
       window.hooks.AutoScroll = {
         mounted() { this.scrollToLatest() },
         updated() { this.scrollToLatest() },
