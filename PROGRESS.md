@@ -1,6 +1,6 @@
 # MDEx streaming progress
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 ## Goal
 
@@ -187,6 +187,8 @@ The Playground includes:
 
 Current proof:
 
+- `Mix.install/2` uses the repository lockfile so a cached local MDEx build
+  fetches its transitive dependencies
 - the standalone Phoenix Playground script compiles
 - the default raw GitHub URL produced 201 MDEx updates through
   `Req.Response.Async`

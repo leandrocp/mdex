@@ -7,7 +7,8 @@ Mix.install(
     {:phoenix_playground, "~> 0.1.9"},
     {:req, "~> 0.7.4"}
   ],
-  config: [mdex_native: [syntax_highlighter: :lumis]]
+  config: [mdex_native: [syntax_highlighter: :lumis]],
+  lockfile: Path.join(mdex_path, "mix.lock")
 )
 
 defmodule MDExStreamingDemo do
