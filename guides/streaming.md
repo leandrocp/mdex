@@ -367,7 +367,8 @@ a delay of up to 1000 ms and optional auto-scroll.
 
 Lumis highlights partial code fences. The page also shows source counts, MDEx
 updates, DOM chunks, and current and peak memory for the producer and LiveView
-processes.
+processes. A small monospace card shows the latest chunk indexes as `+id` for
+inserts and `~id` for replacements.
 
 ## Client tests
 

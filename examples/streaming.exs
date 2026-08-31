@@ -15,6 +15,7 @@ defmodule MDExStreamingDemo do
 
   @default_url "https://raw.githubusercontent.com/leandrocp/mdex/main/README.md"
   @display_chunk_bytes 64
+  @activity_limit 24
   @mdex_options [
     extension: [
       alerts: true,
@@ -65,6 +66,7 @@ defmodule MDExStreamingDemo do
        received_chunks: 0,
        markdown_updates: 0,
        rendered_chunks: 0,
+       index_activity: [],
        producer_memory: 0,
        producer_peak_memory: 0,
        live_view_memory: live_view_memory,
@@ -124,6 +126,14 @@ defmodule MDExStreamingDemo do
       .metrics-note { margin: .8rem 0 0; font-size: .78rem; }
       .error { padding: .8rem 1rem; margin-bottom: 1rem; border: 1px solid #fecaca; border-radius: 12px; background: #fef2f2; color: #991b1b; }
 
+      .engine-activity { display: flex; align-items: center; gap: .75rem; min-height: 2.75rem; margin-bottom: 1rem; padding: .55rem .75rem; color: #737d90; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: .7rem; box-shadow: 0 8px 24px rgba(25, 38, 71, .05); }
+      .engine-activity strong { flex: 0 0 auto; color: #465066; font-size: .72rem; }
+      .engine-events { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: .25rem; min-width: 0; }
+      .engine-token { padding: .12rem .3rem; border-radius: 4px; font-size: .68rem; line-height: 1.25; }
+      .engine-token.insert { color: #166534; background: #dcfce7; }
+      .engine-token.replace { color: #3730a3; background: #e0e7ff; }
+      .engine-legend { flex: 0 0 auto; white-space: nowrap; color: #8a93a5; }
+
       .output { padding: clamp(1.1rem, 4vw, 2.5rem); min-height: 24rem; overflow-wrap: anywhere; }
       .empty { display: grid; place-items: center; min-height: 20rem; color: #7a8498; text-align: center; }
       .markdown-chunk { display: contents; }
@@ -152,6 +162,8 @@ defmodule MDExStreamingDemo do
         .url-input { grid-column: 1 / -1; }
         .pace { grid-template-columns: 1fr auto; }
         .pace label { grid-column: 1 / -1; }
+        .engine-activity { align-items: flex-start; flex-wrap: wrap; }
+        .engine-events { order: 3; flex-basis: 100%; }
       }
 
       @media (prefers-color-scheme: dark) {
@@ -163,6 +175,10 @@ defmodule MDExStreamingDemo do
         .status strong, .metric dd, .how-it-works h2 { color: #e7eaf0; }
         .metric { border-color: #303b50; background: #101827; }
         .metric dt, .metric small { color: #98a3b7; }
+        .engine-activity { color: #8f99ac; }
+        .engine-activity strong { color: #c8ced9; }
+        .engine-token.insert { color: #bbf7d0; background: #12351f; }
+        .engine-token.replace { color: #c7d2fe; background: #252b59; }
         .error { border-color: #7f1d1d; background: #3b1118; color: #fecaca; }
         .markdown-body a { color: #a5b4fc; }
         .markdown-body blockquote { color: #b5bdcd; }
@@ -270,6 +286,20 @@ defmodule MDExStreamingDemo do
           </p>
         </section>
 
+        <section id="engine-activity" class="card engine-activity" aria-label="MDEx engine activity">
+          <strong>Engine activity</strong>
+          <div class="engine-events">
+            <span :if={@index_activity == []}>Waiting for indexed chunks</span>
+            <code
+              :for={{operation, id} <- Enum.reverse(@index_activity)}
+              class={["engine-token", Atom.to_string(operation)]}
+            >
+              {index_token(operation, id)}
+            </code>
+          </div>
+          <span class="engine-legend">+ insert · ~ replace</span>
+        </section>
+
         <div :if={@error} class="error" role="alert">{@error}</div>
 
         <div :if={@status == :idle} class="card empty">
@@ -345,6 +375,7 @@ defmodule MDExStreamingDemo do
         received_chunks: 0,
         markdown_updates: 0,
         rendered_chunks: 0,
+        index_activity: [],
         producer_memory: 0,
         producer_peak_memory: 0,
         live_view_memory: live_view_memory,
@@ -387,6 +418,7 @@ defmodule MDExStreamingDemo do
      socket
      |> stream_insert(:markdown, chunk)
      |> update(:markdown_updates, &(&1 + 1))
+     |> put_index_activity(id)
      |> update(:rendered_chunks, &max(&1, id + 1))
      |> put_memory(:producer, producer_memory)
      |> put_memory(:live_view, process_memory())}
@@ -460,6 +492,14 @@ defmodule MDExStreamingDemo do
   defp status_label(:complete), do: "Complete"
   defp status_label(:stopped), do: "Stopped"
   defp status_label(:error), do: "Error"
+
+  defp put_index_activity(socket, id) do
+    operation = if id < socket.assigns.rendered_chunks, do: :replace, else: :insert
+    update(socket, :index_activity, &Enum.take([{operation, id} | &1], @activity_limit))
+  end
+
+  defp index_token(:insert, id), do: "+#{id}"
+  defp index_token(:replace, id), do: "~#{id}"
 
   defp put_memory(socket, :producer, bytes) do
     socket

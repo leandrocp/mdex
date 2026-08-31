@@ -182,6 +182,7 @@ The Playground includes:
 - source byte and chunk counts
 - MDEx update and replacement counts
 - keyed DOM chunk counts
+- a compact index activity card for inserts and replacements
 - current and peak memory for the producer and LiveView processes
 
 Current proof:
