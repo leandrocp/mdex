@@ -92,7 +92,7 @@ defmodule MDExStreamingDemo do
       code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 
       .page { min-height: 100vh; padding: 2rem 1rem 4rem; }
-      .shell { width: min(1040px, 100%); margin: 0 auto; }
+      .shell { width: min(1280px, 100%); margin: 0 auto; }
       .hero { margin-bottom: 1.25rem; }
       .hero h1 { margin: 0 0 .4rem; font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -.05em; }
       .hero p { margin: 0; color: #5d667a; font-size: 1.05rem; }
@@ -113,27 +113,30 @@ defmodule MDExStreamingDemo do
       .auto-scroll { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: .55rem; width: fit-content; cursor: pointer; }
       .auto-scroll input { width: 1rem; height: 1rem; accent-color: #4f46e5; }
 
-      .telemetry { margin-bottom: 1rem; padding: 1rem; color: #5d667a; }
+      .preview-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 300px); gap: 1rem; align-items: start; }
+      .diagnostics { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+      .telemetry { padding: .85rem; color: #5d667a; }
       .status { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; font-size: .9rem; }
       .status strong { color: #172033; }
       .status-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #98a2b4; }
       .status-dot.streaming { background: #16a34a; box-shadow: 0 0 0 .3rem rgba(22, 163, 74, .13); animation: pulse 1.2s infinite; }
       .status-dot.complete { background: #4f46e5; }
-      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; margin: 1rem 0 0; }
-      .metric { min-width: 0; padding: .75rem; border: 1px solid #e3e7ef; border-radius: 10px; background: #f8f9fc; }
+      .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; margin: .75rem 0 0; }
+      .metric { min-width: 0; padding: .6rem; border: 1px solid #e3e7ef; border-radius: 9px; background: #f8f9fc; }
       .metric dt { margin-bottom: .25rem; color: #737d90; font-size: .72rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-      .metric dd { margin: 0; color: #172033; font-size: 1rem; font-weight: 750; font-variant-numeric: tabular-nums; }
-      .metric small { display: block; margin-top: .18rem; color: #737d90; font-size: .75rem; }
-      .metrics-note { margin: .8rem 0 0; font-size: .78rem; }
+      .metric dd { margin: 0; color: #172033; font-size: .9rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+      .metric small { display: block; margin-top: .18rem; color: #737d90; font-size: .68rem; }
+      .metrics-note { margin: .7rem 0 0; font-size: .7rem; }
       .error { padding: .8rem 1rem; margin-bottom: 1rem; border: 1px solid #fecaca; border-radius: 12px; background: #fef2f2; color: #991b1b; }
 
-      .engine-activity { display: flex; align-items: center; gap: .75rem; min-height: 2.75rem; margin-bottom: 1rem; padding: .55rem .75rem; color: #737d90; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: .7rem; box-shadow: 0 8px 24px rgba(25, 38, 71, .05); }
-      .engine-activity strong { flex: 0 0 auto; color: #465066; font-size: .72rem; }
-      .engine-events { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: .25rem; min-width: 0; }
+      .engine-activity { padding: .7rem .85rem .85rem; border-top: 1px solid #e3e7ef; color: #737d90; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: .7rem; }
+      .engine-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+      .engine-activity strong { color: #465066; font-size: .72rem; }
+      .engine-events { display: flex; flex-wrap: wrap; gap: .25rem; min-width: 0; max-height: 7rem; margin-top: .55rem; overflow-y: auto; }
       .engine-token { padding: .12rem .3rem; border-radius: 4px; font-size: .68rem; line-height: 1.25; }
       .engine-token.insert { color: #166534; background: #dcfce7; }
       .engine-token.replace { color: #3730a3; background: #e0e7ff; }
-      .engine-legend { flex: 0 0 auto; white-space: nowrap; color: #8a93a5; }
+      .engine-legend { white-space: nowrap; color: #8a93a5; font-size: .65rem; }
 
       .output { padding: clamp(1.1rem, 4vw, 2.5rem); min-height: 24rem; overflow-wrap: anywhere; }
       .empty { display: grid; place-items: center; min-height: 20rem; color: #7a8498; text-align: center; }
@@ -158,13 +161,17 @@ defmodule MDExStreamingDemo do
 
       @keyframes pulse { 50% { opacity: .55; } }
 
+      @media (max-width: 900px) {
+        .shell { width: min(760px, 100%); }
+        .preview-layout { grid-template-columns: 1fr; }
+        .diagnostics { position: static; max-height: none; overflow: visible; }
+      }
+
       @media (max-width: 720px) {
         .url-form { grid-template-columns: 1fr auto; }
         .url-input { grid-column: 1 / -1; }
         .pace { grid-template-columns: 1fr auto; }
         .pace label { grid-column: 1 / -1; }
-        .engine-activity { align-items: flex-start; flex-wrap: wrap; }
-        .engine-events { order: 3; flex-basis: 100%; }
       }
 
       @media (prefers-color-scheme: dark) {
@@ -176,7 +183,7 @@ defmodule MDExStreamingDemo do
         .status strong, .metric dd, .how-it-works h2 { color: #e7eaf0; }
         .metric { border-color: #303b50; background: #101827; }
         .metric dt, .metric small { color: #98a3b7; }
-        .engine-activity { color: #8f99ac; }
+        .engine-activity { border-color: #303b50; color: #8f99ac; }
         .engine-activity strong { color: #c8ced9; }
         .engine-token.insert { color: #bbf7d0; background: #12351f; }
         .engine-token.replace { color: #c7d2fe; background: #252b59; }
@@ -247,82 +254,88 @@ defmodule MDExStreamingDemo do
           </form>
         </section>
 
-        <section id="stream-metrics" class="card telemetry" aria-live="polite">
-          <div class="status">
-            <span class={["status-dot", Atom.to_string(@status)]}></span>
-            <strong>{status_label(@status)}</strong>
-            <span>Run data</span>
-          </div>
-
-          <dl class="metrics">
-            <div class="metric">
-              <dt>Req source</dt>
-              <dd id="source-metrics">{format_bytes(@received_bytes)}</dd>
-              <small>{@received_chunks} chunks · paced at {@display_chunk_bytes} bytes</small>
-            </div>
-            <div class="metric">
-              <dt>MDEx</dt>
-              <dd id="mdex-metrics">{@markdown_updates} updates</dd>
-              <small>{max(@markdown_updates - @rendered_chunks, 0)} replacements</small>
-            </div>
-            <div class="metric">
-              <dt>LiveView DOM</dt>
-              <dd id="dom-metrics">{@rendered_chunks} chunks</dd>
-              <small>ordered ids · any id can be replaced</small>
-            </div>
-            <div class="metric">
-              <dt>Producer memory</dt>
-              <dd id="producer-memory">{format_bytes(@producer_memory)}</dd>
-              <small>peak {format_bytes(@producer_peak_memory)}</small>
-            </div>
-            <div class="metric">
-              <dt>LiveView memory</dt>
-              <dd id="live-view-memory">{format_bytes(@live_view_memory)}</dd>
-              <small>peak {format_bytes(@live_view_peak_memory)}</small>
-            </div>
-          </dl>
-
-          <p class="metrics-note">
-            Memory is measured for each BEAM process. The browser keeps the latest value for each id. MDEx keeps the cumulative source and the latest keyed AST nodes.
-          </p>
-        </section>
-
-        <section id="engine-activity" class="card engine-activity" aria-label="MDEx engine activity">
-          <strong>Engine activity</strong>
-          <div class="engine-events">
-            <span :if={@index_activity == []}>Waiting for indexed chunks</span>
-            <code
-              :for={{operation, id} <- Enum.reverse(@index_activity)}
-              class={["engine-token", Atom.to_string(operation)]}
-            >
-              {index_token(operation, id)}
-            </code>
-          </div>
-          <span class="engine-legend">+ insert · ~ replace</span>
-        </section>
-
         <div :if={@error} class="error" role="alert">{@error}</div>
 
-        <div :if={@status == :idle} class="card empty">
-          <p>Press <strong>Stream URL</strong> to fetch the MDEx README, or enter another Markdown URL.</p>
-        </div>
-
-        <article
-          :if={@status != :idle}
-          id="markdown-output"
-          class="card output markdown-body"
-          phx-update="stream"
-          phx-hook="AutoScroll"
-          data-auto-scroll={to_string(@auto_scroll)}
-        >
-          <div
-            :for={{dom_id, {_id, document}} <- @streams.markdown}
-            id={dom_id}
-            class="markdown-chunk"
-          >
-            {Phoenix.HTML.raw(MDEx.to_html!(document))}
+        <div class="preview-layout">
+          <div :if={@status == :idle} class="card empty">
+            <p>Press <strong>Stream URL</strong> to fetch the MDEx README, or enter another Markdown URL.</p>
           </div>
-        </article>
+
+          <article
+            :if={@status != :idle}
+            id="markdown-output"
+            class="card output markdown-body"
+            phx-update="stream"
+            phx-hook="AutoScroll"
+            data-auto-scroll={to_string(@auto_scroll)}
+          >
+            <div
+              :for={{dom_id, {_id, document}} <- @streams.markdown}
+              id={dom_id}
+              class="markdown-chunk"
+            >
+              {Phoenix.HTML.raw(MDEx.to_html!(document))}
+            </div>
+          </article>
+
+          <aside class="card diagnostics" aria-label="Streaming diagnostics">
+            <section id="stream-metrics" class="telemetry" aria-live="polite">
+              <div class="status">
+                <span class={["status-dot", Atom.to_string(@status)]}></span>
+                <strong>Run data</strong>
+                <span>{status_label(@status)}</span>
+              </div>
+
+              <dl class="metrics">
+                <div class="metric">
+                  <dt>Req source</dt>
+                  <dd id="source-metrics">{format_bytes(@received_bytes)}</dd>
+                  <small>{@received_chunks} chunks · paced at {@display_chunk_bytes} bytes</small>
+                </div>
+                <div class="metric">
+                  <dt>MDEx</dt>
+                  <dd id="mdex-metrics">{@markdown_updates} updates</dd>
+                  <small>{max(@markdown_updates - @rendered_chunks, 0)} replacements</small>
+                </div>
+                <div class="metric">
+                  <dt>LiveView DOM</dt>
+                  <dd id="dom-metrics">{@rendered_chunks} chunks</dd>
+                  <small>ordered ids · any id can be replaced</small>
+                </div>
+                <div class="metric">
+                  <dt>Producer memory</dt>
+                  <dd id="producer-memory">{format_bytes(@producer_memory)}</dd>
+                  <small>peak {format_bytes(@producer_peak_memory)}</small>
+                </div>
+                <div class="metric">
+                  <dt>LiveView memory</dt>
+                  <dd id="live-view-memory">{format_bytes(@live_view_memory)}</dd>
+                  <small>peak {format_bytes(@live_view_peak_memory)}</small>
+                </div>
+              </dl>
+
+              <p class="metrics-note">
+                Memory is measured for each BEAM process. The browser keeps the latest value for each id. MDEx keeps the cumulative source and the latest keyed AST nodes.
+              </p>
+            </section>
+
+            <section id="engine-activity" class="engine-activity" aria-label="MDEx engine activity">
+              <div class="engine-heading">
+                <strong>Engine activity</strong>
+                <span class="engine-legend">+ insert · ~ replace</span>
+              </div>
+              <div class="engine-events">
+                <span :if={@index_activity == []}>Waiting for indexed chunks</span>
+                <code
+                  :for={{operation, id} <- Enum.reverse(@index_activity)}
+                  class={["engine-token", Atom.to_string(operation)]}
+                >
+                  {index_token(operation, id)}
+                </code>
+              </div>
+            </section>
+          </aside>
+        </div>
 
         <section id="how-it-works" class="card how-it-works">
           <h2>How it works</h2>
