@@ -179,7 +179,7 @@ The Playground includes:
 - an auto-scroll checkbox
 - raw HTML rendering for the default MDEx README
 - Lumis highlighting for partial code fences
-- a Lumis-highlighted "How it works" panel
+- a collapsible, Lumis-highlighted "How it works" card below the controls
 - source byte and chunk counts
 - MDEx update and replacement counts
 - keyed DOM chunk counts

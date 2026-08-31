@@ -155,9 +155,10 @@ defmodule MDExStreamingDemo do
       .markdown-body th, .markdown-body td { padding: .5rem .7rem; border: 1px solid #d7dce6; text-align: left; }
       .markdown-body hr { margin: 2rem 0; border: 0; border-top: 1px solid #d7dce6; }
 
-      .how-it-works { margin-top: 1rem; padding: 1.25rem; color: #5d667a; }
-      .how-it-works h2 { margin: 0; color: #313a4d; font-size: 1.2rem; }
-      .how-it-works p { margin: .35rem 0 1rem; }
+      .how-it-works { margin-bottom: 1rem; overflow: hidden; color: #5d667a; }
+      .how-it-works summary { padding: 1rem 1.25rem; cursor: pointer; color: #313a4d; font-size: 1.05rem; font-weight: 750; }
+      .how-it-content { padding: 0 1.25rem 1.25rem; border-top: 1px solid #e3e7ef; }
+      .how-it-works p { margin: 1rem 0; }
       .how-it-works pre { overflow-x: auto; margin: 0; }
 
       @keyframes pulse { 50% { opacity: .55; } }
@@ -181,7 +182,8 @@ defmodule MDExStreamingDemo do
         .card { background: #151d2c; border-color: #2a3447; box-shadow: none; }
         .url-input { background: #0f1726; border-color: #354057; color: #e7eaf0; }
         .button-secondary { color: #d8dce5; background: #2a3447; }
-        .status strong, .metric dd, .how-it-works h2 { color: #e7eaf0; }
+        .status strong, .metric dd, .how-it-works summary { color: #e7eaf0; }
+        .how-it-content { border-color: #303b50; }
         .metric { border-color: #303b50; background: #101827; }
         .metric dt, .metric small { color: #98a3b7; }
         .engine-activity { border-color: #303b50; color: #8f99ac; }
@@ -254,6 +256,14 @@ defmodule MDExStreamingDemo do
             </label>
           </form>
         </section>
+
+        <details id="how-it-works" class="card how-it-works">
+          <summary>How it works</summary>
+          <div class="how-it-content">
+            <p>Req reads source chunks. MDEx updates keyed AST chunks. LiveView inserts or replaces the matching DOM child.</p>
+            <div class="markdown-body">{Phoenix.HTML.raw(@pipeline_html)}</div>
+          </div>
+        </details>
 
         <div :if={@error} class="error" role="alert">{@error}</div>
 
@@ -338,11 +348,6 @@ defmodule MDExStreamingDemo do
           </aside>
         </div>
 
-        <section id="how-it-works" class="card how-it-works">
-          <h2>How it works</h2>
-          <p>Req reads source chunks. MDEx updates keyed AST chunks. LiveView inserts or replaces the matching DOM child.</p>
-          <div class="markdown-body">{Phoenix.HTML.raw(@pipeline_html)}</div>
-        </section>
       </div>
     </main>
 
