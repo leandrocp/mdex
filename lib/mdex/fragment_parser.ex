@@ -9,6 +9,8 @@ defmodule MDEx.FragmentParser do
   @ordered_delims [". ", ".\t", ") ", ")\t"]
   @tokens ["**", "__", "~~", "*", "_", "~"]
   @fence_chars ["`", "~"]
+  @void_html_tags ~w(area base basefont bgsound br col embed hr img input keygen link meta param source track wbr)
+  @raw_text_html_tags ~w(script style textarea title)
 
   defcombinatorp(:space_prefix, ascii_string([32], min: 0, max: 3))
   defcombinatorp(:bullet_marker, choice(Enum.map(@bullet_markers, &string/1)))
@@ -888,6 +890,150 @@ defmodule MDEx.FragmentParser do
 
   defp tag_start?(<<"<", char, _rest::binary>>) when char in ?a..?z or char in ?A..?Z or char == ?/, do: true
   defp tag_start?(_), do: false
+
+  @doc false
+  def continue_html_context(context, %MDEx.HtmlBlock{literal: literal}) do
+    scan_html(literal, context)
+  end
+
+  def continue_html_context(context, %MDEx.HtmlInline{literal: literal}) do
+    scan_html(literal, context)
+  end
+
+  def continue_html_context(context, %{nodes: nodes}) when is_list(nodes) do
+    Enum.reduce(nodes, context, &continue_html_context(&2, &1))
+  end
+
+  def continue_html_context(context, _node), do: context
+
+  defp scan_html("", context), do: context
+
+  defp scan_html(html, [tag | _rest] = context) when tag in @raw_text_html_tags do
+    scan_raw_text_html(html, context, tag)
+  end
+
+  defp scan_html(<<"<!--", rest::binary>>, context), do: scan_after(rest, "-->", context)
+  defp scan_html(<<"<![CDATA[", rest::binary>>, context), do: scan_after(rest, "]]>", context)
+  defp scan_html(<<"<?", rest::binary>>, context), do: scan_after(rest, "?>", context)
+  defp scan_html(<<"<!", rest::binary>>, context), do: scan_after(rest, ">", context)
+  defp scan_html(<<"</", rest::binary>>, context), do: scan_closing_html_tag(rest, context)
+
+  defp scan_html(<<"<", char, _rest::binary>> = html, context) when char in ?a..?z or char in ?A..?Z do
+    scan_opening_html_tag(html, context)
+  end
+
+  defp scan_html(<<_char, rest::binary>>, context), do: scan_html(rest, context)
+
+  defp scan_after(html, terminator, context) do
+    case :binary.match(html, terminator) do
+      {position, length} ->
+        rest_start = position + length
+        rest = binary_part(html, rest_start, byte_size(html) - rest_start)
+        scan_html(rest, context)
+
+      :nomatch ->
+        context
+    end
+  end
+
+  defp scan_opening_html_tag(<<"<", rest::binary>>, context) do
+    {tag, rest} = take_html_tag_name(rest)
+
+    case take_html_tag_end(rest, nil, nil) do
+      {:ok, self_closing?, rest} ->
+        tag = String.downcase(tag)
+
+        context =
+          if self_closing? or tag in @void_html_tags do
+            context
+          else
+            [tag | context]
+          end
+
+        scan_html(rest, context)
+
+      :incomplete ->
+        context
+    end
+  end
+
+  defp scan_closing_html_tag(html, context) do
+    {tag, rest} = take_html_tag_name(html)
+
+    case take_html_tag_end(rest, nil, nil) do
+      {:ok, _self_closing?, rest} ->
+        scan_html(rest, close_html_tag(context, String.downcase(tag)))
+
+      :incomplete ->
+        context
+    end
+  end
+
+  defp scan_raw_text_html(<<"</", rest::binary>>, context, tag) do
+    {closing_tag, rest} = take_html_tag_name(rest)
+
+    case take_html_tag_end(rest, nil, nil) do
+      {:ok, _self_closing?, rest} ->
+        if String.downcase(closing_tag) == tag do
+          scan_html(rest, tl(context))
+        else
+          scan_raw_text_html(rest, context, tag)
+        end
+
+      :incomplete ->
+        context
+    end
+  end
+
+  defp scan_raw_text_html(<<_char, rest::binary>>, context, tag) do
+    scan_raw_text_html(rest, context, tag)
+  end
+
+  defp scan_raw_text_html("", context, _tag), do: context
+
+  defp take_html_tag_name(html), do: take_html_tag_name(html, html, 0)
+
+  defp take_html_tag_name(source, <<char, rest::binary>>, length)
+       when char in ?a..?z or char in ?A..?Z or char in ?0..?9 or char == ?- do
+    take_html_tag_name(source, rest, length + 1)
+  end
+
+  defp take_html_tag_name(source, rest, length) do
+    {binary_part(source, 0, length), rest}
+  end
+
+  defp take_html_tag_end("", _quote, _last_nonspace), do: :incomplete
+
+  defp take_html_tag_end(<<quote, rest::binary>>, quote, last_nonspace) do
+    take_html_tag_end(rest, nil, last_nonspace)
+  end
+
+  defp take_html_tag_end(<<_char, rest::binary>>, quote, last_nonspace) when not is_nil(quote) do
+    take_html_tag_end(rest, quote, last_nonspace)
+  end
+
+  defp take_html_tag_end(<<quote, rest::binary>>, nil, last_nonspace) when quote in [?", ?'] do
+    take_html_tag_end(rest, quote, last_nonspace)
+  end
+
+  defp take_html_tag_end(<<">", rest::binary>>, nil, last_nonspace) do
+    {:ok, last_nonspace == ?/, rest}
+  end
+
+  defp take_html_tag_end(<<char, rest::binary>>, nil, last_nonspace) when char in @ws_chars do
+    take_html_tag_end(rest, nil, last_nonspace)
+  end
+
+  defp take_html_tag_end(<<char, rest::binary>>, nil, _last_nonspace) do
+    take_html_tag_end(rest, nil, char)
+  end
+
+  defp close_html_tag(context, tag) do
+    case Enum.split_while(context, &(&1 != tag)) do
+      {_nested, []} -> context
+      {_nested, [_tag | rest]} -> rest
+    end
+  end
 
   defp inside_inline_code?(text, pos) do
     prefix = binary_part(text, 0, pos)

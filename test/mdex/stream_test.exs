@@ -1484,6 +1484,60 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!(finalized) == "<p>First\nSecond</p>"
   end
 
+  test "advances past adjacent blocks when a later stable boundary exists" do
+    events = Enum.to_list(MDEx.stream(["# Title\n```elixir\none\n```\n\nNext"]))
+
+    assert [{0, title_and_code}, {1, next}, {1, final_next}] = events
+    assert [%Heading{}, %CodeBlock{}] = title_and_code.nodes
+    assert MDEx.to_html!(next) == "<p>Next</p>"
+    assert MDEx.to_html!(final_next) == "<p>Next</p>"
+  end
+
+  test "keeps a raw HTML container in one keyed document" do
+    chunks = ["<div>\nfirst\n\n", "**second**\n\n", "</div>\n\nAfter"]
+    events = Enum.to_list(MDEx.stream(chunks, render: [unsafe: true]))
+
+    assert [
+             {0, opening},
+             {0, inside},
+             {0, complete},
+             {1, following},
+             {1, final_after}
+           ] = events
+
+    assert [%HtmlBlock{}] = opening.nodes
+    assert [%HtmlBlock{}, %Paragraph{}] = inside.nodes
+    assert [%HtmlBlock{}, %Paragraph{}, %HtmlBlock{}] = complete.nodes
+    assert MDEx.to_html!(complete) == "<div>\nfirst\n<p><strong>second</strong></p>\n</div>"
+    assert MDEx.to_html!(following) == "<p>After</p>"
+    assert MDEx.to_html!(final_after) == "<p>After</p>"
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
+  end
+
+  test "keeps raw inline HTML across paragraphs in one keyed document" do
+    chunks = [
+      "Before\n\nOne <span data-label=\">\">first\n\n",
+      "second</span><br>\n\nAfter"
+    ]
+
+    events = Enum.to_list(MDEx.stream(chunks, render: [unsafe: true]))
+
+    assert [
+             {0, before},
+             {1, opening},
+             {1, complete},
+             {2, following},
+             {2, final_following}
+           ] = events
+
+    assert MDEx.to_html!(before) == "<p>Before</p>"
+    assert [%Paragraph{}] = opening.nodes
+    assert [%Paragraph{}, %Paragraph{}] = complete.nodes
+    assert MDEx.to_html!(following) == "<p>After</p>"
+    assert MDEx.to_html!(final_following) == "<p>After</p>"
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
+  end
+
   test "re-emits an earlier id when document-wide syntax changes its AST" do
     reference_events =
       Enum.to_list(

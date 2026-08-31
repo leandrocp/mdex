@@ -177,6 +177,7 @@ The Playground includes:
 - direct Req streaming through `into: :self`
 - a delay slider from 0 to 1000 ms
 - an auto-scroll checkbox
+- raw HTML rendering for the default MDEx README
 - Lumis highlighting for partial code fences
 - a Lumis-highlighted "How it works" panel
 - source byte and chunk counts
@@ -190,10 +191,15 @@ Current proof:
 
 - `Mix.install/2` uses the repository lockfile so a cached local MDEx build
   fetches its transitive dependencies
+- adjacent blocks advance after a later stable boundary instead of keeping the
+  mutable tail id open
+- raw HTML containers stay in one keyed document; a browser-standard fragment
+  parse kept the first README wrapper ids as direct siblings
 - the standalone Phoenix Playground script compiles
 - the default raw GitHub URL produced 201 MDEx updates through
   `Req.Response.Async`
-- the final keyed HTML matched a normal full-source parse
+- the current branch README produced 243 updates across 45 ids with 64-byte
+  source chunks; its final keyed HTML matched a normal full-source parse
 - an incomplete Elixir fence rendered Lumis spans
 
 The in-app browser was not connected for the MDEx Playground visual check in

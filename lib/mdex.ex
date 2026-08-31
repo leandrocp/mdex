@@ -1523,10 +1523,19 @@ defmodule MDEx do
       |> stream_source_blocks()
       |> Enum.drop_while(fn {_stable?, start_line} -> start_line < state.open_range.start_line end)
 
-    {stable, tail} = Enum.split_while(open_blocks, &elem(&1, 0))
+    tail_start =
+      open_blocks
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.reduce(nil, fn
+        [{true, _start_line}, {_stable?, next_start_line}], _tail_start -> next_start_line
+        _pair, tail_start -> tail_start
+      end)
 
-    case {stable, tail} do
-      {[_ | _], [{_stable?, tail_start} | _rest]} ->
+    case tail_start do
+      nil ->
+        state
+
+      tail_start ->
         range = %{
           id: state.open_range.id,
           start_line: state.open_range.start_line,
@@ -1539,9 +1548,6 @@ defmodule MDEx do
             open_range: %{id: state.next_id, start_line: tail_start},
             next_id: state.next_id + 1
         }
-
-      _other ->
-        state
     end
   end
 
@@ -1597,10 +1603,10 @@ defmodule MDEx do
       positions
       |> Enum.zip(tl(positions) ++ [nil])
       |> Enum.map(fn
-        {{start_line, end_line}, {next_start_line, _next_end_line}} ->
-          {next_start_line > end_line + 1, start_line}
+        {{start_line, end_line, html_context}, {next_start_line, _next_end_line, _next_html_context}} ->
+          {html_context == [] and next_start_line > end_line + 1, start_line}
 
-        {{start_line, _end_line}, nil} ->
+        {{start_line, _end_line, _html_context}, nil} ->
           {false, start_line}
       end)
     end)
@@ -1608,18 +1614,20 @@ defmodule MDEx do
 
   defp stream_node_groups(nodes) do
     nodes
-    |> Enum.reduce([], fn node, groups ->
+    |> Enum.reduce({[], []}, fn node, {groups, html_context} ->
       {start_line, _start_column} = node.sourcepos.start
       {end_line, _end_column} = node.sourcepos.end
+      html_context = MDEx.FragmentParser.continue_html_context(html_context, node)
 
       case groups do
-        [{^start_line, previous_end_line} | rest] ->
-          [{start_line, max(end_line, previous_end_line)} | rest]
+        [{^start_line, previous_end_line, _previous_html_context} | rest] ->
+          {[{start_line, max(end_line, previous_end_line), html_context} | rest], html_context}
 
         _other ->
-          [{start_line, end_line} | groups]
+          {[{start_line, end_line, html_context} | groups], html_context}
       end
     end)
+    |> elem(0)
     |> Enum.reverse()
   end
 

@@ -135,6 +135,11 @@ One keyed document may hold several top-level Markdown blocks. A later link or
 footnote definition can update an earlier keyed document after newer ids have
 already been emitted.
 
+Raw HTML may open a container in one Markdown block and close it after later
+blocks. MDEx keeps that container in one keyed document. A LiveView or similar
+consumer can therefore keep each keyed wrapper as an independent DOM child,
+including when it renders trusted input with `render: [unsafe: true]`.
+
 The end of the Stream is the completion signal. There is no `done?` field or
 EOF value. If downstream stops early, MDEx does not finalize unread input.
 
@@ -194,6 +199,9 @@ Each source chunk causes one cumulative parse. MDEx derives keyed source ranges
 from CommonMark source positions, compares their AST nodes with the previous
 parse, and emits only new or changed ranges. It does not parse each keyed range
 again.
+
+The existing fragment parser tracks raw HTML nodes while it derives those
+ranges. A boundary inside an open HTML container stays in the mutable tail.
 
 This keeps document-wide parser behavior. For example, a link definition at
 the end of the source can change a link node in an earlier range. MDEx emits

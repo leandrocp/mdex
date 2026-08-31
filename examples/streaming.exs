@@ -28,6 +28,7 @@ defmodule MDExStreamingDemo do
       tasklist: true
     ],
     parse: [relaxed_autolinks: true, relaxed_tasklist_matching: true],
+    render: [unsafe: true],
     syntax_highlight: [
       engine: :lumis,
       opts: [

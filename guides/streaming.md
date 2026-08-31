@@ -51,6 +51,9 @@ Apply these rules:
 
 A chunk may contain more than one Markdown block. MDEx groups top-level nodes
 by source range so consumers do not need to split Markdown themselves.
+When raw HTML opens a container across Markdown blocks, MDEx keeps the whole
+container in one keyed chunk. This keeps keyed DOM children independent when
+`render: [unsafe: true]` is enabled.
 
 MDEx emits a new immutable document for each update. It does not change a
 document that it already emitted.
@@ -365,11 +368,13 @@ The URL defaults to the raw MDEx README on GitHub. The example splits large
 network reads into 64-byte chunks so updates stay visible. The controls include
 a delay of up to 1000 ms and optional auto-scroll.
 
-Lumis highlights partial code fences. The page also shows source counts, MDEx
-updates, DOM chunks, and current and peak memory for the producer and LiveView
-processes. A sticky diagnostics panel beside the preview keeps this run data
-and the latest chunk indexes visible while the page scrolls. The compact
-monospace activity uses `+id` for inserts and `~id` for replacements.
+The example enables `render: [unsafe: true]` so raw HTML in the README is
+visible. Use trusted URLs when reusing this setting. Lumis highlights partial
+code fences. The page also shows source counts, MDEx updates, DOM chunks, and
+current and peak memory for the producer and LiveView processes. A sticky
+diagnostics panel beside the preview keeps this run data and the latest chunk
+indexes visible while the page scrolls. The compact monospace activity uses
+`+id` for inserts and `~id` for replacements.
 
 ## Client tests
 
@@ -410,7 +415,6 @@ chunks
 |> Enum.each(&consume/1)
 ```
 
-Plugins that read or change the whole document may not match a render made from
-separate keyed documents. Their support is not defined yet. See
-[`STREAMING_API.md`](https://github.com/leandrocp/mdex/blob/main/STREAMING_API.md)
-for the API contract and open release work.
+Plugins run for each keyed document as described in the [Plugins](#plugins)
+section. A plugin that emits raw HTML must keep that HTML self-contained within
+the current keyed document.
