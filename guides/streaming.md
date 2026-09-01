@@ -100,52 +100,6 @@ response, and numbering shared by several chunks. For those transforms, either
 wait for the full source or keep state outside MDEx and account for any
 repeated id.
 
-## Plugins
-
-Pass plugins through the normal `:plugins` option:
-
-```elixir
-chunks
-|> MDEx.stream(plugins: [MDExGFM])
-|> Stream.map(fn {id, document} ->
-  {id, MDEx.to_html!(document)}
-end)
-```
-
-MDEx attaches each plugin once when Stream enumeration starts. Extension and
-parse options set by `attach/2` apply to every parse. Render options set by
-`attach/2` apply when each emitted document is rendered. Plugin pipeline steps
-then run on every emitted document, including updates with a repeated id.
-
-Each run starts from the prepared plugin configuration. Changes that a plugin
-makes to one emitted document are not carried into the next update.
-
-The keyed document limit still applies:
-
-- An AST transform that only needs the current chunk works directly.
-- Assets injected at the document root may appear in more than one keyed
-  chunk.
-- Sequence numbers and generated IDs restart for each keyed chunk. They are not
-  unique across the full response.
-- A plugin cannot build a table of contents or other full-response result
-  without external state.
-- `attach/2` runs before MDEx reads source chunks, so it receives a document
-  with an empty Markdown buffer. A plugin that preprocesses the raw Markdown
-  buffer is not compatible with `MDEx.stream/2`; use the one-document API.
-
-For the plugins listed in the MDEx README, this means:
-
-- `mdex_gfm` parser options apply normally.
-- `mdex_custom_heading_id` processes headings within each keyed chunk.
-- `mdex_mermaid`, `mdex_katex`, `mdex_video_embed`, and `mdex_mermex` process
-  each keyed chunk separately. Configure document-wide assets and globally
-  unique IDs outside the Markdown stream when needed.
-- `mdex_multiline_cells` preprocesses the Markdown buffer and should be used
-  after the complete Markdown response is available.
-
-See the [Plugins guide](plugins.html#streaming-plugins) for the plugin-author
-contract.
-
 ## Lists and generated streams
 
 ```elixir
@@ -174,13 +128,16 @@ end)
 `File.stream!/1` works without an adapter:
 
 ```elixir
-"README.md"
-|> File.stream!()
-|> MDEx.stream()
-|> Enum.each(fn {id, document} ->
-  cache({id, :html}, MDEx.to_html!(document))
-end)
+rendered_chunks =
+  "README.md"
+  |> File.stream!()
+  |> MDEx.stream()
+  |> Enum.reduce(%{}, fn {id, document}, chunks ->
+    Map.put(chunks, id, MDEx.to_html!(document))
+  end)
 ```
+
+The map keeps the latest rendered value for each id.
 
 You can also read fixed-size binary chunks:
 
@@ -225,29 +182,6 @@ end)
 The first update renders a closed `<strong>` element. The next update uses the
 same id and replaces it. At EOF, MDEx parses the source without temporary
 closing syntax.
-
-Fragment parsing supports partial emphasis, code spans, code fences, links,
-images, tables, lists, math, HTML, and other enabled syntax.
-
-## `put_markdown/3`
-
-`MDEx.Document.put_markdown/3` is not deprecated. Use it to build one full
-document for an AST pipeline:
-
-```elixir
-document =
-  MDEx.new()
-  |> MDEx.Document.put_markdown("# Release notes\n\n")
-  |> MDEx.Document.put_markdown("Version **1.0**")
-
-MDEx.to_html!(document)
-#=> "<h1>Release notes</h1>\n<p>Version <strong>1.0</strong></p>"
-```
-
-Use `MDEx.stream/2` for an Enumerable of chunks. It uses the same parser
-options and enables fragment completion until EOF.
-
-`MDEx.new(streaming: true)` is deprecated. It still warns and works for now.
 
 ## Phoenix LiveView
 
@@ -377,21 +311,6 @@ diagnostics panel beside the preview keeps this run data and the latest chunk
 indexes visible while the page scrolls. The compact monospace activity uses
 `+id` for inserts and `~id` for replacements.
 
-## Client tests
-
-The API has local test branches in three clients:
-
-- Loopyard reads each backend Stream once, sends text chunks through MDEx, and
-  shares keyed documents with its LiveViews.
-- phoenix_streamdown removes its Markdown repair and block split code. MDEx
-  parses the source; phoenix_streamdown keeps components, styles, and optional
-  animation.
-- Ash AI sends its lazy tool-loop output through MDEx, then sends keyed
-  documents through PubSub to LiveView or LiveComponent code.
-
-In each client, MDEx owns Markdown parsing, partial syntax, keyed ids, and EOF.
-The client owns transport, cancellation, pacing, and response ids.
-
 ## Push-only sources
 
 If a source only sends process messages, adapt it at the process boundary with
@@ -399,7 +318,7 @@ If a source only sends process messages, adapt it at the process boundary with
 cancellation, and cleanup behavior. MDEx does not add a separate
 `new/push/finish` API for this case.
 
-## Options and plugins
+## Options
 
 Pass normal MDEx options as the second argument:
 
@@ -415,7 +334,3 @@ chunks
 )
 |> Enum.each(&consume/1)
 ```
-
-Plugins run for each keyed document as described in the [Plugins](#plugins)
-section. A plugin that emits raw HTML must keep that HTML self-contained within
-the current keyed document.
