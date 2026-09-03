@@ -18,8 +18,6 @@ Mix.install(
   ~s|```\n|
 ]
 |> MDEx.stream()
-|> Enum.each(fn {idx, doc} ->
-  IO.puts("-- chunk: #{idx}")
-  IO.puts(doc)
-  IO.puts("\n")
+|> Enum.each(fn {id, document} ->
+  IO.puts("\n-- chunk #{id} --\n#{document}")
 end)
