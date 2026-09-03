@@ -3,4 +3,4 @@
 reviews:
   auto_review:
     ignore_title_keywords:
-      - "chore: release"
+      - "chore: release v"
