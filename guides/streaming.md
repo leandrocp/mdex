@@ -300,8 +300,10 @@ elixir examples/streaming.exs
 
 The URL defaults to the raw MDEx README on GitHub. The example splits large
 network reads into 64-byte chunks so updates stay visible. The controls include
-a delay of up to 1000 ms and optional auto-scroll. New keyed preview chunks use
-a short reveal animation unless the browser requests reduced motion.
+pause and resume at a source chunk boundary, a delay of up to 1000 ms, and
+optional auto-scroll. New keyed preview chunks use a short reveal animation
+unless the browser requests reduced motion. Stream, pause, resume, stop, and
+the delay slider stay in the sticky diagnostics panel while the page scrolls.
 
 The example enables `render: [unsafe: true]` so raw HTML in the README is
 visible. Use trusted URLs when reusing this setting. Lumis highlights partial
@@ -311,12 +313,86 @@ diagnostics panel beside the preview keeps this run data and the latest chunk
 indexes visible while the page scrolls. The compact monospace activity uses
 `+id` for inserts and `~id` for replacements.
 
-## Push-only sources
+## Adapting message-based sources
 
-If a source only sends process messages, adapt it at the process boundary with
-`Stream.resource/3`. The adapter must define subscribe, EOF, error,
-cancellation, and cleanup behavior. MDEx does not add a separate
-`new/push/finish` API for this case.
+Prefer an `Enumerable` from the source when one is available. It composes with
+`MDEx.stream/2` directly and may preserve upstream demand and cancellation.
+
+Some sources only deliver chunks through process messages or callbacks. Adapt
+those sources to an Elixir Stream at the application boundary with
+`Stream.resource/3`:
+
+```elixir
+# This adapter belongs to the application, not MDEx.
+defmodule MyApp.MarkdownMessageStream do
+  def new(source) do
+    Stream.resource(
+      fn ->
+        ref = make_ref()
+
+        {:ok, subscription} =
+          MyApp.MarkdownSource.subscribe(source, self(), ref)
+
+        {ref, subscription}
+      end,
+      fn {ref, _subscription} = state ->
+        receive do
+          {:markdown_chunk, ^ref, chunk} when is_binary(chunk) ->
+            {[chunk], state}
+
+          {:markdown_done, ^ref} ->
+            {:halt, state}
+
+          {:markdown_error, ^ref, reason} ->
+            raise "Markdown source failed: #{inspect(reason)}"
+        end
+      end,
+      fn {_ref, subscription} ->
+        MyApp.MarkdownSource.cancel(subscription)
+      end
+    )
+  end
+end
+```
+
+Replace `MyApp.MarkdownSource` and the message shapes with the API provided by
+the source. The resulting value is a normal Stream:
+
+```elixir
+source
+|> MyApp.MarkdownMessageStream.new()
+|> MDEx.stream()
+|> Enum.each(&consume/1)
+```
+
+`Stream.resource/3` gives the adapter a clear lifecycle:
+
+1. Subscribe lazily in the first callback. `self()` is the process that
+   enumerates the Stream.
+2. Receive one binary chunk at a time in the second callback.
+3. Return `{:halt, state}` when the source reports EOF.
+4. Raise when the source reports an error.
+5. Cancel or unsubscribe in the final callback. It runs when enumeration ends,
+   fails, or the downstream consumer halts early.
+
+Tag messages with a unique reference so concurrent streams and late messages
+from an earlier subscription cannot be mixed. The adapter also owns any
+timeout and source-specific cleanup policy.
+
+### Backpressure
+
+`Stream.resource/3` makes a message source look like an Enumerable, but it does
+not make the producer demand-driven. If the producer sends chunks faster than
+the Stream consumes them, messages accumulate in the receiving process.
+
+For an unbounded or high-volume source, use its acknowledgement, pause, or
+demand mechanism when available. Otherwise the application must define a
+bounded buffer or an overflow policy. If the source already provides an
+Enumerable with cancellation or demand, use that instead of a message adapter.
+
+Subscription, buffering, timeouts, and cancellation are source concerns. MDEx
+therefore does not add a separate `new/push/finish` API; it consumes the binary
+Stream produced by the adapter.
 
 ## Options
 

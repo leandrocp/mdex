@@ -62,6 +62,7 @@ defmodule MDExStreamingDemo do
        delay_ms: 25,
        auto_scroll: true,
        status: :idle,
+       waiting_producer: nil,
        error: nil,
        run_id: nil,
        received_bytes: 0,
@@ -69,6 +70,7 @@ defmodule MDExStreamingDemo do
        markdown_updates: 0,
        rendered_chunks: 0,
        index_activity: [],
+       current_source_chunk: nil,
        producer_memory: 0,
        producer_peak_memory: 0,
        live_view_memory: live_view_memory,
@@ -100,27 +102,29 @@ defmodule MDExStreamingDemo do
 
       .card { background: #fff; border: 1px solid #dfe4ee; border-radius: 16px; box-shadow: 0 14px 40px rgba(25, 38, 71, .08); }
       .controls { padding: 1rem; margin-bottom: 1rem; }
-      .url-form { display: grid; grid-template-columns: 1fr auto auto; gap: .65rem; }
       .url-input { width: 100%; min-width: 0; border: 1px solid #cbd3e1; border-radius: 10px; padding: .72rem .85rem; background: #fff; color: #172033; }
       .button { border: 0; border-radius: 10px; padding: .72rem 1rem; cursor: pointer; font-weight: 700; }
       .button-primary { color: #fff; background: #4f46e5; }
       .button-secondary { color: #313a4d; background: #e9edf5; }
       .button[disabled] { cursor: not-allowed; opacity: .5; }
 
-      .pace { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .8rem; margin-top: 1rem; }
-      .pace label { color: #465066; font-weight: 650; }
-      .pace input[type="range"] { width: 100%; accent-color: #4f46e5; }
-      .pace output { min-width: 7.5rem; text-align: right; color: #465066; font-variant-numeric: tabular-nums; }
-      .auto-scroll { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: .55rem; width: fit-content; cursor: pointer; }
+      .auto-scroll { display: inline-flex; align-items: center; gap: .55rem; width: fit-content; margin-top: 1rem; cursor: pointer; }
       .auto-scroll input { width: 1rem; height: 1rem; accent-color: #4f46e5; }
 
       .preview-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 300px); gap: 1rem; align-items: start; }
       .diagnostics { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+      .run-controls { position: sticky; top: 0; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; padding: .85rem; border-bottom: 1px solid #e3e7ef; border-radius: 15px 15px 0 0; background: #fff; }
+      .sticky-pace { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .25rem .5rem; color: #465066; }
+      .sticky-pace label { font-size: .72rem; font-weight: 650; }
+      .sticky-pace output { font-size: .7rem; font-variant-numeric: tabular-nums; }
+      .sticky-pace input { grid-column: 1 / -1; width: 100%; accent-color: #4f46e5; }
+      .run-controls .button-primary { grid-column: 1 / -1; }
       .telemetry { padding: .85rem; color: #5d667a; }
       .status { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; font-size: .9rem; }
       .status strong { color: #172033; }
       .status-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #98a2b4; }
       .status-dot.streaming { background: #16a34a; box-shadow: 0 0 0 .3rem rgba(22, 163, 74, .13); animation: pulse 1.2s infinite; }
+      .status-dot.paused { background: #d97706; }
       .status-dot.complete { background: #4f46e5; }
       .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; margin: .75rem 0 0; }
       .metric { min-width: 0; padding: .6rem; border: 1px solid #e3e7ef; border-radius: 9px; background: #f8f9fc; }
@@ -133,6 +137,9 @@ defmodule MDExStreamingDemo do
       .engine-activity { padding: .7rem .85rem .85rem; border-top: 1px solid #e3e7ef; color: #737d90; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: .7rem; }
       .engine-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
       .engine-activity strong { color: #465066; font-size: .72rem; }
+      .engine-source { min-width: 0; margin-top: .55rem; padding: .45rem .5rem; border: 1px solid #e3e7ef; border-radius: 6px; background: #f8f9fc; }
+      .engine-source span { display: block; margin-bottom: .25rem; color: #8a93a5; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+      .engine-source code { display: block; overflow-wrap: anywhere; color: #465066; font-size: .66rem; line-height: 1.35; white-space: pre-wrap; }
       .engine-events { display: flex; flex-wrap: wrap; gap: .25rem; min-width: 0; max-height: 7rem; margin-top: .55rem; overflow-y: auto; }
       .engine-token { padding: .12rem .3rem; border-radius: 4px; font-size: .68rem; line-height: 1.25; }
       .engine-token.insert { color: #166534; background: #dcfce7; }
@@ -164,30 +171,29 @@ defmodule MDExStreamingDemo do
       @keyframes pulse { 50% { opacity: .55; } }
 
       @media (max-width: 900px) {
+        .page { padding-bottom: 8rem; }
         .shell { width: min(760px, 100%); }
         .preview-layout { grid-template-columns: 1fr; }
         .diagnostics { position: static; max-height: none; overflow: visible; }
-      }
-
-      @media (max-width: 720px) {
-        .url-form { grid-template-columns: 1fr auto; }
-        .url-input { grid-column: 1 / -1; }
-        .pace { grid-template-columns: 1fr auto; }
-        .pace label { grid-column: 1 / -1; }
+        .run-controls { position: fixed; top: auto; right: 1rem; bottom: 1rem; left: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #e3e7ef; border-radius: 12px; box-shadow: 0 14px 40px rgba(25, 38, 71, .18); }
+        .run-controls .button-primary { grid-column: auto; }
       }
 
       @media (prefers-color-scheme: dark) {
         body { background: #0d1320; color: #e7eaf0; }
-        .hero p, .telemetry, .pace label, .pace output, .how-it-works { color: #aeb6c7; }
+        .hero p, .telemetry, .sticky-pace, .how-it-works { color: #aeb6c7; }
         .card { background: #151d2c; border-color: #2a3447; box-shadow: none; }
         .url-input { background: #0f1726; border-color: #354057; color: #e7eaf0; }
         .button-secondary { color: #d8dce5; background: #2a3447; }
+        .run-controls { border-color: #303b50; background: #151d2c; }
         .status strong, .metric dd, .how-it-works summary { color: #e7eaf0; }
         .how-it-content { border-color: #303b50; }
         .metric { border-color: #303b50; background: #101827; }
         .metric dt, .metric small { color: #98a3b7; }
         .engine-activity { border-color: #303b50; color: #8f99ac; }
         .engine-activity strong { color: #c8ced9; }
+        .engine-source { border-color: #303b50; background: #101827; }
+        .engine-source code { color: #c8ced9; }
         .engine-token.insert { color: #bbf7d0; background: #12351f; }
         .engine-token.replace { color: #c7d2fe; background: #252b59; }
         .error { border-color: #7f1d1d; background: #3b1118; color: #fecaca; }
@@ -218,31 +224,9 @@ defmodule MDExStreamingDemo do
               placeholder="https://example.com/document.md"
               required
             />
-            <button class="button button-primary" type="submit">
-              {if @status == :streaming, do: "Restart", else: "Stream URL"}
-            </button>
-            <button
-              class="button button-secondary"
-              type="button"
-              phx-click="stop"
-              disabled={@status != :streaming}
-            >
-              Stop
-            </button>
           </form>
 
-          <form id="pace-form" phx-change="pace" class="pace">
-            <label for="delay-ms">Playback delay per {@display_chunk_bytes}-byte chunk</label>
-            <input
-              id="delay-ms"
-              type="range"
-              name="delay_ms"
-              min="0"
-              max="1000"
-              step="10"
-              value={@delay_ms}
-            />
-            <output for="delay-ms">{@delay_ms} ms</output>
+          <form id="auto-scroll-form" phx-change="auto_scroll">
             <label class="auto-scroll" for="auto-scroll">
               <input type="hidden" name="auto_scroll" value="false" />
               <input
@@ -291,6 +275,41 @@ defmodule MDExStreamingDemo do
           </article>
 
           <aside class="card diagnostics" aria-label="Streaming diagnostics">
+            <nav class="run-controls" aria-label="Stream controls">
+              <form id="delay-form" phx-change="delay" class="sticky-pace">
+                <label for="delay-ms">Delay per {@display_chunk_bytes}-byte chunk</label>
+                <output for="delay-ms">{@delay_ms} ms</output>
+                <input
+                  id="delay-ms"
+                  type="range"
+                  name="delay_ms"
+                  min="0"
+                  max="1000"
+                  step="10"
+                  value={@delay_ms}
+                />
+              </form>
+              <button class="button button-primary" type="submit" form="url-form">
+                {if @status in [:streaming, :paused], do: "Restart", else: "Stream URL"}
+              </button>
+              <button
+                class="button button-secondary"
+                type="button"
+                phx-click={if @status == :paused, do: "resume", else: "pause"}
+                disabled={@status not in [:streaming, :paused]}
+              >
+                {if @status == :paused, do: "Resume", else: "Pause"}
+              </button>
+              <button
+                class="button button-secondary"
+                type="button"
+                phx-click="stop"
+                disabled={@status not in [:streaming, :paused]}
+              >
+                Stop
+              </button>
+            </nav>
+
             <section id="stream-metrics" class="telemetry" aria-live="polite">
               <div class="status">
                 <span class={["status-dot", Atom.to_string(@status)]}></span>
@@ -335,6 +354,10 @@ defmodule MDExStreamingDemo do
               <div class="engine-heading">
                 <strong>Engine activity</strong>
                 <span class="engine-legend">+ insert · ~ replace</span>
+              </div>
+              <div class="engine-source">
+                <span>Markdown chunk {@received_chunks}</span>
+                <code id="current-source-chunk">{format_source_chunk(@current_source_chunk)}</code>
               </div>
               <div class="engine-events">
                 <span :if={@index_activity == []}>Waiting for indexed chunks</span>
@@ -385,13 +408,27 @@ defmodule MDExStreamingDemo do
   end
 
   @impl Phoenix.LiveView
-  def handle_event("pace", params, socket) do
-    {:noreply,
-     assign(socket,
-       delay_ms: parse_delay(params["delay_ms"]),
-       auto_scroll: params["auto_scroll"] == "true"
-     )}
+  def handle_event("delay", %{"delay_ms" => delay_ms}, socket) do
+    {:noreply, assign(socket, :delay_ms, parse_delay(delay_ms))}
   end
+
+  def handle_event("auto_scroll", %{"auto_scroll" => auto_scroll}, socket) do
+    {:noreply, assign(socket, :auto_scroll, auto_scroll == "true")}
+  end
+
+  def handle_event("pause", _params, %{assigns: %{status: :streaming}} = socket) do
+    {:noreply, assign(socket, :status, :paused)}
+  end
+
+  def handle_event("resume", _params, %{assigns: %{status: :paused}} = socket) do
+    if socket.assigns.waiting_producer do
+      send(socket.assigns.waiting_producer, {:continue, socket.assigns.run_id, socket.assigns.delay_ms})
+    end
+
+    {:noreply, assign(socket, status: :streaming, waiting_producer: nil)}
+  end
+
+  def handle_event(event, _params, socket) when event in ["pause", "resume"], do: {:noreply, socket}
 
   def handle_event("start", %{"url" => raw_url}, socket) do
     url = String.trim(raw_url)
@@ -407,12 +444,14 @@ defmodule MDExStreamingDemo do
         url: url,
         run_id: run_id,
         status: :streaming,
+        waiting_producer: nil,
         error: nil,
         received_bytes: 0,
         received_chunks: 0,
         markdown_updates: 0,
         rendered_chunks: 0,
         index_activity: [],
+        current_source_chunk: nil,
         producer_memory: 0,
         producer_peak_memory: 0,
         live_view_memory: live_view_memory,
@@ -427,25 +466,31 @@ defmodule MDExStreamingDemo do
     {:noreply,
      socket
      |> cancel_async(:markdown_fetch)
-     |> assign(status: :stopped, run_id: nil)}
+     |> assign(status: :stopped, waiting_producer: nil, run_id: nil)}
   end
 
   @impl Phoenix.LiveView
   def handle_info(
-        {:pace_chunk, run_id, producer, bytes, producer_memory},
+        {:pace_chunk, run_id, producer, chunk, producer_memory},
         %{assigns: %{run_id: run_id}} = socket
       ) do
-    send(producer, {:continue, run_id, socket.assigns.delay_ms})
+    socket =
+      socket
+      |> update(:received_bytes, &(&1 + byte_size(chunk)))
+      |> update(:received_chunks, &(&1 + 1))
+      |> assign(:current_source_chunk, chunk)
+      |> put_memory(:producer, producer_memory)
+      |> put_memory(:live_view, process_memory())
 
-    {:noreply,
-     socket
-     |> update(:received_bytes, &(&1 + bytes))
-     |> update(:received_chunks, &(&1 + 1))
-     |> put_memory(:producer, producer_memory)
-     |> put_memory(:live_view, process_memory())}
+    if socket.assigns.status == :paused do
+      {:noreply, assign(socket, :waiting_producer, producer)}
+    else
+      send(producer, {:continue, run_id, socket.assigns.delay_ms})
+      {:noreply, socket}
+    end
   end
 
-  def handle_info({:pace_chunk, _run_id, _producer, _bytes, _memory}, socket), do: {:noreply, socket}
+  def handle_info({:pace_chunk, _run_id, _producer, _chunk, _memory}, socket), do: {:noreply, socket}
 
   def handle_info(
         {:markdown_chunk, run_id, {id, _document} = chunk, producer_memory},
@@ -465,7 +510,7 @@ defmodule MDExStreamingDemo do
 
   @impl Phoenix.LiveView
   def handle_async(:markdown_fetch, {:ok, {run_id, _status}}, %{assigns: %{run_id: run_id}} = socket) do
-    {:noreply, assign(socket, status: :complete, run_id: nil)}
+    {:noreply, assign(socket, status: :complete, waiting_producer: nil, run_id: nil)}
   end
 
   def handle_async(:markdown_fetch, {:ok, {_run_id, _status}}, socket), do: {:noreply, socket}
@@ -473,7 +518,13 @@ defmodule MDExStreamingDemo do
   def handle_async(:markdown_fetch, {:exit, {:shutdown, :cancel}}, socket), do: {:noreply, socket}
 
   def handle_async(:markdown_fetch, {:exit, reason}, socket) do
-    {:noreply, assign(socket, status: :error, run_id: nil, error: Exception.format_exit(reason))}
+    {:noreply,
+     assign(socket,
+       status: :error,
+       waiting_producer: nil,
+       run_id: nil,
+       error: Exception.format_exit(reason)
+     )}
   end
 
   defp stream_url(url, live_view, run_id) do
@@ -507,7 +558,7 @@ defmodule MDExStreamingDemo do
 
   defp pace_with_live_view(chunks, live_view, run_id) do
     Stream.map(chunks, fn chunk ->
-      send(live_view, {:pace_chunk, run_id, self(), byte_size(chunk), process_memory()})
+      send(live_view, {:pace_chunk, run_id, self(), chunk, process_memory()})
 
       receive do
         {:continue, ^run_id, delay_ms} -> Process.sleep(delay_ms)
@@ -526,6 +577,7 @@ defmodule MDExStreamingDemo do
 
   defp status_label(:idle), do: "Ready"
   defp status_label(:streaming), do: "Streaming"
+  defp status_label(:paused), do: "Paused"
   defp status_label(:complete), do: "Complete"
   defp status_label(:stopped), do: "Stopped"
   defp status_label(:error), do: "Error"
@@ -537,6 +589,9 @@ defmodule MDExStreamingDemo do
 
   defp index_token(:insert, id), do: "+#{id}"
   defp index_token(:replace, id), do: "~#{id}"
+
+  defp format_source_chunk(nil), do: "Waiting for source"
+  defp format_source_chunk(chunk), do: inspect(chunk)
 
   defp put_memory(socket, :producer, bytes) do
     socket

@@ -1272,8 +1272,11 @@ defmodule MDEx do
   @doc """
   Creates an `MDEx.Document`.
 
-  A document stores the CommonMark AST, options, and pipeline steps. Use it to
-  read or change nodes before rendering.
+  A document stores the CommonMark AST, options, assigns, and pipeline steps.
+  `MDEx.Document` exposes the tree through Elixir's `Enumerable`, `Collectable`,
+  and `Access` APIs. You can inspect and traverse the AST, find nodes by index,
+  type, structure, or predicate, update or remove matching nodes, insert new
+  nodes, merge documents, and run transformations before rendering.
 
   - Pass `:markdown` to add source when the document is created.
   - Call `MDEx.Document.put_markdown/3` to add more source later.
