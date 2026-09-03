@@ -82,8 +82,8 @@ For each source chunk, MDEx:
 7. emits only new or changed ids
 
 At EOF, MDEx parses the original cumulative source once without temporary
-fragment completion and emits the final open id. The final keyed documents
-reconstruct the same HTML as a normal full-source parse.
+fragment completion and emits only ids whose AST changed. The final keyed
+documents reconstruct the same HTML as a normal full-source parse.
 
 This design preserves document-wide behavior. A link or footnote definition
 near the end can change an earlier AST, so MDEx emits that earlier id again.

@@ -294,7 +294,7 @@ defmodule MDEx.FragmentParser do
     with <<char_code, _::binary>> <- rest,
          char = <<char_code>>,
          true <- char in @fence_chars do
-      run = count_fence_run(rest, char_code, 0)
+      run = count_byte_run(rest, char_code, 0)
       remainder = binary_part(rest, run, byte_size(rest) - run)
       %{indent: indent, char: char, run: run, rest: remainder}
     else
@@ -312,11 +312,11 @@ defmodule MDEx.FragmentParser do
     {String.duplicate(" ", count), rest}
   end
 
-  defp count_fence_run(<<char_code, rest::binary>>, char_code, acc) do
-    count_fence_run(rest, char_code, acc + 1)
+  defp count_byte_run(<<char_code, rest::binary>>, char_code, acc) do
+    count_byte_run(rest, char_code, acc + 1)
   end
 
-  defp count_fence_run(_rest, _char_code, acc), do: acc
+  defp count_byte_run(_rest, _char_code, acc), do: acc
 
   defp only_spaces?(""), do: true
   defp only_spaces?(<<char, rest::binary>>) when char in [32, 9], do: only_spaces?(rest)
@@ -573,7 +573,58 @@ defmodule MDEx.FragmentParser do
   defp unmatched_suffix(text) do
     # Collect all unmatched suffixes with the position of their last opening delimiter,
     # then sort by position descending so innermost (latest) closes first.
-    do_unmatched_suffix(text, [{"*", "**"}, {"_", "__"}, {"~", "~~"}, {"+", "++"}, {"=", "=="}], [])
+    text
+    |> mask_inline_code_spans()
+    |> do_unmatched_suffix([{"*", "**"}, {"_", "__"}, {"~", "~~"}, {"+", "++"}, {"=", "=="}], [])
+  end
+
+  defp mask_inline_code_spans(text) do
+    text
+    |> mask_inline_code_spans([])
+    |> IO.iodata_to_binary()
+  end
+
+  defp mask_inline_code_spans("", acc), do: Enum.reverse(acc)
+
+  defp mask_inline_code_spans(text, acc) do
+    case :binary.match(text, "`") do
+      :nomatch ->
+        Enum.reverse([text | acc])
+
+      {position, 1} ->
+        before = binary_part(text, 0, position)
+        opener_and_rest = binary_part(text, position, byte_size(text) - position)
+        opener_length = count_byte_run(opener_and_rest, ?`, 0)
+        rest = binary_part(opener_and_rest, opener_length, byte_size(opener_and_rest) - opener_length)
+
+        case take_through_matching_backticks(rest, opener_length, 0) do
+          :nomatch ->
+            Enum.reverse([String.duplicate(" ", byte_size(opener_and_rest)), before | acc])
+
+          {:match, span_length, remaining} ->
+            masked = String.duplicate(" ", opener_length + span_length)
+            mask_inline_code_spans(remaining, [masked, before | acc])
+        end
+    end
+  end
+
+  defp take_through_matching_backticks(text, opener_length, consumed) do
+    case :binary.match(text, "`") do
+      :nomatch ->
+        :nomatch
+
+      {position, 1} ->
+        candidate_and_rest = binary_part(text, position, byte_size(text) - position)
+        candidate_length = count_byte_run(candidate_and_rest, ?`, 0)
+        rest = binary_part(candidate_and_rest, candidate_length, byte_size(candidate_and_rest) - candidate_length)
+        consumed = consumed + position + candidate_length
+
+        if candidate_length == opener_length do
+          {:match, consumed, rest}
+        else
+          take_through_matching_backticks(rest, opener_length, consumed)
+        end
+    end
   end
 
   defp do_unmatched_suffix(_text, [], []), do: ""

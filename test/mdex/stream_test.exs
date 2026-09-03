@@ -1324,7 +1324,7 @@ defmodule MDEx.StreamTest do
     assert_received :closed
   end
 
-  test "emits keyed tail replacements and finalizes at EOF" do
+  test "does not emit an unchanged open chunk at EOF" do
     events =
       ["# Hel", "lo\n\nNow **wri", "ting**"]
       |> MDEx.stream()
@@ -1334,8 +1334,19 @@ defmodule MDEx.StreamTest do
              {0, "<h1>Hel</h1>"},
              {0, "<h1>Hello</h1>"},
              {1, "<p>Now <strong>wri</strong></p>"},
-             {1, "<p>Now <strong>writing</strong></p>"},
              {1, "<p>Now <strong>writing</strong></p>"}
+           ]
+  end
+
+  test "emits the open chunk at EOF when removing fragment completion changes its AST" do
+    events =
+      ["**partial"]
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+
+    assert events == [
+             {0, "<p><strong>partial</strong></p>"},
+             {0, "<p>**partial</p>"}
            ]
   end
 
@@ -1472,25 +1483,22 @@ defmodule MDEx.StreamTest do
     for separator <- ["\n\n", "\n \t\n", "\r\n\r\n", "\r\n \t\r\n"] do
       events = Enum.to_list(MDEx.stream(["First#{separator}Second"]))
 
-      assert [{0, first}, {1, partial_second}, {1, final_second}] = events
+      assert [{0, first}, {1, second}] = events
       assert MDEx.to_html!(first) == "<p>First</p>"
-      assert MDEx.to_html!(partial_second) == "<p>Second</p>"
-      assert MDEx.to_html!(final_second) == "<p>Second</p>"
+      assert MDEx.to_html!(second) == "<p>Second</p>"
       refute Enum.any?(events, fn {_id, document} -> Keyword.has_key?(document.options, :streaming) end)
     end
 
-    assert [{0, joined}, {0, finalized}] = Enum.to_list(MDEx.stream(["First\nSecond"]))
+    assert [{0, joined}] = Enum.to_list(MDEx.stream(["First\nSecond"]))
     assert MDEx.to_html!(joined) == "<p>First\nSecond</p>"
-    assert MDEx.to_html!(finalized) == "<p>First\nSecond</p>"
   end
 
   test "advances past adjacent blocks when a later stable boundary exists" do
     events = Enum.to_list(MDEx.stream(["# Title\n```elixir\none\n```\n\nNext"]))
 
-    assert [{0, title_and_code}, {1, next}, {1, final_next}] = events
+    assert [{0, title_and_code}, {1, next}] = events
     assert [%Heading{}, %CodeBlock{}] = title_and_code.nodes
     assert MDEx.to_html!(next) == "<p>Next</p>"
-    assert MDEx.to_html!(final_next) == "<p>Next</p>"
   end
 
   test "keeps a raw HTML container in one keyed document" do
@@ -1501,8 +1509,7 @@ defmodule MDEx.StreamTest do
              {0, opening},
              {0, inside},
              {0, complete},
-             {1, following},
-             {1, final_after}
+             {1, following}
            ] = events
 
     assert [%HtmlBlock{}] = opening.nodes
@@ -1510,7 +1517,6 @@ defmodule MDEx.StreamTest do
     assert [%HtmlBlock{}, %Paragraph{}, %HtmlBlock{}] = complete.nodes
     assert MDEx.to_html!(complete) == "<div>\nfirst\n<p><strong>second</strong></p>\n</div>"
     assert MDEx.to_html!(following) == "<p>After</p>"
-    assert MDEx.to_html!(final_after) == "<p>After</p>"
     assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
   end
 
@@ -1526,15 +1532,13 @@ defmodule MDEx.StreamTest do
              {0, before},
              {1, opening},
              {1, complete},
-             {2, following},
-             {2, final_following}
+             {2, following}
            ] = events
 
     assert MDEx.to_html!(before) == "<p>Before</p>"
     assert [%Paragraph{}] = opening.nodes
     assert [%Paragraph{}, %Paragraph{}] = complete.nodes
     assert MDEx.to_html!(following) == "<p>After</p>"
-    assert MDEx.to_html!(final_following) == "<p>After</p>"
     assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
   end
 
@@ -1547,14 +1551,13 @@ defmodule MDEx.StreamTest do
         ])
       )
 
-    assert [{0, unresolved}, {1, tail}, {0, linked}, {1, final_tail}] = reference_events
+    assert [{0, unresolved}, {1, tail}, {0, linked}] = reference_events
     assert MDEx.to_html!(unresolved) =~ "<p>Read [the docs].</p>"
     assert MDEx.to_html!(linked) =~ ~s(<a href="https://example.com">the docs</a>)
     assert MDEx.to_html!(tail) == "<p>Tail.</p>"
-    assert MDEx.to_html!(final_tail) == MDEx.to_html!(tail)
 
     ids = Enum.map(reference_events, &elem(&1, 0))
-    assert ids == [0, 1, 0, 1]
+    assert ids == [0, 1, 0]
   end
 
   test "preserves a late footnote definition across keyed documents" do
@@ -1575,10 +1578,9 @@ defmodule MDEx.StreamTest do
     task_events =
       Enum.to_list(MDEx.stream(["- [x] done\n\nNext"], extension: [tasklist: true]))
 
-    assert [{0, task}, {1, next}, {1, final_next}] = task_events
+    assert [{0, task}, {1, next}] = task_events
     assert MDEx.to_html!(task) =~ ~s(type="checkbox" checked="")
     assert MDEx.to_html!(next) == "<p>Next</p>"
-    assert MDEx.to_html!(final_next) == "<p>Next</p>"
   end
 
   test "parses the cumulative source once per input chunk and once at EOF" do
@@ -1590,7 +1592,7 @@ defmodule MDEx.StreamTest do
       end)
 
     assert calls == [:parse_document, :parse_document]
-    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert [{0, stable}, {1, final}] = events
     assert stable.nodes == MDEx.parse_document!("First **bold**\n\nSecond `code`\n\n").nodes
     assert MDEx.to_html!(final) == MDEx.to_html!("- Third\n  - nested **strong**")
     assert [%MDEx.List{sourcepos: %{start: {5, 1}}}] = final.nodes
@@ -1628,7 +1630,7 @@ defmodule MDEx.StreamTest do
            end)
   end
 
-  test "runs document plugins on reused stable and EOF ASTs" do
+  test "runs document plugins on reused stable and open ASTs" do
     rewrite_links = fn document ->
       Document.append_steps(document,
         rewrite_links: fn document ->
@@ -1647,7 +1649,7 @@ defmodule MDEx.StreamTest do
         )
       )
 
-    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert [{0, stable}, {1, final}] = events
     assert MDEx.to_html!(stable) =~ "target=https%3A%2F%2Fexample.com%2Fone"
     assert MDEx.to_html!(final) =~ "target=https%3A%2F%2Fexample.com%2Ftwo"
   end
@@ -1677,7 +1679,7 @@ defmodule MDEx.StreamTest do
     refute_received :plugin_attached
     events = Enum.to_list(stream)
 
-    assert [{0, stable}, {1, _partial}, {1, final}] = events
+    assert [{0, stable}, {1, final}] = events
     assert MDEx.to_html!(stable) =~ "<table>"
     assert MDEx.to_html!(final) == "<p>Tail</p>"
 

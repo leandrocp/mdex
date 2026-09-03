@@ -118,7 +118,6 @@ the output has this form:
 {0, heading_document}           # insert
 {1, partial_paragraph_document} # insert
 {1, updated_paragraph_document} # replace
-{1, final_paragraph_document}   # replace at EOF
 ```
 
 The exact number of updates is private. The id rules are public:
@@ -128,7 +127,7 @@ The exact number of updates is private. The id rules are public:
 3. A repeated id replaces the earlier value for that id.
 4. Any earlier id may be emitted again.
 5. An id keeps its original position when it is replaced.
-6. EOF emits the last chunk with a normal final parse, then ends the Stream.
+6. EOF parses the last chunk normally and emits it only when its AST changed.
 7. Empty input emits no chunks.
 
 One keyed document may hold several top-level Markdown blocks. A later link or
@@ -184,7 +183,7 @@ The Stream uses `Stream.transform/5`:
 
 - parser state is created when enumeration starts
 - upstream chunks are read only when downstream asks for them
-- normal EOF emits the final document
+- normal EOF reparses without fragment completion and emits changed documents
 - an early halt does not act like EOF
 - cleanup runs after completion, halt, or error
 - a second run creates new state when the source can be read again

@@ -168,21 +168,19 @@ iex> ~MD[# Hello :smile:]
 #### Streaming
 
 ```elixir
-iex> ["# Hel", "lo\n\nNow **wri", "ting**"]
+iex> ["# Install **MD", "Ex**\n\n`{:mdex,", " \"~> 0.12\"}`\n\n", "Enjoy!"]
 ...> |> MDEx.stream()
 ...> |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
 [
-  {0, "<h1>Hel</h1>"},
-  {0, "<h1>Hello</h1>"},
-  {1, "<p>Now <strong>wri</strong></p>"},
-  {1, "<p>Now <strong>writing</strong></p>"},
-  {1, "<p>Now <strong>writing</strong></p>"}
+  {0, "<h1>Install <strong>MD</strong></h1>"},
+  {0, "<h1>Install <strong>MDEx</strong></h1>"},
+  {1, "<p><code>{:mdex,</code></p>"},
+  {1, "<p><code>{:mdex, &quot;~&gt; 0.12&quot;}</code></p>"},
+  {2, "<p>Enjoy!</p>"}
 ]
 ```
 
-Insert a chunk when its id is new. Replace it when the id repeats. See the
-[Streaming guide](https://hexdocs.pm/mdex/streaming.html) for files, Req, and
-Phoenix LiveView.
+[Streaming guide](https://hexdocs.pm/mdex/streaming.html)
 
 ## Examples and Guides
 

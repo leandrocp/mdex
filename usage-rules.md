@@ -413,8 +413,9 @@ Use `MDEx.stream/2` for LLM, SSE, file, or HTTP response chunks.
 - Pass any Enumerable of binary chunks directly to `MDEx.stream/2`.
 - Insert a chunk when its id is new.
 - Replace a chunk when its id repeats.
-- After a higher id appears, all lower ids are stable.
+- Keep chunks in id order. Replacing an earlier id does not move it.
 - Render each document. MDEx closes partial syntax for the open chunk.
+- EOF emits a replacement only when removing partial syntax changes the AST.
 - Change the emitted AST before rendering when the transform only needs one
   keyed document.
 - Do not assume an emitted document contains the full Markdown response.

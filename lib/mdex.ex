@@ -1375,7 +1375,8 @@ defmodule MDEx do
   Insert a chunk when its id is new. Replace it when the id repeats. A later
   source chunk may update any earlier id when document-wide Markdown changes
   its AST, such as a link reference definition. An id always keeps its original
-  position. EOF emits the open chunk with a normal parse, then ends the Stream.
+  position. At EOF, MDEx parses the open chunk normally and emits it only when
+  its AST changed after removing temporary fragment completion.
 
   A file or network read may split a UTF-8 code point. MDEx holds the incomplete
   bytes until the next chunk.
@@ -1411,7 +1412,6 @@ defmodule MDEx do
         {0, "<h1>Hel</h1>"},
         {0, "<h1>Hello</h1>"},
         {1, "<p>Now <strong>wri</strong></p>"},
-        {1, "<p>Now <strong>writing</strong></p>"},
         {1, "<p>Now <strong>writing</strong></p>"}
       ]
 
@@ -1487,12 +1487,7 @@ defmodule MDEx do
     nodes = stream_parse_nodes!(state.source, state.rust_options)
     segment_nodes = stream_segment_nodes(state, nodes)
 
-    changed_ids =
-      state.segment_nodes
-      |> stream_changed_ids(segment_nodes)
-      |> then(&[state.open_range.id | &1])
-      |> Enum.uniq()
-      |> Enum.sort()
+    changed_ids = stream_changed_ids(state.segment_nodes, segment_nodes)
 
     events = stream_document_events(changed_ids, segment_nodes, state.document)
     {events, %{state | segment_nodes: segment_nodes}}

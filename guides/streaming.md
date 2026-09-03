@@ -38,7 +38,7 @@ An id may appear more than once:
 {0, first_document}         # insert
 {1, partial_document}       # insert
 {0, updated_first_document} # replace an earlier chunk
-{1, final_document}         # replace the open chunk at EOF
+{1, final_document}         # replace at EOF if the normal AST differs
 ```
 
 Apply these rules:
@@ -47,7 +47,8 @@ Apply these rules:
 2. Replace a chunk when its id repeats.
 3. Keep chunks in id order. A replacement does not move its chunk.
 4. Any earlier id may repeat. Document-wide Markdown can change an earlier AST.
-5. Normal Stream completion is EOF. There is no custom EOF chunk.
+5. Normal Stream completion is EOF. There is no custom EOF chunk or unchanged
+   replacement.
 
 A chunk may contain more than one Markdown block. MDEx groups top-level nodes
 by source range so consumers do not need to split Markdown themselves.
@@ -59,6 +60,23 @@ MDEx emits a new immutable document for each update. It does not change a
 document that it already emitted.
 
 If the consumer stops early, MDEx does not parse input it has not read.
+
+## Collect the final output
+
+Without a live UI, collect the latest document for each id and join them in
+order:
+
+```elixir
+html =
+  chunks
+  |> MDEx.stream()
+  |> Stream.map(fn {id, document} ->
+    {id, MDEx.to_html!(document)}
+  end)
+  |> Enum.into(%{})
+  |> Enum.sort_by(&elem(&1, 0))
+  |> Enum.map_join("\n", &elem(&1, 1))
+```
 
 ## Change the AST before rendering
 
@@ -181,7 +199,7 @@ end)
 
 The first update renders a closed `<strong>` element. The next update uses the
 same id and replaces it. At EOF, MDEx parses the source without temporary
-closing syntax.
+closing syntax and emits another replacement only when that changes the AST.
 
 ## Phoenix LiveView
 
