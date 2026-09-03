@@ -1,5 +1,9 @@
-defmodule MDEx.StreamingTest do
-  use ExUnit.Case, async: true
+defmodule MDEx.StreamTest do
+  use ExUnit.Case, async: false
+
+  import ExUnit.CaptureIO
+
+  alias MDEx.Document
 
   # alias MDEx.BlockQuote
   alias MDEx.Code
@@ -18,7 +22,13 @@ defmodule MDEx.StreamingTest do
   # alias MDEx.TaskItem
   alias MDEx.Text
 
-  defp nodes(chunks, document \\ MDEx.new(streaming: true)) do
+  defp streaming_document(options \\ []) do
+    options
+    |> MDEx.new()
+    |> MDEx.Document.put_private(:fragment_completion, true)
+  end
+
+  defp nodes(chunks, document \\ streaming_document()) do
     Enum.reduce(chunks, document, fn chunk, doc -> Enum.into([chunk], doc) end)
     |> MDEx.Document.run()
     |> Map.get(:nodes)
@@ -371,7 +381,7 @@ defmodule MDEx.StreamingTest do
                  %Strikethrough{nodes: [%Text{literal: "deleted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [strikethrough: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [strikethrough: true]))
   end
 
   test "simple insert" do
@@ -386,7 +396,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [insert: true]))
   end
 
   test "simple highlight" do
@@ -401,7 +411,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [highlight: true]))
   end
 
   test "incomplete insert across chunks" do
@@ -416,7 +426,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Insert{nodes: [%Text{literal: "inserted text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [insert: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [insert: true]))
   end
 
   test "incomplete highlight across chunks" do
@@ -431,7 +441,7 @@ defmodule MDEx.StreamingTest do
                  %MDEx.Highlight{nodes: [%Text{literal: "marked text"}]}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [highlight: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [highlight: true]))
   end
 
   test "simple subtext" do
@@ -446,7 +456,7 @@ defmodule MDEx.StreamingTest do
                  %Text{literal: "Some Subtext"}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [subtext: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [subtext: true]))
   end
 
   test "bold emphasis across chunks" do
@@ -833,7 +843,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 1,
                num_nonempty_cells: 2
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   test "table with incomplete header separator" do
@@ -858,7 +868,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 1,
                num_nonempty_cells: 2
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   test "table with incomplete row" do
@@ -891,7 +901,7 @@ defmodule MDEx.StreamingTest do
                num_rows: 2,
                num_nonempty_cells: 4
              }
-           ] = nodes(chunks, MDEx.new(extension: [table: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
 
   # FIXME
@@ -927,8 +937,7 @@ defmodule MDEx.StreamingTest do
 
     options = [
       extension: [tasklist: true],
-      parse: [relaxed_tasklist_matching: true],
-      streaming: true
+      parse: [relaxed_tasklist_matching: true]
     ]
 
     assert [
@@ -961,14 +970,13 @@ defmodule MDEx.StreamingTest do
                  }
                ]
              }
-           ] = nodes(chunks, MDEx.new(options))
+           ] = nodes(chunks, streaming_document(options))
   end
 
   test "task list retains emphasis across chunks" do
     options = [
       extension: [tasklist: true],
-      parse: [relaxed_tasklist_matching: true],
-      streaming: true
+      parse: [relaxed_tasklist_matching: true]
     ]
 
     chunks = [
@@ -1002,7 +1010,7 @@ defmodule MDEx.StreamingTest do
                tight: true
              }
            ] =
-             nodes(chunks, MDEx.new(options))
+             nodes(chunks, streaming_document(options))
   end
 
   test "nested blockquotes with formatting" do
@@ -1045,7 +1053,7 @@ defmodule MDEx.StreamingTest do
                  %Text{literal: " for specs"}
                ]
              }
-           ] = nodes(chunks, MDEx.new(extension: [autolink: true], streaming: true))
+           ] = nodes(chunks, streaming_document(extension: [autolink: true]))
   end
 
   test "line breaks with trailing spaces" do
@@ -1198,7 +1206,7 @@ defmodule MDEx.StreamingTest do
     end
 
     test "fragment state tracks unclosed token across flushes" do
-      doc = MDEx.new(streaming: true)
+      doc = streaming_document()
 
       # First flush: ** opens bold, FragmentParser completes it
       doc = Enum.into(["**bold "], doc) |> MDEx.Document.run()
@@ -1212,7 +1220,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["[click](https://example.com) ", "more text"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
 
       assert %MDEx.Link{url: "https://example.com"} = hd(nodes)
@@ -1225,7 +1233,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["```\nhello\n```\n", "after"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1235,7 +1243,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["Hello ", "world ", "!"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
 
       text =
@@ -1254,7 +1262,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["<div>foo", "bar</div>"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1264,7 +1272,7 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["<div", ">foo<", "/div>"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
     end
 
@@ -1274,8 +1282,456 @@ defmodule MDEx.StreamingTest do
              ] =
                multi_flush_nodes(
                  ["# Tit", "le"],
-                 MDEx.new(streaming: true)
+                 streaming_document()
                )
+    end
+  end
+
+  test "deprecates the MDEx.new streaming option while preserving compatibility" do
+    warning =
+      capture_io(:stderr, fn ->
+        document = MDEx.new(streaming: true) |> Document.put_markdown("**partial")
+        assert MDEx.to_html!(document) == "<p><strong>partial</strong></p>"
+      end)
+
+    assert warning =~ "the :streaming option is deprecated"
+    assert warning =~ "MDEx.stream/2"
+  end
+
+  test "returns a native lazy Stream" do
+    parent = self()
+
+    chunks =
+      Stream.resource(
+        fn ->
+          send(parent, :started)
+          ["# One", "\n\nTwo"]
+        end,
+        fn
+          [chunk | rest] -> {[chunk], rest}
+          [] -> {:halt, []}
+        end,
+        fn _state -> send(parent, :closed) end
+      )
+
+    stream = MDEx.stream(chunks)
+
+    assert %Stream{} = stream
+    refute_received :started
+
+    assert [{0, %Document{}}] = Enum.take(stream, 1)
+    assert_received :started
+    assert_received :closed
+  end
+
+  test "does not emit an unchanged open chunk at EOF" do
+    events =
+      ["# Hel", "lo\n\nNow **wri", "ting**"]
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+
+    assert events == [
+             {0, "<h1>Hel</h1>"},
+             {0, "<h1>Hello</h1>"},
+             {1, "<p>Now <strong>wri</strong></p>"},
+             {1, "<p>Now <strong>writing</strong></p>"}
+           ]
+  end
+
+  test "emits the open chunk at EOF when removing fragment completion changes its AST" do
+    events =
+      ["**partial"]
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+
+    assert events == [
+             {0, "<p><strong>partial</strong></p>"},
+             {0, "<p>**partial</p>"}
+           ]
+  end
+
+  test "emits no chunks for empty input" do
+    assert [] = Enum.to_list(MDEx.stream([]))
+    assert [] = Enum.to_list(MDEx.stream([""]))
+  end
+
+  test "buffers UTF-8 code points divided across chunks" do
+    events = MDEx.stream(["ol", <<0xC3>>, <<0xA1>>, "\n\n# Next"])
+
+    assert final_html(events) == MDEx.to_html!("olá\n\n# Next")
+  end
+
+  test "raises lazily for incomplete or invalid UTF-8" do
+    incomplete = MDEx.stream(["ol", <<0xC3>>])
+    invalid = MDEx.stream([<<0xFF>>])
+
+    assert %Stream{} = incomplete
+
+    assert_raise ArgumentError, ~r/end-of-input with incomplete UTF-8/, fn ->
+      Enum.to_list(incomplete)
+    end
+
+    assert_raise ArgumentError, ~r/received invalid UTF-8/, fn ->
+      Enum.to_list(invalid)
+    end
+  end
+
+  test "raises lazily when the source emits a non-binary" do
+    stream = MDEx.stream(["valid", :not_a_binary])
+
+    assert_raise ArgumentError, ~r/expected a binary chunk/, fn ->
+      Enum.to_list(stream)
+    end
+  end
+
+  test "can be enumerated again when its source is repeatable" do
+    stream = MDEx.stream(["# One\n\n", "Two"])
+
+    assert Enum.map(stream, &elem(&1, 0)) == Enum.map(stream, &elem(&1, 0))
+    assert final_html(stream) == MDEx.to_html!("# One\n\nTwo")
+  end
+
+  test "stops requesting upstream chunks when downstream halts" do
+    parent = self()
+
+    chunks =
+      Stream.resource(
+        fn -> 0 end,
+        fn
+          0 ->
+            {["**fir"], 1}
+
+          1 ->
+            send(parent, :requested_unseen_chunk)
+            {["st**"], 2}
+
+          2 ->
+            {:halt, 2}
+        end,
+        fn _state -> send(parent, :source_closed) end
+      )
+
+    assert [{0, document}] = chunks |> MDEx.stream() |> Enum.take(1)
+    assert MDEx.to_html!(document) == "<p><strong>fir</strong></p>"
+    refute_received :requested_unseen_chunk
+    assert_received :source_closed
+  end
+
+  test "propagates upstream failures and closes the source" do
+    parent = self()
+
+    chunks =
+      Stream.resource(
+        fn -> 0 end,
+        fn
+          0 -> {["# Started"], 1}
+          1 -> raise "upstream failed"
+        end,
+        fn _state -> send(parent, :source_closed) end
+      )
+
+    assert_raise RuntimeError, "upstream failed", fn ->
+      chunks |> MDEx.stream() |> Enum.to_list()
+    end
+
+    assert_received :source_closed
+  end
+
+  test "applies parser options and preserves final rendering across chunk boundaries" do
+    options = [extension: [strikethrough: true, table: true, tasklist: true]]
+
+    markdown = """
+    # Status
+
+    - [x] ~~prototype~~ Stream
+
+    | API | Value |
+    | --- | --- |
+    | input | Enumerable |
+    """
+
+    chunks = ["# Sta", "tus\n\n- [x] ~~proto", "type~~ Stream\n\n| API |", " Value |\n| --- | --- |\n| input | Enumerable |\n"]
+
+    events = MDEx.stream(chunks, options)
+
+    assert final_html(events) == MDEx.to_html!(markdown, options)
+    assert Enum.all?(events, fn {_id, document} -> document.buffer == [] end)
+  end
+
+  test "matches the final put_markdown document for document-wide constructs" do
+    options = [extension: [table: true]]
+
+    cases = [
+      ["- one\n\n", "- two\n\n"],
+      ["~~~~\nalpha\n\n", "beta\n~~~~\n"],
+      ["Read [the docs].\n\nNext paragraph.\n\n", "[the docs]: https://example.com\n"],
+      ["| Name | Value |\n| --- | --- |\n|", " mdex | Stream |\n"]
+    ]
+
+    for chunks <- cases do
+      document =
+        Enum.reduce(chunks, MDEx.new(options), fn chunk, document ->
+          Document.put_markdown(document, chunk)
+        end)
+        |> Document.run()
+
+      assert final_html(MDEx.stream(chunks, options)) == MDEx.to_html!(document)
+    end
+  end
+
+  test "derives blank block boundaries from parser source positions" do
+    for separator <- ["\n\n", "\n \t\n", "\r\n\r\n", "\r\n \t\r\n"] do
+      events = Enum.to_list(MDEx.stream(["First#{separator}Second"]))
+
+      assert [{0, first}, {1, second}] = events
+      assert MDEx.to_html!(first) == "<p>First</p>"
+      assert MDEx.to_html!(second) == "<p>Second</p>"
+      refute Enum.any?(events, fn {_id, document} -> Keyword.has_key?(document.options, :streaming) end)
+    end
+
+    assert [{0, joined}] = Enum.to_list(MDEx.stream(["First\nSecond"]))
+    assert MDEx.to_html!(joined) == "<p>First\nSecond</p>"
+  end
+
+  test "advances past adjacent blocks when a later stable boundary exists" do
+    events = Enum.to_list(MDEx.stream(["# Title\n```elixir\none\n```\n\nNext"]))
+
+    assert [{0, title_and_code}, {1, next}] = events
+    assert [%Heading{}, %CodeBlock{}] = title_and_code.nodes
+    assert MDEx.to_html!(next) == "<p>Next</p>"
+  end
+
+  test "keeps a raw HTML container in one keyed document" do
+    chunks = ["<div>\nfirst\n\n", "**second**\n\n", "</div>\n\nAfter"]
+    events = Enum.to_list(MDEx.stream(chunks, render: [unsafe: true]))
+
+    assert [
+             {0, opening},
+             {0, inside},
+             {0, complete},
+             {1, following}
+           ] = events
+
+    assert [%HtmlBlock{}] = opening.nodes
+    assert [%HtmlBlock{}, %Paragraph{}] = inside.nodes
+    assert [%HtmlBlock{}, %Paragraph{}, %HtmlBlock{}] = complete.nodes
+    assert MDEx.to_html!(complete) == "<div>\nfirst\n<p><strong>second</strong></p>\n</div>"
+    assert MDEx.to_html!(following) == "<p>After</p>"
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
+  end
+
+  test "keeps raw inline HTML across paragraphs in one keyed document" do
+    chunks = [
+      "Before\n\nOne <span data-label=\">\">first\n\n",
+      "second</span><br>\n\nAfter"
+    ]
+
+    events = Enum.to_list(MDEx.stream(chunks, render: [unsafe: true]))
+
+    assert [
+             {0, before},
+             {1, opening},
+             {1, complete},
+             {2, following}
+           ] = events
+
+    assert MDEx.to_html!(before) == "<p>Before</p>"
+    assert [%Paragraph{}] = opening.nodes
+    assert [%Paragraph{}, %Paragraph{}] = complete.nodes
+    assert MDEx.to_html!(following) == "<p>After</p>"
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), render: [unsafe: true])
+  end
+
+  test "re-emits an earlier id when document-wide syntax changes its AST" do
+    reference_events =
+      Enum.to_list(
+        MDEx.stream([
+          "Read [the docs].\n\nAnother paragraph.\n\nTail.\n\n",
+          "[the docs]: https://example.com\n"
+        ])
+      )
+
+    assert [{0, unresolved}, {1, tail}, {0, linked}] = reference_events
+    assert MDEx.to_html!(unresolved) =~ "<p>Read [the docs].</p>"
+    assert MDEx.to_html!(linked) =~ ~s(<a href="https://example.com">the docs</a>)
+    assert MDEx.to_html!(tail) == "<p>Tail.</p>"
+
+    ids = Enum.map(reference_events, &elem(&1, 0))
+    assert ids == [0, 1, 0]
+  end
+
+  test "preserves a late footnote definition across keyed documents" do
+    chunks = [
+      "Fact.[^note]\n\nAnother paragraph.\n\n",
+      "[^note]: More context.\n"
+    ]
+
+    options = [extension: [footnotes: true]]
+    events = Enum.to_list(MDEx.stream(chunks, options))
+
+    assert Enum.count(events, fn {id, _document} -> id == 0 end) == 2
+    assert final_html(events) == MDEx.to_html!(Enum.join(chunks), options)
+    assert final_html(events) =~ ~s(<section class="footnotes")
+  end
+
+  test "does not treat task items as link references" do
+    task_events =
+      Enum.to_list(MDEx.stream(["- [x] done\n\nNext"], extension: [tasklist: true]))
+
+    assert [{0, task}, {1, next}] = task_events
+    assert MDEx.to_html!(task) =~ ~s(type="checkbox" checked="")
+    assert MDEx.to_html!(next) == "<p>Next</p>"
+  end
+
+  test "parses the cumulative source once per input chunk and once at EOF" do
+    source = "First **bold**\n\nSecond `code`\n\n- Third\n  - nested **strong**"
+
+    {calls, events} =
+      trace_parser_calls(fn ->
+        Enum.to_list(MDEx.stream([source]))
+      end)
+
+    assert calls == [:parse_document, :parse_document]
+    assert [{0, stable}, {1, final}] = events
+    assert stable.nodes == MDEx.parse_document!("First **bold**\n\nSecond `code`\n\n").nodes
+    assert MDEx.to_html!(final) == MDEx.to_html!("- Third\n  - nested **strong**")
+    assert [%MDEx.List{sourcepos: %{start: {5, 1}}}] = final.nodes
+  end
+
+  test "allows each streamed AST to be changed before rendering" do
+    chunks = [
+      "Intro [site](https://example.com/a",
+      ").\n\nRead [the docs].\n\n",
+      "[the docs]: https://example.com/docs\n"
+    ]
+
+    rewrite_links = fn document ->
+      Document.update_nodes(document, MDEx.Link, fn link ->
+        %{link | url: "https://proxy.test/?target=" <> URI.encode_www_form(link.url)}
+      end)
+    end
+
+    transformed_events =
+      chunks
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, rewrite_links.(document)} end)
+
+    expected =
+      chunks
+      |> Enum.join()
+      |> MDEx.parse_document!()
+      |> rewrite_links.()
+      |> MDEx.to_html!()
+
+    assert final_html(transformed_events) == expected
+
+    assert Enum.any?(transformed_events, fn {_id, document} ->
+             MDEx.to_html!(document) =~ "https://proxy.test/?target=https%3A%2F%2Fexample.com%2Fdocs"
+           end)
+  end
+
+  test "runs document plugins on reused stable and open ASTs" do
+    rewrite_links = fn document ->
+      Document.append_steps(document,
+        rewrite_links: fn document ->
+          Document.update_nodes(document, MDEx.Link, fn link ->
+            %{link | url: "https://proxy.test/?target=" <> URI.encode_www_form(link.url)}
+          end)
+        end
+      )
+    end
+
+    events =
+      Enum.to_list(
+        MDEx.stream(
+          ["[one](https://example.com/one)\n\n[two](https://example.com/two)"],
+          plugins: [rewrite_links]
+        )
+      )
+
+    assert [{0, stable}, {1, final}] = events
+    assert MDEx.to_html!(stable) =~ "target=https%3A%2F%2Fexample.com%2Fone"
+    assert MDEx.to_html!(final) =~ "target=https%3A%2F%2Fexample.com%2Ftwo"
+  end
+
+  test "attaches plugins once and applies their parser options before parsing" do
+    test_process = self()
+
+    plugin = fn document ->
+      send(test_process, :plugin_attached)
+
+      document
+      |> Document.put_extension_options(table: true)
+      |> Document.append_steps(
+        plugin_step: fn document ->
+          send(test_process, :plugin_step_ran)
+          document
+        end
+      )
+    end
+
+    stream =
+      MDEx.stream(
+        ["| A |\n| --- |\n| B |\n\nTail"],
+        plugins: [plugin]
+      )
+
+    refute_received :plugin_attached
+    events = Enum.to_list(stream)
+
+    assert [{0, stable}, {1, final}] = events
+    assert MDEx.to_html!(stable) =~ "<table>"
+    assert MDEx.to_html!(final) == "<p>Tail</p>"
+
+    assert_received :plugin_attached
+    refute_received :plugin_attached
+
+    for _event <- events do
+      assert_received :plugin_step_ran
+    end
+
+    refute_received :plugin_step_ran
+  end
+
+  defp final_html(events) do
+    {ids, documents} =
+      Enum.reduce(events, {[], %{}}, fn {id, document}, {ids, documents} ->
+        ids = if Map.has_key?(documents, id), do: ids, else: ids ++ [id]
+        {ids, Map.put(documents, id, document)}
+      end)
+
+    Enum.map_join(ids, "\n", fn id -> documents |> Map.fetch!(id) |> MDEx.to_html!() end)
+  end
+
+  defp trace_parser_calls(fun) do
+    Elixir.Code.ensure_loaded!(MDExNative.Comrak)
+    tracee = self()
+    tracer = spawn_link(fn -> collect_parser_calls([]) end)
+
+    :erlang.trace(tracee, true, [:call, {:tracer, tracer}])
+    :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, true, [:local])
+
+    on_exit(fn ->
+      :erlang.trace_pattern({MDExNative.Comrak, :parse_document, 2}, false, [:local])
+      Process.exit(tracer, :kill)
+    end)
+
+    result = fun.()
+    :erlang.trace(tracee, false, [:call])
+    reference = :erlang.trace_delivered(tracee)
+    assert_receive {:trace_delivered, ^tracee, ^reference}
+    send(tracer, {:get_calls, self()})
+    assert_receive {:parser_calls, calls}
+    {calls, result}
+  end
+
+  defp collect_parser_calls(calls) do
+    receive do
+      {:trace, _pid, :call, {MDExNative.Comrak, name, _args}} ->
+        collect_parser_calls([name | calls])
+
+      {:get_calls, caller} ->
+        send(caller, {:parser_calls, Enum.reverse(calls)})
     end
   end
 end

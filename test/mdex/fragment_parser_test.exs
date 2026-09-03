@@ -123,6 +123,13 @@ defmodule MDEx.FragmentParserTest do
     assert complete("`code ") == "`code` "
   end
 
+  test "delimiters inside inline code remain literal" do
+    markdown = ~s|`{:mdex, "~> 0.12"}`|
+
+    assert complete(markdown) == markdown
+    assert complete("`~>` and **bold") == "`~>` and **bold**"
+  end
+
   test "bar` - prefix: `foo " do
     assert complete("bar`", prefix: "`foo ") == "`foo bar`"
   end

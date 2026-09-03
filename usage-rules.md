@@ -1,8 +1,9 @@
 # MDEx Usage Rules
 
-MDEx is a fast, extensible Markdown library for Elixir. It parses Markdown into an AST (`MDEx.Document`) and renders to HTML, HEEx, JSON, XML, normalized Markdown, or Quill Delta.
+MDEx parses Markdown into an AST (`MDEx.Document`). It can render HTML, HEEx,
+JSON, XML, CommonMark, or Quill Delta.
 
-This file is the source of truth for coding agents working with MDEx.
+This file gives API rules for developers and coding agents.
 
 ## Agent Defaults
 
@@ -10,7 +11,7 @@ This file is the source of truth for coding agents working with MDEx.
 2. **Use `use MDEx` in modules that render Markdown** - It adds `require MDEx` and `import MDEx.Sigil`.
 3. **Use `HEEX` only when you need Phoenix semantics** - Components, `phx-*`, `{@assigns}`, or HEEx expressions.
 4. **Use runtime functions for runtime content** - Database content, user input, files, API responses, LLM output.
-5. **Use `MDEx.Document` when you need control** - AST transforms, plugins, streaming, custom renderers, inspection.
+5. **Use `MDEx.Document` when you need control** - AST transforms, plugins, custom renderers, inspection.
 6. **Keep options explicit and minimal** - Only enable extensions and unsafe rendering when needed.
 
 ## Decision Guide
@@ -68,17 +69,18 @@ MDEx.to_html!(doc)
 
 ### Streaming or chunked Markdown
 
-- Use `MDEx.new(streaming: true)`.
-- Append chunks with `MDEx.Document.put_markdown/2` or `Enum.into/2`.
-- Render after each chunk with `MDEx.to_html!/1` or another `to_*` function.
+- Pass the source Enumerable to `MDEx.stream/2`.
+- Read `{id, %MDEx.Document{}}` chunks.
+- Insert a new id and replace a repeated id.
+- Treat all lower ids as stable after a higher id appears.
+- Treat normal Stream completion as EOF.
 
 ```elixir
-doc = MDEx.new(streaming: true)
-doc = MDEx.Document.put_markdown(doc, "**Hel")
-html = MDEx.to_html!(doc)
-
-doc = MDEx.Document.put_markdown(doc, "lo**")
-html = MDEx.to_html!(doc)
+chunks
+|> MDEx.stream(extension: [table: true])
+|> Enum.each(fn {id, document} ->
+  replace_rendered_chunk(id, MDEx.to_html!(document))
+end)
 ```
 
 ## Canonical API Choices
@@ -180,7 +182,8 @@ Treat this API as experimental.
 
 ### `MDEx.new/1`
 
-Use this as the entrypoint for pipelines, plugins, streaming, assigns, and reusable option sets.
+Use this as the entry point for document pipelines, plugins, assigns, and
+shared option sets. Use `MDEx.stream/2` for an Enumerable of Markdown chunks.
 
 ```elixir
 doc =
@@ -405,20 +408,36 @@ Use `document.private` helpers for plugin state instead of overloading assigns.
 
 ## Streaming Rules
 
-Streaming mode is especially useful for LLM or SSE output.
+Use `MDEx.stream/2` for LLM, SSE, file, or HTTP response chunks.
 
-- Always set `streaming: true` on document creation.
-- Keep the same document instance across chunks.
-- `put_markdown/2` appends chunks to the document buffer.
-- `Enum.into(chunks, doc)` is the cleanest way to accumulate many chunks.
-- Any `to_*` call flushes the buffer, completes open syntax temporarily, and re-renders.
+- Pass any Enumerable of binary chunks directly to `MDEx.stream/2`.
+- Insert a chunk when its id is new.
+- Replace a chunk when its id repeats.
+- Keep chunks in id order. Replacing an earlier id does not move it.
+- Render each document. MDEx closes partial syntax for the open chunk.
+- EOF emits a replacement only when removing partial syntax changes the AST.
+- Change the emitted AST before rendering when the transform only needs one
+  keyed document.
+- Do not assume an emitted document contains the full Markdown response.
+- Plugins attach once when Stream enumeration starts. Their pipeline steps run
+  on every emitted document, including repeated ids.
+- Plugin parser options apply before parsing, but plugin steps remain local to
+  one keyed document.
+- Do not use a plugin that preprocesses `document.buffer` with
+  `MDEx.stream/2`. Use the one-document API after collecting the full source.
+- Use normal Stream completion as EOF.
 
 ```elixir
-doc = Enum.into(["# Hel", "lo\n\n", "**world**"], MDEx.new(streaming: true))
-html = MDEx.to_html!(doc)
+["# Hel", "lo\n\n", "**world**"]
+|> MDEx.stream()
+|> Enum.each(fn {id, document} ->
+  replace_rendered_chunk(id, MDEx.to_html!(document))
+end)
 ```
 
-If you want to replace prior content instead of appending, create a fresh document.
+`MDEx.new(streaming: true)` is deprecated. Use `MDEx.new/1` and
+`MDEx.Document.put_markdown/3` to build one document in steps. Do not use them
+as a manual streaming API.
 
 ## Output Formats
 
@@ -580,7 +599,7 @@ doc = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
 5. **Forgetting required extensions** - Tables, strikethrough, math, footnotes, and similar syntax need explicit options unless a plugin enables them.
 6. **Treating `parse_fragment!/1` like a full document parser** - It is for one fragment node.
 7. **Expecting component imports to be automatic in HEEx** - Import or fully qualify them yourself.
-8. **Replacing streaming content with `put_markdown/2`** - It appends; create a new document if you want replacement.
+8. **Using `MDEx.new(streaming: true)`** - It is deprecated; pass chunks to `MDEx.stream/2`.
 9. **Putting inline nodes at the root** - Wrap them in a block container.
 10. **Using plugins without attaching or passing them** - They do nothing until attached.
 
@@ -600,7 +619,8 @@ Use `MDEx.to_html!/2` and consider sanitization if raw HTML is enabled.
 
 ### LLM chat output
 
-Use `MDEx.new(streaming: true)` and keep the document in state between chunks.
+Pass the provider's text chunks through `MDEx.stream/2`. Insert new ids and
+replace repeated ids.
 
 ### Reusable Markdown processing pipeline
 

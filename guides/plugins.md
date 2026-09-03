@@ -48,6 +48,56 @@ MDEx.new(markdown: "# Hello")
 |> MDEx.to_html!()
 ```
 
+## Streaming Plugins
+
+Pass plugins to `MDEx.stream/2` with the same `:plugins` option:
+
+```elixir
+chunks
+|> MDEx.stream(plugins: [{MyPlugin, custom_option: "value"}])
+|> Stream.map(fn {id, document} ->
+  {id, MDEx.to_html!(document)}
+end)
+```
+
+The streaming lifecycle differs from the one-document lifecycle:
+
+1. Stream enumeration starts.
+2. MDEx creates an empty document and calls each plugin's `attach/2` once.
+3. MDEx uses the resulting parser options for every source parse.
+4. MDEx runs the configured pipeline steps on every emitted document.
+5. A repeated id receives a new document built from the latest source. State
+   from the earlier document is not reused.
+
+An emitted document contains one keyed chunk, not the full Markdown response.
+A plugin step must therefore treat the document as independent.
+
+### Plugin author rules
+
+- Use `attach/2` to register options, configure MDEx, and append pipeline steps.
+- Do not read or rewrite `document.buffer` in `attach/2`. The buffer is empty
+  because the source Stream has not been read yet.
+- Make each pipeline step work with one keyed document.
+- Do not rely on `document.private`, assigns, counters, or transformed nodes
+  from an earlier update. Each update starts from the plugin configuration.
+- Expect a pipeline step to run again when the same id is replaced.
+- Parser options set during `attach/2` apply before both normal and partial
+  parsing. Parser options set inside a pipeline step are too late to change the
+  AST that the step receives.
+- Do not assume generated IDs are unique across keyed chunks. Include external
+  context in an ID when response-wide uniqueness is required.
+- Prefer loading CSS and JavaScript in the surrounding page. Assets inserted
+  into the document root may be repeated in several keyed chunks.
+- Keep document-wide transforms on the one-document API. Examples include a
+  table of contents, global numbering, collected footnotes, and source
+  preprocessing.
+
+Plugin attachment is lazy. Enumerating a repeatable Stream again attaches the
+plugins again and creates a new pipeline.
+
+See the [Streaming guide](streaming.html#plugins) for the user-facing behavior
+and notes about existing MDEx plugins.
+
 ## Creating Custom Plugins
 
 A plugin is any module that implements an `attach/2` function. This function receives a document and options, and returns a modified document:

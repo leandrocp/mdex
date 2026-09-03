@@ -41,7 +41,7 @@
 - Discord Flavored Markdown (Partial)
 - Wiki-style links
 - Phoenix HEEx components and expressions
-- [Streaming](https://hexdocs.pm/mdex/streaming.html) incomplete fragments
+- Native Elixir [Stream](https://hexdocs.pm/mdex/streaming.html) for Markdown chunks
 - [Emoji](https://www.webfx.com/tools/emoji-cheat-sheet) shortcodes
 - Built-in Syntax Highlighting with [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html)
 - [Code Block Decorators](https://hexdocs.pm/mdex/code_block_decorators-2.html)
@@ -160,12 +160,21 @@ iex> ~MD[# Hello :smile:]
 ```
 
 #### Streaming
+
 ```elixir
-iex> MDEx.new(streaming: true)
-...> |> MDEx.Document.put_markdown("**Install")
-...> |> MDEx.to_html!()
-"<p><strong>Install</strong></p>"
+iex> ["# Install **MD", "Ex**\n\n`{:mdex,", " \"~> 0.12\"}`\n\n", "Enjoy!"]
+...> |> MDEx.stream()
+...> |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+[
+  {0, "<h1>Install <strong>MD</strong></h1>"},
+  {0, "<h1>Install <strong>MDEx</strong></h1>"},
+  {1, "<p><code>{:mdex,</code></p>"},
+  {1, "<p><code>{:mdex, &quot;~&gt; 0.12&quot;}</code></p>"},
+  {2, "<p>Enjoy!</p>"}
+]
 ```
+
+[Streaming guide](https://hexdocs.pm/mdex/streaming.html)
 
 ## Examples and Guides
 

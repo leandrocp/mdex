@@ -2,6 +2,12 @@
 
 ### Changes
 
+* Add `MDEx.stream/2`. It turns an Enumerable of Markdown chunks into a lazy
+  Elixir Stream of keyed `MDEx.Document` values.
+* Deprecate `MDEx.new(streaming: true)`. Use `MDEx.stream/2` for chunked input.
+  `MDEx.Document.put_markdown/3` remains supported for building one document.
+* Require `mdex_native >= 0.2.9` for link-reference metadata from the parser.
+
 ## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
 
 
