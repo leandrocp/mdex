@@ -2271,9 +2271,7 @@ defmodule MDEx.Document do
   end
 
   @doc false
-  # Markdown waiting to be parsed, when it is the document's whole content: nothing
-  # already parsed to merge it with, no steps to run over the resulting AST and no
-  # fragment completion to apply. Callers can render it without building an AST.
+  # Buffered Markdown that is the document's whole content, so it can render without an AST.
   def unparsed_markdown(%MDEx.Document{nodes: [], buffer: [_ | _] = buffer, current_steps: [], halted: false} = document) do
     if get_private(document, :fragment_completion, false) do
       :error
