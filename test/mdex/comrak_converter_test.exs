@@ -119,16 +119,28 @@ defmodule MDEx.ComrakConverterTest do
   end
 
   test "round-trips every struct MDExNative.Comrak defines" do
-    Application.load(:mdex_native)
-    {:ok, modules} = :application.get_key(:mdex_native, :modules)
+    natives = native_structs()
 
-    for module <- modules, ["MDExNative", "Comrak", suffix] <- [Module.split(module)] do
+    # A partial module list would let the round trip below pass without asserting anything.
+    assert Enum.all?(@nodes, &(Module.concat(MDExNative.Comrak, &1) in natives))
+
+    for module <- natives do
+      ["MDExNative", "Comrak", suffix] = Module.split(module)
       native = module.__struct__()
       mdex = MDEx.ComrakConverter.to_mdex(native)
 
       assert mdex.__struct__ == Module.concat(MDEx, suffix)
       assert MDEx.ComrakConverter.from_mdex(mdex) == native
     end
+  end
+
+  defp native_structs do
+    :ok = Application.ensure_loaded(:mdex_native)
+
+    for module <- Application.spec(:mdex_native, :modules),
+        match?(["MDExNative", "Comrak", _suffix], Module.split(module)),
+        Code.ensure_loaded?(module) and function_exported?(module, :__struct__, 0),
+        do: module
   end
 
   defp fields(module) do
