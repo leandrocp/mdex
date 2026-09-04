@@ -660,10 +660,11 @@ defmodule MDEx do
   def to_xml(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
     markdown = document || markdown
-    options = Document.put_options(MDEx.new(), options).options
+    document = Document.put_options(MDEx.new(), options)
 
     markdown
-    |> Comrak.markdown_to_xml(Document.rust_options!(options))
+    |> maybe_auto_close(document)
+    |> Comrak.markdown_to_xml(Document.rust_options!(document.options))
     |> maybe_trim()
   end
 
@@ -679,6 +680,14 @@ defmodule MDEx do
       to_xml(%Document{nodes: List.wrap(source)}, options)
     else
       {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  defp maybe_auto_close(markdown, document) do
+    if Document.get_private(document, :auto_close, false) do
+      MDEx.FragmentParser.complete(markdown)
+    else
+      markdown
     end
   end
 
@@ -1300,9 +1309,9 @@ defmodule MDEx do
     - `:syntax_highlight` (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) - Syntax highlight options, or `nil` to turn it off.
     - `:sanitize` (`t:sanitize_options/0` | `nil`) - HTML cleaning options, or `nil` to turn it off. Defaults to `nil`.
     - `:assigns` (`t:map/0`) - Values for pipelines, plugins, and HEEx. Defaults to `%{}`.
+    - `:auto_close` (`t:boolean/0`) - Closes Markdown syntax left open at the end of the source. Defaults to `false`, and to `true` in `MDEx.stream/2`.
 
-  The `:streaming` option is deprecated. Pass an Enumerable of Markdown chunks
-  to `MDEx.stream/2`.
+  The `:streaming` option is deprecated. Use `:auto_close`.
 
   `:sanitize` and `:unsafe` are off by default. See the
   [Safety guide](https://hexdocs.pm/mdex/safety.html).
@@ -1352,7 +1361,7 @@ defmodule MDEx do
   @spec new(keyword()) :: Document.t()
   def new(options \\ []) do
     if Keyword.has_key?(options, :streaming) do
-      IO.warn("the :streaming option is deprecated; pass an Enumerable of Markdown chunks to MDEx.stream/2")
+      IO.warn("the :streaming option is deprecated; use :auto_close instead")
     end
 
     # TODO: remove :document in v1.0
@@ -1427,12 +1436,19 @@ defmodule MDEx do
         cache({id, :html}, MDEx.to_html!(document))
       end)
 
+  Markdown syntax left open at the end of a chunk is closed so partial output
+  stays readable, which is why the first document above renders `<h1>Hel</h1>`
+  rather than `# Hel`. Pass `auto_close: false` to render the source as written:
+
+      iex> ["a [x](htt"] |> MDEx.stream(auto_close: false) |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+      [{0, "<p>a [x](htt</p>"}]
+
   See the [Streaming guide](streaming.html) for the id rules, Req, and Phoenix
   LiveView.
 
   > #### Experimental {: .warning}
   >
-  > This function may change before its first stable release.
+  > Consider this function experimental and subject to change.
 
   """
   @spec stream(Enumerable.t(), Document.options()) :: Enumerable.t()
@@ -1440,6 +1456,8 @@ defmodule MDEx do
     chunks
     |> Stream.transform(
       fn ->
+        {auto_close, options} = Keyword.pop(options, :auto_close, true)
+
         document =
           options
           |> Keyword.drop([:document, :markdown, :streaming])
@@ -1447,6 +1465,7 @@ defmodule MDEx do
 
         %{
           document: document,
+          auto_close: auto_close,
           rust_options: Document.rust_options!(document.options),
           source: "",
           utf8_suffix: "",
@@ -1499,7 +1518,7 @@ defmodule MDEx do
   defp emit_stream_source(source, state) do
     nodes =
       source
-      |> MDEx.FragmentParser.complete(preserve_pending_html: true)
+      |> stream_auto_close(state)
       |> stream_parse_nodes!(state.rust_options)
 
     state = state |> Map.put(:source, source) |> stream_maybe_finalize_open(nodes)
@@ -1508,6 +1527,12 @@ defmodule MDEx do
     events = stream_document_events(changed_ids, segment_nodes, state.document)
 
     {events, %{state | segment_nodes: segment_nodes}}
+  end
+
+  defp stream_auto_close(source, %{auto_close: false}), do: source
+
+  defp stream_auto_close(source, _state) do
+    MDEx.FragmentParser.complete(source, preserve_pending_html: true)
   end
 
   defp stream_parse_nodes!(source, rust_options) do

@@ -1,253 +1,184 @@
 # Streaming Markdown
 
-Use `MDEx.stream/2` when Markdown arrives in chunks from an LLM, file, or HTTP
-response.
+Two independent things are involved when Markdown arrives a piece at a time:
+
+- **`MDEx.stream/2`** turns an Enumerable of chunks into keyed documents, so a UI
+  updates only what changed.
+- **`:auto_close`** closes Markdown syntax left open at the end of the source, so
+  a half-written `**bold` renders as bold instead of literal asterisks. It is an
+  option on every render, and on by default in `MDEx.stream/2`.
+
+Use either on its own. If you already hold the whole response as a string and
+only want it to render sensibly while it grows, you want `:auto_close`, not
+`MDEx.stream/2`.
+
+## `:auto_close`
 
 ```elixir
-chunks
-|> MDEx.stream(options)
-|> Enum.each(&consume/1)
+MDEx.to_html!("Some **bo")                     #=> "<p>Some **bo</p>"
+MDEx.to_html!("Some **bo", auto_close: true)   #=> "<p>Some <strong>bo</strong></p>"
 ```
 
-The input is any `Enumerable` of binaries. The result is a lazy Elixir
-`Stream`. MDEx parses each update and emits keyed documents:
+It closes emphasis, inline code, fenced blocks, links, images, tables, list
+markers, and HTML tags. It works with every renderer and with
+`MDEx.parse_document/2`, so AST transforms on partial source are possible too.
+
+The trade-off is that a link whose URL is still arriving renders as a real link:
 
 ```elixir
-{id, %MDEx.Document{}}
+MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="htt">x</a></p>)
 ```
 
-The caller does not need to manage parser state.
+Pass `auto_close: false` if you would rather show the raw source until the
+construct is finished, including inside `MDEx.stream/2`.
 
-## Output contract
+## `MDEx.stream/2`
 
-Each document is parsed and ready to render. Render it in the format your
-application needs:
+The input is any `Enumerable` of binaries. The result is a lazy `Stream` of
+`{id, %MDEx.Document{}}`. You do not manage parser state.
 
 ```elixir
 chunks
 |> MDEx.stream(extension: [table: true])
-|> Stream.map(fn {id, document} ->
-  {id, MDEx.to_html!(document)}
+|> Enum.each(fn {id, document} ->
+  replace_rendered_chunk(id, MDEx.to_html!(document))
 end)
-|> Enum.each(&update_output/1)
 ```
 
 An id may appear more than once:
 
 ```elixir
-{0, first_document}         # insert
-{1, partial_document}       # insert
-{0, updated_first_document} # replace an earlier chunk
-{1, final_document}         # replace at EOF if the normal AST differs
+{0, first}    # insert
+{1, partial}  # insert
+{0, revised}  # replace an earlier chunk
+{1, final}    # replace at EOF if the AST changed
 ```
 
-Apply these rules:
-
 1. Insert a chunk when its id is new.
-2. Replace a chunk when its id repeats.
-3. Keep chunks in id order. A replacement does not move its chunk.
-4. Any earlier id may repeat. Document-wide Markdown can change an earlier AST.
-5. Normal Stream completion is EOF. There is no custom EOF chunk or unchanged
-   replacement.
+2. Replace a chunk when its id repeats. A replacement does not move it.
+3. Any earlier id may repeat — a late link reference or footnote definition
+   changes a block that was already emitted.
+4. Normal Stream completion is EOF. There is no EOF chunk.
 
-A chunk may contain more than one Markdown block. MDEx groups top-level nodes
-by source range so consumers do not need to split Markdown themselves.
-When raw HTML opens a container across Markdown blocks, MDEx keeps the whole
-container in one keyed chunk. This keeps keyed DOM children independent when
-`render: [unsafe: true]` is enabled.
+MDEx groups top-level nodes by source range, so a chunk may hold more than one
+Markdown block and you never split Markdown yourself. Raw HTML that opens a
+container across blocks stays in one keyed chunk. Emitted documents are
+immutable. If the consumer stops early, MDEx does not read input it has not
+reached.
 
-MDEx emits a new immutable document for each update. It does not change a
-document that it already emitted.
+### Collecting the final output
 
-If the consumer stops early, MDEx does not parse input it has not read.
-
-## Collect the final output
-
-Without a live UI, collect the latest document for each id and join them in
-order:
+Keep the latest document per id and join them in order:
 
 ```elixir
 html =
   chunks
   |> MDEx.stream()
-  |> Stream.map(fn {id, document} ->
-    {id, MDEx.to_html!(document)}
-  end)
+  |> Stream.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
   |> Enum.into(%{})
   |> Enum.sort_by(&elem(&1, 0))
   |> Enum.map_join("\n", &elem(&1, 1))
 ```
 
-## Change the AST before rendering
+### Transforming before rendering
 
-Each emitted `%MDEx.Document{}` contains a parsed AST. You can change its nodes
-before rendering it. Do not call `MDEx.parse_document!/2` again.
-
-This example sends external links through a redirect service:
+Each emitted document holds a parsed AST — change it, do not parse it again:
 
 ```elixir
-def rewrite_links(document) do
-  MDEx.Document.update_nodes(document, MDEx.Link, fn link ->
-    url = "https://example.test/redirect?to=" <> URI.encode_www_form(link.url)
-    %{link | url: url}
-  end)
-end
-
 chunks
 |> MDEx.stream()
-|> Stream.map(fn {id, document} ->
-  document = rewrite_links(document)
-  {id, MDEx.to_html!(document)}
-end)
+|> Stream.map(fn {id, document} -> {id, MDEx.to_html!(rewrite_links(document))} end)
 |> Enum.each(&update_output/1)
 ```
 
-Apply the transform to every emitted chunk, including repeated ids. A partial
-link may become a complete link in a later update with the same id. A reference
-link may also become available after its definition arrives.
+Apply the transform to every emitted chunk, including repeated ids.
 
-### Whole-document limit
+A chunk is one keyed segment, not the whole response. Transforms that need the
+whole document — a table of contents, ids unique across the response, numbering
+shared by several chunks — need the complete source, or state you keep yourself
+and reconcile when an id repeats.
 
-The document in `{id, document}` is one keyed chunk, not the full Markdown
-response. A transform that only needs nodes in that chunk, such as rewriting a
-link or adding attributes, works directly.
+## Sources
 
-A transform that needs all content may produce a different result. Examples
-include a table of contents, heading ids that must be unique across the whole
-response, and numbering shared by several chunks. For those transforms, either
-wait for the full source or keep state outside MDEx and account for any
-repeated id.
-
-## Lists and generated streams
+`File.stream!/1`, `Req`'s async body, and any other Enumerable work directly:
 
 ```elixir
-["# Hel", "lo\n\n", "Some **bold", " text**"]
-|> MDEx.stream()
-|> Stream.each(fn {_id, document} ->
-  IO.write(MDEx.to_html!(document))
-end)
-|> Stream.run()
+"README.md" |> File.stream!([], 2048) |> MDEx.stream()
+
+Req.get!(url, into: :self).body |> MDEx.stream(extension: [table: true])
 ```
 
-You can use normal `Stream` functions before and after `MDEx.stream/2`:
+Req cancels the request if the consumer stops early.
+
+A chunk may split a UTF-8 code point. MDEx holds the incomplete bytes until the
+next chunk. Invalid UTF-8 raises when the Stream reaches it, and so does an
+incomplete code point at EOF.
+
+### Sources that push
+
+`MDEx.stream/2` pulls. When a source pushes instead — process messages, a
+callback, PubSub fan-out — adapt it at the application boundary with
+`Stream.resource/3`, and read it in a task rather than in a process that must
+stay responsive:
 
 ```elixir
-chunk_source
-|> MDEx.stream(options)
-|> Stream.map(fn {id, document} ->
-  {id, MDEx.to_json!(document)}
-end)
-|> Stream.filter(&interesting?/1)
-|> Enum.each(&publish/1)
+def new(source) do
+  Stream.resource(
+    fn ->
+      ref = make_ref()
+      {:ok, _subscription} = MyApp.Source.subscribe(source, self(), ref)
+      ref
+    end,
+    fn ref ->
+      receive do
+        {:chunk, ^ref, chunk} -> {[chunk], ref}
+        {:done, ^ref} -> {:halt, ref}
+        {:error, ^ref, reason} -> raise "source failed: #{inspect(reason)}"
+      end
+    end,
+    fn ref -> MyApp.Source.cancel(ref) end
+  )
+end
 ```
 
-## File streams
+Tag messages with a unique reference so late messages from an earlier
+subscription cannot be mixed in. The final callback runs when enumeration ends,
+fails, or the consumer halts early.
 
-`File.stream!/1` works without an adapter:
-
-```elixir
-rendered_chunks =
-  "README.md"
-  |> File.stream!()
-  |> MDEx.stream()
-  |> Enum.reduce(%{}, fn {id, document}, chunks ->
-    Map.put(chunks, id, MDEx.to_html!(document))
-  end)
-```
-
-The map keeps the latest rendered value for each id.
-
-You can also read fixed-size binary chunks:
-
-```elixir
-"large.md"
-|> File.stream!([], 2048)
-|> MDEx.stream()
-|> Enum.each(&consume/1)
-```
-
-A file or network chunk may split a UTF-8 code point. MDEx holds the incomplete
-bytes until the next chunk. Invalid UTF-8 raises when the Stream reaches those
-bytes. An incomplete code point at EOF also raises.
-
-## Req response streams
-
-Req's asynchronous response body is an Enumerable, so it can feed MDEx
-directly:
-
-```elixir
-Req.get!(url, into: :self).body
-|> MDEx.stream(extension: [table: true])
-|> Enum.each(&consume/1)
-```
-
-The body does not need to be joined first. Req cancels the asynchronous request
-if the consumer stops early.
-
-## Partial Markdown
-
-MDEx uses its fragment parser on the cumulative source. This keeps partial
-output valid while more source is expected:
-
-```elixir
-["**Fol", "low**"]
-|> MDEx.stream()
-|> Enum.each(fn {_id, document} ->
-  IO.inspect(MDEx.to_html!(document))
-end)
-```
-
-The first update renders a closed `<strong>` element. The next update uses the
-same id and replaces it. At EOF, MDEx parses the source without temporary
-closing syntax and emits another replacement only when that changes the AST.
+`Stream.resource/3` does not make the producer demand-driven. If it outruns the
+consumer, messages accumulate in the receiving process. Use the source's own
+acknowledgement or pause mechanism when it has one, otherwise bound the buffer
+yourself. Subscription, buffering, timeouts, and cancellation belong to the
+source, which is why MDEx consumes a binary Stream rather than offering its own
+push API.
 
 ## Phoenix LiveView
 
-The MDEx id can be the id for a
-[`Phoenix.LiveView.stream/4`](https://phoenix-live-view.hexdocs.pm/Phoenix.LiveView.html#stream/4)
-entry.
-
-Configure the id before you create the LiveView stream:
+An MDEx id can be the id of a `Phoenix.LiveView.stream/4` entry. Configure the
+`dom_id` before creating the LiveView stream:
 
 ```elixir
 def mount(_params, _session, socket) do
   {:ok,
    socket
-   |> stream_configure(:markdown, dom_id: fn {id, _document} ->
-     "markdown-#{id}"
-   end)
+   |> stream_configure(:markdown, dom_id: fn {id, _document} -> "markdown-#{id}" end)
    |> stream(:markdown, [])}
 end
 ```
 
-Use the exact DOM id that LiveView gives to the template:
-
 ```heex
 <div id="markdown" class="markdown-body" phx-update="stream">
-  <div
-    :for={{dom_id, {_id, document}} <- @streams.markdown}
-    id={dom_id}
-    class="contents"
-  >
+  <div :for={{dom_id, {_id, document}} <- @streams.markdown} id={dom_id} class="contents">
     {Phoenix.HTML.raw(MDEx.to_html!(document))}
   </div>
 </div>
 ```
 
-Use `Phoenix.HTML.raw/1` only after applying the MDEx safety options required by
-your application.
+Use `Phoenix.HTML.raw/1` only after applying the safety options your application
+needs.
 
-### Read the source outside the LiveView callback
-
-`Phoenix.LiveView.stream/4` reads its Enumerable in the LiveView process. Do
-not pass it an LLM, socket, or other long-running source:
-
-```elixir
-# This blocks the LiveView callback until the source ends.
-stream(socket, :markdown, MDEx.stream(long_running_chunks))
-```
-
-Read the MDEx Stream in a task and send each finite chunk to the LiveView:
+`Phoenix.LiveView.stream/4` reads its Enumerable inside the LiveView process, so
+never hand it a long-running source. Read it in a task and forward each chunk:
 
 ```elixir
 def start_markdown(socket, chunks) do
@@ -263,168 +194,51 @@ end
 def handle_info({:markdown_chunk, chunk}, socket) do
   {:noreply, stream_insert(socket, :markdown, chunk)}
 end
-
-def handle_async(:markdown_producer, {:ok, :ok}, socket) do
-  {:noreply, socket}
-end
 ```
 
-You may also send a finite list and call `stream/4` once per batch:
+A repeated id updates the same DOM child in place without moving it, including
+when a lower id repeats after a higher one was inserted. LiveView drops streamed
+data from socket state after each render, so the source and MDEx state must stay
+in the producer. `stream_async/4` does not forward chunks while its task runs.
 
-```elixir
-def handle_info({:markdown_chunks, chunks}, socket) do
-  {:noreply, stream(socket, :markdown, chunks)}
-end
-```
-
-When an id repeats, LiveView updates the same DOM child without moving it. This
-also works when a lower id repeats after a higher id was inserted. LiveView
-drops streamed data from socket state after each render, so the source and
-MDEx state must stay in the producer.
-
-`stream_async/4` does not forward chunks while its task runs. It waits for the
-task result and then passes that result to `stream/4`.
-
-### Start a new response
-
-MDEx ids start at `0` for each Stream run. Reset the LiveView stream when the UI
-shows one active response:
+Ids restart at `0` for each Stream run, so reset the LiveView stream when a new
+response begins:
 
 ```elixir
 socket = stream(socket, :markdown, [], reset: true)
 ```
 
-For several active responses, include a response id in each DOM id. An MDEx id
-is unique only within one Stream run.
+For several concurrent responses, include a response id in each DOM id.
 
-## Runnable Phoenix example
+## Runnable example
 
 [`examples/streaming.exs`](https://github.com/leandrocp/mdex/blob/main/examples/streaming.exs)
-runs this path:
-
-```text
-Req.Response.Async Enumerable
-  -> MDEx.stream/2
-  -> one {id, document} chunk per message
-  -> Phoenix.LiveView.stream_insert/4
-  -> phx-update="stream"
-```
-
-Run it from the repository:
+runs `Req` → `MDEx.stream/2` → `stream_insert/4` → `phx-update="stream"` with
+Lumis highlighting, an adjustable delay, and live metrics:
 
 ```shell
 elixir examples/streaming.exs
 ```
 
-The URL defaults to the raw MDEx README on GitHub. The example splits large
-network reads into 64-byte chunks so updates stay visible. The controls include
-pause and resume at a source chunk boundary, a delay of up to 1000 ms, and
-optional auto-scroll. New keyed preview chunks use a short reveal animation
-unless the browser requests reduced motion. Stream, pause, resume, stop, and
-the delay slider stay in the sticky diagnostics panel while the page scrolls.
-
-The example enables `render: [unsafe: true]` so raw HTML in the README is
-visible. Use trusted URLs when reusing this setting. Lumis highlights partial
-code fences. The page also shows source counts, MDEx updates, DOM chunks, and
-current and peak memory for the producer and LiveView processes. A sticky
-diagnostics panel beside the preview keeps this run data and the latest chunk
-indexes visible while the page scrolls. The compact monospace activity uses
-`+id` for inserts and `~id` for replacements.
-
-## Adapting message-based sources
-
-Prefer an `Enumerable` from the source when one is available. It composes with
-`MDEx.stream/2` directly and may preserve upstream demand and cancellation.
-
-Some sources only deliver chunks through process messages or callbacks. Adapt
-those sources to an Elixir Stream at the application boundary with
-`Stream.resource/3`:
-
-```elixir
-# This adapter belongs to the application, not MDEx.
-defmodule MyApp.MarkdownMessageStream do
-  def new(source) do
-    Stream.resource(
-      fn ->
-        ref = make_ref()
-
-        {:ok, subscription} =
-          MyApp.MarkdownSource.subscribe(source, self(), ref)
-
-        {ref, subscription}
-      end,
-      fn {ref, _subscription} = state ->
-        receive do
-          {:markdown_chunk, ^ref, chunk} when is_binary(chunk) ->
-            {[chunk], state}
-
-          {:markdown_done, ^ref} ->
-            {:halt, state}
-
-          {:markdown_error, ^ref, reason} ->
-            raise "Markdown source failed: #{inspect(reason)}"
-        end
-      end,
-      fn {_ref, subscription} ->
-        MyApp.MarkdownSource.cancel(subscription)
-      end
-    )
-  end
-end
-```
-
-Replace `MyApp.MarkdownSource` and the message shapes with the API provided by
-the source. The resulting value is a normal Stream:
-
-```elixir
-source
-|> MyApp.MarkdownMessageStream.new()
-|> MDEx.stream()
-|> Enum.each(&consume/1)
-```
-
-`Stream.resource/3` gives the adapter a clear lifecycle:
-
-1. Subscribe lazily in the first callback. `self()` is the process that
-   enumerates the Stream.
-2. Receive one binary chunk at a time in the second callback.
-3. Return `{:halt, state}` when the source reports EOF.
-4. Raise when the source reports an error.
-5. Cancel or unsubscribe in the final callback. It runs when enumeration ends,
-   fails, or the downstream consumer halts early.
-
-Tag messages with a unique reference so concurrent streams and late messages
-from an earlier subscription cannot be mixed. The adapter also owns any
-timeout and source-specific cleanup policy.
-
-### Backpressure
-
-`Stream.resource/3` makes a message source look like an Enumerable, but it does
-not make the producer demand-driven. If the producer sends chunks faster than
-the Stream consumes them, messages accumulate in the receiving process.
-
-For an unbounded or high-volume source, use its acknowledgement, pause, or
-demand mechanism when available. Otherwise the application must define a
-bounded buffer or an overflow policy. If the source already provides an
-Enumerable with cancellation or demand, use that instead of a message adapter.
-
-Subscription, buffering, timeouts, and cancellation are source concerns. MDEx
-therefore does not add a separate `new/push/finish` API; it consumes the binary
-Stream produced by the adapter.
+It enables `render: [unsafe: true]` so raw HTML in the fetched README is visible.
+Use trusted URLs when reusing that setting.
 
 ## Options
 
-Pass normal MDEx options as the second argument:
+`MDEx.stream/2` takes the same options as the other render functions:
 
 ```elixir
 chunks
 |> MDEx.stream(
   extension: [strikethrough: true, table: true, tasklist: true],
-  render: [unsafe: false],
-  syntax_highlight: [
-    engine: :lumis,
-    opts: [formatter: {:html_inline, theme: "github_light"}]
-  ]
+  syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "github_light"}]],
+  auto_close: false
 )
 |> Enum.each(&consume/1)
 ```
+
+Plugins attach once when enumeration starts, and their steps run on every
+emitted document, including repeated ids. Their parser options apply before
+parsing, but their steps only ever see one keyed chunk. A plugin that
+preprocesses `document.buffer` does not fit `MDEx.stream/2` — collect the full
+source and use the one-document API instead.

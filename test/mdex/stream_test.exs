@@ -24,8 +24,8 @@ defmodule MDEx.StreamTest do
 
   defp streaming_document(options \\ []) do
     options
+    |> Keyword.put(:auto_close, true)
     |> MDEx.new()
-    |> MDEx.Document.put_private(:fragment_completion, true)
   end
 
   defp nodes(chunks, document \\ streaming_document()) do
@@ -1295,7 +1295,38 @@ defmodule MDEx.StreamTest do
       end)
 
     assert warning =~ "the :streaming option is deprecated"
-    assert warning =~ "MDEx.stream/2"
+    assert warning =~ ":auto_close"
+  end
+
+  test "auto_close is on by default and can be turned off" do
+    assert [{0, ~s(<p>a <a href="htt">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
+             ["a [x](htt"] |> MDEx.stream() |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+
+    assert [{0, "<p>a [x](htt</p>"}] =
+             ["a [x](htt"]
+             |> MDEx.stream(auto_close: false)
+             |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+  end
+
+  test "auto_close is off by default outside streaming" do
+    assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
+    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="htt">x</a></p>)
+  end
+
+  test "auto_close applies to every renderer that accepts Markdown" do
+    source = "a [x](htt"
+
+    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="htt">)
+    assert MDEx.to_json!(source, auto_close: true) =~ "MDEx.Link"
+    assert [_, %{"attributes" => %{"link" => "htt"}} | _] = MDEx.to_delta!(source, auto_close: true)
+    assert [%MDEx.Paragraph{nodes: [_, %MDEx.Link{url: "htt"}]}] = MDEx.parse_document!(source, auto_close: true).nodes
+
+    # to_xml/2 renders a binary natively instead of running the document
+    # pipeline, so it needs the source completed before the native call.
+    xml = MDEx.to_xml!(source, auto_close: true)
+    assert xml =~ "<link"
+    assert xml == MDEx.new(markdown: source, auto_close: true) |> MDEx.to_xml!()
+    refute MDEx.to_xml!(source) =~ "<link"
   end
 
   test "returns a native lazy Stream" do
@@ -1732,6 +1763,128 @@ defmodule MDEx.StreamTest do
 
       {:get_calls, caller} ->
         send(caller, {:parser_calls, Enum.reverse(calls)})
+    end
+  end
+
+  describe "streaming a source matches rendering it in one shot" do
+    @comparison_options [
+      extension: [table: true, strikethrough: true, tasklist: true, footnotes: true, autolink: true],
+      render: [unsafe: true]
+    ]
+
+    @sources [
+      heading_and_paragraphs: "# Title\n\nFirst paragraph.\n\nSecond paragraph.\n",
+      tight_list: "- one\n- two\n- three\n",
+      loose_list: "- one\n\n- two\n\n- three\n",
+      nested_list: "- one\n  - nested\n  - also\n- two\n",
+      task_list: "- [ ] todo\n- [x] done\n",
+      fenced_code: "Intro:\n\n```elixir\ndef a(b), do: b\n```\n\nOutro.\n",
+      table: "| name | qty |\n|---|---|\n| apples | 3 |\n| pears | 7 |\n",
+      block_quote: "> quoted\n> lines\n\nAfter.\n",
+      raw_html: "<div class=\"x\">\n  <p>raw</p>\n</div>\n\nAfter.\n",
+      reference_link: "See [docs][1] and [more][2].\n\n[1]: https://a.test\n[2]: https://b.test\n",
+      footnote: "Text with a note[^1].\n\n[^1]: The note.\n",
+      inline_marks: "A **bold**, *em*, ~~struck~~, `code`, and [link](https://a.test).\n",
+      image: "![alt](https://a.test/i.png)\n\nAfter.\n",
+      thematic_break: "Before.\n\n---\n\nAfter.\n",
+      setext_heading: "Title\n=====\n\nBody.\n",
+      mixed: """
+      # Report
+
+      Summary paragraph with **bold** and a [link](https://a.test).
+
+      - first
+      - second
+
+      ```elixir
+      IO.puts(:ok)
+      ```
+
+      | col | val |
+      |---|---|
+      | a | 1 |
+
+      > closing note
+      """
+    ]
+
+    # A chunk boundary can fall anywhere, so exercise sizes that split inside
+    # markers, across lines, and across whole blocks.
+    @chunk_sizes [1, 2, 3, 5, 7, 13, 64]
+
+    defp chunk_every(source, size) do
+      source |> :binary.bin_to_list() |> Enum.chunk_every(size) |> Enum.map(&:binary.list_to_bin/1)
+    end
+
+    defp latest_per_id(source, size, options) do
+      source
+      |> chunk_every(size)
+      |> MDEx.stream(options)
+      |> Enum.reduce(%{}, fn {id, document}, acc -> Map.put(acc, id, document) end)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map(&elem(&1, 1))
+    end
+
+    defp squeeze(html), do: String.replace(html, ~r/\s+/, "")
+
+    test "the final keyed chunks render the same HTML as to_html!/2" do
+      for {name, source} <- @sources, size <- @chunk_sizes do
+        expected = MDEx.to_html!(source, @comparison_options)
+
+        streamed =
+          source
+          |> latest_per_id(size, @comparison_options)
+          |> Enum.map_join("\n", &MDEx.to_html!/1)
+
+        assert squeeze(streamed) == squeeze(expected),
+               "#{name} at chunk size #{size}\nstreamed: #{inspect(streamed)}\nexpected: #{inspect(expected)}"
+      end
+    end
+
+    test "every top-level node of the one-shot parse lands in exactly one keyed chunk" do
+      for {name, source} <- @sources, size <- @chunk_sizes do
+        expected = MDEx.parse_document!(source, @comparison_options).nodes
+        streamed = source |> latest_per_id(size, @comparison_options) |> Enum.flat_map(& &1.nodes)
+
+        assert streamed == expected,
+               "#{name} at chunk size #{size}: keyed chunks do not partition the document"
+      end
+    end
+
+    test "a single chunk holding the whole source matches to_html!/2" do
+      for {name, source} <- @sources do
+        streamed =
+          [source]
+          |> MDEx.stream(@comparison_options)
+          |> Enum.reduce(%{}, fn {id, document}, acc -> Map.put(acc, id, MDEx.to_html!(document)) end)
+          |> Enum.sort_by(&elem(&1, 0))
+          |> Enum.map_join("\n", &elem(&1, 1))
+
+        assert squeeze(streamed) == squeeze(MDEx.to_html!(source, @comparison_options)),
+               to_string(name)
+      end
+    end
+
+    test "auto_close: false also converges on the one-shot render" do
+      options = Keyword.put(@comparison_options, :auto_close, false)
+
+      for {name, source} <- @sources, size <- [1, 7, 64] do
+        streamed =
+          source
+          |> latest_per_id(size, options)
+          |> Enum.map_join("\n", &MDEx.to_html!/1)
+
+        assert squeeze(streamed) == squeeze(MDEx.to_html!(source, options)),
+               "#{name} at chunk size #{size} with auto_close: false"
+      end
+    end
+
+    test "no keyed chunk ever renders temporary closing syntax at the end of input" do
+      for {_name, source} <- @sources, size <- @chunk_sizes do
+        html = source |> latest_per_id(size, @comparison_options) |> Enum.map_join(&MDEx.to_html!/1)
+
+        refute html =~ "mdex:incomplete-link"
+      end
     end
   end
 end

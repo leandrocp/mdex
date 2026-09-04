@@ -678,6 +678,7 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
+    :auto_close,
     :streaming,
     :assigns,
     :plugins,
@@ -1632,10 +1633,15 @@ defmodule MDEx.Document do
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
 
+      {:auto_close, value}, acc ->
+        acc
+        |> Map.update!(:options, &Keyword.put(&1 || [], :auto_close, value))
+        |> Document.put_private(:auto_close, value)
+
       {:streaming, value}, acc ->
         acc
-        |> Map.update!(:options, &Keyword.put(&1 || [], :streaming, value))
-        |> Document.put_private(:fragment_completion, value)
+        |> Map.update!(:options, &Keyword.put(&1 || [], :auto_close, value))
+        |> Document.put_private(:auto_close, value)
 
       {:assigns, value}, acc ->
         %{acc | options: Keyword.put(acc.options || [], :assigns, value)}
@@ -2145,7 +2151,7 @@ defmodule MDEx.Document do
   1. Processes buffered markdown: If there are any markdown chunks in the buffer (added via `put_markdown/3` for example),
      they are parsed and added to the document. If the document already has nodes, they are combined with the buffer.
 
-  2. Closes partial syntax when called by `MDEx.stream/2`.
+  2. Closes Markdown syntax left open at the end of the buffer, when `:auto_close` is set.
 
   3. Executes pipeline steps: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
      executed in order. Steps can transform the document or halt the pipeline.
@@ -2245,7 +2251,7 @@ defmodule MDEx.Document do
 
   defp flush_buffer(document, buffer) do
     {buffer, document} =
-      if Document.get_private(document, :fragment_completion, false) do
+      if Document.get_private(document, :auto_close, false) do
         state = Document.get_private(document, :fragment_state)
         {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state)
         {completed, Document.put_private(document, :fragment_state, new_state)}
@@ -2362,6 +2368,24 @@ defmodule MDEx.Document do
 
   @doc """
   Adds Markdown to the document buffer.
+
+  Use this to compose a document from separate pieces of Markdown. Any AST edit
+  made by a pipeline step or by inserting nodes is kept when more Markdown is
+  added later.
+
+  > #### Not for streaming {: .warning}
+  >
+  > Keeping those AST edits means `run/1` renders the current AST back to
+  > Markdown before parsing the buffer with it, so each call costs a full render
+  > plus a full parse of everything added so far.
+  >
+  > That round trip also loses what the AST does not store: blank lines between
+  > blocks, whether a list is loose or tight, and a table's delimiter row. Adding
+  > one chunk at a time therefore changes the output — two paragraphs merge into
+  > one, a loose list turns tight, and a table's `|---|` row becomes a data row.
+  >
+  > For Markdown arriving in chunks use `MDEx.stream/2`, which keeps the source
+  > text instead of the AST.
 
   ## Examples
 
