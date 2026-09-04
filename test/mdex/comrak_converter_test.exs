@@ -121,7 +121,7 @@ defmodule MDEx.ComrakConverterTest do
   test "round-trips every struct MDExNative.Comrak defines" do
     natives = native_structs()
 
-    # A partial module list would let the round trip below pass without asserting anything.
+    # A partial list would let the loop below assert nothing.
     assert Enum.all?(@nodes, &(Module.concat(MDExNative.Comrak, &1) in natives))
 
     for module <- natives do
