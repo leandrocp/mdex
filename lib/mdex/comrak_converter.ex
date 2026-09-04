@@ -1,11 +1,8 @@
 defmodule MDEx.ComrakConverter do
   @moduledoc false
 
-  # Both namespaces declare the same fields, so a node converts by swapping
-  # `__struct__`. The table is compile-time: resolving it per node used to cost more
-  # than parsing and rendering combined.
-
-  # `Document` has its own clause because `MDEx.Document` also carries pipeline state.
+  # Both namespaces declare the same fields, so a node converts by swapping `__struct__`.
+  # `Document` is excluded: `MDEx.Document` also carries pipeline state.
   @nodes ~w(
     Alert Attributes BlockDirective BlockQuote Code CodeBlock DescriptionDetails
     DescriptionItem DescriptionList DescriptionTerm Emph Escaped EscapedTag
@@ -47,7 +44,7 @@ defmodule MDEx.ComrakConverter do
 
   defp convert(value, _direction), do: value
 
-  # A mismatched `mdex_native` may decode a different set of fields.
+  # Sizes differ when `mdex_native` decoded a different set of fields.
   defp rename(node, target, size) when map_size(node) == size, do: Map.replace!(node, :__struct__, target)
   defp rename(node, target, _size), do: struct(target, Map.from_struct(node))
 
