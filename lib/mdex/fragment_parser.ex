@@ -456,10 +456,10 @@ defmodule MDEx.FragmentParser do
 
   defp maybe_complete_table(core, trailing) do
     case trailing do
-      <<?\n, _::binary>> ->
+      <<?\n, rest::binary>> ->
         line = last_line(core)
 
-        if table_header_line?(line) do
+        if table_header_line?(line) and not blank_line_follows?(rest) do
           separator = generate_table_separator(line)
           {core <> "\n" <> separator, {:consume_trailing, "\n"}}
         else
@@ -470,6 +470,8 @@ defmodule MDEx.FragmentParser do
         nil
     end
   end
+
+  defp blank_line_follows?(rest), do: :binary.match(rest, "\n") != :nomatch
 
   defp table_header_line?(line) do
     trimmed = String.trim(line)

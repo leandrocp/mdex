@@ -217,6 +217,22 @@ defmodule MDEx.FragmentParserTest do
     assert complete("| foo | bar |\n") == "| foo | bar |\n| - | - |"
   end
 
+  test "table closed by blank line" do
+    assert complete("| a |\n|---|\n| 1 |\n\n") == "| a |\n|---|\n| 1 |\n\n"
+  end
+
+  test "multi column table closed by blank line" do
+    assert complete("| a | b |\n|---|---|\n| 1 | 2 |\n\n") == "| a | b |\n|---|---|\n| 1 | 2 |\n\n"
+  end
+
+  test "table closed by blank line after other blocks" do
+    assert complete("# h\n\n| a |\n|---|\n| 1 |\n\n") == "# h\n\n| a |\n|---|\n| 1 |\n\n"
+  end
+
+  test "open table still gets a row appended" do
+    assert complete("| a |\n|---|\n| 1 |\n") == "| a |\n|---|\n| 1 |\n| - |"
+  end
+
   test "- [x] Collect *n" do
     assert complete("- [x] Collect *n") == "- [x] Collect *n*"
   end
