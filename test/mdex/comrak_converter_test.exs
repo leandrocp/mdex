@@ -118,6 +118,19 @@ defmodule MDEx.ComrakConverterTest do
     end
   end
 
+  test "round-trips every struct MDExNative.Comrak defines" do
+    Application.load(:mdex_native)
+    {:ok, modules} = :application.get_key(:mdex_native, :modules)
+
+    for module <- modules, ["MDExNative", "Comrak", suffix] <- [Module.split(module)] do
+      native = module.__struct__()
+      mdex = MDEx.ComrakConverter.to_mdex(native)
+
+      assert mdex.__struct__ == Module.concat(MDEx, suffix)
+      assert MDEx.ComrakConverter.from_mdex(mdex) == native
+    end
+  end
+
   defp fields(module) do
     module.__struct__()
     |> Map.from_struct()

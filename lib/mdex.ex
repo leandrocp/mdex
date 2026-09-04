@@ -411,7 +411,7 @@ defmodule MDEx do
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Comrak.document_to_html/2)
+    run_pipeline(document, options, :html)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -668,7 +668,7 @@ defmodule MDEx do
   end
 
   def to_xml(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Comrak.document_to_xml/2)
+    run_pipeline(document, options, :xml)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -1035,7 +1035,7 @@ defmodule MDEx do
   """
   @spec to_markdown(Document.t(), MDEx.Document.options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_markdown(%Document{} = document, options \\ []) do
-    run_pipeline(document, options, &Comrak.document_to_commonmark/2)
+    run_pipeline(document, options, :commonmark)
   end
 
   @doc """
@@ -1146,21 +1146,50 @@ defmodule MDEx do
   defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
 
-  defp run_pipeline(document, options, converter) do
+  defp run_pipeline(document, options, format) do
     {document_opt, options} = pop_deprecated_document_option(options)
 
-    document
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> then(fn document ->
+    document =
       document
-      |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
-      |> ComrakConverter.from_mdex()
-      |> converter.(Document.rust_options!(document.options))
-      |> maybe_trim()
-    end)
+      |> Document.put_options(options)
+      |> maybe_apply_document_option(document_opt)
+
+    case source_markdown(document, format) do
+      {:ok, markdown} ->
+        markdown
+        |> render_markdown(format, Document.rust_options!(document.options))
+        |> maybe_trim()
+
+      :error ->
+        document = Document.run(document)
+
+        document
+        |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
+        |> ComrakConverter.from_mdex()
+        |> render_document(format, Document.rust_options!(document.options))
+        |> maybe_trim()
+    end
   end
+
+  # Markdown that no step or renderer will touch doesn't need an Elixir AST, and
+  # skipping it also skips both struct translation passes. `:commonmark` always needs
+  # one because the NIF only renders it from a document.
+  defp source_markdown(document, format) when format in [:html, :xml] do
+    if document.options[:codefence_renderers] in [nil, %{}] do
+      Document.unparsed_markdown(document)
+    else
+      :error
+    end
+  end
+
+  defp source_markdown(_document, _format), do: :error
+
+  defp render_markdown(markdown, :html, options), do: Comrak.markdown_to_html(markdown, options)
+  defp render_markdown(markdown, :xml, options), do: Comrak.markdown_to_xml(markdown, options)
+
+  defp render_document(document, :html, options), do: Comrak.document_to_html(document, options)
+  defp render_document(document, :xml, options), do: Comrak.document_to_xml(document, options)
+  defp render_document(document, :commonmark, options), do: Comrak.document_to_commonmark(document, options)
 
   defp apply_codefence_renderers_to_document(document, renderers) when renderers in [nil, %{}] do
     document
