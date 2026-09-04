@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.13.6](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.13.6) (2026-09-04)
+
+### Features
+
+- Update lumis to v0.7 by @leandrocp in [#393](https://github.com/leandrocp/mdex/pull/393)
+- Introduce Stream API by @leandrocp in [#397](https://github.com/leandrocp/mdex/pull/397)
+- Add :auto_close option to close open Markdown syntax by @leandrocp in [#403](https://github.com/leandrocp/mdex/pull/403)
+
+### Bug Fixes
+
+- Do not append a table row when a blank line closed the table by @leandrocp in [#402](https://github.com/leandrocp/mdex/pull/402)
+
+### Documentation
+
+- Add plugin mdex_multiline_cells by @leandrocp
+
+### Other Changes
+
+- Bump mdex_native and fix tests by @leandrocp in [#389](https://github.com/leandrocp/mdex/pull/389)
+- Clean up CHANGELOG.md by @leandrocp in [#400](https://github.com/leandrocp/mdex/pull/400)
+
 ## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
 
 
