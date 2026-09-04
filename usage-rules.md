@@ -435,9 +435,26 @@ Use `MDEx.stream/2` for LLM, SSE, file, or HTTP response chunks.
 end)
 ```
 
-`MDEx.new(streaming: true)` is deprecated. Use `MDEx.new/1` and
-`MDEx.Document.put_markdown/3` to build one document in steps. Do not use them
-as a manual streaming API.
+### Partial Markdown
+
+`:auto_close` closes Markdown syntax left open at the end of the source, so
+`Some **bo` renders as bold rather than literal asterisks. It works on every
+render function, defaults to `false`, and defaults to `true` in `MDEx.stream/2`.
+
+```elixir
+MDEx.to_html!(source, auto_close: true)
+chunks |> MDEx.stream(auto_close: false)
+```
+
+Use it when you hold the whole response as a string and only need it to render
+sensibly while it grows. Use `MDEx.stream/2` when you have the chunks and want
+keyed output.
+
+`MDEx.new(streaming: true)` is deprecated. Use `:auto_close`.
+`MDEx.Document.put_markdown/3` is for composing a document from separate pieces
+of Markdown, not for feeding chunks — it renders the AST back to Markdown on
+every call, which is slower and loses blank lines, list looseness, and table
+delimiter rows.
 
 ## Output Formats
 
@@ -599,9 +616,10 @@ doc = MDEx.Document.wrap(%MDEx.Text{literal: "Hello"})
 5. **Forgetting required extensions** - Tables, strikethrough, math, footnotes, and similar syntax need explicit options unless a plugin enables them.
 6. **Treating `parse_fragment!/1` like a full document parser** - It is for one fragment node.
 7. **Expecting component imports to be automatic in HEEx** - Import or fully qualify them yourself.
-8. **Using `MDEx.new(streaming: true)`** - It is deprecated; pass chunks to `MDEx.stream/2`.
+8. **Using `MDEx.new(streaming: true)`** - It is deprecated; use `auto_close: true`.
 9. **Putting inline nodes at the root** - Wrap them in a block container.
 10. **Using plugins without attaching or passing them** - They do nothing until attached.
+11. **Feeding stream chunks to `MDEx.Document.put_markdown/3`** - It composes documents; use `MDEx.stream/2` for chunks.
 
 ## Recommended Patterns
 

@@ -1705,21 +1705,56 @@ defmodule MDEx.DocumentTest do
 
     assert MapSet.equal?(
              opts,
-             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers])
+             MapSet.new([
+               :extension,
+               :parse,
+               :render,
+               :sanitize,
+               :auto_close,
+               :streaming,
+               :syntax_highlight,
+               :assigns,
+               :plugins,
+               :codefence_renderers
+             ])
            )
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo])
 
     assert MapSet.equal?(
              opts,
-             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers, :foo])
+             MapSet.new([
+               :extension,
+               :parse,
+               :render,
+               :sanitize,
+               :auto_close,
+               :streaming,
+               :syntax_highlight,
+               :assigns,
+               :plugins,
+               :codefence_renderers,
+               :foo
+             ])
            )
 
     assert %{registered_options: opts} = Document.register_options(%MDEx.Document{}, [:foo, :foo])
 
     assert MapSet.equal?(
              opts,
-             MapSet.new([:extension, :parse, :render, :sanitize, :streaming, :syntax_highlight, :assigns, :plugins, :codefence_renderers, :foo])
+             MapSet.new([
+               :extension,
+               :parse,
+               :render,
+               :sanitize,
+               :auto_close,
+               :streaming,
+               :syntax_highlight,
+               :assigns,
+               :plugins,
+               :codefence_renderers,
+               :foo
+             ])
            )
   end
 

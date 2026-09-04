@@ -24,8 +24,8 @@ defmodule MDEx.StreamTest do
 
   defp streaming_document(options \\ []) do
     options
+    |> Keyword.put(:auto_close, true)
     |> MDEx.new()
-    |> MDEx.Document.put_private(:fragment_completion, true)
   end
 
   defp nodes(chunks, document \\ streaming_document()) do
@@ -1295,7 +1295,22 @@ defmodule MDEx.StreamTest do
       end)
 
     assert warning =~ "the :streaming option is deprecated"
-    assert warning =~ "MDEx.stream/2"
+    assert warning =~ ":auto_close"
+  end
+
+  test "auto_close is on by default and can be turned off" do
+    assert [{0, ~s(<p>a <a href="htt">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
+             ["a [x](htt"] |> MDEx.stream() |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+
+    assert [{0, "<p>a [x](htt</p>"}] =
+             ["a [x](htt"]
+             |> MDEx.stream(auto_close: false)
+             |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+  end
+
+  test "auto_close is off by default outside streaming" do
+    assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
+    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="htt">x</a></p>)
   end
 
   test "returns a native lazy Stream" do
