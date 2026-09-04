@@ -660,10 +660,11 @@ defmodule MDEx do
   def to_xml(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
     markdown = document || markdown
-    options = Document.put_options(MDEx.new(), options).options
+    document = Document.put_options(MDEx.new(), options)
 
     markdown
-    |> Comrak.markdown_to_xml(Document.rust_options!(options))
+    |> maybe_auto_close(document)
+    |> Comrak.markdown_to_xml(Document.rust_options!(document.options))
     |> maybe_trim()
   end
 
@@ -679,6 +680,14 @@ defmodule MDEx do
       to_xml(%Document{nodes: List.wrap(source)}, options)
     else
       {:error, %InvalidInputError{found: source}}
+    end
+  end
+
+  defp maybe_auto_close(markdown, document) do
+    if Document.get_private(document, :auto_close, false) do
+      MDEx.FragmentParser.complete(markdown)
+    else
+      markdown
     end
   end
 
@@ -1439,7 +1448,7 @@ defmodule MDEx do
 
   > #### Experimental {: .warning}
   >
-  > This function may change before its first stable release.
+  > Consider this function experimental and subject to change.
 
   """
   @spec stream(Enumerable.t(), Document.options()) :: Enumerable.t()

@@ -1313,6 +1313,22 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="htt">x</a></p>)
   end
 
+  test "auto_close applies to every renderer that accepts Markdown" do
+    source = "a [x](htt"
+
+    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="htt">)
+    assert MDEx.to_json!(source, auto_close: true) =~ "MDEx.Link"
+    assert [_, %{"attributes" => %{"link" => "htt"}} | _] = MDEx.to_delta!(source, auto_close: true)
+    assert [%MDEx.Paragraph{nodes: [_, %MDEx.Link{url: "htt"}]}] = MDEx.parse_document!(source, auto_close: true).nodes
+
+    # to_xml/2 renders a binary natively instead of running the document
+    # pipeline, so it needs the source completed before the native call.
+    xml = MDEx.to_xml!(source, auto_close: true)
+    assert xml =~ "<link"
+    assert xml == MDEx.new(markdown: source, auto_close: true) |> MDEx.to_xml!()
+    refute MDEx.to_xml!(source) =~ "<link"
+  end
+
   test "returns a native lazy Stream" do
     parent = self()
 
