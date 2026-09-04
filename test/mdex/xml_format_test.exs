@@ -114,4 +114,11 @@ defmodule MDEx.XmlFormatTest do
       subtext: true
     )
   end
+
+  test "renders the same XML from Markdown and from a document" do
+    markdown = "# Hello\n"
+    options = [render: [sourcepos: true]]
+
+    assert MDEx.to_xml!(markdown, options) == MDEx.to_xml!(MDEx.new([markdown: markdown] ++ options))
+  end
 end
