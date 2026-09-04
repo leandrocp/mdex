@@ -2276,6 +2276,17 @@ defmodule MDEx.Document do
     end
   end
 
+  @doc false
+  def unparsed_markdown(%MDEx.Document{nodes: [], buffer: [_ | _] = buffer, current_steps: [], halted: false} = document) do
+    if get_private(document, :fragment_completion, false) do
+      :error
+    else
+      {:ok, buffer_to_binary(buffer)}
+    end
+  end
+
+  def unparsed_markdown(%MDEx.Document{}), do: :error
+
   defp buffer_to_binary(buffer) do
     buffer
     |> Enum.reverse()

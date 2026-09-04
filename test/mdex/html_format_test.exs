@@ -669,4 +669,27 @@ defmodule MDEx.HTMLFormatTest do
       block_directive: true
     )
   end
+
+  describe "rendering without an AST" do
+    @markdown "# Title\n\nSome **bold** text with `code` and a [link](http://example.com).\n"
+
+    test "renders the same HTML as the pipeline" do
+      with_step = MDEx.Document.append_steps(MDEx.new(markdown: @markdown), noop: & &1)
+
+      assert MDEx.to_html!(@markdown) == MDEx.to_html!(with_step)
+    end
+
+    test "still runs pipeline steps" do
+      upcase = &MDEx.Document.update_nodes(&1, MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
+      document = MDEx.Document.append_steps(MDEx.new(markdown: @markdown), upcase: upcase)
+
+      assert MDEx.to_html!(document) =~ "<h1>TITLE</h1>"
+    end
+
+    test "still renders documents that were already parsed" do
+      document = %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "parsed"}]}]}
+
+      assert MDEx.to_html!(document) == "<p>parsed</p>"
+    end
+  end
 end
