@@ -1171,8 +1171,7 @@ defmodule MDEx do
     end
   end
 
-  # Markdown that no step or renderer will touch renders without an AST, skipping both
-  # struct translation passes. `:commonmark` is out: the NIF only renders it from a document.
+  # `:commonmark` is excluded: the NIF only renders it from a document.
   defp source_markdown(document, format) when format in [:html, :xml] do
     if document.options[:codefence_renderers] in [nil, %{}] do
       Document.unparsed_markdown(document)

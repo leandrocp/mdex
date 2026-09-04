@@ -2271,7 +2271,6 @@ defmodule MDEx.Document do
   end
 
   @doc false
-  # Buffered Markdown that is the document's whole content, so it can render without an AST.
   def unparsed_markdown(%MDEx.Document{nodes: [], buffer: [_ | _] = buffer, current_steps: [], halted: false} = document) do
     if get_private(document, :fragment_completion, false) do
       :error
