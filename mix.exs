@@ -179,7 +179,8 @@ defmodule MDEx.MixProject do
       {:lumis, "~> 0.1", optional: true},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:stream_data, "~> 1.0", only: :test}
     ]
   end
 
