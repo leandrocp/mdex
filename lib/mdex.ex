@@ -411,7 +411,7 @@ defmodule MDEx do
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Comrak.document_to_html/2)
+    run_pipeline(document, options, &Comrak.document_to_html/2, &Comrak.markdown_to_html/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -1155,20 +1155,41 @@ defmodule MDEx do
   defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim(result)}
   defp maybe_trim(error), do: error
 
-  defp run_pipeline(document, options, converter) do
+  defp run_pipeline(document, options, converter, markdown_converter \\ nil) do
     {document_opt, options} = pop_deprecated_document_option(options)
 
-    document
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> then(fn document ->
+    document =
       document
-      |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
-      |> ComrakConverter.from_mdex()
-      |> converter.(Document.rust_options!(document.options))
-      |> maybe_trim()
-    end)
+      |> Document.put_options(options)
+      |> maybe_apply_document_option(document_opt)
+
+    case source_markdown(document, markdown_converter) do
+      {:ok, markdown} ->
+        markdown
+        |> markdown_converter.(Document.rust_options!(document.options))
+        |> maybe_trim()
+
+      :error ->
+        document
+        |> Document.run()
+        |> then(fn document ->
+          document
+          |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
+          |> ComrakConverter.from_mdex()
+          |> converter.(Document.rust_options!(document.options))
+          |> maybe_trim()
+        end)
+    end
+  end
+
+  defp source_markdown(_document, nil), do: :error
+
+  defp source_markdown(document, _markdown_converter) do
+    if document.options[:codefence_renderers] in [nil, %{}] do
+      Document.unparsed_markdown(document)
+    else
+      :error
+    end
   end
 
   defp apply_codefence_renderers_to_document(document, renderers) when renderers in [nil, %{}] do
