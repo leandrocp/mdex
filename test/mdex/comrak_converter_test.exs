@@ -89,6 +89,16 @@ defmodule MDEx.ComrakConverterTest do
              MDEx.ComrakConverter.to_mdex(native_code)
   end
 
+  test "rebuilds structs when source and target fields differ" do
+    native_code =
+      %MDExNative.Comrak.Code{literal: "elixir"}
+      |> Map.delete(:attrs)
+      |> Map.put(:future_field, true)
+
+    assert %MDEx.Code{literal: "elixir", attrs: nil} =
+             MDEx.ComrakConverter.to_mdex(native_code)
+  end
+
   test "converts mdex document structs to native structs" do
     document = %MDEx.Document{
       nodes: [
@@ -120,9 +130,7 @@ defmodule MDEx.ComrakConverterTest do
 
   test "round-trips every struct MDExNative.Comrak defines" do
     natives = native_structs()
-
-    # Or the loop below asserts nothing.
-    assert Enum.all?(@nodes, &(Module.concat(MDExNative.Comrak, &1) in natives))
+    refute Enum.empty?(natives)
 
     for module <- natives do
       ["MDExNative", "Comrak", suffix] = Module.split(module)

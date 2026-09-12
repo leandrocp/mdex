@@ -2278,7 +2278,7 @@ defmodule MDEx.Document do
 
   @doc false
   def unparsed_markdown(%MDEx.Document{nodes: [], buffer: [_ | _] = buffer, current_steps: [], halted: false} = document) do
-    if get_private(document, :fragment_completion, false) do
+    if get_private(document, :auto_close, false) do
       :error
     else
       {:ok, buffer_to_binary(buffer)}

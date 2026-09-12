@@ -40,10 +40,11 @@ defmodule MDEx.HTMLFormatTest do
       render: [unsafe: true]
     ]
 
+    assert {:ok, direct_html} = MDEx.to_html(document, opts)
     assert {:ok, doc} = MDEx.parse_document(document, opts)
     assert {:ok, html} = MDEx.to_html(doc, opts)
 
-    # IO.puts(html)
+    assert direct_html == html
     assert html == String.trim(expected)
   end
 
@@ -54,10 +55,11 @@ defmodule MDEx.HTMLFormatTest do
       render: [unsafe: true]
     ]
 
+    assert {:ok, direct_html} = MDEx.to_html(document, opts)
     assert {:ok, doc} = MDEx.parse_document(document, opts)
     assert {:ok, html} = MDEx.to_html(doc, opts)
 
-    # IO.puts(html)
+    assert direct_html == html
     assert html == String.trim(expected)
   end
 
@@ -677,6 +679,16 @@ defmodule MDEx.HTMLFormatTest do
       with_step = MDEx.Document.append_steps(MDEx.new(markdown: @markdown), noop: & &1)
 
       assert MDEx.to_html!(@markdown) == MDEx.to_html!(with_step)
+    end
+
+    test "preserves buffered Markdown order" do
+      document =
+        MDEx.new(markdown: "# Last")
+        |> MDEx.Document.put_markdown("# First\n", :top)
+
+      with_step = MDEx.Document.append_steps(document, noop: & &1)
+
+      assert MDEx.to_html!(document) == MDEx.to_html!(with_step)
     end
 
     test "still runs pipeline steps" do
