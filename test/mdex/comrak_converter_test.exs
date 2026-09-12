@@ -143,8 +143,6 @@ defmodule MDEx.ComrakConverterTest do
   end
 
   defp native_structs do
-    :ok = Application.ensure_loaded(:mdex_native)
-
     for module <- Application.spec(:mdex_native, :modules),
         match?(["MDExNative", "Comrak", _suffix], Module.split(module)),
         Code.ensure_loaded?(module) and function_exported?(module, :__struct__, 0),
