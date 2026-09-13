@@ -1178,8 +1178,8 @@ defmodule MDEx do
   @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
-  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim(result)}
+  defp maybe_trim({:ok, result}), do: {:ok, String.trim_trailing(result)}
+  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim_trailing(result)}
   defp maybe_trim(error), do: error
 
   defp run_pipeline(document, options, converter) do
