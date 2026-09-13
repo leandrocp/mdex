@@ -10,7 +10,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   require MDEx
 
-  @max_runs if System.get_env("CI"), do: 500, else: 100
+  @max_runs 500
 
   @extension_option_kinds %{
     alerts: :boolean,
