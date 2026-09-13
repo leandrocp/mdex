@@ -180,6 +180,7 @@ defmodule MDEx.MixProject do
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:floki, "~> 0.38.4", only: :test},
       {:stream_data, "~> 1.0", only: :test}
     ]
   end
