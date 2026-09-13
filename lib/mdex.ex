@@ -279,7 +279,7 @@ defmodule MDEx do
   defp json_to_node(json) do
     {node_type, node} = Map.pop!(json, :node_type)
     node_type = Module.safe_concat([node_type])
-    node = map_nodes(node)
+    node = node |> map_nodes() |> map_sourcepos() |> map_node_fields(node_type)
     struct(node_type, node)
   end
 
@@ -299,6 +299,33 @@ defmodule MDEx do
   end
 
   defp map_attrs(node), do: node
+
+  defp map_sourcepos(%{sourcepos: %{start: [start_line, start_column], end: [end_line, end_column]}} = node) do
+    sourcepos = %MDEx.Sourcepos{start: {start_line, start_column}, end: {end_line, end_column}}
+    %{node | sourcepos: sourcepos}
+  end
+
+  defp map_sourcepos(node), do: node
+
+  defp map_node_fields(node, type) when type in [MDEx.List, MDEx.ListItem] do
+    node
+    |> Map.update!(:list_type, &String.to_existing_atom/1)
+    |> Map.update!(:delimiter, &String.to_existing_atom/1)
+  end
+
+  defp map_node_fields(node, MDEx.Table) do
+    Map.update!(node, :alignments, &Enum.map(&1, fn alignment -> String.to_existing_atom(alignment) end))
+  end
+
+  defp map_node_fields(node, MDEx.FootnoteReference) do
+    Map.update!(node, :texts, &Enum.map(&1, fn [text, count] -> {text, count} end))
+  end
+
+  defp map_node_fields(node, MDEx.Alert) do
+    Map.update!(node, :alert_type, &String.to_existing_atom/1)
+  end
+
+  defp map_node_fields(node, _type), do: node
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
