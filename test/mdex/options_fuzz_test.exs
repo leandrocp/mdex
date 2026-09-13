@@ -94,6 +94,8 @@ defmodule MDEx.OptionsFuzzTest do
   [link](https://example.com/a?b=1&c=2 "title"){target=_blank} and
   ![image](https://example.com/image.png "alt"){width=10}
 
+  ![standalone figure](https://example.com/figure.png "caption")
+
   [Heading](#heading) and []()
 
   https://example.com and <user@example.com>
@@ -105,7 +107,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   "smart quotes" -- punctuation and 中文*emphasis*文本.
 
-  Inline math $x + y$, LaTeX math \(x + y\), and `code`{.language-elixir key=value}.
+  Inline math $x + y$, math code $`x + y`$, LaTeX math \(x + y\), and `code`{.language-elixir key=value}.
 
   - [x] task
   - [ ] pending

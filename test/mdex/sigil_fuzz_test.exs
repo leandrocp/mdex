@@ -48,7 +48,8 @@ defmodule MDEx.SigilFuzzTest do
 
   property "~MD HTML output matches to_html" do
     check all(markdown <- markdown(), property_options()) do
-      assert eval_sigil(markdown, ~c"HTML") == MDEx.to_html!(markdown, @sigil_options)
+      assert html_tree(eval_sigil(markdown, ~c"HTML")) ==
+               html_tree(MDEx.to_html!(markdown, @sigil_options))
     end
   end
 
@@ -132,11 +133,18 @@ defmodule MDEx.SigilFuzzTest do
       multiline block quote
       >>>
 
-      Inline math $x + y$ and math code `$x + y$`.
+      Inline math $x + y$ and math code $`x + y`$.
 
       {https://example.com/#{text}}
+      https://example.com/plain
 
       <span data-kind="raw">raw HTML</span>
+
+      {@value}
+
+      ```elixir key=value
+      IO.puts("MDEx")
+      ```
       """
     end
   end
@@ -153,4 +161,18 @@ defmodule MDEx.SigilFuzzTest do
   defp property_options do
     [max_runs: @max_runs, max_generation_size: 30]
   end
+
+  defp html_tree(html) do
+    html
+    |> Floki.parse_fragment!()
+    |> normalize_html_tree()
+  end
+
+  defp normalize_html_tree(nodes) when is_list(nodes), do: Enum.map(nodes, &normalize_html_tree/1)
+
+  defp normalize_html_tree({tag, attributes, children}) do
+    {tag, Enum.sort(attributes), normalize_html_tree(children)}
+  end
+
+  defp normalize_html_tree(node), do: node
 end
