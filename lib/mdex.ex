@@ -309,20 +309,20 @@ defmodule MDEx do
 
   defp map_node_fields(node, type) when type in [MDEx.List, MDEx.ListItem] do
     node
-    |> Map.update!(:list_type, &String.to_existing_atom/1)
-    |> Map.update!(:delimiter, &String.to_existing_atom/1)
+    |> Map.update(:list_type, :bullet, &String.to_existing_atom/1)
+    |> Map.update(:delimiter, :period, &String.to_existing_atom/1)
   end
 
   defp map_node_fields(node, MDEx.Table) do
-    Map.update!(node, :alignments, &Enum.map(&1, fn alignment -> String.to_existing_atom(alignment) end))
+    Map.update(node, :alignments, [], &Enum.map(&1, fn alignment -> String.to_existing_atom(alignment) end))
   end
 
   defp map_node_fields(node, MDEx.FootnoteReference) do
-    Map.update!(node, :texts, &Enum.map(&1, fn [text, count] -> {text, count} end))
+    Map.update(node, :texts, [], &Enum.map(&1, fn [text, count] -> {text, count} end))
   end
 
   defp map_node_fields(node, MDEx.Alert) do
-    Map.update!(node, :alert_type, &String.to_existing_atom/1)
+    Map.update(node, :alert_type, :note, &String.to_existing_atom/1)
   end
 
   defp map_node_fields(node, _type), do: node
