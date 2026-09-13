@@ -340,43 +340,43 @@ defmodule MDEx.FeaturesFuzzTest do
   defp sanitize_value(:boolean), do: boolean()
 
   defp sanitize_value(:tag_attributes) do
-    map_of(
+    pair_map(
       member_of(@sanitize_tags),
       list_of(member_of(@sanitize_attributes), max_length: 4),
-      max_length: 4
+      4
     )
   end
 
   defp sanitize_value(:allowed_classes) do
-    map_of(
+    pair_map(
       member_of(@sanitize_tags),
       list_of(member_of(@sanitize_values), max_length: 4),
-      max_length: 4
+      4
     )
   end
 
   defp sanitize_value(:tag_attribute_value_lists) do
-    map_of(
+    pair_map(
       member_of(@sanitize_tags),
-      map_of(
+      pair_map(
         member_of(@sanitize_attributes),
         list_of(member_of(@sanitize_values), max_length: 4),
-        max_length: 3
+        3
       ),
-      max_length: 3
+      3
     )
   end
 
   defp sanitize_value(:tag_attribute_values) do
-    map_of(
+    pair_map(
       member_of(@sanitize_tags),
-      map_of(member_of(@sanitize_attributes), member_of(@sanitize_values), max_length: 3),
-      max_length: 3
+      pair_map(member_of(@sanitize_attributes), member_of(@sanitize_values), 3),
+      3
     )
   end
 
   defp sanitize_value(:tag_values) do
-    map_of(member_of(@sanitize_tags), member_of(@sanitize_attributes), max_length: 4)
+    pair_map(member_of(@sanitize_tags), member_of(@sanitize_attributes), 4)
   end
 
   defp sanitize_value(:url_relative) do
@@ -386,6 +386,12 @@ defmodule MDEx.FeaturesFuzzTest do
       {:rewrite_with_base, "https://example.com/base/"},
       {:rewrite_with_root, {"https://example.com/root/", "index.html"}}
     ])
+  end
+
+  defp pair_map(key_generator, value_generator, max_length) do
+    tuple({key_generator, value_generator})
+    |> list_of(max_length: max_length)
+    |> map(&Map.new/1)
   end
 
   defp syntax_highlight_options do
