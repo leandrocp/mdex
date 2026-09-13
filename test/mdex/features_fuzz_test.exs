@@ -411,7 +411,11 @@ defmodule MDEx.FeaturesFuzzTest do
   end
 
   defp stream_markdown do
-    gen all(heading <- nonempty_text(), body <- nonempty_text(), slug <- nonempty_text()) do
+    gen all(
+          heading <- nonempty_text(),
+          body <- string(:utf8, min_length: 1, max_length: 48),
+          slug <- nonempty_text()
+        ) do
       "# #{heading}\n\n#{body} **strong**\n\n[link][ref]\n\n[ref]: https://example.com/#{slug}\n"
     end
   end
