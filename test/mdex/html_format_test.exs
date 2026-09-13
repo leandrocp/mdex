@@ -703,5 +703,19 @@ defmodule MDEx.HTMLFormatTest do
 
       assert MDEx.to_html!(document) == "<p>parsed</p>"
     end
+
+    test "keeps parsed nodes when more Markdown is buffered" do
+      document =
+        MDEx.parse_document!("# Parsed\n")
+        |> MDEx.Document.put_markdown("# Appended\n")
+
+      assert MDEx.to_html!(document) == "<h1>Parsed</h1>\n<h1>Appended</h1>"
+    end
+
+    test "does not render the buffer of a halted document" do
+      document = MDEx.Document.put_markdown(%MDEx.Document{halted: true}, "# Buffered\n")
+
+      assert MDEx.to_html!(document) == ""
+    end
   end
 end
