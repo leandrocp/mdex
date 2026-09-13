@@ -54,7 +54,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   @parse_option_kinds %{
     default_info_string: :optional_string,
-    escaped_char_spans: :boolean,
+    escaped_char_spans: :upstream_escaped_char_spans,
     ignore_setext: :boolean,
     leave_footnote_definitions: :boolean,
     relaxed_autolinks: :boolean,
@@ -68,7 +68,7 @@ defmodule MDEx.OptionsFuzzTest do
     alert_style: {:member_of, [:specific, :semantic]},
     compact_html: :boolean,
     escape: :boolean,
-    escaped_char_spans: :boolean,
+    escaped_char_spans: :upstream_escaped_char_spans,
     experimental_minimize_commonmark: :boolean,
     figure_with_caption: :boolean,
     full_info_string: :boolean,
@@ -94,15 +94,22 @@ defmodule MDEx.OptionsFuzzTest do
   [link](https://example.com/a?b=1&c=2 "title"){target=_blank} and
   ![image](https://example.com/image.png "alt"){width=10}
 
+  [Heading](#heading) and []()
+
   https://example.com and <user@example.com>
+
+  {https://relaxed.example.com} and \*escaped\*
 
   **strong** *emphasis* ~~strike~~ __underline__ ~subscript~ ^superscript^
   ==highlight== ++insert++ ||spoiler|| {-subtext-} :rocket:
 
-  Inline math $x + y$ and `code`{.language-elixir key=value}.
+  "smart quotes" -- punctuation and 中文*emphasis*文本.
+
+  Inline math $x + y$, LaTeX math \(x + y\), and `code`{.language-elixir key=value}.
 
   - [x] task
   - [ ] pending
+  - [?] relaxed
 
   1. ordered
   2. list
@@ -110,6 +117,7 @@ defmodule MDEx.OptionsFuzzTest do
   | column | value |
   | :----- | ----: |
   | row    | data  |
+  | [x]    | task  |
 
   An inline footnote ^[inline note] and a reference.[^note]
 
@@ -135,6 +143,10 @@ defmodule MDEx.OptionsFuzzTest do
 
   <span data-kind="raw">raw HTML</span>
 
+  <script>filtered by tagfilter</script>
+
+  {@assign}
+
   ```elixir {.example key=value}
   IO.puts("hello")
   ```
@@ -142,6 +154,10 @@ defmodule MDEx.OptionsFuzzTest do
   ```
   code without an info string
   ```
+
+      indented code block
+
+  A deliberately long paragraph that gives width and CommonMark minimization options enough text and punctuation to transform during rendering.
   """
 
   @heex_markdown ~S"""
@@ -189,7 +205,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   property "HTML rendering has Markdown and Document input parity" do
     check all({markdown, options} <- fuzz_case(), property_options()) do
-      expected = MDEx.to_html!(markdown, options)
+      expected = NativeComrak.markdown_to_html(markdown, native_options(options))
       document = MDEx.parse_document!(markdown, options)
 
       assert html_tree(MDEx.to_html!(document)) == html_tree(expected)
@@ -350,6 +366,12 @@ defmodule MDEx.OptionsFuzzTest do
   end
 
   defp option_value(:boolean), do: boolean()
+
+  # mdex_native currently exposes Escaped children through an undeclared
+  # dynamic :nodes field, so any Document round trip loses those children.
+  # Restore boolean generation when https://github.com/leandrocp/mdex_native/issues/69 is released.
+  defp option_value(:upstream_escaped_char_spans), do: constant(false)
+
   defp option_value(:deprecated_header_ids), do: constant(nil)
   defp option_value(:optional_string), do: one_of([constant(nil), option_string()])
   defp option_value(:front_matter_delimiter), do: member_of([nil, "---", "+++", ";;;"])
@@ -403,8 +425,8 @@ defmodule MDEx.OptionsFuzzTest do
       assert %{"insert" => insert} = operation
       assert is_binary(insert) or is_map(insert)
 
-      if attributes = operation["attributes"] do
-        assert is_map(attributes)
+      if Map.has_key?(operation, "attributes") do
+        assert is_map(operation["attributes"])
       end
     end)
   end
