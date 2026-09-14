@@ -1104,6 +1104,10 @@ defmodule MDExTest do
     test "document to markdown with default options" do
       assert MDEx.to_markdown!(%Document{nodes: [%Heading{nodes: [%Text{literal: "Test"}]}]}) == "# Test"
     end
+
+    test "keeps the indentation of a leading indented code block" do
+      assert MDEx.to_markdown!(MDEx.parse_document!("    a\n    b\n")) == "    a\n    b"
+    end
   end
 
   describe "url rewriter" do

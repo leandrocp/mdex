@@ -9,6 +9,7 @@ defmodule MDEx.MixProject do
       app: :mdex,
       version: @version,
       elixir: "~> 1.15",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       package: package(),
       docs: docs(),
@@ -25,6 +26,9 @@ defmodule MDEx.MixProject do
       extra_applications: [:logger]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_env), do: ["lib"]
 
   def cli do
     [

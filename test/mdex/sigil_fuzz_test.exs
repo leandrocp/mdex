@@ -1,10 +1,10 @@
 defmodule MDEx.SigilFuzzTest do
-  use ExUnit.Case, async: true
-  use ExUnitProperties
+  use MDEx.Fuzz
 
+  import ExUnit.CaptureIO
   import MDEx.Sigil
 
-  @max_runs 500
+  alias MDEx.Fuzz.Markdown
 
   @sigil_options MDEx.merge_options(
                    MDEx.Document.default_options(),
@@ -41,44 +41,44 @@ defmodule MDEx.SigilFuzzTest do
   end
 
   property "~MD document output matches parse_document" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert eval_sigil(markdown, []) == MDEx.parse_document!(markdown, @sigil_options)
     end
   end
 
   property "~MD HTML output matches to_html" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert html_tree(eval_sigil(markdown, ~c"HTML")) ==
                html_tree(MDEx.to_html!(markdown, @sigil_options))
     end
   end
 
   property "~MD Markdown output preserves literal Markdown" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert eval_sigil(markdown, ~c"MD") == markdown
     end
   end
 
   property "~MD JSON output matches to_json" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert eval_sigil(markdown, ~c"JSON") == MDEx.to_json!(markdown, @sigil_options)
     end
   end
 
   property "~MD XML output matches to_xml" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert eval_sigil(markdown, ~c"XML") == MDEx.to_xml!(markdown, @sigil_options)
     end
   end
 
   property "~MD Delta output matches to_delta" do
-    check all(markdown <- markdown(), property_options()) do
+    check all(markdown <- markdown()) do
       assert eval_sigil(markdown, ~c"DELTA") == MDEx.to_delta!(markdown, @sigil_options)
     end
   end
 
   property "~MD HEEX output evaluates generated assigns" do
-    check all(value <- heex_value(), property_options()) do
+    check all(value <- heex_value()) do
       html = render_heex_sigil(%{value: value})
 
       assert Floki.text(Floki.parse_fragment!(html)) == "Hello #{value}"
@@ -96,7 +96,18 @@ defmodule MDEx.SigilFuzzTest do
   defp eval_sigil(markdown, modifier) do
     ast = {:sigil_MD, [], [{:<<>>, [], [markdown]}, modifier]}
     env = %{__ENV__ | module: nil}
-    {value, []} = Code.eval_quoted(ast, [], env)
+
+    # `MDEx.Sigil.expr/2` speculatively parses the sigil body as Elixir to detect
+    # a `%MDEx.Document{}` literal. Markdown that happens to tokenize - `~~~`
+    # fences, `---` breaks, `:::` directives - makes that probe print Elixir
+    # deprecation warnings. They say nothing about the sigil result, so they are
+    # swallowed here to keep a failing property readable.
+    capture_io(:stderr, fn ->
+      {value, []} = Code.eval_quoted(ast, [], env)
+      send(self(), {:sigil_result, value})
+    end)
+
+    assert_received {:sigil_result, value}
     value
   end
 
@@ -105,74 +116,7 @@ defmodule MDEx.SigilFuzzTest do
     |> MDEx.to_html!()
   end
 
-  defp markdown do
-    gen all(text <- nonempty_text()) do
-      """
-      # #{text}
-
-      ~~strike~~ __underline__ X^2^ ||spoiler|| :rocket:
-
-      - [x] task
-      - [?] relaxed task
-
-      | feature | value |
-      | ------- | ----- |
-      | table   | #{text} |
-
-      A reference.[^note]
-
-      [^note]: footnote
-
-      Term
-      : Description
-
-      > [!NOTE]
-      > alert
-
-      >>>
-      multiline block quote
-      >>>
-
-      Inline math $x + y$ and math code $`x + y`$.
-
-      {https://example.com/#{text}}
-      https://example.com/plain
-
-      <span data-kind="raw">raw HTML</span>
-
-      {@value}
-
-      ```elixir key=value
-      IO.puts("MDEx")
-      ```
-      """
-    end
-  end
-
-  defp heex_value do
-    one_of([
-      string(:alphanumeric, max_length: 48),
-      member_of(["<MDEx>", "Elixir & Rust", ~s("quoted"), "{value}"])
-    ])
-  end
-
-  defp nonempty_text, do: string(:alphanumeric, min_length: 1, max_length: 48)
-
-  defp property_options do
-    [max_runs: @max_runs, max_generation_size: 30]
-  end
-
-  defp html_tree(html) do
-    html
-    |> Floki.parse_fragment!()
-    |> normalize_html_tree()
-  end
-
-  defp normalize_html_tree(nodes) when is_list(nodes), do: Enum.map(nodes, &normalize_html_tree/1)
-
-  defp normalize_html_tree({tag, attributes, children}) do
-    {tag, Enum.sort(attributes), normalize_html_tree(children)}
-  end
-
-  defp normalize_html_tree(node), do: node
+  # The sigil interpolates its body at compile time, so the generated document
+  # reaches every modifier verbatim and the parity assertions stay meaningful.
+  defp markdown, do: Markdown.document(max_blocks: 6)
 end
