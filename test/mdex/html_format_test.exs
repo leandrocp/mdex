@@ -40,10 +40,11 @@ defmodule MDEx.HTMLFormatTest do
       render: [unsafe: true]
     ]
 
+    assert {:ok, direct_html} = MDEx.to_html(document, opts)
     assert {:ok, doc} = MDEx.parse_document(document, opts)
     assert {:ok, html} = MDEx.to_html(doc, opts)
 
-    # IO.puts(html)
+    assert direct_html == html
     assert html == String.trim(expected)
   end
 
@@ -54,10 +55,11 @@ defmodule MDEx.HTMLFormatTest do
       render: [unsafe: true]
     ]
 
+    assert {:ok, direct_html} = MDEx.to_html(document, opts)
     assert {:ok, doc} = MDEx.parse_document(document, opts)
     assert {:ok, html} = MDEx.to_html(doc, opts)
 
-    # IO.puts(html)
+    assert direct_html == html
     assert html == String.trim(expected)
   end
 
@@ -668,5 +670,52 @@ defmodule MDEx.HTMLFormatTest do
       "<div class=\"note\">\n<h1>Title</h1>\n<p>Some text.</p>\n<ul>\n<li>item one</li>\n<li>item two</li>\n</ul>\n</div>",
       block_directive: true
     )
+  end
+
+  describe "rendering without an AST" do
+    @markdown "# Title\n\nSome **bold** text with `code` and a [link](http://example.com).\n"
+
+    test "renders the same HTML as the pipeline" do
+      with_step = MDEx.Document.append_steps(MDEx.new(markdown: @markdown), noop: & &1)
+
+      assert MDEx.to_html!(@markdown) == MDEx.to_html!(with_step)
+    end
+
+    test "preserves buffered Markdown order" do
+      document =
+        MDEx.new(markdown: "# Last")
+        |> MDEx.Document.put_markdown("# First\n", :top)
+
+      with_step = MDEx.Document.append_steps(document, noop: & &1)
+
+      assert MDEx.to_html!(document) == MDEx.to_html!(with_step)
+    end
+
+    test "still runs pipeline steps" do
+      upcase = &MDEx.Document.update_nodes(&1, MDEx.Text, fn node -> %{node | literal: String.upcase(node.literal)} end)
+      document = MDEx.Document.append_steps(MDEx.new(markdown: @markdown), upcase: upcase)
+
+      assert MDEx.to_html!(document) =~ "<h1>TITLE</h1>"
+    end
+
+    test "still renders documents that were already parsed" do
+      document = %MDEx.Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "parsed"}]}]}
+
+      assert MDEx.to_html!(document) == "<p>parsed</p>"
+    end
+
+    test "keeps parsed nodes when more Markdown is buffered" do
+      document =
+        MDEx.parse_document!("# Parsed\n")
+        |> MDEx.Document.put_markdown("# Appended\n")
+
+      assert MDEx.to_html!(document) == "<h1>Parsed</h1>\n<h1>Appended</h1>"
+    end
+
+    test "does not render the buffer of a halted document" do
+      document = MDEx.Document.put_markdown(%MDEx.Document{halted: true}, "# Buffered\n")
+
+      assert MDEx.to_html!(document) == ""
+    end
   end
 end

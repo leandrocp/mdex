@@ -2275,6 +2275,17 @@ defmodule MDEx.Document do
     end
   end
 
+  @doc false
+  def unparsed_markdown(%MDEx.Document{nodes: [], buffer: [_ | _] = buffer, current_steps: [], halted: false} = document) do
+    if get_private(document, :auto_close, false) do
+      :error
+    else
+      {:ok, buffer_to_binary(buffer)}
+    end
+  end
+
+  def unparsed_markdown(%MDEx.Document{}), do: :error
+
   defp buffer_to_binary(buffer) do
     buffer
     |> Enum.reverse()
@@ -2762,7 +2773,7 @@ defmodule MDEx.Document do
     if header_ids do
       IO.warn("extension :header_ids is deprecated, use :header_id_prefix instead")
 
-      if Keyword.has_key?(extension, :header_id_prefix) do
+      if Keyword.get(extension, :header_id_prefix) do
         extension
       else
         Keyword.put(extension, :header_id_prefix, header_ids)
@@ -3753,6 +3764,18 @@ defimpl Jason.Encoder, for: MDEx.Document do
   end
 end
 
+defimpl Jason.Encoder, for: MDEx.FootnoteReference do
+  def encode(%MDEx.FootnoteReference{} = node, opts) do
+    map =
+      node
+      |> Map.from_struct()
+      |> Map.update!(:texts, &Enum.map(&1, fn {text, count} -> [text, count] end))
+      |> Map.put("node_type", inspect(MDEx.FootnoteReference))
+
+    Jason.Encode.map(map, opts)
+  end
+end
+
 defimpl Jason.Encoder,
   for: [
     MDEx.FrontMatter,
@@ -3769,7 +3792,6 @@ defimpl Jason.Encoder,
     MDEx.Heading,
     MDEx.ThematicBreak,
     MDEx.FootnoteDefinition,
-    MDEx.FootnoteReference,
     MDEx.Table,
     MDEx.TableRow,
     MDEx.TableCell,

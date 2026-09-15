@@ -84,6 +84,33 @@ defmodule MDEx.JsonFormatTest do
   end
 
   describe "parse_document" do
+    test "uses defaults for omitted list fields" do
+      assert %MDEx.Document{
+               nodes: [%MDEx.List{list_type: :bullet, delimiter: :period, nodes: []}]
+             } = parse_sparse_node("MDEx.List", nodes: [])
+    end
+
+    test "uses defaults for omitted list item fields" do
+      assert %MDEx.Document{
+               nodes: [%MDEx.ListItem{list_type: :bullet, delimiter: :period, nodes: []}]
+             } = parse_sparse_node("MDEx.ListItem", nodes: [])
+    end
+
+    test "uses defaults for omitted table alignments" do
+      assert %MDEx.Document{nodes: [%MDEx.Table{alignments: [], nodes: []}]} =
+               parse_sparse_node("MDEx.Table", nodes: [])
+    end
+
+    test "uses defaults for omitted footnote reference texts" do
+      assert %MDEx.Document{nodes: [%MDEx.FootnoteReference{texts: []}]} =
+               parse_sparse_node("MDEx.FootnoteReference")
+    end
+
+    test "uses defaults for omitted alert type" do
+      assert %MDEx.Document{nodes: [%MDEx.Alert{alert_type: :note, nodes: []}]} =
+               parse_sparse_node("MDEx.Alert", nodes: [])
+    end
+
     test "does not create atoms from invalid node_type values" do
       try do
         MDEx.parse_document({:json, ~s|{"node_type":"MDEx.Unknown","nodes":[]}|})
@@ -118,5 +145,11 @@ defmodule MDEx.JsonFormatTest do
       assert {:ok, %MDEx.Document{nodes: [%MDEx.Paragraph{}, %MDEx.Paragraph{}]}} = MDEx.parse_document({:json, payload})
       assert :erlang.system_info(:atom_count) - before == 0
     end
+  end
+
+  defp parse_sparse_node(node_type, fields \\ []) do
+    node = fields |> Map.new() |> Map.put(:node_type, node_type)
+    json = Jason.encode!(%{node_type: "MDEx.Document", nodes: [node]})
+    MDEx.parse_document!({:json, json})
   end
 end

@@ -279,7 +279,7 @@ defmodule MDEx do
   defp json_to_node(json) do
     {node_type, node} = Map.pop!(json, :node_type)
     node_type = Module.safe_concat([node_type])
-    node = map_nodes(node)
+    node = node |> map_nodes() |> map_sourcepos() |> map_node_fields(node_type)
     struct(node_type, node)
   end
 
@@ -299,6 +299,33 @@ defmodule MDEx do
   end
 
   defp map_attrs(node), do: node
+
+  defp map_sourcepos(%{sourcepos: %{start: [start_line, start_column], end: [end_line, end_column]}} = node) do
+    sourcepos = %MDEx.Sourcepos{start: {start_line, start_column}, end: {end_line, end_column}}
+    %{node | sourcepos: sourcepos}
+  end
+
+  defp map_sourcepos(node), do: node
+
+  defp map_node_fields(node, type) when type in [MDEx.List, MDEx.ListItem] do
+    node
+    |> Map.update(:list_type, :bullet, &String.to_existing_atom/1)
+    |> Map.update(:delimiter, :period, &String.to_existing_atom/1)
+  end
+
+  defp map_node_fields(node, MDEx.Table) do
+    Map.update(node, :alignments, [], &Enum.map(&1, fn alignment -> String.to_existing_atom(alignment) end))
+  end
+
+  defp map_node_fields(node, MDEx.FootnoteReference) do
+    Map.update(node, :texts, [], &Enum.map(&1, fn [text, count] -> {text, count} end))
+  end
+
+  defp map_node_fields(node, MDEx.Alert) do
+    Map.update(node, :alert_type, :note, &String.to_existing_atom/1)
+  end
+
+  defp map_node_fields(node, _type), do: node
 
   @doc """
   Same as `parse_document/2` but raises if the parsing fails.
@@ -411,7 +438,7 @@ defmodule MDEx do
   end
 
   def to_html(%Document{} = document, options) when is_list(options) do
-    run_pipeline(document, options, &Comrak.document_to_html/2)
+    run_pipeline(document, options, &Comrak.document_to_html/2, &Comrak.markdown_to_html/2)
   rescue
     ErlangError ->
       {:error, %DecodeError{document: document}}
@@ -1151,24 +1178,45 @@ defmodule MDEx do
   @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp maybe_trim({:ok, result}), do: {:ok, String.trim(result)}
-  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim(result)}
+  defp maybe_trim({:ok, result}), do: {:ok, String.trim_trailing(result)}
+  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim_trailing(result)}
   defp maybe_trim(error), do: error
 
-  defp run_pipeline(document, options, converter) do
+  defp run_pipeline(document, options, converter, markdown_converter \\ nil) do
     {document_opt, options} = pop_deprecated_document_option(options)
 
-    document
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> then(fn document ->
+    document =
       document
-      |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
-      |> ComrakConverter.from_mdex()
-      |> converter.(Document.rust_options!(document.options))
-      |> maybe_trim()
-    end)
+      |> Document.put_options(options)
+      |> maybe_apply_document_option(document_opt)
+
+    case source_markdown(document, markdown_converter) do
+      {:ok, markdown} ->
+        markdown
+        |> markdown_converter.(Document.rust_options!(document.options))
+        |> maybe_trim()
+
+      :error ->
+        document
+        |> Document.run()
+        |> then(fn document ->
+          document
+          |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
+          |> ComrakConverter.from_mdex()
+          |> converter.(Document.rust_options!(document.options))
+          |> maybe_trim()
+        end)
+    end
+  end
+
+  defp source_markdown(_document, nil), do: :error
+
+  defp source_markdown(document, _markdown_converter) do
+    if document.options[:codefence_renderers] in [nil, %{}] do
+      Document.unparsed_markdown(document)
+    else
+      :error
+    end
   end
 
   defp apply_codefence_renderers_to_document(document, renderers) when renderers in [nil, %{}] do

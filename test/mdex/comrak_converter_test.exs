@@ -89,6 +89,16 @@ defmodule MDEx.ComrakConverterTest do
              MDEx.ComrakConverter.to_mdex(native_code)
   end
 
+  test "rebuilds structs when source and target fields differ" do
+    native_code =
+      %MDExNative.Comrak.Code{literal: "elixir"}
+      |> Map.delete(:attrs)
+      |> Map.put(:future_field, true)
+
+    assert %MDEx.Code{literal: "elixir", attrs: nil} =
+             MDEx.ComrakConverter.to_mdex(native_code)
+  end
+
   test "converts mdex document structs to native structs" do
     document = %MDEx.Document{
       nodes: [
@@ -116,6 +126,27 @@ defmodule MDEx.ComrakConverterTest do
     assert_raise ArgumentError, "cannot convert URI", fn ->
       MDEx.ComrakConverter.to_mdex(%URI{path: "/"})
     end
+  end
+
+  test "round-trips every struct MDExNative.Comrak defines" do
+    natives = native_structs()
+    refute Enum.empty?(natives)
+
+    for module <- natives do
+      ["MDExNative", "Comrak", suffix] = Module.split(module)
+      native = module.__struct__()
+      mdex = MDEx.ComrakConverter.to_mdex(native)
+
+      assert mdex.__struct__ == Module.concat(MDEx, suffix)
+      assert MDEx.ComrakConverter.from_mdex(mdex) == native
+    end
+  end
+
+  defp native_structs do
+    for module <- Application.spec(:mdex_native, :modules),
+        match?(["MDExNative", "Comrak", _suffix], Module.split(module)),
+        Code.ensure_loaded?(module) and function_exported?(module, :__struct__, 0),
+        do: module
   end
 
   defp fields(module) do

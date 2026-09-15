@@ -9,6 +9,7 @@ defmodule MDEx.MixProject do
       app: :mdex,
       version: @version,
       elixir: "~> 1.15",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       package: package(),
       docs: docs(),
@@ -25,6 +26,9 @@ defmodule MDEx.MixProject do
       extra_applications: [:logger]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_env), do: ["lib"]
 
   def cli do
     [
@@ -182,7 +186,9 @@ defmodule MDEx.MixProject do
       {:rustler, ">= 0.30.0", runtime: false},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:floki, "~> 0.35", only: :test},
+      {:stream_data, "~> 1.0", only: :test}
     ]
   end
 
