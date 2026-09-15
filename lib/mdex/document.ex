@@ -3610,6 +3610,7 @@ defimpl Enumerable,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.Subtext,
+    MDEx.Escaped,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.BlockDirective,
@@ -3665,7 +3666,6 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
-    MDEx.Escaped,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}

@@ -975,6 +975,15 @@ defmodule MDEx.DocumentTest do
       assert Enum.reduce(empty_doc, 0, fn _node, acc -> acc + 1 end) == 1
     end
 
+    test "escaped node enumeration reaches its children" do
+      doc = %MDEx.Document{
+        nodes: [%MDEx.Escaped{nodes: [%MDEx.Text{literal: "escaped"}]}]
+      }
+
+      assert Enum.count(doc) == 3
+      assert %MDEx.Text{literal: "escaped"} in Enum.to_list(doc)
+    end
+
     test "single node document enumeration" do
       doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "single"}]}
 
