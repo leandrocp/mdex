@@ -199,12 +199,12 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", branch: "feat/lumis-wasm-runtime"}
+      {:mdex_native, github: "leandrocp/mdex_native", branch: "lp-mdex-dyncall-bridge"}
     end
   end
 
   defp lumis_dep do
-    {:lumis, github: "leandrocp/lumis", branch: "refactor/share-wasm-runtime", sparse: "packages/elixir/lumis", optional: true}
+    {:lumis, github: "leandrocp/lumis", branch: "lp-mdex-dyncall-bridge", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do
