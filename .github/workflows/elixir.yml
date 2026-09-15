@@ -10,6 +10,10 @@ jobs:
   test:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
     uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
+    with:
+      # Temporary, with the git branches in mix.exs: neither has a release to
+      # download a precompiled NIF from, so both are built from source.
+      env_vars: '{"MDEX_NATIVE_BUILD": "1", "LUMIS_BUILD": "1"}'
 
   lint:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
@@ -17,3 +21,4 @@ jobs:
     with:
       credo: true
       credo_args: '--strict'
+      env_vars: '{"MDEX_NATIVE_BUILD": "1", "LUMIS_BUILD": "1"}'

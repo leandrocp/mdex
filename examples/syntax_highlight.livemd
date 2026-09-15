@@ -17,7 +17,7 @@ Add Lumis to your deps if you want to use `engine: :lumis`:
 <!-- livebook:{"force_markdown":true} -->
 
 ```elixir
-{:lumis, "~> 0.1"}
+{:lumis, "~> 0.8"}
 ```
 
 And configure `:mdex_native` to download the Lumis NIF:

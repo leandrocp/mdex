@@ -180,7 +180,10 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:lumis, "~> 0.1", optional: true},
+      lumis_dep(),
+      # Temporary, with the two git branches below: both build their NIF from
+      # source, and each declares `:rustler` optional, so nothing else pulls it.
+      {:rustler, ">= 0.30.0", runtime: false},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -189,12 +192,19 @@ defmodule MDEx.MixProject do
     ]
   end
 
+  # TODO: swap both back to version requirements once leandrocp/lumis#1335 and
+  # leandrocp/mdex_native#59 are merged and released. Until then the branches
+  # are the only place the option conversion lives in `:mdex_native`.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.6"}
+      {:mdex_native, github: "leandrocp/mdex_native", branch: "feat/lumis-wasm-runtime"}
     end
+  end
+
+  defp lumis_dep do
+    {:lumis, github: "leandrocp/lumis", branch: "refactor/share-wasm-runtime", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do
