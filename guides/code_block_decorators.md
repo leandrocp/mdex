@@ -5,7 +5,7 @@ Code block decorators are Lumis syntax highlighting options for individual code 
 Code block decorators require Lumis. Add it to your deps:
 
 ```elixir
-{:lumis, "~> 0.1"}
+{:lumis, "~> 0.8"}
 ```
 
 Configure `:mdex_native` before compiling dependencies:
