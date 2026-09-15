@@ -3424,8 +3424,8 @@ defmodule MDEx.Escaped do
   Spec: https://github.github.com/gfm/#backslash-escapes
   """
 
-  @type t :: %__MODULE__{}
-  defstruct sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
