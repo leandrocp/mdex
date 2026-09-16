@@ -2545,7 +2545,7 @@ defmodule MDEx.Document do
   @typedoc """
   Lumis syntax highlighting options, as documented in `t:Lumis.options/0`.
 
-  Spelled loosely because `:lumis` is optional: naming `Lumis.options/0` here
+  Spelled loosely because `:lumis` is optional: naming `t:Lumis.options/0` here
   would make Dialyzer report an unknown type for everyone who does not install
   it. Lumis validates these itself when a code block is highlighted.
   """

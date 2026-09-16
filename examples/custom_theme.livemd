@@ -5,7 +5,7 @@
 ```elixir
 Mix.install([
   {:mdex, "~> 0.12"},
-  {:lumis, "~> 0.8"},
+  {:lumis, "~> 0.8.1"},
   {:kino, "~> 0.16"}
 ],
   config: [mdex_native: [syntax_highlighter: :lumis]]

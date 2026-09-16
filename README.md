@@ -93,7 +93,7 @@ for example to use Lumis:
 def deps do
   [
     {:mdex, "~> 0.12"},
-    {:lumis, "~> 0.8"}
+    {:lumis, "~> 0.8.1"}
   ]
 end
 ```

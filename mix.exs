@@ -181,7 +181,7 @@ defmodule MDEx.MixProject do
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
       lumis_dep(),
-      # Temporary, with the two git branches below: both build their NIF from
+      # Temporary, with the two exact git refs below: both build their NIF from
       # source, and each declares `:rustler` optional, so nothing else pulls it.
       {:rustler, ">= 0.30.0", runtime: false},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
@@ -192,19 +192,19 @@ defmodule MDEx.MixProject do
     ]
   end
 
-  # TODO: swap both back to version requirements once leandrocp/lumis#1335 and
-  # leandrocp/mdex_native#59 are merged and released. Until then the branches
-  # are the only place the option conversion lives in `:mdex_native`.
+  # TODO: use `{:mdex_native, "~> 0.2.9"}` and `{:lumis, "~> 0.8.1"}` after
+  # leandrocp/mdex_native#73 and leandrocp/lumis#1424 are released. Until then,
+  # exact commits keep this coordinated PR reproducible.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", branch: "feat/lumis-wasm-runtime"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "ffedaf9c61ea5948b85bffabc44c6fe17e32e5e4"}
     end
   end
 
   defp lumis_dep do
-    {:lumis, github: "leandrocp/lumis", branch: "refactor/share-wasm-runtime", sparse: "packages/elixir/lumis", optional: true}
+    {:lumis, github: "leandrocp/lumis", ref: "3e6cba579d7a9df0b97abad8a0b011d8b6ff627b", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do
