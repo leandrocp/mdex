@@ -37,7 +37,7 @@ mix compile
 To enable syntax highlighting with Lumis, add `:lumis` to your deps:
 
 ```elixir
-{:lumis, "~> 0.8.1"}
+{:lumis, "~> 0.9"}
 ```
 
 Then configure `:mdex_native` before compiling dependencies:

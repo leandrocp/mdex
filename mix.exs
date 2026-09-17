@@ -192,19 +192,21 @@ defmodule MDEx.MixProject do
     ]
   end
 
-  # TODO: use `{:mdex_native, "~> 0.2.9"}` and `{:lumis, "~> 0.8.1"}` after
-  # leandrocp/mdex_native#73 and leandrocp/lumis#1424 are released. Until then,
-  # exact commits keep this coordinated PR reproducible.
+  # TODO: use `{:mdex_native, "~> 0.3"}` and `{:lumis, "~> 0.9"}` once
+  # leandrocp/mdex_native#73 and leandrocp/lumis#1424 have released. Both drop
+  # their NIF 2.15 artifacts, which is a breaking change under each project's
+  # release rule, hence the minor bumps. Until then, exact commits keep this
+  # coordinated PR reproducible.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", ref: "538718dad77ce64cd3ac8ecf130320ec6e1700ea"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "ec17ae74ea3bdb85f56dbbd17a763e39e57c45fc"}
     end
   end
 
   defp lumis_dep do
-    {:lumis, github: "leandrocp/lumis", ref: "fa4de747742f6aefe7b64d062ae81493ac0e0434", sparse: "packages/elixir/lumis", optional: true}
+    {:lumis, github: "leandrocp/lumis", ref: "449f7520a0fb700db66512b82928888a12bba351", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do

@@ -1,5 +1,11 @@
 name: Elixir CI
 
+# Both reusable workflows only read the checkout; they never need a token that
+# can write. Builds run third-party Rust build scripts from source here, so the
+# token they run next to should not be able to.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
