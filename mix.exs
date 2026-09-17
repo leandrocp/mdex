@@ -199,12 +199,12 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", ref: "ffedaf9c61ea5948b85bffabc44c6fe17e32e5e4"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "3e8e1816fbaecbbd14d82f9e043409dfae2f9e2e"}
     end
   end
 
   defp lumis_dep do
-    {:lumis, github: "leandrocp/lumis", ref: "3e6cba579d7a9df0b97abad8a0b011d8b6ff627b", sparse: "packages/elixir/lumis", optional: true}
+    {:lumis, github: "leandrocp/lumis", ref: "dc09f9a3db2a1a71d65ed764b8665f646d320782", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do
