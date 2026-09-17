@@ -975,6 +975,15 @@ defmodule MDEx.DocumentTest do
       assert Enum.reduce(empty_doc, 0, fn _node, acc -> acc + 1 end) == 1
     end
 
+    test "escaped node enumeration reaches its children" do
+      doc = %MDEx.Document{
+        nodes: [%MDEx.Escaped{nodes: [%MDEx.Text{literal: "escaped"}]}]
+      }
+
+      assert Enum.count(doc) == 3
+      assert %MDEx.Text{literal: "escaped"} in Enum.to_list(doc)
+    end
+
     test "single node document enumeration" do
       doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "single"}]}
 
@@ -1536,34 +1545,33 @@ defmodule MDEx.DocumentTest do
       assert get_in(document.options, [:syntax_highlight, :opts, :theme]) == "Catppuccin Macchiato"
     end
 
-    test "converts legacy formatter options to lumis opts" do
+    test "migrates the legacy formatter option into lumis opts" do
       options = Document.rust_options!(syntax_highlight: [formatter: {:html_inline, theme: "github_light"}])
 
-      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
-      assert formatter_opts.theme == {:string, "github_light"}
+      assert [engine: :lumis, opts: opts] = options.syntax_highlight
+      assert opts[:formatter] == {:html_inline, [theme: "github_light"]}
     end
 
     test "preserves the MDEx theme for legacy html_inline formatter defaults" do
       options = Document.rust_options!(syntax_highlight: [formatter: :html_inline])
 
-      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
-      assert formatter_opts.theme == {:string, "onedark"}
+      assert [engine: :lumis, opts: opts] = options.syntax_highlight
+      assert opts[:formatter] == {:html_inline, [theme: "onedark"]}
 
       options = Document.rust_options!(syntax_highlight: [formatter: {:html_inline, pre_class: "code"}])
 
-      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
-      assert formatter_opts.theme == {:string, "onedark"}
-      assert formatter_opts.pre_class == "code"
+      assert [engine: :lumis, opts: opts] = options.syntax_highlight
+      assert opts[:formatter] == {:html_inline, [theme: "onedark", pre_class: "code"]}
     end
 
-    test "allows theme-less html_inline output through explicit Lumis opts" do
+    test "leaves explicit Lumis opts alone, theme included" do
       options = Document.rust_options!(syntax_highlight: [engine: :lumis, opts: [formatter: :html_inline]])
 
-      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
-      assert formatter_opts.theme == nil
+      assert [engine: :lumis, opts: opts] = options.syntax_highlight
+      assert opts[:formatter] == :html_inline
     end
 
-    test "converts engine and opts to native syntax highlight options" do
+    test "hands engine and opts to the native layer unconverted" do
       options =
         Document.rust_options!(
           syntax_highlight: [
@@ -1572,16 +1580,15 @@ defmodule MDEx.DocumentTest do
           ]
         )
 
-      assert %{engine: :lumis, opts: %{formatter: {:html_inline, formatter_opts}}} = options.syntax_highlight
-      assert formatter_opts.theme == {:string, "github_light"}
-      assert formatter_opts.pre_class == "code-block-example"
+      assert [engine: :lumis, opts: opts] = options.syntax_highlight
+      assert opts[:formatter] == {:html_inline, [theme: "github_light", pre_class: "code-block-example"]}
     end
 
     test "converts syntect engine and opts to native syntax highlight options" do
       options =
         Document.rust_options!(syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]])
 
-      assert options.syntax_highlight == %{engine: :syntect, opts: %{theme: "Catppuccin Macchiato"}}
+      assert options.syntax_highlight == [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
     end
 
     test "does not support legacy formatter syntax with syntect" do

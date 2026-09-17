@@ -1067,14 +1067,13 @@ defmodule MDEx.Document do
     ],
     opts: [
       type: :keyword_list,
-      type_spec: quote(do: Lumis.options() | syntect_options()),
+      type_spec: quote(do: lumis_options() | syntect_options()),
       default: [formatter: @default_lumis_formatter],
       doc:
         "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0` and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
     ],
     formatter: [
       type: :any,
-      type_spec: quote(do: Lumis.formatter()),
       type_doc: "`t:Lumis.formatter/0`",
       doc: false
     ]
@@ -2540,8 +2539,17 @@ defmodule MDEx.Document do
   """
   @type syntax_highlight_options() :: [
           engine: :lumis | :syntect,
-          opts: Lumis.options() | syntect_options()
+          opts: lumis_options() | syntect_options()
         ]
+
+  @typedoc """
+  Lumis syntax highlighting options, as documented in `t:Lumis.options/0`.
+
+  Spelled loosely because `:lumis` is optional: naming `t:Lumis.options/0` here
+  would make Dialyzer report an unknown type for everyone who does not install
+  it. Lumis validates these itself when a code block is highlighted.
+  """
+  @type lumis_options() :: keyword()
 
   @typedoc """
   Syntect syntax highlighting options.
@@ -2727,16 +2735,21 @@ defmodule MDEx.Document do
 
     opts = syntax_highlight_engine_options(engine, opts, formatter, raw_options)
 
-    %{engine: engine, opts: opts}
+    # A keyword list, not a map: `MDExNative.Comrak` only normalizes
+    # `:syntax_highlight` when it arrives as one, and normalizing is what runs
+    # the engine's own option conversion.
+    [engine: engine, opts: opts]
   end
 
+  # The keyword list goes down untouched. `:mdex_native` runs it through Lumis
+  # itself, so the shape the NIF decodes has one definition instead of a copy
+  # here that has to track every Lumis release.
   defp syntax_highlight_engine_options(:lumis, opts, formatter, _raw_options) do
-    opts = if formatter, do: Keyword.put(opts, :formatter, legacy_lumis_formatter(formatter)), else: opts
-    lumis_syntax_highlight_options(opts)
+    if formatter, do: Keyword.put(opts, :formatter, legacy_lumis_formatter(formatter)), else: opts
   end
 
   defp syntax_highlight_engine_options(:syntect, opts, nil, raw_options) do
-    if Keyword.has_key?(raw_options, :opts), do: Map.new(opts), else: %{}
+    if Keyword.has_key?(raw_options, :opts), do: opts, else: []
   end
 
   defp syntax_highlight_engine_options(:syntect, _opts, _formatter, _raw_options) do
@@ -2753,29 +2766,6 @@ defmodule MDEx.Document do
   end
 
   defp legacy_lumis_formatter(formatter), do: formatter
-
-  if Code.ensure_loaded?(Lumis) do
-    defp lumis_syntax_highlight_options(options) do
-      options
-      |> Lumis.validate_options!()
-      |> Lumis.rust_options!()
-    end
-  else
-    defp lumis_syntax_highlight_options(_options) do
-      raise ArgumentError, """
-      Lumis syntax highlighting requires the :lumis dependency.
-
-      Add it to your deps:
-
-          {:lumis, "~> 0.1"}
-
-      And configure :mdex_native before compiling dependencies:
-
-          config :mdex_native, syntax_highlighter: :lumis
-
-      """
-    end
-  end
 
   defp migrate_header_ids(extension) do
     {header_ids, extension} = Keyword.pop(extension, :header_ids)
@@ -3434,8 +3424,8 @@ defmodule MDEx.Escaped do
   Spec: https://github.github.com/gfm/#backslash-escapes
   """
 
-  @type t :: %__MODULE__{}
-  defstruct sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3620,6 +3610,7 @@ defimpl Enumerable,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.Subtext,
+    MDEx.Escaped,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.BlockDirective,
@@ -3675,7 +3666,6 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
-    MDEx.Escaped,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}

@@ -180,7 +180,10 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:lumis, "~> 0.1", optional: true},
+      lumis_dep(),
+      # Temporary, with the two exact git refs below: both build their NIF from
+      # source, and each declares `:rustler` optional, so nothing else pulls it.
+      {:rustler, ">= 0.30.0", runtime: false},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -189,12 +192,21 @@ defmodule MDEx.MixProject do
     ]
   end
 
+  # TODO: use `{:mdex_native, "~> 0.3"}` and `{:lumis, "~> 0.9"}` once
+  # leandrocp/mdex_native#73 and leandrocp/lumis#1424 have released. Both drop
+  # their NIF 2.15 artifacts, which is a breaking change under each project's
+  # release rule, hence the minor bumps. Until then, exact commits keep this
+  # coordinated PR reproducible.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.6"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "7f9a541096b7305991c6c770198c881d187e93c3"}
     end
+  end
+
+  defp lumis_dep do
+    {:lumis, github: "leandrocp/lumis", ref: "b20739c98e005f74370856eabc4a2c4dab8ce62e", sparse: "packages/elixir/lumis", optional: true}
   end
 
   defp aliases do

@@ -1,5 +1,11 @@
 name: Elixir CI
 
+# Both reusable workflows only read the checkout; they never need a token that
+# can write. Builds run third-party Rust build scripts from source here, so the
+# token they run next to should not be able to.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
@@ -10,6 +16,10 @@ jobs:
   test:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
     uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
+    with:
+      # Temporary, with the exact git refs in mix.exs: neither has a release to
+      # download a precompiled NIF from, so both are built from source.
+      env_vars: '{"MDEX_NATIVE_BUILD": "1", "LUMIS_BUILD": "1"}'
 
   lint:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
@@ -17,3 +27,4 @@ jobs:
     with:
       credo: true
       credo_args: '--strict'
+      env_vars: '{"MDEX_NATIVE_BUILD": "1", "LUMIS_BUILD": "1"}'
