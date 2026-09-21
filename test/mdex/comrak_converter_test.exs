@@ -80,6 +80,32 @@ defmodule MDEx.ComrakConverterTest do
              MDEx.ComrakConverter.to_mdex(document)
   end
 
+  test "preserves escaped character children through MDEx conversion" do
+    options = [parse: [escaped_char_spans: true], render: [escaped_char_spans: true]]
+
+    native_document = MDExNative.Comrak.parse_document(~S(\*escaped\*), options)
+    mdex_document = MDEx.ComrakConverter.to_mdex(native_document)
+
+    assert %MDEx.Document{
+             nodes: [
+               %MDEx.Paragraph{
+                 nodes: [
+                   %MDEx.Escaped{nodes: [%MDEx.Text{literal: "*"}]},
+                   %MDEx.Text{literal: "escaped"},
+                   %MDEx.Escaped{nodes: [%MDEx.Text{literal: "*"}]}
+                 ]
+               }
+             ]
+           } = mdex_document
+
+    rebuilt = MDEx.ComrakConverter.from_mdex(mdex_document)
+
+    assert MDExNative.Comrak.document_to_commonmark(rebuilt, options) == "\\*escaped\\*\n"
+
+    assert MDExNative.Comrak.document_to_html(rebuilt, options) ==
+             "<p><span data-escaped-char>*</span>escaped<span data-escaped-char>*</span></p>\n"
+  end
+
   test "defaults missing attrs to nil" do
     native_code =
       %MDExNative.Comrak.Code{literal: "elixir"}

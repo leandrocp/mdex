@@ -3434,8 +3434,8 @@ defmodule MDEx.Escaped do
   Spec: https://github.github.com/gfm/#backslash-escapes
   """
 
-  @type t :: %__MODULE__{}
-  defstruct sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3620,6 +3620,7 @@ defimpl Enumerable,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.Subtext,
+    MDEx.Escaped,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.BlockDirective,
@@ -3675,7 +3676,6 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
-    MDEx.Escaped,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}
