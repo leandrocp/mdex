@@ -182,8 +182,6 @@ defmodule MDEx.MixProject do
       {:jason, "~> 1.0"},
       {:lumis, "~> 0.9", optional: true},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
-      # Lumis 0.9 dropped the runtime parser download, so every language the
-      # suite highlights has to be an explicit dependency.
       {:lumis_wasm_elixir, "~> 0.26", only: [:dev, :test]},
       {:lumis_wasm_rust, "~> 0.26", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :docs},
