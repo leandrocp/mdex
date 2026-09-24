@@ -99,7 +99,7 @@ defmodule MDEx.SlackConverter do
   defp render_node(%MDEx.DescriptionItem{nodes: nodes}, context), do: render_nodes(nodes, context)
   defp render_node(%MDEx.DescriptionTerm{nodes: nodes}, context), do: [render_nodes(nodes, context), "\n"]
   defp render_node(%MDEx.DescriptionDetails{nodes: nodes}, context), do: [": ", render_nodes(nodes, context), "\n"]
-  defp render_node(%MDEx.Escaped{}, _context), do: ""
+  defp render_node(%MDEx.Escaped{nodes: nodes}, context), do: render_nodes(nodes, context)
   defp render_node(%MDEx.EscapedTag{literal: literal}, _context), do: escape_text(literal)
   defp render_node(%MDEx.BlockDirective{info: info, nodes: nodes}, context), do: ["*", escape_text(info), "*\n", render_nodes(nodes, context)]
 

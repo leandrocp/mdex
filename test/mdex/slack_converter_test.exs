@@ -248,6 +248,15 @@ defmodule MDEx.SlackConverterTest do
       assert result == "Tom &amp; Jerry &lt; Bugs &gt; Daffy\n"
     end
 
+    test "escaped spans render the same as the default parse" do
+      source = "\\*hello\\*"
+
+      # Each escaped character parses to an `MDEx.Escaped` wrapping it; the
+      # output must not depend on whether that wrapper is present.
+      assert MDEx.to_slack!(source, parse: [escaped_char_spans: true]) == MDEx.to_slack!(source)
+      assert MDEx.to_slack!(source, parse: [escaped_char_spans: true]) == "*hello*\n"
+    end
+
     test "does not escape generated link delimiters" do
       {:ok, result} = MDEx.to_slack("[Slack & docs](https://docs.slack.dev/?a=1&b=2)")
 

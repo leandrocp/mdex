@@ -4,7 +4,7 @@
 Mix.install(
   [
     {:mdex, ">= 0.13.3"},
-    {:lumis, ">= 0.6.1"},
+    {:lumis, "~> 0.9"},
     {:phoenix_playground, "~> 0.1"},
     {:req_embed, "~> 0.3"}
   ],
