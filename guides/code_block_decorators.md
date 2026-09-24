@@ -16,6 +16,9 @@ Configure `:mdex_native` before compiling dependencies:
 config :mdex_native, syntax_highlighter: :lumis
 ```
 
+Lumis no longer ships parsers. See [Compilation](compilation.md) for how languages are
+installed and warmed up.
+
 To use code block decorators, you must enable both `:render` options:
 
 ```elixir

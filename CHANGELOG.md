@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased
+
+### ⚠ BREAKING CHANGES
+
+* require `mdex_native >= 0.2.9` and `lumis ~> 0.9`
+
+#### Lumis parsers
+
+Lumis v0.9 stopped auto loading languages. Each one is its own Hex package now, and a
+fence in a language you haven't installed comes out as plain text.
+
+```elixir
+# mix.exs
+{:lumis, "~> 0.9"},
+{:lumis_wasm_elixir, "~> 0.26"},
+{:lumis_wasm_rust, "~> 0.26"}
+```
+
+Documents inject languages too: HTML reaches `css` and `javascript`, Elixir reaches
+`comment`. Install those as well. Bundles like `{:lumis_wasm_bundle_web, "~> 0.1"}` cover
+a set at once, and the [language catalog](https://docs.lumis.sh/reference/languages) has
+every package name.
+
+Config and render options are unchanged.
+
+Parsers compile on first use. Calling `Lumis.Languages.async_load(~w(elixir rust))` from
+your `start/2` moves that off the first request.
+
+Two rendering changes may break snapshot tests: an unterminated final line no longer gets
+a newline before `</div>`, and adjacent tokens sharing a scope now collapse into one
+`<span>`.
+
 ## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
 
 

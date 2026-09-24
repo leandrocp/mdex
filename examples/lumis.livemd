@@ -4,8 +4,11 @@
 
 ```elixir
 Mix.install([
-  {:mdex, "~> 0.12"},
-  {:lumis, "~> 0.1"},
+  {:mdex, "~> 0.13"},
+  {:lumis, "~> 0.9"},
+  {:lumis_wasm_elixir, "~> 0.26"},
+  {:lumis_wasm_ruby, "~> 0.26"},
+  {:lumis_wasm_rust, "~> 0.26"},
   {:kino, "~> 0.16"}
 ],
   config: [mdex_native: [syntax_highlighter: :lumis]]
@@ -16,7 +19,7 @@ Mix.install([
 
 [Lumis](https://hex.pm/packages/lumis) highlights code with Tree-sitter. It ships themes converted from Neovim colorschemes and gives you a few HTML formatters.
 
-To use Lumis, add `{:lumis, "~> 0.1"}` to your deps and configure `:mdex_native` with `syntax_highlighter: :lumis` before compiling dependencies. This notebook does both in `Mix.install/2` above.
+To use Lumis, add `{:lumis, "~> 0.9"}` to your deps, add a parser for every language you highlight, and configure `:mdex_native` with `syntax_highlighter: :lumis` before compiling dependencies. This notebook does all three in `Mix.install/2` above: it highlights Elixir, Ruby, and Rust, so it installs those three parsers.
 
 Then use `engine: :lumis` to enable Lumis for a render:
 
@@ -37,6 +40,28 @@ syntax_highlight: [formatter: {:html_inline, theme: "github_light"}]
 For new code, pass Lumis options under `:opts` and set the engine explicitly.
 
 The language still comes from the Markdown fence. One formatter can handle different languages in the same document.
+
+## Parsers are dependencies
+
+Since v0.9 Lumis does not carry the parsers it highlights with. Each language is a WebAssembly module published as its own [`lumis_wasm_*`](https://hex.pm/packages?search=lumis_wasm_) package: nothing is compiled into the NIF and nothing is downloaded at runtime. Name a language you haven't installed and that fence comes out as plain text.
+
+Documents inject languages too: HTML reaches `css` and `javascript`, Elixir reaches `comment`. Install those as well. A bundle covers a set at once:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+{:lumis_wasm_bundle_web, "~> 0.1"}
+```
+
+The [language catalog](https://docs.lumis.sh/reference/languages) lists every package name.
+
+Parsers compile on first use. In an application, warm them from `start/2` so the first request doesn't pay for it:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+Lumis.Languages.async_load(~w(elixir ruby rust))
+```
 
 ## Inline styles
 

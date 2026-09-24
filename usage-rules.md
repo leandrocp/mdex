@@ -534,6 +534,18 @@ syntax_highlight: [engine: :syntect, opts: [theme: "Catppuccin Macchiato"]]
 syntax_highlight: nil
 ```
 
+Since v0.9 Lumis needs a `lumis_wasm_*` parser dependency per language. Without one that
+code block renders as plain text. Add `{:lumis_wasm_elixir, "~> 0.26"}` and friends, or a
+bundle such as `{:lumis_wasm_bundle_web, "~> 0.1"}`.
+
+Lumis documentation:
+
+- [Languages](https://docs.lumis.sh/reference/languages) — every parser package and how detection works
+- [Elixir integration](https://docs.lumis.sh/usage/elixir) — configuration, releases, Phoenix
+- [Formatters](https://docs.lumis.sh/formatters) — every formatter and its options
+- [Themes](https://docs.lumis.sh/themes) — the theme list, custom themes, CSS files
+- [Recipes](https://docs.lumis.sh/recipes) — LiveView rendering, light/dark, injected languages
+
 ### `sanitize:`
 
 Use when allowing raw HTML but still needing safe output.
