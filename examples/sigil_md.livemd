@@ -4,8 +4,9 @@
 
 ```elixir
 Mix.install([
-  {:mdex, "~> 0.12"},
-  {:lumis, "~> 0.1"},
+  {:mdex, "~> 0.13"},
+  {:lumis, "~> 0.9"},
+  {:lumis_wasm_elixir, "~> 0.26"},
   {:kino, "~> 0.16"}
 ],
   config: [mdex_native: [syntax_highlighter: :lumis]]

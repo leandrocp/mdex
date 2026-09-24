@@ -6,7 +6,8 @@
 Mix.install([
   {:mdex, "~> 0.8"},
   {:mdex_gfm, "~> 0.1"},
-  {:lumis, "~> 0.1"},
+  {:lumis, "~> 0.9"},
+  {:lumis_wasm_elixir, "~> 0.26"},
   {:kino, "~> 0.16"},
   {:req, "~> 0.5"}
 ],

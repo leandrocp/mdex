@@ -39,18 +39,43 @@ language you highlight to your deps:
 
 ```elixir
 {:lumis, "~> 0.9"},
-{:lumis_wasm_elixir, "~> 0.26"}
+{:lumis_wasm_elixir, "~> 0.26"},
+{:lumis_wasm_rust, "~> 0.26"}
 ```
-
-Lumis no longer downloads parsers at runtime, so a language without its package renders
-unhighlighted. See the [Lumis languages reference](https://docs.lumis.sh/reference/languages)
-for the full catalog and the `lumis_wasm_bundle_*` packages.
 
 Then configure `:mdex_native` before compiling dependencies:
 
 ```elixir
 config :mdex_native, syntax_highlighter: :lumis
 ```
+
+### Parsers are dependencies
+
+Since Lumis v0.9 a parser is a WebAssembly module published as its own
+[`lumis_wasm_*`](https://hex.pm/packages?search=lumis_wasm_) package. Nothing is compiled
+into the NIF and nothing is downloaded at runtime, so a language you haven't installed
+renders as plain text.
+
+Documents inject languages too: HTML reaches `css` and `javascript`, Elixir reaches
+`comment`. Install those as well. A bundle covers a set at once:
+
+```elixir
+{:lumis_wasm_bundle_web, "~> 0.1"}
+```
+
+The [language catalog](https://docs.lumis.sh/reference/languages) lists every package name.
+
+Parsers compile on first use. Warm them from your application's `start/2` so production
+doesn't pay for it on the first request:
+
+```elixir
+def start(_type, _args) do
+  Lumis.Languages.async_load(~w(elixir rust))
+  Supervisor.start_link(children(), strategy: :one_for_one, name: MyApp.Supervisor)
+end
+```
+
+It returns right away, and a failed warm-up is logged instead of stopping boot.
 
 To use Syntect instead:
 

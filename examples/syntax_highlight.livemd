@@ -12,12 +12,15 @@ If no highlighter is configured, fenced code blocks render normally without synt
 
 ## Lumis
 
-Add Lumis to your deps if you want to use `engine: :lumis`:
+Add Lumis to your deps if you want to use `engine: :lumis`, along with a parser for every
+language you highlight:
 
 <!-- livebook:{"force_markdown":true} -->
 
 ```elixir
-{:lumis, "~> 0.1"}
+{:lumis, "~> 0.9"},
+{:lumis_wasm_elixir, "~> 0.26"},
+{:lumis_wasm_rust, "~> 0.26"}
 ```
 
 And configure `:mdex_native` to download the Lumis NIF:
@@ -29,6 +32,12 @@ import Config
 
 config :mdex_native, syntax_highlighter: :lumis
 ```
+
+Since Lumis v0.9, parsers are ordinary dependencies. Each language is its own
+`lumis_wasm_*` package, nothing is compiled in and nothing is downloaded at runtime, so a
+fence in a language you haven't installed renders as plain text. Bundles such as
+`{:lumis_wasm_bundle_web, "~> 0.1"}` cover a set at once, and the
+[language catalog](https://docs.lumis.sh/reference/languages) lists every package name.
 
 ## Syntect
 
