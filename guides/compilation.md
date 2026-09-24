@@ -34,11 +34,17 @@ mix deps.get
 mix compile
 ```
 
-To enable syntax highlighting with Lumis, add `:lumis` to your deps:
+To enable syntax highlighting with Lumis, add `:lumis` and a parser package for each
+language you highlight to your deps:
 
 ```elixir
-{:lumis, "~> 0.1"}
+{:lumis, "~> 0.9"},
+{:lumis_wasm_elixir, "~> 0.26"}
 ```
+
+Lumis no longer downloads parsers at runtime, so a language without its package renders
+unhighlighted. See the [Lumis languages reference](https://docs.lumis.sh/reference/languages)
+for the full catalog and the `lumis_wasm_bundle_*` packages.
 
 Then configure `:mdex_native` before compiling dependencies:
 

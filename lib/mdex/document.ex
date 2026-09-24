@@ -2765,9 +2765,10 @@ defmodule MDEx.Document do
       raise ArgumentError, """
       Lumis syntax highlighting requires the :lumis dependency.
 
-      Add it to your deps:
+      Add it to your deps, along with a parser package for each language you highlight:
 
-          {:lumis, "~> 0.1"}
+          {:lumis, "~> 0.9"},
+          {:lumis_wasm_elixir, "~> 0.26"}
 
       And configure :mdex_native before compiling dependencies:
 
@@ -3434,8 +3435,8 @@ defmodule MDEx.Escaped do
   Spec: https://github.github.com/gfm/#backslash-escapes
   """
 
-  @type t :: %__MODULE__{}
-  defstruct sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3620,6 +3621,7 @@ defimpl Enumerable,
     MDEx.Subscript,
     MDEx.SpoileredText,
     MDEx.Subtext,
+    MDEx.Escaped,
     MDEx.EscapedTag,
     MDEx.Alert,
     MDEx.BlockDirective,
@@ -3675,7 +3677,6 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
-    MDEx.Escaped,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}

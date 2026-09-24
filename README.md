@@ -93,10 +93,16 @@ for example to use Lumis:
 def deps do
   [
     {:mdex, "~> 0.12"},
-    {:lumis, "~> 0.1"}
+    {:lumis, "~> 0.9"},
+    # one package per language you highlight, or a `lumis_wasm_bundle_*` package
+    {:lumis_wasm_elixir, "~> 0.26"}
   ]
 end
 ```
+
+Lumis no longer downloads parsers at runtime, so a language is only highlighted when its
+package is a dependency. See the [Lumis languages reference](https://docs.lumis.sh/reference/languages)
+for the full catalog and the available bundles.
 
 ```elixir
 config :mdex_native, syntax_highlighter: :lumis

@@ -2,10 +2,12 @@ Code block decorators are Lumis syntax highlighting options for individual code 
 
 ### Prerequisites
 
-Code block decorators require Lumis. Add it to your deps:
+Code block decorators require Lumis, plus a parser package for each language you
+highlight:
 
 ```elixir
-{:lumis, "~> 0.1"}
+{:lumis, "~> 0.9"},
+{:lumis_wasm_elixir, "~> 0.26"}
 ```
 
 Configure `:mdex_native` before compiling dependencies:

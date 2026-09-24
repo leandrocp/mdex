@@ -180,8 +180,10 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:lumis, "~> 0.1", optional: true},
+      {:lumis, "~> 0.9", optional: true},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
+      {:lumis_wasm_elixir, "~> 0.26", only: [:dev, :test]},
+      {:lumis_wasm_rust, "~> 0.26", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:floki, "~> 0.35", only: :test},
@@ -193,7 +195,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.6"}
+      {:mdex_native, ">= 0.2.9"}
     end
   end
 

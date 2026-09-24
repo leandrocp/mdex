@@ -54,7 +54,7 @@ defmodule MDEx.Fuzz.Options do
 
   @parse_option_kinds %{
     default_info_string: :optional_string,
-    escaped_char_spans: :upstream_escaped_char_spans,
+    escaped_char_spans: :boolean,
     ignore_setext: :boolean,
     leave_footnote_definitions: :boolean,
     relaxed_autolinks: :boolean,
@@ -68,7 +68,7 @@ defmodule MDEx.Fuzz.Options do
     alert_style: {:member_of, [:specific, :semantic]},
     compact_html: :boolean,
     escape: :boolean,
-    escaped_char_spans: :upstream_escaped_char_spans,
+    escaped_char_spans: :boolean,
     experimental_minimize_commonmark: :boolean,
     figure_with_caption: :boolean,
     full_info_string: :boolean,
@@ -176,11 +176,6 @@ defmodule MDEx.Fuzz.Options do
   end
 
   defp option_value(:boolean), do: boolean()
-
-  # mdex_native currently exposes Escaped children through an undeclared
-  # dynamic :nodes field, so any Document round trip loses those children.
-  # Restore boolean generation when https://github.com/leandrocp/mdex_native/issues/69 is released.
-  defp option_value(:upstream_escaped_char_spans), do: constant(false)
 
   defp option_value(:deprecated_header_ids), do: constant(nil)
   defp option_value(:optional_string), do: one_of([constant(nil), option_string()])
