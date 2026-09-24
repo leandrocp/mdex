@@ -2765,9 +2765,10 @@ defmodule MDEx.Document do
       raise ArgumentError, """
       Lumis syntax highlighting requires the :lumis dependency.
 
-      Add it to your deps:
+      Add it to your deps, along with a parser package for each language you highlight:
 
-          {:lumis, "~> 0.1"}
+          {:lumis, "~> 0.9"},
+          {:lumis_wasm_elixir, "~> 0.26"}
 
       And configure :mdex_native before compiling dependencies:
 

@@ -180,8 +180,12 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:lumis, "~> 0.1", optional: true},
+      {:lumis, "~> 0.9", optional: true},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
+      # Lumis 0.9 dropped the runtime parser download, so every language the
+      # suite highlights has to be an explicit dependency.
+      {:lumis_wasm_elixir, "~> 0.26", only: [:dev, :test]},
+      {:lumis_wasm_rust, "~> 0.26", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:floki, "~> 0.35", only: :test},
