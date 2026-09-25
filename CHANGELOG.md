@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
+
 ### ⚠ BREAKING CHANGES
 
 * require `mdex_native >= 0.2.9` and `lumis ~> 0.9`
@@ -31,6 +33,32 @@ your `start/2` moves that off the first request.
 Two rendering changes may break snapshot tests: an unterminated final line no longer gets
 a newline before `</div>`, and adjacent tokens sharing a scope now collapse into one
 `<span>`.
+
+### Features
+
+- Update lumis to v0.7 by @leandrocp in [#393](https://github.com/leandrocp/mdex/pull/393)
+- Introduce Stream API by @leandrocp in [#397](https://github.com/leandrocp/mdex/pull/397)
+- Add :auto_close option to close open Markdown syntax by @leandrocp in [#403](https://github.com/leandrocp/mdex/pull/403)
+- Lumis 0.9 with parsers from Hex by @leandrocp in [#415](https://github.com/leandrocp/mdex/pull/415)
+- **Breaking:** Require lumis ~> 0.9 and mdex_native >= 0.2.9 by @leandrocp
+
+### Bug Fixes
+
+- Do not append a table row when a blank line closed the table by @leandrocp in [#402](https://github.com/leandrocp/mdex/pull/402)
+- Preserve escaped AST children by @leandrocp in [#413](https://github.com/leandrocp/mdex/pull/413)
+
+### Performance Improvements
+
+- Skip AST struct conversion when rendering Markdown by @leandrocp in [#404](https://github.com/leandrocp/mdex/pull/404)
+
+### Documentation
+
+- Add plugin mdex_multiline_cells by @leandrocp
+
+### Other Changes
+
+- Bump mdex_native and fix tests by @leandrocp in [#389](https://github.com/leandrocp/mdex/pull/389)
+- Clean up CHANGELOG.md by @leandrocp in [#400](https://github.com/leandrocp/mdex/pull/400)
 
 ## [0.13.5](https://github.com/leandrocp/mdex/compare/v0.13.4...v0.13.5) (2026-07-29)
 
