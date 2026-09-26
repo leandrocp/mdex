@@ -317,7 +317,7 @@ defmodule MDEx.FeaturesFuzzTest do
     refute html =~ "<style"
     assert Floki.text(html_tree(html)) =~ suffix
 
-    if sanitize[:strip_comments] do
+    if Keyword.get(sanitize, :strip_comments, true) do
       refute html =~ "<!--"
     end
   end

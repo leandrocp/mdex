@@ -1234,7 +1234,7 @@ defmodule MDEx.Document do
     link_rel: [
       type: {:or, [:string, nil]},
       default: "noopener noreferrer",
-      doc: "Configures a `rel` attribute that will be added on links."
+      doc: "Configures a `rel` attribute that will be added on links. Must be `nil` when `rel` is an allowed attribute."
     ],
     allowed_classes: [
       type: {:map, :string, {:list, :string}},
@@ -1323,6 +1323,11 @@ defmodule MDEx.Document do
 
           sanitize = Keyword.put(MDEx.Document.default_sanitize_options(), :rm_tags, ["a"])
           [sanitize: sanitize]
+
+      Tags listed in `:allowed_classes` or `:add_allowed_classes` lose `class` from their default
+      `:tag_attributes`, so the allowlist decides which classes are kept.
+
+      To allow a `rel` attribute, also pass `link_rel: nil`.
 
       Set it to `nil` or `false` to disable it.
 
@@ -2852,7 +2857,7 @@ defmodule MDEx.Document do
   def adapt_sanitize_options(nil = _options), do: nil
 
   def adapt_sanitize_options(options) do
-    options = Keyword.merge(@default_sanitize_options, options)
+    options = Keyword.merge(sanitize_defaults(options), options)
 
     {:custom,
      %{
@@ -2906,6 +2911,20 @@ defmodule MDEx.Document do
        strip_comments: options[:strip_comments],
        id_prefix: options[:id_prefix]
      }}
+  end
+
+  # ammonia panics when a tag in `allowed_classes` also allows `class`. Unlike
+  # ammonia's own defaults, ours allow `class` on a few tags, so drop it from
+  # the tags given `allowed_classes` and let the allowlist decide.
+  defp sanitize_defaults(options) do
+    class_tags = Map.keys(options[:allowed_classes] || %{}) ++ Map.keys(options[:add_allowed_classes] || %{})
+
+    tag_attributes =
+      Map.new(@default_sanitize_options[:tag_attributes], fn {tag, attributes} ->
+        if tag in class_tags, do: {tag, List.delete(attributes, "class")}, else: {tag, attributes}
+      end)
+
+    Keyword.put(@default_sanitize_options, :tag_attributes, tag_attributes)
   end
 
   @doc """

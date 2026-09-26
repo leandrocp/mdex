@@ -1549,6 +1549,21 @@ defmodule MDEx.DocumentTest do
     test "keeps an explicit nil over the default" do
       assert {:custom, %{link_rel: nil}} = Document.rust_options!(sanitize: [link_rel: nil]).sanitize
     end
+
+    test "drops the default class attribute from tags with allowed classes" do
+      assert {:custom, sanitize} = Document.rust_options!(sanitize: [add_allowed_classes: %{"code" => ["language-elixir"]}]).sanitize
+      assert sanitize.tag_attributes.set["code"] == ["translate", "tabindex"]
+      assert sanitize.tag_attributes.set["span"] == ["class", "style", "data-line"]
+    end
+
+    test "keeps given tag attributes next to allowed classes" do
+      tag_attributes = %{"code" => ["class"]}
+
+      assert {:custom, sanitize} =
+               Document.rust_options!(sanitize: [tag_attributes: tag_attributes, allowed_classes: %{"code" => []}]).sanitize
+
+      assert sanitize.tag_attributes.set == tag_attributes
+    end
   end
 
   describe "put_syntax_highlight_options" do

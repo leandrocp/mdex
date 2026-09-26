@@ -1296,10 +1296,10 @@ defmodule MDEx do
           nil
 
         options ->
-          options
-          |> Document.validate_keyword_list!(:sanitize)
-          |> NimbleOptions.validate!(MDEx.Document.sanitize_options_schema())
-          |> MDEx.Document.adapt_sanitize_options()
+          Document.validate_keyword_list!(options, :sanitize)
+          # adapt_sanitize_options/1 fills in the defaults, the same way it does when rendering
+          NimbleOptions.validate!(options, MDEx.Document.sanitize_options_schema())
+          MDEx.Document.adapt_sanitize_options(options)
       end
 
     escape_content = opt(options, [:escape, :content], true)
