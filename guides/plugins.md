@@ -124,9 +124,6 @@ end
 queues up steps, and that's all it should do. The steps run later, when the
 document is rendered, and they're where the work happens.
 
-The snippets below are written against `alias MDEx.Document`, like the module
-above.
-
 ### Registering options
 
 `put_options/2` rejects a key nobody registered:
@@ -143,7 +140,7 @@ from two plugins collides where `:mermaid_version` and `:katex_version` don't.
 Read one back with `get_option/3`:
 
 ```elixir
-Document.get_option(document, :mermaid_version, "11")
+MDEx.Document.get_option(document, :mermaid_version, "11")
 ```
 
 ### Steps
@@ -152,7 +149,7 @@ Document.get_option(document, :mermaid_version, "11")
 the front. A step takes a document and returns one:
 
 ```elixir
-Document.append_steps(document,
+MDEx.Document.append_steps(document,
   validate: &validate/1,
   transform: &transform/1
 )
@@ -161,7 +158,7 @@ Document.append_steps(document,
 To edit the tree, use `update_nodes/3` or `MDEx.traverse_and_update/2`:
 
 ```elixir
-Document.update_nodes(document, MDEx.Text, fn node ->
+MDEx.Document.update_nodes(document, MDEx.Text, fn node ->
   %{node | literal: String.upcase(node.literal)}
 end)
 ```
@@ -171,8 +168,8 @@ renders:
 
 ```elixir
 MDEx.new(markdown: "# Title")
-|> Document.append_steps(stop: &Document.halt/1)
-|> Document.append_steps(never_runs: &explode/1)
+|> MDEx.Document.append_steps(stop: &MDEx.Document.halt/1)
+|> MDEx.Document.append_steps(never_runs: &explode/1)
 |> MDEx.to_html!()
 #=> "<h1>Title</h1>"
 ```
@@ -185,13 +182,13 @@ option set inside one arrives too late to change it:
 ```elixir
 # the AST was built before the step ran, so ~b~ stays literal
 MDEx.new(markdown: "a ~b~")
-|> Document.append_steps(late: &Document.put_extension_options(&1, strikethrough: true))
+|> MDEx.Document.append_steps(late: &MDEx.Document.put_extension_options(&1, strikethrough: true))
 |> MDEx.to_html!()
 #=> "<p>a ~b~</p>"
 
 # set it in attach/2 and the parser sees it
 MDEx.new(markdown: "a ~b~")
-|> Document.put_extension_options(strikethrough: true)
+|> MDEx.Document.put_extension_options(strikethrough: true)
 |> MDEx.to_html!()
 #=> "<p>a <del>b</del></p>"
 ```
@@ -207,9 +204,9 @@ pipeline, so a later step reads what an earlier one wrote:
 
 ```elixir
 document
-|> Document.put_private(:seen, 0)
-|> Document.update_private(:seen, 0, &(&1 + 1))
-|> Document.get_private(:seen)
+|> MDEx.Document.put_private(:seen, 0)
+|> MDEx.Document.update_private(:seen, 0, &(&1 + 1))
+|> MDEx.Document.get_private(:seen)
 #=> 1
 ```
 
@@ -297,8 +294,8 @@ catch is that your plugin does nothing at all until the caller opts in, so say
 so in your README. "Requires `render: [unsafe: true]`" is a fine thing for a
 plugin to ask for when it's written down.
 
-A third path is to call `Document.put_render_options(document, unsafe: true)`
-yourself. It flips the option for the whole document, so the Markdown author's
+A third path is to call `MDEx.Document.put_render_options/2` yourself with
+`unsafe: true`. It flips the option for the whole document, so the Markdown author's
 raw HTML renders too. Where you call it decides whether the caller can say no,
 because render options are last write wins:
 
