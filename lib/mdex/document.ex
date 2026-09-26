@@ -533,15 +533,7 @@ defmodule MDEx.Document do
           end)
         end
 
-        defp escape(text) do
-          String.replace(text, ["&", "<", ">", "\\"", "'"], fn
-            "&" -> "&amp;"
-            "<" -> "&lt;"
-            ">" -> "&gt;"
-            "\\"" -> "&quot;"
-            "'" -> "&#39;"
-          end)
-        end
+        defp escape(text), do: MDEx.safe_html(text, sanitize: false)
       end
 
   Now we can `attach/1` that plugin into any MDEx document to render Mermaid diagrams.

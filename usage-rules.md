@@ -402,19 +402,11 @@ defmodule MyPlugin do
     end)
   end
 
-  defp escape(text) do
-    String.replace(text, ["&", "<", ">", "\"", "'"], fn
-      "&" -> "&amp;"
-      "<" -> "&lt;"
-      ">" -> "&gt;"
-      "\"" -> "&quot;"
-      "'" -> "&#39;"
-    end)
-  end
+  defp escape(text), do: MDEx.safe_html(text, sanitize: false)
 end
 ```
 
-Emit plugin-generated HTML as `MDEx.Raw`, which renders without `render: [unsafe: true]`. `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless `unsafe: true` is set, and setting it from a plugin also renders the Markdown author's raw HTML. `MDEx.Raw` is inserted verbatim, so escape any text taken from the Markdown source.
+Emit plugin-generated HTML as `MDEx.Raw`, which renders without `render: [unsafe: true]`. `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless `unsafe: true` is set, and setting it from a plugin also renders the Markdown author's raw HTML. `MDEx.Raw` is inserted verbatim, so escape any text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on cleans the text as HTML instead, dropping whatever parses as a tag.
 
 Use `document.private` helpers for plugin state instead of overloading assigns.
 

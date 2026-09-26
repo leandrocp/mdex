@@ -250,9 +250,23 @@ but it renders all raw HTML written by the Markdown author across the whole
 document.
 
 `MDEx.Raw` is never escaped, so escape any text taken from the Markdown source
-yourself, like the code in a code block. Otherwise a code block containing
-`</code></pre><script>` injects a script under the default options. The
-`:sanitize` option still applies to `MDEx.Raw` output.
+before you interpolate it, like the code in a code block. Otherwise a code block
+containing `</code></pre><script>` injects a script under the default options.
+
+`MDEx.safe_html/2` does that escaping when you turn sanitizing off:
+
+```elixir
+MDEx.safe_html(~s(if a < b, do: "x"), sanitize: false)
+#=> "if a &lt; b, do: &quot;x&quot;"
+```
+
+Leave `:sanitize` at its default and it cleans the text as HTML first, which is
+the wrong job here: it drops whatever parses as a tag instead of escaping it.
+Note also that `:escape` covers `{` and `}` inside `<code>` tags by default,
+which you want when the output is headed for LiveView. Pass
+`escape: [curly_braces_in_code: false]` when it is not.
+
+The `:sanitize` render option still applies to `MDEx.Raw` output.
 
 ## Example Plugin
 
@@ -283,15 +297,7 @@ defmodule CodeBlockEnhancer do
     end)
   end
 
-  defp escape(text) do
-    String.replace(text, ["&", "<", ">", "\"", "'"], fn
-      "&" -> "&amp;"
-      "<" -> "&lt;"
-      ">" -> "&gt;"
-      "\"" -> "&quot;"
-      "'" -> "&#39;"
-    end)
-  end
+  defp escape(text), do: MDEx.safe_html(text, sanitize: false)
 end
 ```
 
