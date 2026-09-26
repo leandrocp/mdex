@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## [0.14.1](https://github.com/leandrocp/mdex/compare/v0.14.0...v0.14.1) (2026-09-26)
+
+### Bug Fixes
+
+- Raise validation errors for invalid built-in option values by @leandrocp in [#423](https://github.com/leandrocp/mdex/pull/423)
+- Validate :assigns and :auto_close option values by @leandrocp in [#427](https://github.com/leandrocp/mdex/pull/427)
+- Default Link and Image title to an empty string by @leandrocp in [#428](https://github.com/leandrocp/mdex/pull/428)
+- Disable sanitization with sanitize: false by @leandrocp in [#429](https://github.com/leandrocp/mdex/pull/429)
+- Handle document root fragments consistently by @leandrocp in [#432](https://github.com/leandrocp/mdex/pull/432)
+- Fill in sanitize defaults for partial :sanitize options by @leandrocp in [#433](https://github.com/leandrocp/mdex/pull/433)
+
+### Documentation
+
+- Emit plugin HTML as MDEx.Raw in plugin examples by @leandrocp in [#425](https://github.com/leandrocp/mdex/pull/425)
+- Expand the plugin authoring guide and document the HTML node trade-off by @leandrocp in [#431](https://github.com/leandrocp/mdex/pull/431)
+
 ## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
 
 ### ⚠ BREAKING CHANGES
