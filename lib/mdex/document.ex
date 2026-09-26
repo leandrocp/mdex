@@ -3403,10 +3403,10 @@ defmodule MDEx.Link do
   @type t :: %__MODULE__{
           nodes: [MDEx.Document.md_node()],
           url: String.t(),
-          title: String.t() | nil,
+          title: String.t(),
           attrs: MDEx.Attributes.t() | nil
         }
-  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
+  defstruct nodes: [], url: "", title: "", attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3420,10 +3420,10 @@ defmodule MDEx.Image do
   @type t :: %__MODULE__{
           nodes: [MDEx.Document.md_node()],
           url: String.t(),
-          title: String.t() | nil,
+          title: String.t(),
           attrs: MDEx.Attributes.t() | nil
         }
-  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
+  defstruct nodes: [], url: "", title: "", attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
