@@ -492,7 +492,7 @@ defmodule MDEx do
 
   ## Options
 
-    * `:assigns` - a map of assigns to pass to the HEEx template. Defaults to `%{}`.
+    * `:assigns` - a map or keyword list of assigns to pass to the HEEx template. Defaults to `%{}`.
 
   Note that the following options are automatically enabled: `extension: [phoenix_heex: true]` and `render: [unsafe: true]`
   in order to let the parser recognize all tags properly.
@@ -596,7 +596,7 @@ defmodule MDEx do
   @doc false
   def __to_heex__(%Document{} = doc, options, caller) do
     {assigns, _options} = Keyword.pop(options, :assigns, %{})
-    assigns = Map.merge(Document.get_option(doc, :assigns, %{}), assigns)
+    assigns = Map.merge(Document.get_option(doc, :assigns, %{}), Document.normalize_assigns!(assigns))
 
     html =
       doc
@@ -613,6 +613,7 @@ defmodule MDEx do
   @doc false
   def __to_heex__(source, options, caller) do
     {assigns, options} = Keyword.pop(options, :assigns, %{})
+    assigns = Document.normalize_assigns!(assigns)
     extension = Keyword.merge(options[:extension] || [], phoenix_heex: true)
     render = Keyword.merge(options[:render] || [], unsafe: true)
     options = Keyword.merge(options, extension: extension, render: render)
@@ -1357,7 +1358,7 @@ defmodule MDEx do
     - `:render` (`t:MDEx.Document.render_options/0`) - Render options.
     - `:syntax_highlight` (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) - Syntax highlight options, or `nil` to turn it off.
     - `:sanitize` (`t:sanitize_options/0` | `nil`) - HTML cleaning options, or `nil` to turn it off. Defaults to `nil`.
-    - `:assigns` (`t:map/0`) - Values for pipelines, plugins, and HEEx. Defaults to `%{}`.
+    - `:assigns` (`t:map/0` | `t:keyword/0`) - Values for pipelines, plugins, and HEEx. Defaults to `%{}`.
     - `:auto_close` (`t:boolean/0`) - Closes Markdown syntax left open at the end of the source. Defaults to `false`, and to `true` in `MDEx.stream/2`.
 
   The `:streaming` option is deprecated. Use `:auto_close`.
@@ -1506,6 +1507,7 @@ defmodule MDEx do
     |> Stream.transform(
       fn ->
         {auto_close, options} = Keyword.pop(options, :auto_close, true)
+        Document.validate_boolean!(auto_close, :auto_close)
 
         document =
           options

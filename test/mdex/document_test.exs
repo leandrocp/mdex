@@ -1448,6 +1448,11 @@ defmodule MDEx.DocumentTest do
             syntax_highlight: [:html_inline],
             sanitize: :default,
             sanitize: [:default],
+            auto_close: nil,
+            auto_close: "no",
+            streaming: nil,
+            assigns: "x",
+            assigns: [:name],
             plugins: MyPlugin,
             codefence_renderers: []
           ] do
@@ -1811,6 +1816,14 @@ defmodule MDEx.DocumentTest do
       document = Document.assign(MDEx.new(), :title, "Hello")
 
       assert Document.get_option(document, :assigns) == %{title: "Hello"}
+    end
+
+    test "assigns option accepts a keyword list" do
+      document =
+        MDEx.new(assigns: [title: "Hello"])
+        |> Document.assign(:author, "Jane")
+
+      assert Document.get_option(document, :assigns) == %{title: "Hello", author: "Jane"}
     end
 
     test "assign merges with existing assigns" do

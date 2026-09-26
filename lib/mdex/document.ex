@@ -1324,11 +1324,25 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
+    auto_close: [
+      type: :boolean,
+      doc: """
+      Closes Markdown syntax left open at the end of the source.
+
+      Defaults to `false`, and to `true` in `MDEx.stream/2`.
+      """
+    ],
+    streaming: [
+      type: :boolean,
+      doc: false
+    ],
     assigns: [
-      type: :map,
+      type: {:or, [:map, :keyword_list]},
+      type_spec: quote(do: map() | keyword()),
       default: %{},
       doc: """
-      A map of assigns available for use in pipelines, plugins, and HEEx rendering.
+      A map or keyword list of assigns available for use in pipelines, plugins, and HEEx rendering.
+      A keyword list is converted to a map.
 
       Assigns can be set at document creation time:
 
@@ -1633,18 +1647,15 @@ defmodule MDEx.Document do
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
 
-      {:auto_close, value}, acc ->
-        acc
-        |> Map.update!(:options, &Keyword.put(&1 || [], :auto_close, value))
-        |> Document.put_private(:auto_close, value)
+      {name, value}, acc when name in [:auto_close, :streaming] ->
+        validate_boolean!(value, name)
 
-      {:streaming, value}, acc ->
         acc
         |> Map.update!(:options, &Keyword.put(&1 || [], :auto_close, value))
         |> Document.put_private(:auto_close, value)
 
       {:assigns, value}, acc ->
-        %{acc | options: Keyword.put(acc.options || [], :assigns, value)}
+        %{acc | options: Keyword.put(acc.options || [], :assigns, normalize_assigns!(value))}
 
       {:plugins, plugins}, acc ->
         put_plugins(acc, plugins)
@@ -1695,6 +1706,18 @@ defmodule MDEx.Document do
   def validate_keyword_list!(options, name) do
     if Keyword.keyword?(options), do: options, else: raise_invalid_option!(name, options)
   end
+
+  @doc false
+  @spec validate_boolean!(term(), atom()) :: boolean()
+  def validate_boolean!(value, name) do
+    if is_boolean(value), do: value, else: raise_invalid_option!(name, value)
+  end
+
+  @doc false
+  @spec normalize_assigns!(term()) :: map()
+  def normalize_assigns!(assigns) when is_map(assigns), do: assigns
+  def normalize_assigns!(assigns) when is_list(assigns), do: assigns |> validate_keyword_list!(:assigns) |> Map.new()
+  def normalize_assigns!(assigns), do: raise_invalid_option!(:assigns, assigns)
 
   # Reports an invalid top-level value the way `@options_schema` would, naming the option.
   defp raise_invalid_option!(name, value) do

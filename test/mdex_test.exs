@@ -203,6 +203,15 @@ defmodule MDExTest do
       assert "<p>Hello User</p>" = MDEx.to_heex!("Hello {@name}", assigns: %{name: "User"}) |> MDEx.to_html!()
     end
 
+    test "with keyword list assigns" do
+      assert "<p>Hello User</p>" = MDEx.to_heex!("Hello {@name}", assigns: [name: "User"]) |> MDEx.to_html!()
+
+      assert "<p>Hello User</p>" =
+               MDEx.new(markdown: "Hello {@name}", assigns: [name: "Doc"])
+               |> MDEx.to_heex!(assigns: [name: "User"])
+               |> MDEx.to_html!()
+    end
+
     test "with Document.assign" do
       import Phoenix.Component
 
