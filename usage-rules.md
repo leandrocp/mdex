@@ -398,11 +398,23 @@ defmodule MyPlugin do
 
   defp transform(document) do
     Document.update_nodes(document, MDEx.CodeBlock, fn node ->
-      %MDEx.HtmlBlock{literal: "<pre>#{node.literal}</pre>"}
+      %MDEx.Raw{literal: "<pre>#{escape(node.literal)}</pre>"}
+    end)
+  end
+
+  defp escape(text) do
+    String.replace(text, ["&", "<", ">", "\"", "'"], fn
+      "&" -> "&amp;"
+      "<" -> "&lt;"
+      ">" -> "&gt;"
+      "\"" -> "&quot;"
+      "'" -> "&#39;"
     end)
   end
 end
 ```
+
+Emit plugin-generated HTML as `MDEx.Raw`, which renders without `render: [unsafe: true]`. `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless `unsafe: true` is set, and setting it from a plugin also renders the Markdown author's raw HTML. `MDEx.Raw` is inserted verbatim, so escape any text taken from the Markdown source.
 
 Use `document.private` helpers for plugin state instead of overloading assigns.
 
@@ -569,7 +581,7 @@ MDEx.to_html!(markdown,
 ## Safety Rules
 
 - Raw HTML is omitted by default.
-- Raw HTML requires `render: [unsafe: true]`.
+- Raw HTML requires `render: [unsafe: true]`. This includes `MDEx.HtmlBlock` and `MDEx.HtmlInline` nodes inserted by plugins. `MDEx.Raw` nodes render without it.
 - Use `render: [escape: true]` if you want raw HTML rendered as escaped text.
 - If unsafe HTML is enabled for untrusted content, also set `sanitize:`.
 - Use `MDEx.safe_html/2` when you need to sanitize an HTML string directly.

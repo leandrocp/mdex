@@ -161,9 +161,35 @@ Document.update_nodes(document, MDEx.Text, fn node ->
 end)
 ```
 
+## Emitting HTML
+
+Plugins often replace nodes with their own HTML. Three nodes can hold HTML, and
+the render options treat them differently:
+
+| Node | Default | `render: [escape: true]` | `render: [unsafe: true]` |
+| --- | --- | --- | --- |
+| `MDEx.HtmlBlock`, `MDEx.HtmlInline` | `<!-- raw HTML omitted -->` | Escaped | Rendered |
+| `MDEx.Raw` | Rendered | Rendered | Rendered |
+
+The parser creates `MDEx.HtmlBlock` and `MDEx.HtmlInline` for raw HTML written
+in the Markdown source, so nodes a plugin inserts get the same treatment as the
+author's HTML. `MDEx.Raw` is never parsed from input and is inserted verbatim
+into HTML and CommonMark output.
+
+Use `MDEx.Raw` for the HTML a plugin generates. Calling
+`Document.put_render_options(document, unsafe: true)` from a plugin also works,
+but it renders all raw HTML written by the Markdown author across the whole
+document.
+
+`MDEx.Raw` is never escaped, so escape any text taken from the Markdown source
+yourself, like the code in a code block. Otherwise a code block containing
+`</code></pre><script>` injects a script under the default options. The
+`:sanitize` option still applies to `MDEx.Raw` output.
+
 ## Example Plugin
 
-Here's a complete example that adds custom attributes to code blocks:
+Here's a complete example that renders code blocks with a custom class,
+following the rules in [Emitting HTML](#emitting-html):
 
 ```elixir
 defmodule CodeBlockEnhancer do
@@ -181,10 +207,21 @@ defmodule CodeBlockEnhancer do
 
     MDEx.traverse_and_update(document, fn
       %MDEx.CodeBlock{} = node ->
-        %MDEx.HtmlBlock{literal: ~s(<pre class="#{class}"><code>#{node.literal}</code></pre>)}
+        html = ~s(<pre class="#{escape(class)}"><code>#{escape(node.literal)}</code></pre>)
+        %MDEx.Raw{literal: html}
 
       node ->
         node
+    end)
+  end
+
+  defp escape(text) do
+    String.replace(text, ["&", "<", ">", "\"", "'"], fn
+      "&" -> "&amp;"
+      "<" -> "&lt;"
+      ">" -> "&gt;"
+      "\"" -> "&quot;"
+      "'" -> "&#39;"
     end)
   end
 end
@@ -193,5 +230,6 @@ end
 Usage:
 
 ```elixir
-MDEx.to_html!(markdown, plugins: [{CodeBlockEnhancer, code_class: "syntax-highlight"}])
+MDEx.to_html!("```elixir\n:ok\n```", plugins: [{CodeBlockEnhancer, code_class: "syntax-highlight"}])
+#=> "<pre class=\"syntax-highlight\"><code>:ok\n</code></pre>"
 ```
