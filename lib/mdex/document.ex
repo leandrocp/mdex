@@ -1690,6 +1690,18 @@ defmodule MDEx.Document do
     if score < current, do: best, else: {option, score}
   end
 
+  @doc false
+  @spec validate_keyword_list!(term(), atom()) :: keyword()
+  def validate_keyword_list!(options, name) do
+    if Keyword.keyword?(options), do: options, else: raise_invalid_option!(name, options)
+  end
+
+  # Reports an invalid top-level value the way `@options_schema` would, naming the option.
+  defp raise_invalid_option!(name, value) do
+    {:error, error} = NimbleOptions.validate([{name, value}], Keyword.take(@options_schema, [name]))
+    raise error
+  end
+
   @doc """
   Updates the document's `:extension` options.
 
@@ -1702,6 +1714,7 @@ defmodule MDEx.Document do
   """
   @spec put_extension_options(t(), extension_options()) :: t()
   def put_extension_options(%MDEx.Document{} = document, options) when is_list(options) do
+    validate_keyword_list!(options, :extension)
     NimbleOptions.validate!(options, @extension_options_schema)
 
     %{
@@ -1712,6 +1725,8 @@ defmodule MDEx.Document do
           end)
     }
   end
+
+  def put_extension_options(%MDEx.Document{}, options), do: raise_invalid_option!(:extension, options)
 
   @doc """
   Updates the document's `:render` options.
@@ -1725,6 +1740,7 @@ defmodule MDEx.Document do
   """
   @spec put_render_options(t(), render_options()) :: t()
   def put_render_options(%MDEx.Document{} = document, options) when is_list(options) do
+    validate_keyword_list!(options, :render)
     {unsafe_, options} = Keyword.pop(options, :unsafe_, false)
     options = Keyword.put_new(options, :unsafe, unsafe_)
 
@@ -1739,6 +1755,8 @@ defmodule MDEx.Document do
     }
   end
 
+  def put_render_options(%MDEx.Document{}, options), do: raise_invalid_option!(:render, options)
+
   @doc """
   Updates the document's `:parse` options.
 
@@ -1751,6 +1769,7 @@ defmodule MDEx.Document do
   """
   @spec put_parse_options(t(), parse_options()) :: t()
   def put_parse_options(%MDEx.Document{} = document, options) when is_list(options) do
+    validate_keyword_list!(options, :parse)
     NimbleOptions.validate!(options, @parse_options_schema)
 
     %{
@@ -1761,6 +1780,8 @@ defmodule MDEx.Document do
           end)
     }
   end
+
+  def put_parse_options(%MDEx.Document{}, options), do: raise_invalid_option!(:parse, options)
 
   @doc """
   Updates the document's `:syntax_highlight` options.
@@ -1788,6 +1809,7 @@ defmodule MDEx.Document do
   end
 
   def put_syntax_highlight_options(%MDEx.Document{} = document, options) when is_list(options) do
+    validate_keyword_list!(options, :syntax_highlight)
     NimbleOptions.validate!(options, @syntax_highlight_options_schema)
 
     %{
@@ -1798,6 +1820,8 @@ defmodule MDEx.Document do
           end)
     }
   end
+
+  def put_syntax_highlight_options(%MDEx.Document{}, options), do: raise_invalid_option!(:syntax_highlight, options)
 
   @doc """
   Updates the document's `:sanitize` options.
@@ -1821,6 +1845,7 @@ defmodule MDEx.Document do
   end
 
   def put_sanitize_options(%MDEx.Document{} = document, options) when is_list(options) do
+    validate_keyword_list!(options, :sanitize)
     NimbleOptions.validate!(options, @sanitize_options_schema)
 
     %{
@@ -1855,6 +1880,8 @@ defmodule MDEx.Document do
 
     put_sanitize_options(document, nil)
   end
+
+  def put_sanitize_options(%MDEx.Document{}, options), do: raise_invalid_option!(:sanitize, options)
 
   @doc """
   Attaches plugins to the document.
@@ -1892,6 +1919,8 @@ defmodule MDEx.Document do
   def put_plugins(%MDEx.Document{} = document, plugins) when is_list(plugins) do
     Enum.reduce(plugins, document, &attach_plugin/2)
   end
+
+  def put_plugins(%MDEx.Document{}, plugins), do: raise_invalid_option!(:plugins, plugins)
 
   @doc """
   Updates the document's `:codefence_renderers` option.
@@ -1935,6 +1964,8 @@ defmodule MDEx.Document do
           end)
     }
   end
+
+  def put_codefence_renderers(%MDEx.Document{}, renderers), do: raise_invalid_option!(:codefence_renderers, renderers)
 
   defp attach_plugin(plugin, doc) when is_atom(plugin) do
     {:module, _} = Code.ensure_loaded(plugin)

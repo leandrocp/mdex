@@ -1435,6 +1435,27 @@ defmodule MDEx.DocumentTest do
       end
     end
 
+    test "validate built-in option values", %{document: document} do
+      for {name, value} <- [
+            extension: nil,
+            extension: [:table],
+            parse: :smart,
+            parse: [:smart],
+            render: "unsafe",
+            render: [:unsafe],
+            render: [{:unsafe_, true}, :hardbreaks],
+            syntax_highlight: true,
+            syntax_highlight: [:html_inline],
+            sanitize: :default,
+            sanitize: [:default],
+            plugins: MyPlugin,
+            codefence_renderers: []
+          ] do
+        error = assert_raise NimbleOptions.ValidationError, fn -> Document.put_options(document, [{name, value}]) end
+        assert {error.key, error.value} == {name, value}
+      end
+    end
+
     test "put_built_in_options" do
       document = %Document{options: [render: [escape: true]]}
       document = Document.register_options(document, [:test])

@@ -1293,6 +1293,7 @@ defmodule MDEx do
 
         options ->
           options
+          |> Document.validate_keyword_list!(:sanitize)
           |> NimbleOptions.validate!(MDEx.Document.sanitize_options_schema())
           |> MDEx.Document.adapt_sanitize_options()
       end

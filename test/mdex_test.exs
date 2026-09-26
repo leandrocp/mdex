@@ -112,6 +112,12 @@ defmodule MDExTest do
       assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], sanitize: default_options) == "<h1>test</h1>"
     end
 
+    test "sanitize with invalid value" do
+      assert_raise NimbleOptions.ValidationError, ~r/:sanitize option/, fn ->
+        MDEx.to_html!("# test", sanitize: :default)
+      end
+    end
+
     test "unsafe_" do
       assert MDEx.to_html!("<script>hello</script>", render: [unsafe_: true]) == "<script>hello</script>"
     end
@@ -1065,6 +1071,14 @@ defmodule MDExTest do
                sanitize: MDEx.Document.default_sanitize_options(),
                escape: [content: false, curly_braces_in_code: false]
              ) == "<span>tag</span>"
+    end
+
+    test "sanitize with invalid value" do
+      for sanitize <- [true, [:default]] do
+        assert_raise NimbleOptions.ValidationError, ~r/:sanitize option/, fn ->
+          MDEx.safe_html("<span>tag</span>", sanitize: sanitize)
+        end
+      end
     end
 
     test "escape tags" do
