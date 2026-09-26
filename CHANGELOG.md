@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-### Bug Fixes
-
-- Recognize `MDEx.HeexBlock` and `MDEx.HeexInline` as fragments for root insertion and rendering.
-- Leave documents unchanged when `MDEx.Document.put_node_in_document_root/3` receives an invalid node or a list at either position, instead of raising at `:bottom` or inserting a nested list.
-
 ## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
 
 ### ⚠ BREAKING CHANGES
