@@ -3160,7 +3160,7 @@ defmodule MDEx.FootnoteReference do
   """
 
   @type t :: %__MODULE__{name: String.t(), ref_num: non_neg_integer(), ix: non_neg_integer(), texts: [{String.t(), non_neg_integer()}]}
-  defstruct name: "", ref_num: nil, ix: nil, texts: [], sourcepos: %MDEx.Sourcepos{}
+  defstruct name: "", ref_num: 0, ix: 0, texts: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3372,10 +3372,10 @@ defmodule MDEx.Link do
   @type t :: %__MODULE__{
           nodes: [MDEx.Document.md_node()],
           url: String.t(),
-          title: String.t() | nil,
+          title: String.t(),
           attrs: MDEx.Attributes.t() | nil
         }
-  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
+  defstruct nodes: [], url: "", title: "", attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3389,10 +3389,10 @@ defmodule MDEx.Image do
   @type t :: %__MODULE__{
           nodes: [MDEx.Document.md_node()],
           url: String.t(),
-          title: String.t() | nil,
+          title: String.t(),
           attrs: MDEx.Attributes.t() | nil
         }
-  defstruct nodes: [], url: "", title: nil, attrs: nil, sourcepos: %MDEx.Sourcepos{}
+  defstruct nodes: [], url: "", title: "", attrs: nil, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 

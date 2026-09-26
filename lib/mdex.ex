@@ -1072,6 +1072,9 @@ defmodule MDEx do
   @spec to_markdown(Document.t(), MDEx.Document.options()) :: {:ok, String.t()} | {:error, MDEx.DecodeError.t()}
   def to_markdown(%Document{} = document, options \\ []) do
     run_pipeline(document, options, &Comrak.document_to_commonmark/2)
+  rescue
+    ErlangError ->
+      {:error, %DecodeError{document: document}}
   end
 
   @doc """
@@ -1202,11 +1205,20 @@ defmodule MDEx do
         |> then(fn document ->
           document
           |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
-          |> ComrakConverter.from_mdex()
-          |> converter.(Document.rust_options!(document.options))
-          |> maybe_trim()
+          |> render_document(converter)
         end)
     end
+  end
+
+  # Rescue here so the error carries the document the steps and plugins produced, not the input
+  defp render_document(document, converter) do
+    document
+    |> ComrakConverter.from_mdex()
+    |> converter.(Document.rust_options!(document.options))
+    |> maybe_trim()
+  rescue
+    ErlangError ->
+      {:error, %DecodeError{document: document}}
   end
 
   defp source_markdown(_document, nil), do: :error

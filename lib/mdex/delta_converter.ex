@@ -163,7 +163,7 @@ defmodule MDEx.DeltaConverter do
   # Image - use custom insert object
   defp default_convert_node(%MDEx.Image{url: url, title: title}, _current_attrs, options) do
     image_data = %{"image" => render_url(url, options)}
-    image_data = if title, do: Map.put(image_data, "alt", title), else: image_data
+    image_data = if title in [nil, ""], do: image_data, else: Map.put(image_data, "alt", title)
     [%{"insert" => image_data}]
   end
 

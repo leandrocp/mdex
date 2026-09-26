@@ -457,7 +457,7 @@ defmodule MDEx.DeltaConverterTest do
 
     test "converts images without title" do
       input = %Document{
-        nodes: [%MDEx.Image{url: "https://example.com/image.png", title: nil}]
+        nodes: [%MDEx.Image{url: "https://example.com/image.png"}]
       }
 
       {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})
@@ -477,7 +477,7 @@ defmodule MDEx.DeltaConverterTest do
 
     test "preserves comrak-allowed data image URLs" do
       input = %Document{
-        nodes: [%MDEx.Image{url: "data:image/png;base64,AAAA", title: nil}]
+        nodes: [%MDEx.Image{url: "data:image/png;base64,AAAA"}]
       }
 
       {:ok, result} = DeltaConverter.convert(input, custom_converters: %{})

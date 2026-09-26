@@ -168,6 +168,19 @@ defmodule MDEx.ComrakConverterTest do
     end
   end
 
+  # MDEx.DecodeError relies on this to name the field holding a value of the wrong type
+  test "every mdex node renders with its default values" do
+    for suffix <- @nodes -- [Sourcepos] do
+      document = %MDEx.Document{nodes: [in_parent(struct(Module.concat(MDEx, suffix)))]}
+
+      assert {:ok, _} = MDEx.to_html(document), "#{inspect(suffix)} does not render with its default values"
+    end
+  end
+
+  # comrak panics rendering a table cell outside a table row
+  defp in_parent(%MDEx.TableCell{} = cell), do: %MDEx.Table{nodes: [%MDEx.TableRow{nodes: [cell]}], alignments: [:none]}
+  defp in_parent(node), do: node
+
   defp native_structs do
     for module <- Application.spec(:mdex_native, :modules),
         match?(["MDExNative", "Comrak", _suffix], Module.split(module)),

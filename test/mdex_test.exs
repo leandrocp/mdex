@@ -153,6 +153,14 @@ defmodule MDExTest do
                "<p><code>lang = :elixir</code></p>"
     end
 
+    test "links and images built with struct defaults" do
+      link = %MDEx.Link{url: "https://elixir-lang.org", nodes: [%MDEx.Text{literal: "Elixir"}]}
+      image = %MDEx.Image{url: "https://elixir-lang.org/logo.png", nodes: [%MDEx.Text{literal: "logo"}]}
+
+      assert MDEx.to_html!(%Document{nodes: [%MDEx.Paragraph{nodes: [link, image]}]}) ==
+               ~s(<p><a href="https://elixir-lang.org">Elixir</a><img src="https://elixir-lang.org/logo.png" alt="logo" /></p>)
+    end
+
     test "deprecated :document option still works" do
       warning =
         capture_io(:stderr, fn ->
@@ -168,6 +176,33 @@ defmodule MDExTest do
       assert {:error, %MDEx.DecodeError{}} = MDEx.to_html(%Document{nodes: nil})
       assert {:error, %MDEx.DecodeError{}} = MDEx.to_html(%Document{nodes: [nil]})
       assert {:error, %MDEx.DecodeError{}} = MDEx.to_html(%Document{nodes: [%MDEx.Text{literal: nil}]})
+    end
+
+    test "error names the invalid value" do
+      for {nodes, reason} <- [
+            {nil, "MDEx.Document :nodes must be a list, got: nil"},
+            {[nil], "MDEx.Document :nodes must contain only nodes, got: nil"},
+            {[%MDEx.Paragraph{nodes: [%MDEx.Link{title: nil}]}], "MDEx.Link :title must be a string, got: nil"},
+            {[%MDEx.Paragraph{nodes: [%MDEx.Text{literal: <<0xFF>>}]}], "MDEx.Text :literal must be a string, got: <<255>>"},
+            {[%Heading{level: -1}], "MDEx.Heading :level must be a non-negative integer, got: -1"},
+            {[%Heading{sourcepos: nil}], "MDEx.Heading :sourcepos must be %MDEx.Sourcepos{}, got: nil"}
+          ] do
+        assert {:error, error} = MDEx.to_html(%Document{nodes: nodes})
+        assert Exception.message(error) =~ reason
+      end
+    end
+
+    test "error carries the document produced by the pipeline steps" do
+      document =
+        MDEx.new(markdown: "[Elixir](https://elixir-lang.org)")
+        |> Document.append_steps(
+          drop_title: &Document.update_nodes(&1, fn node -> match?(%MDEx.Link{}, node) end, fn link -> %{link | title: nil} end)
+        )
+
+      assert {:error, %MDEx.DecodeError{document: %Document{nodes: [%MDEx.Paragraph{nodes: [%MDEx.Link{title: nil}]}]}} = error} =
+               MDEx.to_html(document)
+
+      assert Exception.message(error) =~ "MDEx.Link :title must be a string, got: nil"
     end
 
     test "invalid input" do
@@ -1096,6 +1131,11 @@ defmodule MDExTest do
 
     test "keeps the indentation of a leading indented code block" do
       assert MDEx.to_markdown!(MDEx.parse_document!("    a\n    b\n")) == "    a\n    b"
+    end
+
+    test "invalid document" do
+      assert {:error, %MDEx.DecodeError{}} = MDEx.to_markdown(%Document{nodes: [%MDEx.Text{literal: nil}]})
+      assert_raise MDEx.DecodeError, fn -> MDEx.to_markdown!(%Document{nodes: [%MDEx.Text{literal: nil}]}) end
     end
   end
 
