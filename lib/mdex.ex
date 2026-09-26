@@ -1261,6 +1261,9 @@ defmodule MDEx do
       iex> MDEx.safe_html("<custom_tag>Hello</custom_tag>", sanitize: [add_tags: ["custom_tag"]], escape: [content: false])
       "<custom_tag>Hello</custom_tag>"
 
+      iex> MDEx.safe_html("<script>console.log('attack')</script>", sanitize: false, escape: [content: false])
+      "<script>console.log('attack')</script>"
+
       iex> MDEx.safe_html("<h1>{'Example:'}</h1><code>{:ok, 'MDEx'}</code>")
       "&lt;h1&gt;{&#x27;Example:&#x27;}&lt;&#x2f;h1&gt;&lt;code&gt;&lbrace;:ok, &#x27;MDEx&#x27;&rbrace;&lt;&#x2f;code&gt;"
 
@@ -1269,9 +1272,9 @@ defmodule MDEx do
 
   ## Options
 
-    - `:sanitize` - cleans HTML after rendering. Defaults to `MDEx.Document.default_sanitize_options()/0`.
+    - `:sanitize` - cleans HTML after rendering. Defaults to `MDEx.Document.default_sanitize_options()/0` when omitted or `nil`.
         - `keyword` - `t:sanitize_options/0`
-        - `nil` - do not sanitize output.
+        - `false` - do not sanitize output.
 
     - `:escape` - which entities should be escaped. Defaults to `[:content, :curly_braces_in_code]`.
         - `:content` - escape common chars like `<`, `>`, `&`, and others in the HTML content;
@@ -1280,7 +1283,7 @@ defmodule MDEx do
   @spec safe_html(
           String.t(),
           options :: [
-            sanitize: MDEx.Document.sanitize_options() | nil,
+            sanitize: MDEx.Document.sanitize_options() | nil | false,
             escape: [atom()]
           ]
         ) :: String.t()
@@ -1289,7 +1292,7 @@ defmodule MDEx do
       options
       |> opt([:sanitize], Document.default_sanitize_options())
       |> case do
-        nil ->
+        false ->
           nil
 
         options ->

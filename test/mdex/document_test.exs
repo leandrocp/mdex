@@ -1516,6 +1516,18 @@ defmodule MDEx.DocumentTest do
     end
   end
 
+  describe "put_sanitize_options" do
+    test "can disable" do
+      document = Document.put_sanitize_options(%Document{options: [sanitize: [rm_tags: ["a"]]]}, nil)
+      refute get_in(document.options, [:sanitize])
+    end
+
+    test "can disable with false" do
+      document = Document.put_sanitize_options(%Document{options: [sanitize: [rm_tags: ["a"]]]}, false)
+      refute get_in(document.options, [:sanitize])
+    end
+  end
+
   describe "put_syntax_highlight_options" do
     test "can disable" do
       document = Document.put_syntax_highlight_options(%Document{}, nil)
