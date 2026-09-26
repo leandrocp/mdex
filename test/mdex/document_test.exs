@@ -1526,6 +1526,29 @@ defmodule MDEx.DocumentTest do
       document = Document.put_sanitize_options(%Document{options: [sanitize: [rm_tags: ["a"]]]}, false)
       refute get_in(document.options, [:sanitize])
     end
+
+    test "merges into earlier calls" do
+      document =
+        %Document{}
+        |> Document.put_sanitize_options(rm_tags: ["em"])
+        |> Document.put_sanitize_options(link_rel: "nofollow")
+
+      assert Document.get_option(document, :sanitize) == [rm_tags: ["em"], link_rel: "nofollow"]
+    end
+
+    # https://github.com/leandrocp/mdex/issues/416
+    test "converts partial options on top of the defaults" do
+      defaults = Document.default_sanitize_options()
+
+      assert {:custom, sanitize} = Document.rust_options!(sanitize: [rm_tags: ["em"]]).sanitize
+      assert sanitize.link_rel == "noopener noreferrer"
+      assert sanitize.tags == %{set: defaults[:tags], add: [], rm: ["em"]}
+      assert sanitize.tag_attributes.set == defaults[:tag_attributes]
+    end
+
+    test "keeps an explicit nil over the default" do
+      assert {:custom, %{link_rel: nil}} = Document.rust_options!(sanitize: [link_rel: nil]).sanitize
+    end
   end
 
   describe "put_syntax_highlight_options" do

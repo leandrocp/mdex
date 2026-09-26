@@ -1263,6 +1263,8 @@ defmodule MDEx.Document do
     ]
   ]
 
+  @default_sanitize_options NimbleOptions.validate!([], @sanitize_options_schema)
+
   @options_schema [
     extension: [
       type: :keyword_list,
@@ -1558,11 +1560,11 @@ defmodule MDEx.Document do
   Returns the default `:sanitize` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @sanitize_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_sanitize_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_sanitize_options() :: sanitize_options()
-  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+  def default_sanitize_options, do: @default_sanitize_options
 
   @doc false
   def sanitize_options_schema, do: @sanitize_options_schema
@@ -1872,6 +1874,8 @@ defmodule MDEx.Document do
 
   def put_sanitize_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :sanitize)
+    # Only the given keys are stored, so later calls merge into earlier ones.
+    # Defaults are filled in by adapt_sanitize_options/1.
     NimbleOptions.validate!(options, @sanitize_options_schema)
 
     %{
@@ -2848,6 +2852,8 @@ defmodule MDEx.Document do
   def adapt_sanitize_options(nil = _options), do: nil
 
   def adapt_sanitize_options(options) do
+    options = Keyword.merge(@default_sanitize_options, options)
+
     {:custom,
      %{
        link_rel: options[:link_rel],
