@@ -159,12 +159,18 @@ defmodule MDExTest do
                "<p><code>lang = :elixir</code></p>"
     end
 
-    test "links and images built with struct defaults" do
+    test "link built with struct defaults" do
       link = %MDEx.Link{url: "https://elixir-lang.org", nodes: [%MDEx.Text{literal: "Elixir"}]}
+
+      assert MDEx.to_html!(%Document{nodes: [%MDEx.Paragraph{nodes: [link]}]}) ==
+               ~s(<p><a href="https://elixir-lang.org">Elixir</a></p>)
+    end
+
+    test "image built with struct defaults" do
       image = %MDEx.Image{url: "https://elixir-lang.org/logo.png", nodes: [%MDEx.Text{literal: "logo"}]}
 
-      assert MDEx.to_html!(%Document{nodes: [%MDEx.Paragraph{nodes: [link, image]}]}) ==
-               ~s(<p><a href="https://elixir-lang.org">Elixir</a><img src="https://elixir-lang.org/logo.png" alt="logo" /></p>)
+      assert MDEx.to_html!(%Document{nodes: [%MDEx.Paragraph{nodes: [image]}]}) ==
+               ~s(<p><img src="https://elixir-lang.org/logo.png" alt="logo" /></p>)
     end
 
     test "deprecated :document option still works" do
