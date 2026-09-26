@@ -231,29 +231,79 @@ you the nodes to match on.
 
 ## Emitting HTML
 
-Plugins often replace nodes with their own HTML. Three nodes can hold HTML, and
-the render options treat them differently:
+Plugins often replace nodes with their own HTML. Three node types can carry it,
+and the one you pick decides how much of the caller's configuration your plugin
+depends on. That part is up to you:
 
-| Node | Default | `render: [escape: true]` | `render: [unsafe: true]` |
-| --- | --- | --- | --- |
-| `MDEx.HtmlBlock`, `MDEx.HtmlInline` | `<!-- raw HTML omitted -->` | Escaped | Rendered |
-| `MDEx.Raw` | Rendered | Rendered | Rendered |
+| Node | Default | `render: [escape: true]` | `render: [unsafe: true]` | `sanitize:` |
+| --- | --- | --- | --- | --- |
+| `MDEx.HtmlBlock`, `MDEx.HtmlInline` | `<!-- raw HTML omitted -->` | Escaped | Rendered | Cleaned |
+| `MDEx.Raw` | Rendered | Rendered | Rendered | Cleaned |
 
-The parser creates `MDEx.HtmlBlock` and `MDEx.HtmlInline` for raw HTML written
-in the Markdown source, so nodes a plugin inserts get the same treatment as the
-author's HTML. `MDEx.Raw` is never parsed from input and is inserted verbatim
-into HTML and CommonMark output.
+### `MDEx.Raw` ignores the caller's `:unsafe` and `:escape`
 
-Use `MDEx.Raw` for the HTML a plugin generates. Calling
-`Document.put_render_options(document, unsafe: true)` from a plugin also works,
-but it renders all raw HTML written by the Markdown author across the whole
-document.
+`MDEx.Raw` never comes from the parser. You can only build one in code, and it
+goes into HTML and CommonMark output as written no matter what the caller set
+for `:unsafe` or `:escape`. Your markup renders the same for everyone, which is
+usually what you want for markup the plugin itself generated.
 
-`MDEx.Raw` is never escaped, so escape any text taken from the Markdown source
-before you interpolate it, like the code in a code block. Otherwise a code block
-containing `</code></pre><script>` injects a script under the default options.
+That guarantee is also the cost. You've taken one node out of the caller's
+safety settings, so anything you interpolate into it from the Markdown source is
+yours to escape. Skip that and a code block containing `</code></pre><script>`
+lands in the page intact, under default options, in an app that never asked for
+raw HTML.
 
-`MDEx.safe_html/2` does that escaping when you turn sanitizing off:
+`:sanitize` is the exception. It runs over the rendered HTML, `MDEx.Raw`
+included, so a caller who turns it on can still strip what your plugin emitted:
+
+```elixir
+document = %MDEx.Document{nodes: [%MDEx.Raw{literal: "<script>init()</script><b>ok</b>"}]}
+
+MDEx.to_html!(document)
+#=> "<script>init()</script><b>ok</b>"
+
+MDEx.to_html!(document, sanitize: MDEx.Document.default_sanitize_options())
+#=> "<b>ok</b>"
+```
+
+Scripts go first, and so do most attributes. A diagram wrapper comes back
+stripped down to the one attribute the default rules allow:
+
+```elixir
+wrapper = ~s(<pre id="m-1" class="mermaid" phx-update="ignore">graph TD;</pre>)
+
+%MDEx.Document{nodes: [%MDEx.Raw{literal: wrapper}]}
+|> MDEx.to_html!(sanitize: MDEx.Document.default_sanitize_options())
+#=> "<pre class=\"mermaid\">graph TD;</pre>"
+```
+
+The `id` and `phx-update` are gone, and with them any chance of that diagram
+initializing. So if your plugin needs particular tags or attributes to survive,
+that's the second thing worth telling callers who sanitize.
+
+### `MDEx.HtmlBlock` and `MDEx.HtmlInline` follow the caller
+
+These are the nodes the parser builds for raw HTML in the Markdown source, so a
+plugin that emits them gets whatever treatment the author's own HTML gets. They
+disappear by default and need `render: [unsafe: true]`.
+
+Depending on that is a reasonable choice. It keeps your plugin inside the policy
+the caller picked instead of carving out an exception, and a document rendered
+with `escape: true` shows your markup as text along with everything else. The
+catch is that your plugin does nothing at all until the caller opts in, so say
+so in your README. "Requires `render: [unsafe: true]`" is a fine thing for a
+plugin to ask for when it's written down.
+
+A third path is to call `Document.put_render_options(document, unsafe: true)`
+from `attach/2`. Be careful with this one: it flips the option for the whole
+document, so the Markdown author's raw HTML renders too, and the caller cannot
+override it because your step runs after their options are applied. Prefer
+`MDEx.Raw` unless you actually mean "this document renders raw HTML."
+
+### Escaping what you interpolate
+
+Whichever node you emit, escape text that came from the Markdown source before
+it goes into a literal. `MDEx.safe_html/2` does it with sanitizing off:
 
 ```elixir
 MDEx.safe_html(~s(if a < b, do: "x"), sanitize: false)
@@ -262,11 +312,9 @@ MDEx.safe_html(~s(if a < b, do: "x"), sanitize: false)
 
 Leave `:sanitize` at its default and it cleans the text as HTML first, which is
 the wrong job here: it drops whatever parses as a tag instead of escaping it.
-Note also that `:escape` covers `{` and `}` inside `<code>` tags by default,
-which you want when the output is headed for LiveView. Pass
-`escape: [curly_braces_in_code: false]` when it is not.
-
-The `:sanitize` render option still applies to `MDEx.Raw` output.
+`:escape` also covers `{` and `}` inside `<code>` tags by default, which you
+want when the output is headed for LiveView. Pass
+`escape: [curly_braces_in_code: false]` when it isn't.
 
 ## Example Plugin
 

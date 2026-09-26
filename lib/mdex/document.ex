@@ -504,7 +504,8 @@ defmodule MDEx.Document do
           |> Document.append_steps(update_code_blocks: &update_code_blocks/1)
         end
 
-        # MDEx.Raw renders as is, without enabling `render: [unsafe: true]`
+        # MDEx.Raw renders whatever the caller set for `:unsafe` and `:escape`,
+        # so this plugin works without asking them to enable anything
         defp inject_script(document) do
           version = Document.get_option(document, :mermaid_version, @latest_version)
 
@@ -537,7 +538,10 @@ defmodule MDEx.Document do
       end
 
   Now we can `attach/1` that plugin into any MDEx document to render Mermaid diagrams.
-  See [Emitting HTML](plugins.html#emitting-html) for why it emits `MDEx.Raw` nodes.
+  This one emits `MDEx.Raw` so it renders under default options. Emitting
+  `MDEx.HtmlBlock` instead and documenting that the plugin needs
+  `render: [unsafe: true]` is also a valid choice. See
+  [Emitting HTML](plugins.html#emitting-html) for the trade-off.
 
   ## Practical Examples
 
