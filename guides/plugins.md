@@ -100,7 +100,7 @@ and notes about existing MDEx plugins.
 
 ## Creating Custom Plugins
 
-A plugin is any module that implements an `attach/2` function. This function receives a document and options, and returns a modified document:
+A plugin is any module with an `attach/2` function. It takes a document and returns one:
 
 ```elixir
 defmodule MyPlugin do
@@ -120,76 +120,163 @@ defmodule MyPlugin do
 end
 ```
 
-## Document Pipeline Functions
+`attach/2` runs once, before the Markdown is parsed, and should only register
+options and add steps. The steps run later, at render time, and do the work.
 
-These `MDEx.Document` functions are commonly used when building plugins:
+### Registering options
 
-### `register_options/2`
-
-Registers custom option keys so they can be stored in the document:
+`put_options/2` fails if you did not register the key first:
 
 ```elixir
-Document.register_options(document, [:theme_color, :enable_feature])
+MDEx.new() |> MDEx.Document.put_options(my_option: 1)
+** (ArgumentError) unknown option :my_option
 ```
 
-### `put_options/2`
+So call `register_options/2` first, and start your keys with the plugin name.
+All plugins share the same options, so two that use `:version` will clash where
+`:mermaid_version` and `:katex_version` will not. Read one back with
+`MDEx.Document.get_option(document, :mermaid_version, "11")`.
 
-Sets values for registered options:
+### Steps
 
-```elixir
-Document.put_options(document, theme_color: "blue", enable_feature: true)
-```
-
-### `append_steps/2`
-
-Adds processing steps that run when the document is rendered. Steps are functions that receive and return a document:
+`append_steps/2` adds steps to the end of the pipeline, `prepend_steps/2` to
+the front. A step takes a document and returns one:
 
 ```elixir
-Document.append_steps(document,
+MDEx.Document.append_steps(document,
   validate: &validate/1,
   transform: &transform/1
 )
 ```
 
-### `update_nodes/3`
-
-Updates nodes matching a selector with a transformation function:
+Edit the tree with `update_nodes/3` or `MDEx.traverse_and_update/2`:
 
 ```elixir
-Document.update_nodes(document, MDEx.Text, fn node ->
+MDEx.Document.update_nodes(document, MDEx.Text, fn node ->
   %{node | literal: String.upcase(node.literal)}
 end)
 ```
 
+A step can call `halt/1` to skip the rest. The document still renders:
+
+```elixir
+MDEx.new(markdown: "# Title")
+|> MDEx.Document.append_steps(stop: &MDEx.Document.halt/1)
+|> MDEx.Document.append_steps(never_runs: &explode/1)
+|> MDEx.to_html!()
+#=> "<h1>Title</h1>"
+```
+
+### Parser options have to be set in `attach/2`
+
+When a step runs the Markdown is already parsed, so setting a parser or
+extension option there is too late:
+
+```elixir
+# the parser already ran, so ~b~ stays as plain text
+MDEx.new(markdown: "a ~b~")
+|> MDEx.Document.append_steps(late: &MDEx.Document.put_extension_options(&1, strikethrough: true))
+|> MDEx.to_html!()
+#=> "<p>a ~b~</p>"
+
+# set it in attach/2 and the parser sees it
+MDEx.new(markdown: "a ~b~")
+|> MDEx.Document.put_extension_options(strikethrough: true)
+|> MDEx.to_html!()
+#=> "<p>a <del>b</del></p>"
+```
+
+Render options work from either place, since rendering happens after the steps.
+
+### Keeping state
+
+Use `put_private/3` and `get_private/3` for data only your plugin needs, like a
+counter for generated ids. A later step can read what an earlier one wrote:
+
+```elixir
+document
+|> MDEx.Document.put_private(:seen, 0)
+|> MDEx.Document.update_private(:seen, 0, &(&1 + 1))
+|> MDEx.Document.get_private(:seen)
+#=> 1
+```
+
+Do not use assigns for this. Those hold values the caller passes in and HEEx
+templates read, so leave them to the caller.
+
+### Testing a plugin
+
+Test it the same way users call it:
+
+```elixir
+test "wraps code blocks" do
+  html = MDEx.to_html!("```elixir\n:ok\n```", plugins: [MyPlugin])
+  assert html =~ ~s(<pre class="highlight">)
+end
+```
+
+If your plugin changes the tree rather than the output, call `MyPlugin.attach/2`
+then `MDEx.Document.run/1` and match on the nodes.
+
 ## Emitting HTML
 
-Plugins often replace nodes with their own HTML. Three nodes can hold HTML, and
-the render options treat them differently:
+Plugins often replace nodes with their own HTML. Three node types can hold it.
+The one you pick decides how much your plugin depends on the caller's settings,
+and that choice is yours:
 
-| Node | Default | `render: [escape: true]` | `render: [unsafe: true]` |
-| --- | --- | --- | --- |
-| `MDEx.HtmlBlock`, `MDEx.HtmlInline` | `<!-- raw HTML omitted -->` | Escaped | Rendered |
-| `MDEx.Raw` | Rendered | Rendered | Rendered |
+| Node | Default | `render: [escape: true]` | `render: [unsafe: true]` | `sanitize:` |
+| --- | --- | --- | --- | --- |
+| `MDEx.HtmlBlock`, `MDEx.HtmlInline` | `<!-- raw HTML omitted -->` | Escaped | Rendered | Cleaned |
+| `MDEx.Raw` | Rendered | Rendered | Rendered | Cleaned |
 
-The parser creates `MDEx.HtmlBlock` and `MDEx.HtmlInline` for raw HTML written
-in the Markdown source, so nodes a plugin inserts get the same treatment as the
-author's HTML. `MDEx.Raw` is never parsed from input and is inserted verbatim
-into HTML and CommonMark output.
+`MDEx.Raw` never comes from the parser, and it goes out as written whatever the
+caller set for `:unsafe` and `:escape`. Your HTML works everywhere, but it skips
+those settings, so you have to escape any text you take from the Markdown
+source. Miss that and a code block holding `</code></pre><script>` ends up in
+the page as real HTML.
 
-Use `MDEx.Raw` for the HTML a plugin generates. Calling
-`Document.put_render_options(document, unsafe: true)` from a plugin also works,
-but it renders all raw HTML written by the Markdown author across the whole
-document.
+`MDEx.HtmlBlock` and `MDEx.HtmlInline` are what the parser builds for raw HTML
+in the source, so they follow the caller: dropped by default, shown with
+`render: [unsafe: true]`. Your plugin then does nothing until the caller turns
+that on, which is fine as long as your README says so.
 
-`MDEx.Raw` is never escaped, so escape any text taken from the Markdown source
-yourself, like the code in a code block. Otherwise a code block containing
-`</code></pre><script>` injects a script under the default options. The
-`:sanitize` option still applies to `MDEx.Raw` output.
+`:sanitize` applies to both. Its default rules remove scripts and most
+attributes:
+
+```elixir
+wrapper = ~s(<pre id="m-1" class="mermaid" phx-update="ignore">graph TD;</pre>)
+
+%MDEx.Document{nodes: [%MDEx.Raw{literal: wrapper}]}
+|> MDEx.to_html!(sanitize: MDEx.Document.default_sanitize_options())
+#=> "<pre class=\"mermaid\">graph TD;</pre>"
+```
+
+The `id` and `phx-update` are gone, so that diagram never starts. If your plugin
+needs certain tags or attributes, tell callers who sanitize.
+
+You can also call `MDEx.Document.put_render_options/2` with `unsafe: true`, but
+that turns raw HTML on for the whole document, the author's included. The last
+call wins, so from `attach/2` the caller can still turn it back off, and from a
+step they cannot. Prefer `MDEx.Raw`.
+
+### Escaping text you insert
+
+Use `MDEx.safe_html/2` with sanitizing off:
+
+```elixir
+MDEx.safe_html(~s(if a < b, do: "x"), sanitize: false)
+#=> "if a &lt; b, do: &quot;x&quot;"
+```
+
+`sanitize: false` matters: left on, it treats your text as HTML and deletes
+anything that looks like a tag instead of escaping it. It also escapes `{` and
+`}` inside `<code>`, which helps in LiveView. Turn that off with
+`escape: [curly_braces_in_code: false]`.
 
 ## Example Plugin
 
-Here's a complete example that renders code blocks with a custom class,
-following the rules in [Emitting HTML](#emitting-html):
+Here is a full example that wraps code blocks in a custom class, using the rules
+from [Emitting HTML](#emitting-html):
 
 ```elixir
 defmodule CodeBlockEnhancer do
@@ -215,15 +302,7 @@ defmodule CodeBlockEnhancer do
     end)
   end
 
-  defp escape(text) do
-    String.replace(text, ["&", "<", ">", "\"", "'"], fn
-      "&" -> "&amp;"
-      "<" -> "&lt;"
-      ">" -> "&gt;"
-      "\"" -> "&quot;"
-      "'" -> "&#39;"
-    end)
-  end
+  defp escape(text), do: MDEx.safe_html(text, sanitize: false)
 end
 ```
 

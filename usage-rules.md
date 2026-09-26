@@ -402,19 +402,17 @@ defmodule MyPlugin do
     end)
   end
 
-  defp escape(text) do
-    String.replace(text, ["&", "<", ">", "\"", "'"], fn
-      "&" -> "&amp;"
-      "<" -> "&lt;"
-      ">" -> "&gt;"
-      "\"" -> "&quot;"
-      "'" -> "&#39;"
-    end)
-  end
+  defp escape(text), do: MDEx.safe_html(text, sanitize: false)
 end
 ```
 
-Emit plugin-generated HTML as `MDEx.Raw`, which renders without `render: [unsafe: true]`. `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless `unsafe: true` is set, and setting it from a plugin also renders the Markdown author's raw HTML. `MDEx.Raw` is inserted verbatim, so escape any text taken from the Markdown source.
+The node a plugin uses decides what it needs from the caller:
+
+- `MDEx.Raw` ignores `render: [unsafe: true]` and `render: [escape: true]`, so the plugin's HTML shows up whatever the caller set. It is inserted as written, so escape text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on there treats the text as HTML and deletes anything that looks like a tag.
+- `MDEx.HtmlBlock` and `MDEx.HtmlInline` are dropped unless the caller sets `unsafe: true`, the same as HTML written in the Markdown source. Using them is fine as long as the plugin says so in its docs.
+- `Document.put_render_options(document, unsafe: true)` turns raw HTML on for the whole document, the author's included. The last call wins: in `attach/2` the caller can still turn it off with `render: [unsafe: false]`, but in a step it runs after all caller options and they cannot.
+
+`:sanitize` also applies to `MDEx.Raw`, and the default rules remove `<script>` and most attributes. A plugin that needs certain tags or attributes should say so.
 
 Use `document.private` helpers for plugin state instead of overloading assigns.
 
