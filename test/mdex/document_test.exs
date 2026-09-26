@@ -1631,6 +1631,31 @@ defmodule MDEx.DocumentTest do
     end
   end
 
+  describe "fragment?" do
+    test "accepts every node in the md_node type" do
+      assert {:ok, types} = Code.Typespec.fetch_types(Document)
+
+      assert {:type, {:md_node, {:type, _, :union, node_types}, []}} =
+               Enum.find(types, fn {_kind, {name, _, _}} -> name == :md_node end)
+
+      Enum.each(node_types, fn {:remote_type, _, [{:atom, _, module}, {:atom, _, :t}, []]} ->
+        assert Document.fragment?(struct!(module)), "#{inspect(module)} must be a fragment"
+      end)
+    end
+
+    test "continues to accept lists of fragments for rendering" do
+      assert Document.fragment?([%MDEx.Paragraph{}])
+      assert Document.fragment?([%MDEx.HeexBlock{}])
+      assert Document.fragment?([%MDEx.HeexInline{}])
+    end
+
+    test "rejects non-fragment values" do
+      for node <- [nil, :invalid, "text", 1, %{}, %Document{}, %MDEx.Sourcepos{}, []] do
+        refute Document.fragment?(node)
+      end
+    end
+  end
+
   describe "put_node_in_document_root" do
     setup do
       document = MDEx.new(markdown: "# Test") |> Document.run()
@@ -1645,6 +1670,67 @@ defmodule MDEx.DocumentTest do
     test "bottom", %{document: document} do
       assert %Document{nodes: [%MDEx.Heading{level: 1}, %MDEx.HtmlBlock{literal: "<p>bottom</p>"}]} =
                Document.put_node_in_document_root(document, %MDEx.HtmlBlock{literal: "<p>bottom</p>"}, :bottom)
+    end
+
+    test "defaults to the top", %{document: document} do
+      node = %MDEx.HtmlBlock{literal: "<hr>"}
+      assert Document.put_node_in_document_root(document, node) == %{document | nodes: [node | document.nodes]}
+    end
+
+    test "leaves the document unchanged for invalid nodes", %{document: document} do
+      for node <- [nil, :invalid, "text", 1, %{}, %Document{}, %MDEx.Sourcepos{}] do
+        assert Document.put_node_in_document_root(document, node) == document
+        assert Document.put_node_in_document_root(document, node, :top) == document
+        assert Document.put_node_in_document_root(document, node, :bottom) == document
+      end
+    end
+
+    test "rejects lists without inserting nested nodes", %{document: document} do
+      node = %MDEx.HtmlBlock{literal: "<hr>"}
+
+      for nodes <- [[], [node], [node, node], [[node]], [node, nil], [node | :invalid]] do
+        assert Document.put_node_in_document_root(document, nodes) == document
+
+        for position <- [:top, :bottom] do
+          result = Document.put_node_in_document_root(document, nodes, position)
+          assert result == document
+          assert MDEx.to_html(result) == {:ok, "<h1>Test</h1>"}
+        end
+      end
+    end
+
+    test "inserts HEEx nodes at either position", %{document: document} do
+      for node <- [
+            %MDEx.HeexBlock{literal: ~s(<.icon name="hero-x-mark" />), node: "component"},
+            %MDEx.HeexInline{literal: "{@name}"}
+          ] do
+        assert Document.put_node_in_document_root(document, node) == %{document | nodes: [node | document.nodes]}
+        assert Document.put_node_in_document_root(document, node, :top) == %{document | nodes: [node | document.nodes]}
+        assert Document.put_node_in_document_root(document, node, :bottom) == %{document | nodes: document.nodes ++ [node]}
+      end
+    end
+
+    test "renders HEEx nodes inserted by plugin steps", %{document: parsed} do
+      for node <- [
+            %MDEx.HeexBlock{literal: ~s(<.icon name="hero-x-mark" />), node: "component"},
+            %MDEx.HeexInline{literal: "{@name}"}
+          ] do
+        for position <- [:top, :bottom] do
+          document =
+            MDEx.new(markdown: "# Test")
+            |> Document.append_steps(inject: &Document.put_node_in_document_root(&1, node, position))
+
+          nodes =
+            case position do
+              :top -> [node | parsed.nodes]
+              :bottom -> parsed.nodes ++ [node]
+            end
+
+          options = [extension: [phoenix_heex: true], render: [unsafe: true]]
+          assert {:ok, expected} = MDEx.to_html(%Document{nodes: nodes}, options)
+          assert MDEx.to_html(document, options) == {:ok, expected}
+        end
+      end
     end
   end
 

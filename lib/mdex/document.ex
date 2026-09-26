@@ -2381,7 +2381,8 @@ defmodule MDEx.Document do
   Inserts `node` into the document root at the specified `position`.
 
     - By default, the node is inserted at the top of the document.
-    - Node must be a valid fragment node like a `MDEx.Heading`, `MDEx.HtmlBlock`, etc.
+    - Node must be a single valid fragment node like a `MDEx.Heading`, `MDEx.HtmlBlock`, or `MDEx.HeexBlock`.
+    - Invalid nodes, including lists of nodes, leave the document unchanged at either position.
 
   ## Examples
 
@@ -2399,7 +2400,7 @@ defmodule MDEx.Document do
   def put_node_in_document_root(document, node, position \\ :top)
 
   def put_node_in_document_root(%MDEx.Document{} = document, node, :top = _position) do
-    case fragment?(node) do
+    case is_struct(node) and fragment?(node) do
       true ->
         nodes = [node | document.nodes]
         %{document | nodes: nodes}
@@ -2410,20 +2411,13 @@ defmodule MDEx.Document do
   end
 
   def put_node_in_document_root(%MDEx.Document{} = document, node, :bottom = _position) do
-    case fragment?(node) do
+    case is_struct(node) and fragment?(node) do
       true ->
         nodes = document.nodes ++ [node]
         %{document | nodes: nodes}
 
       false ->
-        raise """
-        expected a Document node, for example a %MDEx.Heading{}
-
-        Got:
-
-          #{inspect(node)}
-
-        """
+        document
     end
   end
 
@@ -2716,7 +2710,9 @@ defmodule MDEx.Document do
       MDEx.Subtext,
       MDEx.EscapedTag,
       MDEx.Alert,
-      MDEx.BlockDirective
+      MDEx.BlockDirective,
+      MDEx.HeexBlock,
+      MDEx.HeexInline
     ]
   end
 

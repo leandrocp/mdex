@@ -187,6 +187,32 @@ defmodule MDExTest do
     end
   end
 
+  describe "HEEx fragments" do
+    test "renders bare HEEx nodes as HTML" do
+      for node <- [
+            %MDEx.HeexBlock{literal: ~s(<.icon name="hero-x-mark" />), node: "component"},
+            %MDEx.HeexInline{literal: "{@name}"}
+          ] do
+        assert MDEx.to_html(node, render: [unsafe: true]) == {:ok, node.literal}
+      end
+    end
+
+    for formatter <- [:to_html, :to_xml, :to_json, :to_delta, :to_slack] do
+      test "#{formatter} wraps bare and list HEEx fragments in a document" do
+        for node <- [
+              %MDEx.HeexBlock{literal: ~s(<.icon name="hero-x-mark" />), node: "component"},
+              %MDEx.HeexInline{literal: "{@name}"}
+            ] do
+          options = [render: [unsafe: true]]
+
+          assert {:ok, expected} = apply(MDEx, unquote(formatter), [%Document{nodes: [node]}, options])
+          assert apply(MDEx, unquote(formatter), [node, options]) == {:ok, expected}
+          assert apply(MDEx, unquote(formatter), [[node], options]) == {:ok, expected}
+        end
+      end
+    end
+  end
+
   describe "to_html error handling" do
     test "invalid document" do
       assert {:error, %MDEx.DecodeError{}} = MDEx.to_html(%Document{nodes: nil})
