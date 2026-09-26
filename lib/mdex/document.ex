@@ -492,7 +492,7 @@ defmodule MDEx.Document do
 
         @latest_version "11"
 
-        def attach(document, options \\ []) do
+        def attach(document, options \\\\ []) do
           document
           # register option with prefix `:mermaid_` to avoid conflicts with other plugins
           |> Document.register_options([:mermaid_version])
@@ -500,21 +500,16 @@ defmodule MDEx.Document do
           |> Document.put_options(options)
           # actual steps to manipulate the document
           # see respective Document functions for more info
-          |> Document.append_steps(enable_unsafe: &enable_unsafe/1)
           |> Document.append_steps(inject_script: &inject_script/1)
           |> Document.append_steps(update_code_blocks: &update_code_blocks/1)
         end
 
-        # to render raw html and <script> tags
-        defp enable_unsafe(document) do
-          Document.put_render_options(document, unsafe: true)
-        end
-
+        # MDEx.Raw renders as is, without enabling `render: [unsafe: true]`
         defp inject_script(document) do
           version = Document.get_option(document, :mermaid_version, @latest_version)
 
           script_node =
-            %MDEx.HtmlBlock{
+            %MDEx.Raw{
               literal: \"\"\"
               <script type="module">
                 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@\#\{version\}/dist/mermaid.esm.min.mjs';
@@ -532,15 +527,25 @@ defmodule MDEx.Document do
             _ -> false
           end
 
-          Document.update_nodes(
-            document,
-            selector,
-            &%MDEx.HtmlBlock{literal: "<pre class=\"mermaid\">\#\{&1.literal}</pre>", nodes: &1.nodes}
-          )
+          # the diagram comes from the Markdown source, so escape it
+          Document.update_nodes(document, selector, fn node ->
+            %MDEx.Raw{literal: ~s(<pre class="mermaid">\#\{escape(node.literal)\}</pre>)}
+          end)
+        end
+
+        defp escape(text) do
+          String.replace(text, ["&", "<", ">", "\\"", "'"], fn
+            "&" -> "&amp;"
+            "<" -> "&lt;"
+            ">" -> "&gt;"
+            "\\"" -> "&quot;"
+            "'" -> "&#39;"
+          end)
         end
       end
 
   Now we can `attach/1` that plugin into any MDEx document to render Mermaid diagrams.
+  See [Emitting HTML](plugins.html#emitting-html) for why it emits `MDEx.Raw` nodes.
 
   ## Practical Examples
 
