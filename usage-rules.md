@@ -406,13 +406,13 @@ defmodule MyPlugin do
 end
 ```
 
-Choosing the node a plugin emits decides what it needs from the caller:
+The node a plugin uses decides what it needs from the caller:
 
-- `MDEx.Raw` ignores `render: [unsafe: true]` and `render: [escape: true]`, so the plugin's markup survives whatever the caller configured. It is inserted verbatim, so escape text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on there cleans the text as HTML instead, dropping whatever parses as a tag.
-- `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless the caller sets `unsafe: true`, the same as HTML written in the Markdown source. Emitting these is a valid choice as long as the plugin documents the requirement.
-- Calling `Document.put_render_options(document, unsafe: true)` turns raw HTML on for the whole document, including the author's. Render options are last write wins, so doing it in `attach/2` lets the caller override with a later `render: [unsafe: false]`, while doing it in a step runs after every caller option and cannot be overridden.
+- `MDEx.Raw` ignores `render: [unsafe: true]` and `render: [escape: true]`, so the plugin's HTML shows up whatever the caller set. It is inserted as written, so escape text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on there treats the text as HTML and deletes anything that looks like a tag.
+- `MDEx.HtmlBlock` and `MDEx.HtmlInline` are dropped unless the caller sets `unsafe: true`, the same as HTML written in the Markdown source. Using them is fine as long as the plugin says so in its docs.
+- `Document.put_render_options(document, unsafe: true)` turns raw HTML on for the whole document, the author's included. The last call wins: in `attach/2` the caller can still turn it off with `render: [unsafe: false]`, but in a step it runs after all caller options and they cannot.
 
-`:sanitize` applies to `MDEx.Raw` too, and the default rules drop `<script>` and most attributes. A plugin that needs specific tags or attributes should say so.
+`:sanitize` also applies to `MDEx.Raw`, and the default rules remove `<script>` and most attributes. A plugin that needs certain tags or attributes should say so.
 
 Use `document.private` helpers for plugin state instead of overloading assigns.
 
