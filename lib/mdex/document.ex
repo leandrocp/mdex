@@ -504,8 +504,9 @@ defmodule MDEx.Document do
           |> Document.append_steps(update_code_blocks: &update_code_blocks/1)
         end
 
-        # MDEx.Raw renders whatever the caller set for `:unsafe` and `:escape`,
-        # so this plugin works without asking them to enable anything
+        # MDEx.Raw ignores the caller's `:unsafe` and `:escape`, so this script
+        # renders without asking them to enable anything. `:sanitize` still
+        # applies, and its default rules would drop this tag.
         defp inject_script(document) do
           version = Document.get_option(document, :mermaid_version, @latest_version)
 

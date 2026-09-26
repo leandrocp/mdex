@@ -124,6 +124,9 @@ end
 queues up steps, and that's all it should do. The steps run later, when the
 document is rendered, and they're where the work happens.
 
+The snippets below are written against `alias MDEx.Document`, like the module
+above.
+
 ### Registering options
 
 `put_options/2` rejects a key nobody registered:
@@ -295,10 +298,23 @@ so in your README. "Requires `render: [unsafe: true]`" is a fine thing for a
 plugin to ask for when it's written down.
 
 A third path is to call `Document.put_render_options(document, unsafe: true)`
-from `attach/2`. Be careful with this one: it flips the option for the whole
-document, so the Markdown author's raw HTML renders too, and the caller cannot
-override it because your step runs after their options are applied. Prefer
-`MDEx.Raw` unless you actually mean "this document renders raw HTML."
+yourself. It flips the option for the whole document, so the Markdown author's
+raw HTML renders too. Where you call it decides whether the caller can say no,
+because render options are last write wins:
+
+```elixir
+# from attach/2, so the caller's options are applied after yours and win
+MDEx.to_html!("<i>author</i>", plugins: [SetsUnsafeInAttach], render: [unsafe: false])
+#=> "<p><!-- raw HTML omitted -->author<!-- raw HTML omitted --></p>"
+
+# from a step, which runs during rendering, after every option the caller set
+MDEx.to_html!("<i>author</i>", plugins: [SetsUnsafeInAStep], render: [unsafe: false])
+#=> "<p><i>author</i></p>"
+```
+
+Setting it from a step takes the decision away from the caller for good, which
+is rarely yours to take. Prefer `MDEx.Raw` unless you really mean "this document
+renders raw HTML."
 
 ### Escaping what you interpolate
 

@@ -408,9 +408,9 @@ end
 
 Choosing the node a plugin emits decides what it needs from the caller:
 
-- `MDEx.Raw` renders regardless of `render: [unsafe: true]` and `render: [escape: true]`, so the plugin's markup survives whatever the caller configured. It is inserted verbatim, so escape text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on there cleans the text as HTML instead, dropping whatever parses as a tag.
+- `MDEx.Raw` ignores `render: [unsafe: true]` and `render: [escape: true]`, so the plugin's markup survives whatever the caller configured. It is inserted verbatim, so escape text taken from the Markdown source with `MDEx.safe_html(text, sanitize: false)`. Leaving `:sanitize` on there cleans the text as HTML instead, dropping whatever parses as a tag.
 - `MDEx.HtmlBlock` and `MDEx.HtmlInline` are omitted unless the caller sets `unsafe: true`, the same as HTML written in the Markdown source. Emitting these is a valid choice as long as the plugin documents the requirement.
-- Calling `Document.put_render_options(document, unsafe: true)` from `attach/2` turns raw HTML on for the whole document, including the author's, and the caller cannot override it.
+- Calling `Document.put_render_options(document, unsafe: true)` turns raw HTML on for the whole document, including the author's. Render options are last write wins, so doing it in `attach/2` lets the caller override with a later `render: [unsafe: false]`, while doing it in a step runs after every caller option and cannot be overridden.
 
 `:sanitize` applies to `MDEx.Raw` too, and the default rules drop `<script>` and most attributes. A plugin that needs specific tags or attributes should say so.
 
