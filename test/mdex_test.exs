@@ -1050,6 +1050,49 @@ defmodule MDExTest do
              """
     end
 
+    # https://github.com/leandrocp/mdex/issues/416
+    test "partial sanitize options apply on top of the defaults" do
+      input = ~s"""
+      [link](https://elixir-lang.org) *em*
+
+      <div class="note" style="color: red">note</div>
+
+      ```elixir
+      :ok
+      ```
+      """
+
+      options = [render: [unsafe: true], syntax_highlight: [formatter: :html_linked]]
+      defaults = MDEx.Document.default_sanitize_options()
+      html = MDEx.to_html!(input, options ++ [sanitize: [rm_tags: ["em"]]])
+
+      assert html == MDEx.to_html!(input, options ++ [sanitize: Keyword.put(defaults, :rm_tags, ["em"])])
+      assert html =~ ~s(<a href="https://elixir-lang.org" rel="noopener noreferrer">link</a> em)
+      assert html =~ ~s(<div class="note" style="color: red">note</div>)
+      assert html =~ ~s(<code class="language-elixir" translate="no" tabindex="0">)
+
+      assert MDEx.to_html!(input, options ++ [sanitize: []]) == MDEx.to_html!(input, options ++ [sanitize: defaults])
+    end
+
+    test "explicit nil sanitize option overrides the default" do
+      assert MDEx.to_html!("[link](https://elixir-lang.org)", sanitize: [link_rel: nil]) ==
+               ~s(<p><a href="https://elixir-lang.org">link</a></p>)
+    end
+
+    test "allowed_classes filters class on tags the defaults allow it on" do
+      assert MDEx.to_html!(~s(<code class="language-elixir other" translate="no">:ok</code>),
+               render: [unsafe: true],
+               sanitize: [allowed_classes: %{"code" => ["language-elixir"]}]
+             ) == ~s(<p><code class="language-elixir" translate="no">:ok</code></p>)
+    end
+
+    test "allowed rel attribute with link_rel nil" do
+      assert MDEx.to_html!(~s(<a href="https://elixir-lang.org" rel="nofollow">link</a>),
+               render: [unsafe: true],
+               sanitize: [add_tag_attributes: %{"a" => ["rel"]}, link_rel: nil]
+             ) == ~s(<p><a href="https://elixir-lang.org" rel="nofollow">link</a></p>)
+    end
+
     test "conflicting sanitization rules" do
       assert_output(
         ~S"""
@@ -1146,6 +1189,13 @@ defmodule MDExTest do
           MDEx.safe_html("<span>tag</span>", sanitize: sanitize)
         end
       end
+    end
+
+    test "partial sanitize options apply on top of the defaults" do
+      assert MDEx.safe_html(~s(<a href="https://elixir-lang.org">link</a><code class="language-elixir other">:ok</code>),
+               sanitize: [allowed_classes: %{"code" => ["language-elixir"]}],
+               escape: [content: false, curly_braces_in_code: false]
+             ) == ~s(<a href="https://elixir-lang.org" rel="noopener noreferrer">link</a><code class="language-elixir">:ok</code>)
     end
 
     test "escape tags" do

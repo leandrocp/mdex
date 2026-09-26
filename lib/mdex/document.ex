@@ -1234,7 +1234,7 @@ defmodule MDEx.Document do
     link_rel: [
       type: {:or, [:string, nil]},
       default: "noopener noreferrer",
-      doc: "Configures a `rel` attribute that will be added on links."
+      doc: "Configures a `rel` attribute that will be added on links. Must be `nil` when `rel` is an allowed attribute."
     ],
     allowed_classes: [
       type: {:map, :string, {:list, :string}},
@@ -1262,6 +1262,8 @@ defmodule MDEx.Document do
       doc: "Prefixes all `id` attribute values with a given string. Note that the tag and attribute themselves must still be whitelisted."
     ]
   ]
+
+  @default_sanitize_options NimbleOptions.validate!([], @sanitize_options_schema)
 
   @options_schema [
     extension: [
@@ -1321,6 +1323,11 @@ defmodule MDEx.Document do
 
           sanitize = Keyword.put(MDEx.Document.default_sanitize_options(), :rm_tags, ["a"])
           [sanitize: sanitize]
+
+      Tags listed in `:allowed_classes` or `:add_allowed_classes` lose `class` from their default
+      `:tag_attributes`, so the allowlist decides which classes are kept.
+
+      To allow a `rel` attribute, also pass `link_rel: nil`.
 
       Set it to `nil` or `false` to disable it.
 
@@ -1558,11 +1565,11 @@ defmodule MDEx.Document do
   Returns the default `:sanitize` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @sanitize_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_sanitize_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_sanitize_options() :: sanitize_options()
-  def default_sanitize_options, do: NimbleOptions.validate!([], @sanitize_options_schema)
+  def default_sanitize_options, do: @default_sanitize_options
 
   @doc false
   def sanitize_options_schema, do: @sanitize_options_schema
@@ -1872,6 +1879,8 @@ defmodule MDEx.Document do
 
   def put_sanitize_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :sanitize)
+    # Only the given keys are stored, so later calls merge into earlier ones.
+    # Defaults are filled in by adapt_sanitize_options/1.
     NimbleOptions.validate!(options, @sanitize_options_schema)
 
     %{
@@ -2844,6 +2853,8 @@ defmodule MDEx.Document do
   def adapt_sanitize_options(nil = _options), do: nil
 
   def adapt_sanitize_options(options) do
+    options = Keyword.merge(sanitize_defaults(options), options)
+
     {:custom,
      %{
        link_rel: options[:link_rel],
@@ -2896,6 +2907,20 @@ defmodule MDEx.Document do
        strip_comments: options[:strip_comments],
        id_prefix: options[:id_prefix]
      }}
+  end
+
+  # ammonia panics when a tag in `allowed_classes` also allows `class`. Unlike
+  # ammonia's own defaults, ours allow `class` on a few tags, so drop it from
+  # the tags given `allowed_classes` and let the allowlist decide.
+  defp sanitize_defaults(options) do
+    class_tags = Map.keys(options[:allowed_classes] || %{}) ++ Map.keys(options[:add_allowed_classes] || %{})
+
+    tag_attributes =
+      Map.new(@default_sanitize_options[:tag_attributes], fn {tag, attributes} ->
+        if tag in class_tags, do: {tag, List.delete(attributes, "class")}, else: {tag, attributes}
+      end)
+
+    Keyword.put(@default_sanitize_options, :tag_attributes, tag_attributes)
   end
 
   @doc """

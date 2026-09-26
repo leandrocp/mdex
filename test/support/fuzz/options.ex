@@ -146,12 +146,13 @@ defmodule MDEx.Fuzz.Options do
   end
 
   @doc """
-  A full `:sanitize` option list covering every sanitizer setting.
+  A `:sanitize` option list with any subset of the sanitizer settings, so
+  omitted settings fall back to their defaults.
   """
   def sanitize_options do
     @sanitize_option_kinds
     |> Map.new(fn {name, kind} -> {name, sanitize_value(kind)} end)
-    |> fixed_map()
+    |> optional_map()
     |> map(&Map.to_list/1)
   end
 
