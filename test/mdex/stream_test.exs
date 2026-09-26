@@ -1308,6 +1308,18 @@ defmodule MDEx.StreamTest do
              |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
   end
 
+  test "auto_close accepts only a boolean" do
+    for auto_close <- [nil, "no"] do
+      assert_raise NimbleOptions.ValidationError, ~r/:auto_close option/, fn ->
+        MDEx.to_html!("a [x](htt", auto_close: auto_close)
+      end
+
+      assert_raise NimbleOptions.ValidationError, ~r/:auto_close option/, fn ->
+        ["a [x](htt"] |> MDEx.stream(auto_close: auto_close) |> Enum.to_list()
+      end
+    end
+  end
+
   test "auto_close is off by default outside streaming" do
     assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
     assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="htt">x</a></p>)
