@@ -1302,8 +1302,8 @@ defmodule MDEx.Document do
       """
     ],
     sanitize: [
-      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil]},
-      type_spec: quote(do: sanitize_options() | nil),
+      type: {:or, [{:keyword_list, @sanitize_options_schema}, nil, {:in, [false]}]},
+      type_spec: quote(do: sanitize_options() | nil | false),
       default: nil,
       doc: """
       Cleans HTML using [ammonia](https://crates.io/crates/ammonia) after rendering.
@@ -1320,6 +1320,8 @@ defmodule MDEx.Document do
 
           sanitize = Keyword.put(MDEx.Document.default_sanitize_options(), :rm_tags, ["a"])
           [sanitize: sanitize]
+
+      Set it to `nil` or `false` to disable it.
 
       See the [Safety](#module-safety) section for more info.
       """
@@ -1856,7 +1858,7 @@ defmodule MDEx.Document do
       ["MyComponent"]
 
   """
-  @spec put_sanitize_options(t(), sanitize_options()) :: t()
+  @spec put_sanitize_options(t(), sanitize_options() | nil | false) :: t()
   def put_sanitize_options(%MDEx.Document{} = document, nil = _options) do
     %{
       document
@@ -1894,13 +1896,6 @@ defmodule MDEx.Document do
   end
 
   def put_sanitize_options(%MDEx.Document{} = document, false = _options) do
-    IO.warn("""
-    sanitize: false is deprecated. Pass :sanitize options instead, for example:
-
-      sanitize: nil
-
-    """)
-
     put_sanitize_options(document, nil)
   end
 

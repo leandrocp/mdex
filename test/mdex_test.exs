@@ -107,6 +107,10 @@ defmodule MDExTest do
       assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], sanitize: nil) == "<script>hello</script>"
     end
 
+    test "sanitize false (disabled)" do
+      assert MDEx.to_html!("<script>hello</script>", render: [unsafe: true], sanitize: false) == "<script>hello</script>"
+    end
+
     test "sanitize with default options" do
       default_options = MDEx.Document.default_sanitize_options()
       assert MDEx.to_html!("<h1>test</h1>", render: [unsafe: true], sanitize: default_options) == "<h1>test</h1>"
@@ -1096,6 +1100,20 @@ defmodule MDExTest do
              ) == "<span>tag</span>"
     end
 
+    test "sanitize nil uses the default options" do
+      assert MDEx.safe_html("<script>x</script><b>y</b>",
+               sanitize: nil,
+               escape: [content: false, curly_braces_in_code: false]
+             ) == "<b>y</b>"
+    end
+
+    test "sanitize false skips sanitization" do
+      assert MDEx.safe_html("<script>x</script><b>y</b>",
+               sanitize: false,
+               escape: [content: false, curly_braces_in_code: false]
+             ) == "<script>x</script><b>y</b>"
+    end
+
     test "sanitize with invalid value" do
       for sanitize <- [true, [:default]] do
         assert_raise NimbleOptions.ValidationError, ~r/:sanitize option/, fn ->
@@ -1106,14 +1124,14 @@ defmodule MDExTest do
 
     test "escape tags" do
       assert MDEx.safe_html("<span>content</span>",
-               sanitize: nil,
+               sanitize: false,
                escape: [content: true, curly_braces_in_code: false]
              ) == "&lt;span&gt;content&lt;&#x2f;span&gt;"
     end
 
     test "escape curly braces in code tags" do
       assert MDEx.safe_html("<h1>{test}</h1><code>{:foo}</code>",
-               sanitize: nil,
+               sanitize: false,
                escape: [content: false, curly_braces_in_code: true]
              ) == "<h1>{test}</h1><code>&lbrace;:foo&rbrace;</code>"
     end
