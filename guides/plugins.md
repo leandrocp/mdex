@@ -100,7 +100,7 @@ and notes about existing MDEx plugins.
 
 ## Creating Custom Plugins
 
-A plugin is any module that implements an `attach/2` function. This function receives a document and options, and returns a modified document:
+A plugin is any module with an `attach/2` function. It takes a document and returns one:
 
 ```elixir
 defmodule MyPlugin do
@@ -120,29 +120,33 @@ defmodule MyPlugin do
 end
 ```
 
-## Document Pipeline Functions
+`attach/2` runs once, before any Markdown is parsed. It registers options and
+queues up steps, and that's all it should do. The steps run later, when the
+document is rendered, and they're where the work happens.
 
-These `MDEx.Document` functions are commonly used when building plugins:
+### Registering options
 
-### `register_options/2`
-
-Registers custom option keys so they can be stored in the document:
-
-```elixir
-Document.register_options(document, [:theme_color, :enable_feature])
-```
-
-### `put_options/2`
-
-Sets values for registered options:
+`put_options/2` rejects a key nobody registered:
 
 ```elixir
-Document.put_options(document, theme_color: "blue", enable_feature: true)
+MDEx.new() |> MDEx.Document.put_options(my_option: 1)
+** (ArgumentError) unknown option :my_option
 ```
 
-### `append_steps/2`
+Hence `register_options/2`. Prefix your keys with the plugin name while you're
+there: every plugin on a document shares one namespace, so a plain `:version`
+from two plugins collides where `:mermaid_version` and `:katex_version` don't.
 
-Adds processing steps that run when the document is rendered. Steps are functions that receive and return a document:
+Read one back with `get_option/3`:
+
+```elixir
+Document.get_option(document, :mermaid_version, "11")
+```
+
+### Steps
+
+`append_steps/2` puts steps at the end of the pipeline, `prepend_steps/2` at
+the front. A step takes a document and returns one:
 
 ```elixir
 Document.append_steps(document,
@@ -151,15 +155,79 @@ Document.append_steps(document,
 )
 ```
 
-### `update_nodes/3`
-
-Updates nodes matching a selector with a transformation function:
+To edit the tree, use `update_nodes/3` or `MDEx.traverse_and_update/2`:
 
 ```elixir
 Document.update_nodes(document, MDEx.Text, fn node ->
   %{node | literal: String.upcase(node.literal)}
 end)
 ```
+
+A step can call `halt/1` to skip every step after it. The document still
+renders:
+
+```elixir
+MDEx.new(markdown: "# Title")
+|> Document.append_steps(stop: &Document.halt/1)
+|> Document.append_steps(never_runs: &explode/1)
+|> MDEx.to_html!()
+#=> "<h1>Title</h1>"
+```
+
+### Parser options have to be set in `attach/2`
+
+By the time a step runs, the AST is already parsed. A parser or extension
+option set inside one arrives too late to change it:
+
+```elixir
+# the AST was built before the step ran, so ~b~ stays literal
+MDEx.new(markdown: "a ~b~")
+|> Document.append_steps(late: &Document.put_extension_options(&1, strikethrough: true))
+|> MDEx.to_html!()
+#=> "<p>a ~b~</p>"
+
+# set it in attach/2 and the parser sees it
+MDEx.new(markdown: "a ~b~")
+|> Document.put_extension_options(strikethrough: true)
+|> MDEx.to_html!()
+#=> "<p>a <del>b</del></p>"
+```
+
+Render options are fine either way, since rendering happens after the steps.
+`put_render_options/2` works from a step or from `attach/2`.
+
+### Keeping state
+
+`put_private/3` and `get_private/3` hold anything only the plugin cares about,
+like the counter behind generated element ids. Private values survive the
+pipeline, so a later step reads what an earlier one wrote:
+
+```elixir
+document
+|> Document.put_private(:seen, 0)
+|> Document.update_private(:seen, 0, &(&1 + 1))
+|> Document.get_private(:seen)
+#=> 1
+```
+
+Assigns look tempting for this, but they hold values the caller passes in and
+HEEx templates read. Leave those to the caller and keep plugin bookkeeping in
+`private`.
+
+### Testing a plugin
+
+Test through the same entry point users call. No pipeline setup needed:
+
+```elixir
+test "wraps code blocks" do
+  html = MDEx.to_html!("```elixir\n:ok\n```", plugins: [MyPlugin])
+  assert html =~ ~s(<pre class="highlight">)
+end
+```
+
+Assert on the rendered string when the plugin emits markup. When it rewrites
+the tree instead, `MyPlugin.attach/2` followed by `MDEx.Document.run/1` hands
+you the nodes to match on.
 
 ## Emitting HTML
 
