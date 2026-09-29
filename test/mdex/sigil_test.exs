@@ -194,8 +194,10 @@ defmodule MDEx.SigilTest do
     test "highlight_lines" do
       html = WithLegacyLumis.render()
 
-      assert html =~ "<div class=\"l-line\" data-line=\"1\">"
-      assert html =~ "<div class=\"l-line\" style=\"background-color: #3b4252;\" data-line=\"2\">"
+      assert html =~ "<span class=\"l-line\" data-line=\"1\">"
+
+      assert html =~
+               "<span class=\"l-line\" style=\"display: inline-block; width: 100%; min-height: 1lh; vertical-align: top; background-color: #3b4252;\" data-line=\"2\">"
     end
   end
 

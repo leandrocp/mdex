@@ -3,7 +3,7 @@ mdex_path = System.get_env("MDEX_PATH", Path.expand("..", __DIR__))
 Mix.install(
   [
     {:mdex, path: mdex_path},
-    {:lumis, "~> 0.9"},
+    {:lumis, "~> 0.10"},
     {:lumis_wasm_elixir, "~> 0.26"},
     {:lumis_wasm_bash, "~> 0.26"},
     {:phoenix_playground, "~> 0.1.9"},

@@ -18,7 +18,7 @@ language you highlight:
 <!-- livebook:{"force_markdown":true} -->
 
 ```elixir
-{:lumis, "~> 0.9"},
+{:lumis, "~> 0.10"},
 {:lumis_wasm_elixir, "~> 0.26"},
 {:lumis_wasm_rust, "~> 0.26"}
 ```

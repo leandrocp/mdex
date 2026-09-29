@@ -197,7 +197,7 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><div class="l-line" data-line="1"><span class="l-module">String</span><span class="l-operator">.</span><span class="l-function-call">trim</span><span class="l-punctuation-bracket">(</span><span class="l-string">&quot; MDEx &quot;</span><span class="l-punctuation-bracket">)</span></div></code></pre>
+      <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-module">String</span><span class="l-operator">.</span><span class="l-function-call">trim</span><span class="l-punctuation-bracket">(</span><span class="l-string">&quot; MDEx &quot;</span><span class="l-punctuation-bracket">)</span></span></code></pre>
       """
     )
   end
@@ -211,8 +211,8 @@ defmodule MDEx.HTMLFormatTest do
       ```
       """,
       """
-      <pre class="lumis"><code class="language-plaintext" translate="no" tabindex="0"><div class="l-line" data-line="1">plain
-      </div><div class="l-line" data-line="2">text</div></code></pre>
+      <pre class="lumis"><code class="language-plaintext" translate="no" tabindex="0"><span class="l-line" data-line="1">plain</span>
+      <span class="l-line" data-line="2">text</span></code></pre>
       """
     )
   end

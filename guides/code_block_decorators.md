@@ -6,7 +6,7 @@ Code block decorators require Lumis, plus a parser package for each language you
 highlight:
 
 ```elixir
-{:lumis, "~> 0.9"},
+{:lumis, "~> 0.10"},
 {:lumis_wasm_elixir, "~> 0.26"}
 ```
 
@@ -97,13 +97,13 @@ def calculate(x):
 With `:html_inline` formatter, lines get styles from the theme's highlight color, for eg:
 
 ```html
-<span style="background-color: #dae9f9;" data-line="1">...
+<span class="l-line" style="display: inline-block; width: 100%; min-height: 1lh; vertical-align: top; background-color: #dae9f9;" data-line="1">...
 ```
 
 With `:html_linked` formatter, the class `highlighted` is added to the highlighted lines, for eg:
 
 ```html
-<span class="line highlighted" data-line="1">...
+<span class="l-line highlighted" data-line="1">...
 ```
 
 #### Custom Highlight Styling
