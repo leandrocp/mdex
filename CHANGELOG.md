@@ -1,7 +1,5 @@
 # Changelog
 
-## Unreleased
-
 ## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
 
 ### ⚠ BREAKING CHANGES
