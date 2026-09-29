@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### ⚠ BREAKING CHANGES
+
+* require `mdex_native >= 0.2.10` and `lumis ~> 0.10`
+
+#### Lumis line markup
+
+Lumis v0.10 renders each line of a code block as `<span class="l-line">` instead of
+`<div class="l-line">`, and the newline now sits between lines instead of inside them.
+Snapshot tests and CSS that target `div.l-line` need updating.
+
+With `:html_inline`, a line picked by `highlight_lines` also gets inline layout styles so
+its background spans the whole block, and the `<code>` element gets `style` too. The
+default `:sanitize` options now allow `style` on `<code>` to keep that layout.
+
+With `:html_linked`, use the theme CSS from Lumis v0.10, which carries the same layout.
+
 ## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
 
 ### ⚠ BREAKING CHANGES

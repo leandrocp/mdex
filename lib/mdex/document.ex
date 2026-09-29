@@ -2578,8 +2578,7 @@ defmodule MDEx.Document do
       ...> {:mdex, "~> 0.1"}
       ...> ```
       ...> \""", syntax_highlight: [engine: :lumis, opts: [formatter: {:html_inline, theme: "nord"}]])
-      #=> <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span>
-      #=> </span></code></pre>
+      #=> <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #88c0d0;">&lbrace;</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">&rbrace;</span></span></code></pre>
 
   **Syntect**
 
@@ -2822,7 +2821,7 @@ defmodule MDEx.Document do
 
       Add it to your deps, along with a parser package for each language you highlight:
 
-          {:lumis, "~> 0.9"},
+          {:lumis, "~> 0.10"},
           {:lumis_wasm_elixir, "~> 0.26"}
 
       And configure :mdex_native before compiling dependencies:

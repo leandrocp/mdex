@@ -38,7 +38,7 @@ To enable syntax highlighting with Lumis, add `:lumis` and a parser package for 
 language you highlight to your deps:
 
 ```elixir
-{:lumis, "~> 0.9"},
+{:lumis, "~> 0.10"},
 {:lumis_wasm_elixir, "~> 0.26"},
 {:lumis_wasm_rust, "~> 0.26"}
 ```
