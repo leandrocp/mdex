@@ -20,10 +20,6 @@
 - Emit plugin HTML as MDEx.Raw in plugin examples by @leandrocp in [#425](https://github.com/leandrocp/mdex/pull/425)
 - Expand the plugin authoring guide and document the HTML node trade-off by @leandrocp in [#431](https://github.com/leandrocp/mdex/pull/431)
 
-### Other Changes
-
-- Remove Unreleased section from CHANGELOG by @leandrocp in [#436](https://github.com/leandrocp/mdex/pull/436)
-
 ## [0.14.0](https://github.com/leandrocp/mdex/compare/v0.13.5...v0.14.0) (2026-09-25)
 
 ### ⚠ BREAKING CHANGES
