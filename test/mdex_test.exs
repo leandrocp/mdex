@@ -1084,6 +1084,24 @@ defmodule MDExTest do
       assert MDEx.to_html!(input, options ++ [sanitize: []]) == MDEx.to_html!(input, options ++ [sanitize: defaults])
     end
 
+    test "default sanitize options keep highlighted line layout" do
+      input = ~S"""
+      ```elixir highlight_lines="1"
+      :ok
+      ```
+      """
+
+      options = [
+        render: [github_pre_lang: true, full_info_string: true],
+        syntax_highlight: [formatter: :html_inline]
+      ]
+
+      html = MDEx.to_html!(input, options ++ [sanitize: []])
+
+      assert html == MDEx.to_html!(input, options)
+      assert html =~ ~s(<code class="language-elixir" translate="no" tabindex="0" style="display: block;)
+    end
+
     test "explicit nil sanitize option overrides the default" do
       assert MDEx.to_html!("[link](https://elixir-lang.org)", sanitize: [link_rel: nil]) ==
                ~s(<p><a href="https://elixir-lang.org">link</a></p>)

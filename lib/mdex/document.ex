@@ -1119,7 +1119,7 @@ defmodule MDEx.Document do
         "a" => ~w(href hreflang),
         "bdo" => ~w(dir),
         "blockquote" => ~w(cite),
-        "code" => ~w(class translate tabindex),
+        "code" => ~w(class style translate tabindex),
         "div" => ~w(class style data-line),
         "col" => ~w(align char charoff span),
         "colgroup" => ~w(align char charoff span),

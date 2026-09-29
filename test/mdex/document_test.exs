@@ -1552,7 +1552,7 @@ defmodule MDEx.DocumentTest do
 
     test "drops the default class attribute from tags with allowed classes" do
       assert {:custom, sanitize} = Document.rust_options!(sanitize: [add_allowed_classes: %{"code" => ["language-elixir"]}]).sanitize
-      assert sanitize.tag_attributes.set["code"] == ["translate", "tabindex"]
+      assert sanitize.tag_attributes.set["code"] == ["style", "translate", "tabindex"]
       assert sanitize.tag_attributes.set["span"] == ["class", "style", "data-line"]
     end
 
