@@ -246,6 +246,15 @@ defmodule MDEx.FragmentParserTest do
     assert complete("text\n\n| a | b |\n") == "text\n\n| a | b |\n| - | - |"
   end
 
+  test "outer pipes are optional when looking for the delimiter row" do
+    assert complete("| a | b |\n---|---\n| 1 | 2 |\n") == "| a | b |\n---|---\n| 1 | 2 |\n"
+    assert complete("| a | b |\n:--|--:\n| 1 | 2 |\n") == "| a | b |\n:--|--:\n| 1 | 2 |\n"
+    assert complete("a | b\n--|--\n| 1 | 2 |\n") == "a | b\n--|--\n| 1 | 2 |\n"
+
+    assert complete("| a | b |\n| --- | --- |\n1 | 2\n| 3 | 4 |\n") ==
+             "| a | b |\n| --- | --- |\n1 | 2\n| 3 | 4 |\n"
+  end
+
   test "- [x] Collect *n" do
     assert complete("- [x] Collect *n") == "- [x] Collect *n*"
   end

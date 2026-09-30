@@ -483,9 +483,13 @@ defmodule MDEx.FragmentParser do
     core
     |> String.split("\n")
     |> Enum.reverse()
-    |> Enum.take_while(&table_header_line?/1)
+    |> Enum.take_while(&table_row_line?/1)
     |> Enum.any?(&table_delimiter_line?/1)
   end
+
+  # Outer pipes are optional on any row, so the scan back through the table
+  # cannot require them the way the final-line check does.
+  defp table_row_line?(line), do: String.contains?(line, "|")
 
   defp table_delimiter_line?(line) do
     cells =
