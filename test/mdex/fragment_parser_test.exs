@@ -388,6 +388,18 @@ defmodule MDEx.FragmentParserTest do
       assert complete("text\n[a]: https://exa") == "text\n[a]: https://exa"
     end
 
+    test "link reference definition after multi-line definitions" do
+      assert complete(~s{[a]: https://a.test\n  "Title A"\n[b]: https://exa}) ==
+               ~s{[a]: https://a.test\n  "Title A"\n[b]: mdex:incomplete-link}
+
+      assert complete(~s{[a]: https://a.test\n"Title\nA"\n[b]: https://exa}) ==
+               ~s{[a]: https://a.test\n"Title\nA"\n[b]: mdex:incomplete-link}
+
+      assert complete("[a]:\nhttps://a.test\n[b]: https://exa") == "[a]:\nhttps://a.test\n[b]: mdex:incomplete-link"
+      assert complete("[foo\nbar]: https://exa") == "[foo\nbar]: mdex:incomplete-link"
+      assert complete(~s{[a]: https://example.com\n"Tit}) == "[a]: https://example.com"
+    end
+
     test "task list markers are not links" do
       assert complete("- [ ]") == "- [ ]"
       assert complete("- [x]") == "- [x]"

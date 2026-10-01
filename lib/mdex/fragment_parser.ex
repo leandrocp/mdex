@@ -14,12 +14,12 @@ defmodule MDEx.FragmentParser do
   @incomplete_link_url "mdex:incomplete-link"
   # Stands in for a completed link while the text before it is completed.
   @link_atom <<0>>
-  @link_definition ~r/\A {0,3}\[(?!\^)(?:\\.|[^\\\[\]])+\]:/
-  @atx_heading ~r/\A {0,3}\#{1,6}(?:[ \t]|\z)/
+  @link_definition ~r/\G {0,3}\[(?!\^)(?:\\.|[^\\\[\]])+\]:/
+  @atx_heading ~r/\G {0,3}\#{1,6}(?:[ \t][^\n]*)?(?:\n|\z)/
   @list_marker ~r/(?:\A|\n)[ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+\z/
   @autolink_schemes ["http", "https", "ftp"]
-  @link_destination ~r/(?<=\]\()(?:<[^<>\n]*>|(?:[^\s()]|\([^\s()]*\))+)|<[A-Za-z][^<>\s]*>/
-  @bare_url ~r/(?:https?|ftp):\/\/[^\s<]+|www\.[^\s<]+/
+  # `](` plus a link destination, a `<...>` autolink, or a bare URL in the capture.
+  @url ~r/\]\((?:<[^<>\n]*>|(?:[^\s()]|\([^\s()]*\))+)|<[A-Za-z][^<>\s]*>|((?:https?|ftp):\/\/[^\s<]+|www\.[^\s<]+)/
 
   defcombinatorp(:space_prefix, ascii_string([32], min: 0, max: 3))
   defcombinatorp(:bullet_marker, choice(Enum.map(@bullet_markers, &string/1)))
@@ -598,12 +598,20 @@ defmodule MDEx.FragmentParser do
 
   # `_` and `*` inside link destinations and URLs are not emphasis.
   defp mask_urls(text) do
-    text
-    |> then(&Regex.replace(@link_destination, &1, fn url -> mask_url(url, byte_size(url)) end))
-    |> then(&Regex.replace(@bare_url, &1, fn url -> mask_url(url, byte_size(autolink_text(url))) end))
+    case Regex.scan(@url, text, return: :index) do
+      [] -> text
+      matches -> matches |> mask_url_spans(text, 0, []) |> IO.iodata_to_binary()
+    end
   end
 
-  defp mask_url(url, size), do: String.duplicate("x", size) <> binary_part(url, size, byte_size(url) - size)
+  defp mask_url_spans([], text, from, acc), do: Enum.reverse([binary_part(text, from, byte_size(text) - from) | acc])
+
+  defp mask_url_spans([[{start, size} | bare_url] | matches], text, from, acc) do
+    # trailing punctuation is not part of a bare URL
+    masked = if bare_url == [], do: size, else: byte_size(autolink_text(binary_part(text, start, size)))
+    acc = [String.duplicate("x", masked), binary_part(text, from, start - from) | acc]
+    mask_url_spans(matches, text, start + masked, acc)
+  end
 
   defp mask_inline_code_spans(text) do
     text
@@ -1231,76 +1239,149 @@ defmodule MDEx.FragmentParser do
     end
   end
 
-  # `[label]: url` still arriving at the end of a paragraph made only of link
-  # reference definitions and headings.
+  # `[label]: url` still arriving at the end of a paragraph that so far holds
+  # only link reference definitions and headings. Definitions can't interrupt
+  # a paragraph, and labels and titles may span lines, so they are read one
+  # after another from the paragraph start.
   defp incomplete_link_definition(paragraph, trailing) do
-    {definition, previous} = paragraph |> String.split("\n") |> Enum.reverse() |> definition_line()
-
     with false <- String.contains?(trailing, "\n"),
-         [{0, label_size}] <- Regex.run(@link_definition, definition, return: :index),
-         true <- Enum.all?(previous, &(Regex.match?(@link_definition, &1) or Regex.match?(@atx_heading, &1))) do
-      offset = previous |> Enum.map(&(byte_size(&1) + 1)) |> Enum.sum() |> Kernel.+(label_size)
-      tail = binary_part(paragraph, offset, byte_size(paragraph) - offset)
-      binary_part(paragraph, 0, offset) <> complete_definition_url(tail, trailing)
+         {:open, colon_end, url} <- link_definitions(paragraph, 0) do
+      complete_definition(paragraph, colon_end, url, trailing)
     else
       _ -> nil
     end
   end
 
-  # The URL may start on the line after `[label]:`.
-  defp definition_line([last | rest]) do
-    case rest do
-      [previous | before] ->
-        if Regex.match?(@link_definition, last) or not definition_label_only?(previous) do
-          {last, Enum.reverse(rest)}
-        else
-          {previous, Enum.reverse(before)}
-        end
-
-      [] ->
-        {last, []}
-    end
-  end
-
-  defp definition_label_only?(line) do
-    case Regex.run(@link_definition, line, return: :index) do
-      [{0, size}] -> only_spaces?(binary_part(line, size, byte_size(line) - size))
-      _ -> false
-    end
-  end
-
-  # Keeps a URL that whitespace or `>` already ended, dropping a title still arriving.
-  defp complete_definition_url(tail, trailing) do
-    url_start = skip_link_whitespace(tail, 0)
-
-    case definition_url_end(tail, url_start, trailing) do
-      nil -> " " <> @incomplete_link_url
-      url_end -> binary_part(tail, 0, url_end)
-    end
-  end
-
-  defp definition_url_end(tail, url_start, trailing) do
-    case byte_at(tail, url_start) do
-      nil -> nil
-      ?< -> angle_url_end(tail, url_start)
-      _ -> bare_url_end(tail, url_start, trailing)
-    end
-  end
-
-  defp angle_url_end(tail, url_start) do
-    case :binary.match(tail, ">", scope: {url_start, byte_size(tail) - url_start}) do
-      {pos, 1} -> pos + 1
-      :nomatch -> nil
-    end
-  end
+  defp complete_definition(paragraph, _colon_end, {:keep, keep_end}, _trailing), do: binary_part(paragraph, 0, keep_end)
 
   # Whitespace, including the one still trailing, ends a bare URL.
-  defp bare_url_end(tail, url_start, trailing) do
-    case Regex.run(~r/\s/, tail, return: :index, offset: url_start) do
-      [{pos, _}] -> pos
-      nil when trailing == "" -> nil
-      nil -> byte_size(tail)
+  defp complete_definition(paragraph, _colon_end, {:url, url_end}, trailing) when trailing != "" do
+    binary_part(paragraph, 0, url_end)
+  end
+
+  defp complete_definition(paragraph, colon_end, _url, _trailing) do
+    binary_part(paragraph, 0, colon_end) <> " " <> @incomplete_link_url
+  end
+
+  defp link_definitions(text, index) do
+    cond do
+      index >= byte_size(text) -> nil
+      heading = match_at(@atx_heading, text, index) -> link_definitions(text, index + heading)
+      label = match_at(@link_definition, text, index) -> link_definition(text, index + label)
+      true -> nil
     end
+  end
+
+  defp match_at(regex, text, index) do
+    case Regex.run(regex, text, return: :index, offset: index) do
+      [{^index, size}] -> size
+      _ -> nil
+    end
+  end
+
+  # Reads the URL and title after `[label]:`. Returns `{:open, colon_end, url}`
+  # when the input ends inside the definition, where `url` is `:placeholder`,
+  # `{:url, url_end}` while a bare URL may still grow, or `{:keep, index}`
+  # once the URL is complete.
+  defp link_definition(text, colon_end) do
+    case definition_url_end(text, skip_link_whitespace(text, colon_end)) do
+      :open -> {:open, colon_end, :placeholder}
+      :invalid -> nil
+      {:url, url_end} -> {:open, colon_end, {:url, url_end}}
+      url_end -> next_link_definition(definition_title(text, url_end), text, colon_end, url_end)
+    end
+  end
+
+  defp next_link_definition({:closed, next}, text, _colon_end, _url_end), do: link_definitions(text, next)
+  defp next_link_definition({:open, keep_end}, _text, colon_end, _url_end), do: {:open, colon_end, {:keep, keep_end}}
+  defp next_link_definition(:open, _text, colon_end, url_end), do: {:open, colon_end, {:keep, url_end}}
+  defp next_link_definition(:invalid, _text, _colon_end, _url_end), do: nil
+
+  defp definition_url_end(text, url_start) do
+    case byte_at(text, url_start) do
+      nil -> :open
+      ?< -> angle_url_end(text, url_start + 1)
+      _ -> bare_url_end(text, url_start)
+    end
+  end
+
+  defp angle_url_end(text, index) do
+    case byte_at(text, index) do
+      nil -> :open
+      ?\\ -> angle_url_end(text, index + 2)
+      ?> -> index + 1
+      char when char in [?<, ?\n] -> :invalid
+      _ -> angle_url_end(text, index + 1)
+    end
+  end
+
+  defp bare_url_end(text, index) do
+    case byte_at(text, index) do
+      nil -> {:url, index}
+      char when char in @ws_chars -> index
+      _ -> bare_url_end(text, index + 1)
+    end
+  end
+
+  # A title may follow on the URL's line or start on the next one. Returns
+  # `{:closed, next_line}`, `{:open, keep_end}` for a title that closed at the
+  # end of the input, `:open` while a title arrives, or `:invalid`.
+  defp definition_title(text, url_end) do
+    index = skip_spaces(text, url_end)
+
+    case byte_at(text, index) do
+      nil -> :open
+      ?\n -> next_line_title(text, index + 1)
+      char when char in ~c"\"'(" and index > url_end -> title_line_end(text, index)
+      _ -> :invalid
+    end
+  end
+
+  # A title on the next line that turns out invalid leaves the definition
+  # ending at the URL, with that line as paragraph text.
+  defp next_line_title(text, line_start) do
+    index = skip_spaces(text, line_start)
+
+    if byte_at(text, index) in ~c"\"'(" do
+      case title_line_end(text, index) do
+        :invalid -> {:closed, line_start}
+        result -> result
+      end
+    else
+      {:closed, line_start}
+    end
+  end
+
+  # Only spaces may follow a title on its line.
+  defp title_line_end(text, index) do
+    case link_title_close(text, index + 1, title_closer(:binary.at(text, index))) do
+      nil -> :open
+      title_end -> title_rest(text, title_end, skip_spaces(text, title_end))
+    end
+  end
+
+  defp title_rest(text, title_end, index) do
+    case byte_at(text, index) do
+      nil -> {:open, title_end}
+      ?\n -> {:closed, index + 1}
+      _ -> :invalid
+    end
+  end
+
+  defp title_closer(?(), do: ?)
+  defp title_closer(quote), do: quote
+
+  defp link_title_close(text, index, close) do
+    case byte_at(text, index) do
+      nil -> nil
+      ?\\ -> link_title_close(text, index + 2, close)
+      ^close -> index + 1
+      _ -> link_title_close(text, index + 1, close)
+    end
+  end
+
+  defp skip_spaces(text, index) do
+    if byte_at(text, index) in [?\s, ?\t], do: skip_spaces(text, index + 1), else: index
   end
 
   defp incomplete_inline_link(paragraph, {:wikilink, start}, trailing, options) do
