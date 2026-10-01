@@ -400,6 +400,14 @@ defmodule MDEx.FragmentParserTest do
       assert complete(~s{[a]: https://example.com\n"Tit}) == "[a]: https://example.com"
     end
 
+    test "CRLF and CR line endings" do
+      assert complete("[a]: https://a.test\r\n[b]: https://exa") == "[a]: https://a.test\r\n[b]: mdex:incomplete-link"
+      assert complete(~s{[a]: https://a.test\r\n"T"\r\n[b]: https://exa}) == ~s{[a]: https://a.test\r\n"T"\r\n[b]: mdex:incomplete-link}
+      assert complete("[a]: https://a.test\r[b]: https://exa") == "[a]: https://a.test\r[b]: mdex:incomplete-link"
+      assert complete("text\r\n[a]: https://exa") == "text\r\n[a]: https://exa"
+      assert complete("[a](\r\nhttps://exa") == "[a](mdex:incomplete-link)"
+    end
+
     test "task list markers are not links" do
       assert complete("- [ ]") == "- [ ]"
       assert complete("- [x]") == "- [x]"

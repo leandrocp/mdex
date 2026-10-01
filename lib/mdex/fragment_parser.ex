@@ -1194,12 +1194,30 @@ defmodule MDEx.FragmentParser do
   # placeholder URL until its URL is complete, so a partial URL never renders.
   # Returns the span of `core` the link takes and its completed Markdown.
   defp incomplete_link(core, trailing, options) do
-    start = paragraph_start(core)
-    paragraph = binary_part(core, start, byte_size(core) - start)
+    lines = normalize_line_endings(core)
+    start = paragraph_start(lines)
+    paragraph = binary_part(lines, start, byte_size(lines) - start)
+    trailing = normalize_line_endings(trailing)
 
     case incomplete_link_definition(paragraph, trailing) do
-      nil -> incomplete_paragraph_link(paragraph, start, byte_size(core), trailing, options)
-      definition -> {:definition, binary_part(core, 0, start) <> definition}
+      nil ->
+        incomplete_paragraph_link(paragraph, start, byte_size(core), trailing, options)
+
+      {:placeholder, colon_end} ->
+        {:definition, binary_part(core, 0, start + colon_end) <> " " <> @incomplete_link_url}
+
+      definition_end ->
+        {:definition, binary_part(core, 0, start + definition_end)}
+    end
+  end
+
+  # Link scanning only looks for `\n`, so `\r\n` and `\r` become line endings
+  # of the same byte size and offsets still point into the source.
+  defp normalize_line_endings(text) do
+    if :binary.match(text, "\r") == :nomatch do
+      text
+    else
+      text |> :binary.replace("\r\n", " \n", [:global]) |> :binary.replace("\r", "\n", [:global])
     end
   end
 
@@ -1246,22 +1264,19 @@ defmodule MDEx.FragmentParser do
   defp incomplete_link_definition(paragraph, trailing) do
     with false <- String.contains?(trailing, "\n"),
          {:open, colon_end, url} <- link_definitions(paragraph, 0) do
-      complete_definition(paragraph, colon_end, url, trailing)
+      definition_end(colon_end, url, trailing)
     else
       _ -> nil
     end
   end
 
-  defp complete_definition(paragraph, _colon_end, {:keep, keep_end}, _trailing), do: binary_part(paragraph, 0, keep_end)
+  # Where the completed definition ends, or `{:placeholder, colon_end}`.
+  defp definition_end(_colon_end, {:keep, keep_end}, _trailing), do: keep_end
 
   # Whitespace, including the one still trailing, ends a bare URL.
-  defp complete_definition(paragraph, _colon_end, {:url, url_end}, trailing) when trailing != "" do
-    binary_part(paragraph, 0, url_end)
-  end
+  defp definition_end(_colon_end, {:url, url_end}, trailing) when trailing != "", do: url_end
 
-  defp complete_definition(paragraph, colon_end, _url, _trailing) do
-    binary_part(paragraph, 0, colon_end) <> " " <> @incomplete_link_url
-  end
+  defp definition_end(colon_end, _url, _trailing), do: {:placeholder, colon_end}
 
   defp link_definitions(text, index) do
     cond do
