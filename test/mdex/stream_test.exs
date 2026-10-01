@@ -564,7 +564,7 @@ defmodule MDEx.StreamTest do
              %MDEx.Paragraph{
                nodes: [
                  %MDEx.Link{
-                   url: "https://commonmark",
+                   url: "mdex:incomplete-link",
                    nodes: [%MDEx.Text{literal: "CommonMark spec"}]
                  }
                ]
@@ -625,6 +625,34 @@ defmodule MDEx.StreamTest do
                ]
              }
            ] = nodes(chunks)
+  end
+
+  test "partial link and image URLs never render while streaming" do
+    options = [extension: [autolink: true, footnotes: true, wikilinks_title_after_pipe: true]]
+
+    source = """
+    ![chart](https://cdn.example.test/q3.png "Q3") and **[report](https://docs.example.test/q3_(final))**.
+
+    [![badge](https://img.example.test/b.svg)](https://ci.example.test) [docs][1] [[Wiki Page]] note[^1]
+    and https://example.test/a_b or me@example.test.
+
+    [1]: https://docs.example.test/
+    [^1]: The note.
+    """
+
+    urls = fn document ->
+      for %node{url: url} <- document, node in [MDEx.Link, MDEx.Image, MDEx.WikiLink], do: url
+    end
+
+    documents = source |> String.graphemes() |> MDEx.stream(options) |> Enum.map(&elem(&1, 1))
+    final_urls = source |> MDEx.parse_document!(options) |> urls.()
+
+    assert documents |> Enum.flat_map(urls) |> Enum.uniq() |> Enum.sort() ==
+             Enum.sort(["mdex:incomplete-link" | final_urls])
+
+    for document <- documents, %MDEx.Text{literal: literal} <- document do
+      refute literal =~ "incomplete-link"
+    end
   end
 
   test "only fenced" do
@@ -1299,7 +1327,7 @@ defmodule MDEx.StreamTest do
   end
 
   test "auto_close is on by default and can be turned off" do
-    assert [{0, ~s(<p>a <a href="htt">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
+    assert [{0, ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
              ["a [x](htt"] |> MDEx.stream() |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
 
     assert [{0, "<p>a [x](htt</p>"}] =
@@ -1322,16 +1350,18 @@ defmodule MDEx.StreamTest do
 
   test "auto_close is off by default outside streaming" do
     assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
-    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="htt">x</a></p>)
+    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
   end
 
   test "auto_close applies to every renderer that accepts Markdown" do
     source = "a [x](htt"
 
-    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="htt">)
+    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="mdex:incomplete-link">)
     assert MDEx.to_json!(source, auto_close: true) =~ "MDEx.Link"
-    assert [_, %{"attributes" => %{"link" => "htt"}} | _] = MDEx.to_delta!(source, auto_close: true)
-    assert [%MDEx.Paragraph{nodes: [_, %MDEx.Link{url: "htt"}]}] = MDEx.parse_document!(source, auto_close: true).nodes
+    assert [_, %{"attributes" => %{"link" => "mdex:incomplete-link"}} | _] = MDEx.to_delta!(source, auto_close: true)
+
+    assert [%MDEx.Paragraph{nodes: [_, %MDEx.Link{url: "mdex:incomplete-link"}]}] =
+             MDEx.parse_document!(source, auto_close: true).nodes
 
     # to_xml/2 renders a binary natively instead of running the document
     # pipeline, so it needs the source completed before the native call.

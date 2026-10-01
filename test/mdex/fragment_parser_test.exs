@@ -278,11 +278,11 @@ defmodule MDEx.FragmentParserTest do
   end
 
   test "[foo](https://example" do
-    assert complete("[foo](https://example") == "[foo](https://example)"
+    assert complete("[foo](https://example") == "[foo](mdex:incomplete-link)"
   end
 
   test "![img](https://cdn.example.com/pic" do
-    assert complete("![img](https://cdn.example.com/pic") == "![img](https://cdn.example.com/pic)"
+    assert complete("![img](https://cdn.example.com/pic") == "![img](mdex:incomplete-link)"
   end
 
   test "complete link is not modified" do
@@ -318,8 +318,106 @@ defmodule MDEx.FragmentParserTest do
   end
 
   test "link with nested parens is incomplete" do
-    assert complete("[wiki](https://en.wikipedia.org/wiki/Foo_(bar)") ==
-             "[wiki](https://en.wikipedia.org/wiki/Foo_(bar))"
+    assert complete("[wiki](https://en.wikipedia.org/wiki/Foo_(bar)") == "[wiki](mdex:incomplete-link)"
+  end
+
+  describe "links still arriving never render a partial URL" do
+    test "URL starting on the next line" do
+      assert complete("[a](\nhttps://exa") == "[a](mdex:incomplete-link)"
+    end
+
+    test "URL ending in an escape" do
+      assert complete("[a](https://example.com/a\\") == "[a](mdex:incomplete-link)"
+    end
+
+    test "URL ended by whitespace is kept while the title arrives" do
+      assert complete(~s{[a](https://example.com "Tit}) == "[a](https://example.com)"
+      assert complete("[a](https://example.com\n'Tit") == "[a](https://example.com)"
+      assert complete("[a](<https://example.com/a b> (Tit") == "[a](<https://example.com/a b>)"
+      assert complete("[a](https://example.com ") == "[a](https://example.com) "
+    end
+
+    test "link with a closed title waits only for the paren" do
+      assert complete(~s{[a](https://example.com "Title"}) == ~s{[a](https://example.com "Title")}
+    end
+
+    test "link inside emphasis" do
+      assert complete("**[a](https://exa") == "**[a](mdex:incomplete-link)**"
+      assert complete("*see [a](https://example.com/Foo_") == "*see [a](mdex:incomplete-link)*"
+    end
+
+    test "emphasis markers inside a URL are not emphasis" do
+      assert complete("[a](https://example.com/*b) and text") == "[a](https://example.com/*b) and text"
+      assert complete("[a](https://example.com/Foo_(bar)) done") == "[a](https://example.com/Foo_(bar)) done"
+      assert complete("*see [a](https://example.com/*b) and text") == "*see [a](https://example.com/*b) and text*"
+    end
+
+    test "emphasis inside the label closes before the link" do
+      assert complete("[**bo") == "[**bo**](mdex:incomplete-link)"
+    end
+
+    test "image inside a link" do
+      assert complete("[![badge](https://img") == "[![badge](mdex:incomplete-link)](mdex:incomplete-link)"
+      assert complete("[![badge](https://img.test/b.svg)](https://exa") == "[![badge](https://img.test/b.svg)](mdex:incomplete-link)"
+    end
+
+    test "closed brackets inside a label" do
+      assert complete("[a [b]") == "[a [b]](mdex:incomplete-link)"
+      assert complete("[a [b] c](https://exa") == "[a [b] c](mdex:incomplete-link)"
+    end
+
+    test "full and collapsed references" do
+      assert complete("[a][re") == "[a](mdex:incomplete-link)"
+      assert complete("[a][ref]") == "[a](mdex:incomplete-link)"
+      assert complete("[a][]") == "[a](mdex:incomplete-link)"
+    end
+
+    test "escaped brackets and code spans are not links" do
+      assert complete("\\[a](https://exa") == "\\[a](https://exa"
+      assert complete("`[a](b` text") == "`[a](b` text"
+    end
+
+    test "a blank line after the URL leaves the text alone" do
+      assert complete("[a](https://example.com\n\nNext") == "[a](https://example.com\n\nNext"
+    end
+
+    test "link reference definition" do
+      assert complete("[a]\n\n[a]: https://exa") == "[a]\n\n[a]: mdex:incomplete-link"
+      assert complete("[a]\n\n[a]:\nhttps://exa") == "[a]\n\n[a]: mdex:incomplete-link"
+      assert complete(~s{[a]\n\n[a]: https://example.com "Tit}) == "[a]\n\n[a]: https://example.com"
+      assert complete("text\n[a]: https://exa") == "text\n[a]: https://exa"
+    end
+
+    test "task list markers are not links" do
+      assert complete("- [ ]") == "- [ ]"
+      assert complete("- [x]") == "- [x]"
+    end
+
+    test "autolinks" do
+      options = [extension: [autolink: true]]
+
+      assert complete("see https://exa", options) == "see [https\\:\\/\\/exa](mdex:incomplete-link)"
+      assert complete("see www.exa", options) == "see [www\\.exa](mdex:incomplete-link)"
+      assert complete("mail me@example.c", options) == "mail [me\\@example\\.c](mdex:incomplete-link)"
+      assert complete("**see https://example.com*", options) == "**see [https\\:\\/\\/example\\.com](mdex:incomplete-link)**"
+      assert complete("see https://example.com ", options) == "see https://example.com "
+      assert complete("[a](https://example.com)", options) == "[a](https://example.com)"
+      assert complete(~s{<a href="https://example.com">}, options) == ~s{<a href="https://example.com">}
+      assert complete("see https://exa") == "see https://exa"
+    end
+
+    test "wikilinks" do
+      assert complete("[[Wiki Pa", extension: [wikilinks_title_after_pipe: true]) ==
+               "[[mdex:incomplete-link|Wiki Pa]]"
+
+      assert complete("[[Title|https://exa", extension: [wikilinks_title_before_pipe: true]) ==
+               "[[Title|mdex:incomplete-link]]"
+    end
+
+    test "footnote references are not links" do
+      assert complete("Note[^1]", extension: [footnotes: true]) == "Note[^1]"
+      assert complete("Note[^1", extension: [footnotes: true]) == "Note[^1"
+    end
   end
 
   test "mixed currency and math $5 + $x" do
