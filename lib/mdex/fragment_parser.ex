@@ -459,7 +459,8 @@ defmodule MDEx.FragmentParser do
       <<?\n, rest::binary>> ->
         line = last_line(core)
 
-        if table_header_line?(line) and not blank_line_follows?(rest) do
+        if table_header_line?(line) and not blank_line_follows?(rest) and
+             not table_delimited?(core) do
           separator = generate_table_separator(line)
           {core <> "\n" <> separator, {:consume_trailing, "\n"}}
         else
@@ -476,6 +477,31 @@ defmodule MDEx.FragmentParser do
   defp table_header_line?(line) do
     trimmed = String.trim(line)
     String.starts_with?(trimmed, "|") and String.ends_with?(trimmed, "|")
+  end
+
+  defp table_delimited?(core) do
+    core
+    |> String.split("\n")
+    |> Enum.reverse()
+    |> Enum.take_while(&table_row_line?/1)
+    |> Enum.any?(&table_delimiter_line?/1)
+  end
+
+  # Outer pipes are optional on any row, so the scan back through the table
+  # cannot require them the way the final-line check does.
+  defp table_row_line?(line), do: String.contains?(line, "|")
+
+  defp table_delimiter_line?(line) do
+    cells =
+      line
+      |> String.trim()
+      |> String.trim("|")
+      |> String.split("|")
+
+    Enum.all?(cells, fn cell ->
+      trimmed = String.trim(cell)
+      trimmed != "" and String.match?(trimmed, ~r/^:?-+:?$/)
+    end)
   end
 
   defp generate_table_separator(line) do

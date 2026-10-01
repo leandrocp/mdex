@@ -229,8 +229,30 @@ defmodule MDEx.FragmentParserTest do
     assert complete("# h\n\n| a |\n|---|\n| 1 |\n\n") == "# h\n\n| a |\n|---|\n| 1 |\n\n"
   end
 
-  test "open table still gets a row appended" do
-    assert complete("| a |\n|---|\n| 1 |\n") == "| a |\n|---|\n| 1 |\n| - |"
+  test "open table that already has a delimiter row is left alone" do
+    assert complete("| a |\n|---|\n") == "| a |\n|---|\n"
+    assert complete("| a |\n|---|\n| 1 |\n") == "| a |\n|---|\n| 1 |\n"
+
+    assert complete("| a | b |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n") ==
+             "| a | b |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n"
+  end
+
+  test "alignment markers count as a delimiter row" do
+    assert complete("| a | b |\n|:--|--:|\n| 1 | 2 |\n") == "| a | b |\n|:--|--:|\n| 1 | 2 |\n"
+    assert complete("| a | b |\n|:-:|:-:|\n| 1 | 2 |\n") == "| a | b |\n|:-:|:-:|\n| 1 | 2 |\n"
+  end
+
+  test "header after another block still gets a delimiter row" do
+    assert complete("text\n\n| a | b |\n") == "text\n\n| a | b |\n| - | - |"
+  end
+
+  test "outer pipes are optional when looking for the delimiter row" do
+    assert complete("| a | b |\n---|---\n| 1 | 2 |\n") == "| a | b |\n---|---\n| 1 | 2 |\n"
+    assert complete("| a | b |\n:--|--:\n| 1 | 2 |\n") == "| a | b |\n:--|--:\n| 1 | 2 |\n"
+    assert complete("a | b\n--|--\n| 1 | 2 |\n") == "a | b\n--|--\n| 1 | 2 |\n"
+
+    assert complete("| a | b |\n| --- | --- |\n1 | 2\n| 3 | 4 |\n") ==
+             "| a | b |\n| --- | --- |\n1 | 2\n| 3 | 4 |\n"
   end
 
   test "- [x] Collect *n" do
