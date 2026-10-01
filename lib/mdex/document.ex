@@ -2312,7 +2312,8 @@ defmodule MDEx.Document do
     {buffer, document} =
       if Document.get_private(document, :auto_close, false) do
         state = Document.get_private(document, :fragment_state)
-        {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state)
+        options = Keyword.take(document.options, [:extension, :parse])
+        {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state, options)
         {completed, Document.put_private(document, :fragment_state, new_state)}
       else
         {buffer, document}

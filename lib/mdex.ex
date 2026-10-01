@@ -713,7 +713,7 @@ defmodule MDEx do
 
   defp maybe_auto_close(markdown, document) do
     if Document.get_private(document, :auto_close, false) do
-      MDEx.FragmentParser.complete(markdown)
+      MDEx.FragmentParser.complete(markdown, Keyword.take(document.options, [:extension, :parse]))
     else
       markdown
     end
@@ -1585,8 +1585,9 @@ defmodule MDEx do
 
   defp stream_auto_close(source, %{auto_close: false}), do: source
 
-  defp stream_auto_close(source, _state) do
-    MDEx.FragmentParser.complete(source, preserve_pending_html: true)
+  defp stream_auto_close(source, state) do
+    options = Keyword.take(state.document.options, [:extension, :parse])
+    MDEx.FragmentParser.complete(source, [preserve_pending_html: true] ++ options)
   end
 
   defp stream_parse_nodes!(source, rust_options) do

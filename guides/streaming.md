@@ -23,10 +23,13 @@ It closes emphasis, inline code, fenced blocks, links, images, tables, list
 markers, and HTML tags. It works with every renderer and with
 `MDEx.parse_document/2`, so AST transforms on partial source are possible too.
 
-The trade-off is that a link whose URL is still arriving renders as a real link:
+A link, image, wikilink, or link reference definition whose URL is still
+arriving points to the `mdex:incomplete-link` placeholder until the URL is
+complete, so a partial URL is never rendered. With the `:autolink` extension, a
+bare URL or email at the end of the source links to the placeholder too:
 
 ```elixir
-MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="htt">x</a></p>)
+MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
 ```
 
 Pass `auto_close: false` if you would rather show the raw source until the
