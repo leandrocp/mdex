@@ -204,9 +204,9 @@ defmodule MDEx.FragmentParser do
     opening_append = opening_completion_append(core, line_suffix)
 
     cond do
+      list_marker_line?(line) -> {complete_list_line(core, line), :none}
       opening_append != "" -> {core <> opening_append, :none}
       closer = closing_token(core) -> close_with_prefix(core, prefix, closer)
-      list_marker_line?(line) -> {complete_list_line(core, line), :none}
       true -> {core <> line_suffix, :none}
     end
   end

@@ -1353,6 +1353,55 @@ defmodule MDEx.StreamTest do
     assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
   end
 
+  test "auto_close preserves bullet list markers" do
+    for marker <- ["*", "-", "+"], ending <- ["", "\n", "\r\n"] do
+      assert MDEx.to_html!("#{marker} one#{ending}", auto_close: true) == "<ul>\n<li>one</li>\n</ul>"
+    end
+  end
+
+  test "auto_close preserves task list checkboxes" do
+    options = [extension: [tasklist: true]]
+
+    for marker <- ["*", "-", "+"], checkbox <- ["[x]", "[X]", "[ ]"], ending <- ["", "\n"] do
+      markdown = "#{marker} #{checkbox}#{ending}"
+      html = MDEx.to_html!(markdown, [auto_close: true] ++ options)
+
+      assert html == MDEx.to_html!(markdown, options)
+      assert html =~ ~s(type="checkbox")
+    end
+  end
+
+  test "asterisk list stream updates do not append emphasis markers" do
+    events =
+      ["* o", "ne", "\n* tw", "o"]
+      |> MDEx.stream()
+      |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+
+    assert events == [
+             {0, "<ul>\n<li>o</li>\n</ul>"},
+             {0, "<ul>\n<li>one</li>\n</ul>"},
+             {0, "<ul>\n<li>one</li>\n<li>tw</li>\n</ul>"},
+             {0, "<ul>\n<li>one</li>\n<li>two</li>\n</ul>"}
+           ]
+  end
+
+  test "asterisk task list stream updates preserve checkboxes" do
+    options = [extension: [tasklist: true]]
+    chunks = ["* [x]", " done", "\n* [ ]", " todo"]
+
+    events =
+      chunks
+      |> MDEx.stream(options)
+      |> Enum.map(fn {id, document} -> {id, MDEx.to_html!(document)} end)
+
+    expected =
+      chunks
+      |> Enum.scan(&(&2 <> &1))
+      |> Enum.map(&{0, MDEx.to_html!(&1, options)})
+
+    assert events == expected
+  end
+
   test "auto_close applies to every renderer that accepts Markdown" do
     source = "a [x](htt"
 
