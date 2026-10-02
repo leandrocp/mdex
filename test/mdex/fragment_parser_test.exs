@@ -83,6 +83,23 @@ defmodule MDEx.FragmentParserTest do
     assert complete("- **bold") == "- **bold**"
   end
 
+  test "asterisk bullets are not emphasis openers" do
+    for markdown <- ["* one", "* one\n", "*\tone", "  * one", "* one\n* two", "* one\n  * two", "* [x]", "* [ ]"] do
+      assert complete(markdown) == markdown
+    end
+  end
+
+  test "completes emphasis inside asterisk list items" do
+    assert complete("* *italic") == "* *italic*"
+    assert complete("* **bold") == "* **bold**"
+    assert complete("* **bold*") == "* **bold**"
+    assert complete("* ~~strike") == "* ~~strike~~"
+    assert complete("* [x] **completed") == "* [x] **completed**"
+    assert complete("* one\n  * **bold") == "* one\n  * **bold**"
+    assert complete("* *italic*") == "* *italic*"
+    assert complete("* **bold**") == "* **bold**"
+  end
+
   test "incomplete italic in list items" do
     assert complete("- *italic") == "- *italic*"
   end
