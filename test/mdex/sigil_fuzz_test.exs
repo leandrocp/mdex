@@ -1,5 +1,6 @@
 defmodule MDEx.SigilFuzzTest do
-  use MDEx.Fuzz
+  # Capturing stderr must not race with test-file compilation.
+  use MDEx.Fuzz, async: false
 
   import ExUnit.CaptureIO
   import MDEx.Sigil
