@@ -1,5 +1,6 @@
 defmodule MDExTest do
-  use ExUnit.Case, async: true
+  # Capturing stderr must not race with test-file compilation.
+  use ExUnit.Case, async: false
   alias MDEx.Document
   alias MDEx.Heading
   alias MDEx.Text

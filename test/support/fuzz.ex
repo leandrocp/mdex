@@ -6,6 +6,9 @@ defmodule MDEx.Fuzz do
   generators and helpers, and tags the module with `:fuzz` so the suite can be
   selected with `mix test --only fuzz` or skipped with `mix test --exclude fuzz`.
 
+  Pass `async: false` when capturing a global IO device such as stderr so the
+  tests run after test-file compilation has finished writing warnings.
+
   Properties run at StreamData's default of 100 generations. Do not try to raise
   that with a helper such as `check all(x <- gen(), property_options())`:
   `check all` only reads its options when they are a literal keyword list in the
@@ -22,9 +25,11 @@ defmodule MDEx.Fuzz do
   use ExUnitProperties
 
   @doc false
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
+    opts = Keyword.put_new(opts, :async, true)
+
     quote do
-      use ExUnit.Case, async: true
+      use ExUnit.Case, unquote(opts)
       use ExUnitProperties
 
       import MDEx.Fuzz
