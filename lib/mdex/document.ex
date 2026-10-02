@@ -2215,9 +2215,9 @@ defmodule MDEx.Document do
   3. Executes pipeline steps: All registered steps (added via `append_steps/2` or `prepend_steps/2`) are
      executed in order. Steps can transform the document or halt the pipeline.
 
-  With `:auto_close`, syntax added by an earlier run stays in the AST and can
-  break markup split across runs. Use `MDEx.stream/2` for incoming chunks, or
-  buffer them all before calling `run/1`.
+  With `auto_close: true`, don't call `run/1` after each incoming chunk.
+  It can close formatting before the rest of the text arrives. Use `MDEx.stream/2`
+  for chunked Markdown.
 
   See `MDEx.new/1` for more info.
 
@@ -2453,8 +2453,8 @@ defmodule MDEx.Document do
   > one chunk at a time therefore changes the output — two paragraphs merge into
   > one, a loose list turns tight, and a table's `|---|` row becomes a data row.
   >
-  > `:auto_close` also leaves added syntax in the AST, so emphasis, links, or
-  > inline code split across runs can stay broken after the final chunk arrives.
+  > With `auto_close: true`, a run can also close formatting too early.
+  > Later chunks won't undo it.
   >
   > For Markdown arriving in chunks use `MDEx.stream/2`, which keeps the source
   > text instead of the AST.

@@ -35,13 +35,11 @@ MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="mdex:incompl
 Pass `auto_close: false` if you would rather show the raw source until the
 construct is finished, including inside `MDEx.stream/2`.
 
-`:auto_close` adds syntax to the AST. If you call `MDEx.Document.run/1` between
-chunks, later runs keep that syntax: `"**bo"` followed by `"ld** x"` leaves only
-`bo` bold. Split links and inline code can break too.
+With `auto_close: true`, don't call `MDEx.Document.run/1` after each chunk.
+For example, running after `"**bo"` makes `bo` bold. Adding `"ld** x"` and running
+again leaves `ld` outside the bold text, even though the full word should be bold.
 
-Use `MDEx.stream/2` for incoming chunks. If you already have the accumulated
-source, render that full string each time. If you only need the final result,
-buffer all chunks before calling `MDEx.Document.run/1`.
+Use `MDEx.stream/2` for Markdown that arrives in chunks.
 
 ## `MDEx.stream/2`
 
