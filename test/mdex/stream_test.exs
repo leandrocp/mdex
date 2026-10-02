@@ -655,6 +655,39 @@ defmodule MDEx.StreamTest do
     end
   end
 
+  test "quoted reference definitions never stream partial link or image URLs" do
+    for definition <- [
+          "> [a]: https://x.test/a\n",
+          "> > [a]: https://x.test/a\n",
+          "text\n> [a]: https://x.test/a\n",
+          "> text\n> > [a]: https://x.test/a\n",
+          "> \t [a]: https://x.test/a\n",
+          "> [a]:\n> https://x.test/a\n",
+          "> [a]: <https://x.test/a>\n",
+          "> [a]: https://x.test/a \"Title\"\n",
+          "> [b]: https://b.test\n> \"Café\n> noir\"\n> [a]: https://x.test/a\n",
+          "> text\n>\n> [a]: https://x.test/a\n"
+        ],
+        newline <- ["\n", "\r\n", "\r"],
+        final_newline? <- [true, false] do
+      definition = if final_newline?, do: definition, else: String.trim_trailing(definition, "\n")
+      source = String.replace("[a] ![a]\n\n" <> definition, "\n", newline)
+      events = source |> String.graphemes() |> MDEx.stream() |> Enum.to_list()
+
+      urls =
+        for {_id, document} <- events,
+            %node{url: url} <- document,
+            node in [MDEx.Link, MDEx.Image],
+            uniq: true,
+            do: url
+
+      assert Enum.sort(urls) == ["https://x.test/a", "mdex:incomplete-link"], inspect(source)
+
+      html = events |> Map.new() |> Enum.sort_by(&elem(&1, 0)) |> Enum.map_join("\n", fn {_, doc} -> MDEx.to_html!(doc) end)
+      assert html == MDEx.to_html!(source), inspect(source)
+    end
+  end
+
   test "only fenced" do
     chunks = [
       "```"

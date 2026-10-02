@@ -15,6 +15,8 @@ defmodule MDEx.FragmentParser do
   # Stands in for a completed link while the text before it is completed.
   @link_atom <<0>>
   @link_definition ~r/\G {0,3}\[(?!\^)(?:\\.|[^\\\[\]])+\]:/
+  @block_quote_prefix ~r/\A(?: {0,3}> ?)+/
+  @html_block_delimiters [{"<!--", "-->"}, {"<?", "?>"}, {"<![CDATA[", "]]>"}, {"<!", ">"}]
   @atx_heading ~r/\G {0,3}\#{1,6}(?:[ \t][^\n]*)?(?:\n|\z)/
   @list_marker ~r/(?:\A|\n)[ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+\z/
   @autolink_schemes ["http", "https", "ftp"]
@@ -1289,10 +1291,84 @@ defmodule MDEx.FragmentParser do
   # after another from the paragraph start.
   defp incomplete_link_definition(paragraph, trailing) do
     with false <- String.contains?(trailing, "\n"),
-         {:open, colon_end, url} <- link_definitions(paragraph, 0) do
-      definition_end(colon_end, url, trailing)
+         {text, lines, quote_start} = unquote_definition_lines(paragraph),
+         start = max(quote_start, paragraph_start(text)),
+         true <- text == paragraph or quoted_definition_context?(binary_part(text, 0, start)),
+         {:open, colon_end, url} <- link_definitions(text, start) do
+      case definition_end(colon_end, url, trailing) do
+        {:placeholder, index} -> {:placeholder, definition_source_offset(lines, index)}
+        index -> definition_source_offset(lines, index)
+      end
     else
       _ -> nil
+    end
+  end
+
+  # A quoted blank line does not end a fenced code block or raw HTML block.
+  defp quoted_definition_context?(prefix) do
+    is_nil(unclosed_fence_info(prefix)) and
+      not Enum.any?(scan_html(prefix, []), &(&1 in ~w(script pre style textarea))) and
+      not Enum.any?(@html_block_delimiters, fn {opening, closing} ->
+        case :binary.matches(prefix, opening) |> List.last() do
+          nil -> false
+          {start, size} -> :binary.match(prefix, closing, scope: {start + size, byte_size(prefix) - start - size}) == :nomatch
+        end
+      end)
+  end
+
+  # Parse quoted definitions as their contents, but keep each line's original
+  # byte offset so completion preserves quote markers, labels and line endings.
+  defp unquote_definition_lines(paragraph) do
+    if :binary.match(paragraph, ">") == :nomatch do
+      {paragraph, [{paragraph, 0}], 0}
+    else
+      {lines, {_source_offset, _text_offset, _depth, quote_start}} =
+        paragraph
+        |> String.split("\n")
+        |> Enum.map_reduce({0, 0, 0, 0}, &unquote_definition_line/2)
+
+      {Enum.map_join(lines, "\n", &elem(&1, 0)), lines, quote_start}
+    end
+  end
+
+  defp unquote_definition_line(line, {source_offset, text_offset, previous_depth, quote_start}) do
+    {content, offset, depth} = unquote_definition_line(line)
+    # A new quote can interrupt prose, unlike a reference definition.
+    quote_start = if depth > previous_depth, do: text_offset, else: quote_start
+    next = {source_offset + byte_size(line) + 1, text_offset + byte_size(content) + 1, depth, quote_start}
+    {{content, source_offset + offset}, next}
+  end
+
+  defp unquote_definition_line(line) do
+    {prefix, rest} = expand_quote_prefix(line, 0)
+    prefix_size = match_at(@block_quote_prefix, prefix, 0) || 0
+
+    if prefix_size == 0 do
+      {line, 0, 0}
+    else
+      indent = binary_part(prefix, prefix_size, byte_size(prefix) - prefix_size)
+      offset = byte_size(line) - byte_size(rest) - byte_size(indent)
+      depth = prefix |> binary_part(0, prefix_size) |> count_char(?>)
+      {indent <> rest, offset, depth}
+    end
+  end
+
+  # Tabs advance to four-column stops. A tab after `>` can leave indentation
+  # behind, which must still count when distinguishing definitions from code.
+  defp expand_quote_prefix(<<char, rest::binary>>, column) when char in [?\s, ?\t, ?>] do
+    size = if char == ?\t, do: 4 - rem(column, 4), else: 1
+    expanded = if char == ?>, do: ">", else: String.duplicate(" ", size)
+    {prefix, rest} = expand_quote_prefix(rest, column + size)
+    {expanded <> prefix, rest}
+  end
+
+  defp expand_quote_prefix(rest, _column), do: {"", rest}
+
+  defp definition_source_offset([{line, offset} | rest], index) do
+    if index <= byte_size(line) do
+      offset + index
+    else
+      definition_source_offset(rest, index - byte_size(line) - 1)
     end
   end
 

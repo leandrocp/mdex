@@ -422,6 +422,62 @@ defmodule MDEx.FragmentParserTest do
       assert complete(~s{[a]: https://example.com\n"Tit}) == "[a]: https://example.com"
     end
 
+    test "link reference definitions in block quotes" do
+      for prefix <- ["> ", ">", "> > ", ">>", ">   > ", ">\t", "> \t "] do
+        assert complete("[a]\n\n#{prefix}[a]: https://exa") == "[a]\n\n#{prefix}[a]: mdex:incomplete-link"
+        assert complete("#{prefix}[a]: <https://exa") == "#{prefix}[a]: mdex:incomplete-link"
+        assert complete("#{prefix}[a]: https://example.com ") == "#{prefix}[a]: https://example.com "
+        assert complete("#{prefix}[a]: https://example.com\n") == "#{prefix}[a]: https://example.com\n"
+        assert complete("#{prefix}[a]: <https://example.com>") == "#{prefix}[a]: <https://example.com>"
+        assert complete(~s{#{prefix}[a]: https://example.com "Tit}) == "#{prefix}[a]: https://example.com"
+      end
+
+      assert complete("[a]\n\n  > [a]: https://exa") == "[a]\n\n  > [a]: mdex:incomplete-link"
+    end
+
+    test "quoted multiline definitions preserve source offsets" do
+      for newline <- ["\n", "\r\n", "\r"] do
+        assert complete("> [café]:#{newline}> https://exa") == "> [café]: mdex:incomplete-link"
+
+        assert complete("> [café#{newline}> noir]: https://exa") ==
+                 "> [café#{newline}> noir]: mdex:incomplete-link"
+
+        assert complete(~s{> [a]: https://a.test#{newline}> "Café#{newline}> noir"#{newline}> [b]: https://exa}) ==
+                 ~s{> [a]: https://a.test#{newline}> "Café#{newline}> noir"#{newline}> [b]: mdex:incomplete-link}
+
+        assert complete(~s{> [a]:#{newline}> https://a.test#{newline}> "Tit}) ==
+                 "> [a]:#{newline}> https://a.test"
+      end
+    end
+
+    test "quoted reference definitions cannot interrupt a paragraph or code" do
+      for source <- [
+            "> text\n> [a]: https://exa",
+            ">     [a]: https://exa",
+            ">\t  [a]: https://exa",
+            "> ~~~\n>\n> [a]: https://exa",
+            "> > text\n> > [a]: https://exa"
+          ] do
+        assert complete(source) == source
+      end
+    end
+
+    test "reference definitions at the start of a quote or after a quoted blank line" do
+      assert complete("text\n> [a]: https://exa") == "text\n> [a]: mdex:incomplete-link"
+      assert complete("> text\n> > [a]: https://exa") == "> text\n> > [a]: mdex:incomplete-link"
+      assert complete("> text\n>\n> [a]: https://exa") == "> text\n>\n> [a]: mdex:incomplete-link"
+    end
+
+    test "quoted blank lines do not turn raw HTML into reference definitions" do
+      for {opening, closing} <- [{"<script>", "</script>"}, {"<pre>", "</pre>"}, {"<!--", "-->"}, {"<?", "?>"}, {"<![CDATA[", "]]>"}] do
+        source = "> #{opening}\n>\n> [a]: https://exa"
+        assert complete(source) == source
+
+        source = "> #{opening}\n> #{closing}\n>\n> [a]: https://exa"
+        assert complete(source) == "> #{opening}\n> #{closing}\n>\n> [a]: mdex:incomplete-link"
+      end
+    end
+
     test "CRLF and CR line endings" do
       assert complete("[a]: https://a.test\r\n[b]: https://exa") == "[a]: https://a.test\r\n[b]: mdex:incomplete-link"
       assert complete(~s{[a]: https://a.test\r\n"T"\r\n[b]: https://exa}) == ~s{[a]: https://a.test\r\n"T"\r\n[b]: mdex:incomplete-link}
