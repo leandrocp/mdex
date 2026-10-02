@@ -35,22 +35,13 @@ MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="mdex:incompl
 Pass `auto_close: false` if you would rather show the raw source until the
 construct is finished, including inside `MDEx.stream/2`.
 
-Do not call `MDEx.Document.run/1` between incoming chunks to render partial
-Markdown with `auto_close: true`. Each run stores the completed syntax in the
-AST, and later runs keep it. For example, running after `"**bo"` and again after
-`"ld** x"` leaves the bold span closed after `bo`, even when the source is complete.
-Links and inline code split across runs have the same limitation.
+`:auto_close` adds syntax to the AST. If you call `MDEx.Document.run/1` between
+chunks, later runs keep that syntax: `"**bo"` followed by `"ld** x"` leaves only
+`bo` bold. Split links and inline code can break too.
 
-Use `MDEx.stream/2` for chunks, as shown below. If you already hold the accumulated
-source, pass the full string to each render:
-
-```elixir
-MDEx.to_html!("**bo", auto_close: true)       #=> "<p><strong>bo</strong></p>"
-MDEx.to_html!("**bold** x", auto_close: true) #=> "<p><strong>bold</strong> x</p>"
-```
-
-If intermediate output is not needed, add all chunks with
-`MDEx.Document.put_markdown/3` before calling `MDEx.Document.run/1` once.
+Use `MDEx.stream/2` for incoming chunks. If you already have the accumulated
+source, render that full string each time. If you only need the final result,
+buffer all chunks before calling `MDEx.Document.run/1`.
 
 ## `MDEx.stream/2`
 
