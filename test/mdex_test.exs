@@ -445,36 +445,6 @@ defmodule MDExTest do
       )
     end
 
-    test "custom theme" do
-      theme = Lumis.Theme.get("github_light")
-
-      function_call_style =
-        %Lumis.Theme.Style{
-          fg: "#d1242f",
-          bg: "#e4b7be",
-          bold: true
-        }
-
-      custom_theme =
-        put_in(
-          theme,
-          [Access.key!(:highlights), Access.key!("function.call")],
-          function_call_style
-        )
-
-      assert_output(
-        ~S"""
-        ```elixir
-        {:mdex, "~> 0.1"}
-        ```
-        """,
-        ~S"""
-        <pre class="lumis" style="color: #1f2328; background-color: #ffffff;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #1f2328;">{</span><span style="color: #0550ae;">:mdex</span><span style="color: #1f2328;">,</span> <span style="color: #0a3069;">&quot;~&gt; 0.1&quot;</span><span style="color: #1f2328;">}</span></span></code></pre>
-        """,
-        syntax_highlight: [formatter: {:html_inline, theme: custom_theme}]
-      )
-    end
-
     test "with pre_class" do
       {:ok, html} =
         MDEx.to_html(
@@ -680,26 +650,6 @@ defmodule MDExTest do
 
       assert html =~
                ~r'<pre class="lumis lumis-themes (?:light dark|dark light)" style="color: light-dark\(#4c4f69, #cdd6f4\); background-color: light-dark\(#eff1f5, #1e1e2e\);">'
-    end
-
-    test "with theme structs" do
-      light_theme = Lumis.Theme.get("github_light")
-      dark_theme = Lumis.Theme.get("github_dark")
-
-      {:ok, html} =
-        MDEx.to_html(
-          ~S"""
-          ```elixir
-          :ok
-          ```
-          """,
-          syntax_highlight: [
-            formatter: {:html_multi_themes, themes: [light: light_theme, dark: dark_theme]}
-          ]
-        )
-
-      assert html =~ ~s(--lumis-light:)
-      assert html =~ ~s(--lumis-dark:)
     end
 
     test "with default_theme" do

@@ -21,7 +21,7 @@ Lumis themes are Elixir structs, so you can edit one before passing it to MDEx. 
 
 ## Customization
 
-Below we'll customize the `github_light` theme but you can work with any [%Lumis.Theme{}](https://hexdocs.pm/lumis/Lumis.Theme.html) or build one from scratch.
+Below we'll customize the `github_light` theme but you can work with any [%Lumis.Theme{}](https://hexdocs.pm/lumis/Lumis.Theme.html) or build one from scratch. Building a theme takes the `:lumis` package, which is why this notebook installs it; highlighting with MDEx doesn't.
 
 ```elixir
 theme = Lumis.Theme.get("github_light")

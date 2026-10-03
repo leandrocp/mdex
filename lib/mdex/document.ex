@@ -1071,11 +1071,11 @@ defmodule MDEx.Document do
       type_spec: quote(do: lumis_options() | syntect_options()),
       default: [formatter: @default_lumis_formatter],
       doc:
-        "Engine-specific syntax highlighting options. For `:lumis`, see `t:Lumis.options/0` and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
+        "Engine-specific syntax highlighting options. For `:lumis`, see [`Lumis.options()`](https://hexdocs.pm/lumis/Lumis.html#t:options/0) and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
     ],
     formatter: [
       type: :any,
-      type_doc: "`t:Lumis.formatter/0`",
+      type_doc: "[`Lumis.formatter()`](https://hexdocs.pm/lumis/Lumis.html#t:formatter/0)",
       doc: false
     ]
   ]
@@ -2574,7 +2574,7 @@ defmodule MDEx.Document do
   Syntax highlight code blocks using [Lumis](https://mdex.hexdocs.pm/lumis.html) or [Syntect](https://mdex.hexdocs.pm/syntect.html).
 
   - `:engine` - syntax highlighting engine, either `:lumis` or `:syntect`
-  - `:opts` - engine-specific options, either `t:Lumis.options/0` or `t:syntect_options/0`
+  - `:opts` - engine-specific options, either [`Lumis.options()`](https://hexdocs.pm/lumis/Lumis.html#t:options/0) or `t:syntect_options/0`
 
   ## Examples
 
@@ -2603,7 +2603,7 @@ defmodule MDEx.Document do
         ]
 
   @typedoc """
-  Lumis syntax highlighting options. See `t:Lumis.options/0`.
+  Lumis syntax highlighting options. See [`Lumis.options()`](https://hexdocs.pm/lumis/Lumis.html#t:options/0).
 
   Typed as a plain keyword list because `:lumis` is an optional dependency.
   """

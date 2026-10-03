@@ -34,11 +34,10 @@ mix deps.get
 mix compile
 ```
 
-To enable syntax highlighting with Lumis, add `:lumis` and a parser package for each
-language you highlight to your deps:
+To enable syntax highlighting with Lumis, add a parser package for each language you
+highlight to your deps:
 
 ```elixir
-{:lumis, "~> 0.10"},
 {:lumis_wasm_elixir, "~> 0.26"},
 {:lumis_wasm_rust, "~> 0.26"}
 ```
@@ -65,17 +64,11 @@ Documents inject languages too: HTML reaches `css` and `javascript`, Elixir reac
 
 The [language catalog](https://docs.lumis.sh/reference/languages) lists every package name.
 
-Parsers compile on first use. Warm them from your application's `start/2` so production
-doesn't pay for it on the first request:
-
-```elixir
-def start(_type, _args) do
-  Lumis.Languages.async_load(~w(elixir rust))
-  Supervisor.start_link(children(), strategy: :one_for_one, name: MyApp.Supervisor)
-end
-```
-
-It returns right away, and a failed warm-up is logged instead of stopping boot.
+Parsers compile on first use, and the compiled modules are cached on disk, so a restart
+doesn't compile them again. The cache is where the `:lumis` package keeps its own when
+your project also depends on it: `config :lumis, :data_dir`, then `LUMIS_DATA_DIR`, then
+its `priv`. Without `:lumis` it is in `:mdex_native`'s `priv`. Set `LUMIS_DATA_DIR` to keep
+it on a volume that survives deploys.
 
 To use Syntect instead:
 
