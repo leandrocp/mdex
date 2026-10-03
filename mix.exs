@@ -180,7 +180,6 @@ defmodule MDEx.MixProject do
       {:nimble_options, "~> 1.0"},
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:lumis, "~> 0.10", optional: true},
       {:phoenix_live_view, "~> 0.20.0 or ~> 1.0", optional: true},
       {:lumis_wasm_elixir, "~> 0.26", only: [:dev, :test]},
       {:lumis_wasm_rust, "~> 0.26", only: [:dev, :test]},
@@ -191,11 +190,13 @@ defmodule MDEx.MixProject do
     ]
   end
 
+  # Temporary, until mdex_native releases leandrocp/mdex_native#88: built from
+  # its latest commit, so CI sets MDEX_NATIVE_BUILD=1. Require the release instead.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.10"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "9f771a6c6073efe7f804ae403bfe83d075a9f21e"}
     end
   end
 

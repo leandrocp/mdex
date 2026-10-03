@@ -19,7 +19,7 @@ Mix.install([
 
 [Lumis](https://hex.pm/packages/lumis) highlights code with Tree-sitter. It ships themes converted from Neovim colorschemes and gives you a few HTML formatters.
 
-To use Lumis, add `{:lumis, "~> 0.10"}` to your deps, add a parser for every language you highlight, and configure `:mdex_native` with `syntax_highlighter: :lumis` before compiling dependencies. This notebook does all three in `Mix.install/2` above: it highlights Elixir, Ruby, and Rust, so it installs those three parsers.
+To use Lumis, add a parser for every language you highlight and configure `:mdex_native` with `syntax_highlighter: :lumis` before compiling dependencies. This notebook does both in `Mix.install/2` above: it highlights Elixir, Ruby, and Rust, so it installs those three parsers. It also installs `{:lumis, "~> 0.10"}`, which MDEx doesn't need, for the Lumis functions it calls below.
 
 Then use `engine: :lumis` to enable Lumis for a render:
 

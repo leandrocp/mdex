@@ -12,13 +12,11 @@ If no highlighter is configured, fenced code blocks render normally without synt
 
 ## Lumis
 
-Add Lumis to your deps if you want to use `engine: :lumis`, along with a parser for every
-language you highlight:
+To use `engine: :lumis`, add a parser for every language you highlight to your deps:
 
 <!-- livebook:{"force_markdown":true} -->
 
 ```elixir
-{:lumis, "~> 0.10"},
 {:lumis_wasm_elixir, "~> 0.26"},
 {:lumis_wasm_rust, "~> 0.26"}
 ```
