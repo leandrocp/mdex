@@ -190,11 +190,13 @@ defmodule MDEx.MixProject do
     ]
   end
 
+  # Temporary, until mdex_native releases leandrocp/mdex_native#88: built from
+  # its branch, so CI sets MDEX_NATIVE_BUILD=1. Require the release instead.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.10"}
+      {:mdex_native, github: "leandrocp/mdex_native", branch: "lp-lumis-options-from-lumis-core"}
     end
   end
 
