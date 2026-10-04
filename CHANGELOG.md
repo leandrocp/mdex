@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.14.2](https://github.com/leandrocp/mdex/compare/v0.14.1...v0.14.2) (2026-10-04)
+
+### Bug Fixes
+
+- Only append a table delimiter row when the table lacks one in [\#437](https://github.com/leandrocp/mdex/pull/437)
+- Don't render partial link URLs while auto-closing in [\#440](https://github.com/leandrocp/mdex/pull/440)
+- Preserve asterisk list markers during auto-close in [\#445](https://github.com/leandrocp/mdex/pull/445)
+- Prevent partial reference URLs in block quotes in [\#447](https://github.com/leandrocp/mdex/pull/447)
+- Require mdex_native 0.2.11 and document Lumis budgets in [\#450](https://github.com/leandrocp/mdex/pull/450)
+
+### Documentation
+
+- Warn against auto-closing each incoming chunk in [\#446](https://github.com/leandrocp/mdex/pull/446)
+
 ## [0.14.1](https://github.com/leandrocp/mdex/compare/v0.14.0...v0.14.1) (2026-09-29)
 
 ### Features
