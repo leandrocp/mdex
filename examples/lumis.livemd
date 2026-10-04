@@ -63,6 +63,30 @@ Parsers compile on first use. In an application, warm them from `start/2` so the
 Lumis.Languages.async_load(~w(elixir ruby rust))
 ```
 
+## Highlighting budgets
+
+Pass `:budget` alongside `:formatter` under `syntax_highlight[:opts]`:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+MDEx.to_html!(markdown,
+  syntax_highlight: [
+    engine: :lumis,
+    opts: [
+      formatter: :html_linked,
+      budget: [time_limit: 1_000, match_limit: 4096]
+    ]
+  ]
+)
+```
+
+The budget applies separately to each code block. Omitted or `nil` limits use Lumis's defaults: 5000 milliseconds and 8192 in-progress query matches. Set `time_limit: 0` to disable the time limit.
+
+When time runs out, the whole block renders as escaped plain text with `data-lumis-budget="time"` on its `<pre>`. Reaching the match limit keeps the block highlighted, with some scopes missing, and marks it `data-lumis-budget="matches"`.
+
+The time limit covers parsing and highlighting the code block, excluding language loading. It is checked cooperatively and can be exceeded between checks. It does not bound Markdown parsing, HTML formatting, or the total time to render a document containing several code blocks.
+
 ## Inline styles
 
 Use `:html_inline` when the generated HTML needs to stand on its own. This is useful for docs, feeds, emails, or anything where carrying a stylesheet around is a hassle.

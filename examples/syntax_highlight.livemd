@@ -63,6 +63,8 @@ MDEx.to_html!(markdown,
 )
 ```
 
+Lumis also accepts `budget: [time_limit: 1_000, match_limit: 4096]` inside `:opts` to bound each code block. See [Highlighting budgets](https://mdex.hexdocs.pm/lumis.html#highlighting-budgets) for defaults and fallback behavior.
+
 If another library calls MDEx for you, pass the same option through that library's MDEx configuration.
 
 For example in Tableau:
