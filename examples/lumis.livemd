@@ -65,8 +65,6 @@ Lumis.Languages.async_load(~w(elixir ruby rust))
 
 ## Highlighting budgets
 
-Budget enforcement requires the native fix in [mdex_native #89](https://github.com/leandrocp/mdex_native/pull/89). Releases up to and including `mdex_native 0.2.10` silently ignore the budget option. The behavior below applies once that fix is installed.
-
 Pass `:budget` alongside `:formatter` under `syntax_highlight[:opts]`:
 
 <!-- livebook:{"force_markdown":true} -->

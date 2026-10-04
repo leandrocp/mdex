@@ -2579,7 +2579,7 @@ defmodule MDEx.Document do
 
   For Lumis, `:opts` accepts `budget: [time_limit: 1_000, match_limit: 4096]` alongside `:formatter`
   to bound each code block. See [Highlighting budgets](https://mdex.hexdocs.pm/lumis.html#highlighting-budgets)
-  for the required native fix, defaults, and fallback behavior.
+  for defaults and fallback behavior.
 
   ## Examples
 
