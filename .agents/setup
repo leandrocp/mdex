@@ -27,25 +27,37 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 echo "==> Preparing OTP $otp_version and Elixir $elixir_version (${SECONDS}s)"
-if [[ ! -x "$otp/bin/erl" ]]; then
+if [[ ! -f "$otp/.complete" ]]; then
   curl --fail --location --retry 3 \
     "https://builds.hex.pm/builds/otp/amd64/ubuntu-22.04/OTP-$otp_version.tar.gz" -o "$tmp/otp.tar.gz"
   echo "7b08206f8af76a3ebe895c1a58dda536d21134c02880fe05efec19d37d49eb9c  $tmp/otp.tar.gz" | sha256sum --check
+  rm -rf "$otp"
   mkdir -p "$otp"
   tar -xzf "$tmp/otp.tar.gz" --strip-components=1 -C "$otp"
   "$otp/Install" -minimal "$otp"
+  touch "$otp/.complete"
 fi
-if [[ ! -x "$elixir/bin/elixir" ]]; then
+if [[ ! -f "$elixir/.complete" ]]; then
   curl --fail --location --retry 3 \
     "https://builds.hex.pm/builds/elixir/v$elixir_version-otp-27.zip" -o "$tmp/elixir.zip"
   echo "9ea6a5dc238bf9dcaaa2b6660c2bb2e36fd889004dde86d8a1c122cc68665476  $tmp/elixir.zip" | sha256sum --check
+  rm -rf "$elixir"
   mkdir -p "$elixir"
   unzip -q -o "$tmp/elixir.zip" -d "$elixir"
+  touch "$elixir/.complete"
 fi
 export PATH="$elixir/bin:$otp/bin:$PATH"
 
 # Amp and supervised services use new non-interactive login shells.
-marker='# MDEx orb toolchain'
+if [[ ! -e "$HOME/.bash_profile" ]]; then
+  for profile in .bash_login .profile; do
+    if [[ -f "$HOME/$profile" ]]; then
+      printf '[[ ! -f "$HOME/%s" ]] || source "$HOME/%s"\n' "$profile" "$profile" > "$HOME/.bash_profile"
+      break
+    fi
+  done
+fi
+marker="# MDEx orb toolchain: $PWD ($otp_version/$elixir_version)"
 if ! grep -Fqx "$marker" "$HOME/.bash_profile" 2>/dev/null; then
   cat >> "$HOME/.bash_profile" <<EOF
 
