@@ -37,3 +37,6 @@ checksum-*.exs
 
 mise.toml
 /.claude/settings.local.json
+
+# Orb portal metadata is local to each machine.
+/.amp/portals/*
