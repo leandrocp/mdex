@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Toolchains and compiled dependencies come from the snapshot; never install on wake.
+elixir --version
