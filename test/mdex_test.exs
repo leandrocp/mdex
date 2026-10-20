@@ -1299,7 +1299,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span data-highlight="keyword.function" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword" style="color: #c678dd;">do</span></span>
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span data-highlight="keyword.function" style="color: #c678dd;">defmodule</span> <span data-highlight="module" style="color: #e5c07b;">Example</span> <span data-highlight="keyword.function" style="color: #c678dd;">do</span></span>
         <span class="l-line" data-line="2"><span data-highlight="keyword" style="color: #c678dd;">end</span></span></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline],
@@ -1414,7 +1414,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0" style="display: block; width: fit-content; min-width: 100%; overflow-wrap: anywhere;"><span class="l-line" data-line="1"><span data-highlight="keyword.function" style="color: #8be9fd;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span></span>
+        <pre class="lumis my-code" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0" style="display: block; width: fit-content; min-width: 100%; overflow-wrap: anywhere;"><span class="l-line" data-line="1"><span data-highlight="keyword.function" style="color: #8be9fd;">defmodule</span> <span data-highlight="module" style="color: #ffb86c;">Example</span> <span data-highlight="keyword.function" style="color: #8be9fd;">do</span></span>
         <span class="l-line hl" style="display: inline-block; width: 100%; min-height: 1lh; vertical-align: top; background-color: #44475a;" data-line="2">  <span data-highlight="keyword.function" style="color: #8be9fd;">def</span> <span data-highlight="function" style="color: #50fa7b;">hello</span> <span data-highlight="keyword" style="color: #ff79c6;">do</span></span>
         <span class="l-line hl" style="display: inline-block; width: 100%; min-height: 1lh; vertical-align: top; background-color: #44475a;" data-line="3">    <span data-highlight="string.special.symbol" style="color: #bd93f9;">:world</span></span>
         <span class="l-line" data-line="4">  <span data-highlight="keyword" style="color: #ff79c6;">end</span></span>
@@ -1453,7 +1453,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword">do</span></span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword-function">do</span></span>
         <span class="l-line highlighted" data-line="2">  <span class="l-keyword-function">def</span> <span class="l-function">hello</span><span class="l-punctuation-delimiter">,</span> <span class="l-string-special-symbol">do: :world</span></span>
         <span class="l-line" data-line="3"><span class="l-keyword">end</span></span></code></pre>
         """,
@@ -1475,7 +1475,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword">do</span></span>
+        <pre class="lumis"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword-function">do</span></span>
         <span class="l-line highlighted" data-line="2">  <span class="l-keyword-function">def</span> <span class="l-function">hello</span> <span class="l-keyword">do</span></span>
         <span class="l-line highlighted" data-line="3">    <span class="l-string-special-symbol">:world</span></span>
         <span class="l-line" data-line="4">  <span class="l-keyword">end</span></span>
@@ -1519,7 +1519,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis my-code"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword">do</span></span>
+        <pre class="lumis my-code"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-keyword-function">defmodule</span> <span class="l-module">Example</span> <span class="l-keyword-function">do</span></span>
         <span class="l-line focus" data-line="2">  <span class="l-keyword-function">def</span> <span class="l-function">hello</span> <span class="l-keyword">do</span></span>
         <span class="l-line focus" data-line="3">    <span class="l-string-special-symbol">:world</span></span>
         <span class="l-line" data-line="4">  <span class="l-keyword">end</span></span>

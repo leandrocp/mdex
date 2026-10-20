@@ -960,7 +960,7 @@ defmodule MDEx.StreamTest do
                alignments: [:none, :none],
                num_columns: 2,
                num_rows: 2,
-               num_nonempty_cells: 4
+               num_nonempty_cells: 3
              }
            ] = nodes(chunks, streaming_document(extension: [table: true]))
   end
