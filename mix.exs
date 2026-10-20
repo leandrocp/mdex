@@ -196,7 +196,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", ref: "9f771a6c6073efe7f804ae403bfe83d075a9f21e"}
+      {:mdex_native, github: "leandrocp/mdex_native", ref: "760dbd4b6be1c6ce3d3032e745e0aeb9c3eda913"}
     end
   end
 

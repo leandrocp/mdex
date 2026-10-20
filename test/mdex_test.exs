@@ -649,7 +649,7 @@ defmodule MDExTest do
         )
 
       assert html =~
-               ~r'<pre class="lumis lumis-themes (?:light dark|dark light)" style="color: light-dark\(#4c4f69, #cdd6f4\); background-color: light-dark\(#eff1f5, #1e1e2e\);">'
+               ~r'<pre class="lumis lumis-themes (?:catppuccin_latte catppuccin_mocha|catppuccin_mocha catppuccin_latte)" style="color: light-dark\(#4c4f69, #cdd6f4\); background-color: light-dark\(#eff1f5, #1e1e2e\);">'
     end
 
     test "with default_theme" do

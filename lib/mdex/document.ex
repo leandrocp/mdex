@@ -2605,7 +2605,7 @@ defmodule MDEx.Document do
   @typedoc """
   Lumis syntax highlighting options. See [`Lumis.options()`](https://hexdocs.pm/lumis/Lumis.html#t:options/0).
 
-  Typed as a plain keyword list because `:lumis` is an optional dependency.
+  Typed as a plain keyword list because MDEx does not depend on the `:lumis` package.
   """
   @type lumis_options() :: keyword()
 
