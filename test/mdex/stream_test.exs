@@ -650,6 +650,15 @@ defmodule MDEx.StreamTest do
     assert documents |> Enum.flat_map(urls) |> Enum.uniq() |> Enum.sort() ==
              Enum.sort(["mdex:incomplete-link" | final_urls])
 
+    for document <- documents do
+      html = MDEx.to_html!(document)
+      refute html =~ "mdex:incomplete-link"
+
+      for [_, url] <- Regex.scan(~r/(?:href|src)="([^"]*)"/, html), not String.starts_with?(url, "#") do
+        assert URI.decode(url) in final_urls
+      end
+    end
+
     for document <- documents, %MDEx.Text{literal: literal} <- document do
       refute literal =~ "incomplete-link"
     end
@@ -1360,7 +1369,7 @@ defmodule MDEx.StreamTest do
   end
 
   test "auto_close is on by default and can be turned off" do
-    assert [{0, ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
+    assert [{0, "<p>a <a>x</a></p>"}, {0, "<p>a [x](htt</p>"}] =
              ["a [x](htt"] |> MDEx.stream() |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
 
     assert [{0, "<p>a [x](htt</p>"}] =
@@ -1383,7 +1392,7 @@ defmodule MDEx.StreamTest do
 
   test "auto_close is off by default outside streaming" do
     assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
-    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
+    assert MDEx.to_html!("a [x](htt", auto_close: true) == "<p>a <a>x</a></p>"
   end
 
   test "auto_close preserves bullet list markers" do
@@ -1438,7 +1447,7 @@ defmodule MDEx.StreamTest do
   test "auto_close applies to every renderer that accepts Markdown" do
     source = "a [x](htt"
 
-    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="mdex:incomplete-link">)
+    assert MDEx.to_html!(source, auto_close: true) == "<p>a <a>x</a></p>"
     assert MDEx.to_json!(source, auto_close: true) =~ "MDEx.Link"
     assert [_, %{"attributes" => %{"link" => "mdex:incomplete-link"}} | _] = MDEx.to_delta!(source, auto_close: true)
 

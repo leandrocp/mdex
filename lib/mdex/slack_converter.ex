@@ -175,6 +175,7 @@ defmodule MDEx.SlackConverter do
   defp escape_link_part(<<"|", rest::binary>>, acc), do: escape_link_part(rest, ["%7C" | acc])
   defp escape_link_part(<<char, rest::binary>>, acc), do: escape_link_part(rest, [<<char>> | acc])
 
+  defp render_url("mdex:incomplete-link", _context), do: nil
   defp render_url(url, %{unsafe: true}) when is_binary(url), do: url
 
   defp render_url(url, _context) when is_binary(url) do

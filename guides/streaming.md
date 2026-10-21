@@ -29,8 +29,20 @@ complete, so a partial URL is never rendered. With the `:autolink` extension, a
 bare URL or email at the end of the source links to the placeholder too:
 
 ```elixir
-MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
+MDEx.to_html!("a [x](htt", auto_close: true)        #=> "<p>a <a>x</a></p>"
+MDEx.to_html!("![chart](htt", auto_close: true)     #=> "<p>chart</p>"
 ```
+
+HTML and HEEx render placeholder links without `href` and placeholder images
+as escaped plain alt text, without an `<img>`. This applies with or without
+sanitization. Slack renders only the label. Once a destination is complete,
+normal link and image rendering resumes.
+
+The exact URL `mdex:incomplete-link` is reserved, including when written
+explicitly in Markdown. The AST, JSON, XML, Markdown and Delta outputs retain
+it. To provide a custom image placeholder, transform `%MDEx.Image{}` nodes
+with that URL before rendering; the default alt-text output has no image
+element or styling hook. Empty alt text produces no visible placeholder.
 
 Pass `auto_close: false` if you would rather show the raw source until the
 construct is finished, including inside `MDEx.stream/2`.
