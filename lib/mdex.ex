@@ -713,7 +713,7 @@ defmodule MDEx do
 
   defp maybe_auto_close(markdown, document) do
     if Document.get_private(document, :auto_close, false) do
-      MDEx.FragmentParser.complete(markdown, Keyword.take(document.options, [:extension, :parse]))
+      MDEx.FragmentParser.complete(markdown, Keyword.take(document.options, [:extension, :parse, :auto_close]))
     else
       markdown
     end
@@ -1362,7 +1362,7 @@ defmodule MDEx do
     - `:syntax_highlight` (`t:MDEx.Document.syntax_highlight_options/0` | `nil`) - Syntax highlight options, or `nil` to turn it off.
     - `:sanitize` (`t:sanitize_options/0` | `nil`) - HTML cleaning options, or `nil` to turn it off. Defaults to `nil`.
     - `:assigns` (`t:map/0` | `t:keyword/0`) - Values for pipelines, plugins, and HEEx. Defaults to `%{}`.
-    - `:auto_close` (`t:boolean/0`) - Closes Markdown syntax left open at the end of the source. Defaults to `false`, and to `true` in `MDEx.stream/2`.
+    - `:auto_close` (`t:boolean/0` | `t:keyword/0`) - Closes Markdown syntax left open at the end of the source. Defaults to `false`, and to `true` in `MDEx.stream/2`. A keyword list sets `:links` and `:images` to `:text`, `:placeholder`, or `{:placeholder, url}`. See the [Streaming guide](streaming.html).
 
   The `:streaming` option is deprecated. Use `:auto_close`.
 
@@ -1510,7 +1510,7 @@ defmodule MDEx do
     |> Stream.transform(
       fn ->
         {auto_close, options} = Keyword.pop(options, :auto_close, true)
-        Document.validate_boolean!(auto_close, :auto_close)
+        Document.validate_auto_close!(auto_close)
 
         document =
           options
@@ -1587,7 +1587,7 @@ defmodule MDEx do
 
   defp stream_auto_close(source, state) do
     options = Keyword.take(state.document.options, [:extension, :parse])
-    MDEx.FragmentParser.complete(source, [preserve_pending_html: true] ++ options)
+    MDEx.FragmentParser.complete(source, [preserve_pending_html: true, auto_close: state.auto_close] ++ options)
   end
 
   defp stream_parse_nodes!(source, rust_options) do
