@@ -1408,6 +1408,35 @@ defmodule MDEx.StreamTest do
     end
   end
 
+  test "text completion keeps label block markers literal without losing inline formatting" do
+    for {label, html} <- [
+          {"1. Introduction", "1. Introduction"},
+          {"2) Introduction", "2) Introduction"},
+          {"# Title", "# Title"},
+          {"> note", "&gt; note"},
+          {"- note", "- note"},
+          {"+ note", "+ note"},
+          {"* note", "* note"},
+          {"---", "---"},
+          {"\\# Title", "# Title"},
+          {"\\* note", "* note"},
+          {"*bold*", "<em>bold</em>"},
+          {"#tag", "#tag"},
+          {"-text", "-text"}
+        ],
+        {prefix, before, after_label} <- [
+          {"", "<p>", "</p>"},
+          {"See ", "<p>See ", "</p>"},
+          {"- ", "<ul>\n<li>", "</li>\n</ul>"},
+          {"2. ", "<ol start=\"2\">\n<li>", "</li>\n</ol>"}
+        ],
+        opener <- ["[", "!["],
+        ending <- ["", "](htt"] do
+      source = prefix <> opener <> label <> ending
+      assert MDEx.to_html!(source, auto_close: [links: :text, images: :text]) == before <> html <> after_label
+    end
+  end
+
   test "completion policies are shared by renderers and streaming previews, not EOF" do
     require MDEx
     options = [auto_close: [links: :text, images: :text]]

@@ -1556,7 +1556,15 @@ defmodule MDEx.FragmentParser do
     label = drop_trailing_backslash(rest)
     opener_size = if type == :image, do: 2, else: 1
     content = binary_part(label, opener_size, byte_size(label) - opener_size)
-    pending_link(content <> unmatched_suffix(content), type, options)
+
+    suffix_source =
+      if completion_policy(type, options) == :text do
+        Regex.replace(~r/\\[[:punct:]]/, text_label(content), "")
+      else
+        content
+      end
+
+    pending_link(content <> unmatched_suffix(suffix_source), type, options)
   end
 
   defp complete_label({:after_label, {_start, type}, _outer}, rest, options) do
@@ -1583,9 +1591,15 @@ defmodule MDEx.FragmentParser do
 
   defp pending_link(label, type, options) do
     case completion_policy(type, options) do
-      :text -> label
+      :text -> text_label(label)
       policy -> if(type == :image, do: "![", else: "[") <> label <> "](" <> placeholder_url(policy) <> ")"
     end
+  end
+
+  defp text_label(label) do
+    # A label is inline content, even when removing its wrapper puts it at a block boundary.
+    marker = ~r/\A([ \t]*)(\#{1,6}(?=[ \t]|\z)|>|[-+*](?=[ \t]|\z)|[0-9]{1,9}[.)](?=[ \t]|\z)|(?:-[ \t]*){3,}\z|(?:\*[ \t]*){3,}\z|(?:_[ \t]*){3,}\z)/
+    Regex.replace(marker, label, fn _, spaces, marker -> spaces <> escape_punctuation(marker) end)
   end
 
   defp completion_policy(type, options) do
