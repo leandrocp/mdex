@@ -650,15 +650,6 @@ defmodule MDEx.StreamTest do
     assert documents |> Enum.flat_map(urls) |> Enum.uniq() |> Enum.sort() ==
              Enum.sort(["mdex:incomplete-link" | final_urls])
 
-    for document <- documents do
-      html = MDEx.to_html!(document)
-      refute html =~ "mdex:incomplete-link"
-
-      for [_, url] <- Regex.scan(~r/(?:href|src)="([^"]*)"/, html), not String.starts_with?(url, "#") do
-        assert URI.decode(url) in final_urls
-      end
-    end
-
     for document <- documents, %MDEx.Text{literal: literal} <- document do
       refute literal =~ "incomplete-link"
     end
@@ -1369,7 +1360,7 @@ defmodule MDEx.StreamTest do
   end
 
   test "auto_close is on by default and can be turned off" do
-    assert [{0, "<p>a <a>x</a></p>"}, {0, "<p>a [x](htt</p>"}] =
+    assert [{0, ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)}, {0, "<p>a [x](htt</p>"}] =
              ["a [x](htt"] |> MDEx.stream() |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
 
     assert [{0, "<p>a [x](htt</p>"}] =
@@ -1378,8 +1369,8 @@ defmodule MDEx.StreamTest do
              |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
   end
 
-  test "auto_close accepts only a boolean" do
-    for auto_close <- [nil, "no"] do
+  test "auto_close validates completion policies" do
+    for auto_close <- [nil, "no", [:text], [unknown: :text], [links: :other], [images: {:placeholder, 123}]] do
       assert_raise NimbleOptions.ValidationError, ~r/:auto_close option/, fn ->
         MDEx.to_html!("a [x](htt", auto_close: auto_close)
       end
@@ -1392,7 +1383,95 @@ defmodule MDEx.StreamTest do
 
   test "auto_close is off by default outside streaming" do
     assert MDEx.to_html!("a [x](htt") == "<p>a [x](htt</p>"
-    assert MDEx.to_html!("a [x](htt", auto_close: true) == "<p>a <a>x</a></p>"
+    assert MDEx.to_html!("a [x](htt", auto_close: true) == ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
+  end
+
+  test "auto_close policies apply before parsing, independently for links and images" do
+    options = [auto_close: [links: :text, images: {:placeholder, "/pending.svg"}]]
+
+    for source <- ["[**docs", "[**docs**]", "[**docs**](https://exa", "[**docs**][ref"] do
+      assert MDEx.to_html!(source, options) == "<p><strong>docs</strong></p>"
+    end
+
+    assert MDEx.to_html!("[![badge](https://img", options) == ~s(<p><img src="/pending.svg" alt="badge" /></p>)
+
+    assert MDEx.to_html!("[![badge](https://img", auto_close: [links: {:placeholder, "app:pending"}, images: :text]) ==
+             ~s(<p><a href="app:pending">badge</a></p>)
+
+    assert MDEx.to_html!("![chart](https://cdn.exa", auto_close: [images: :text]) == "<p>chart</p>"
+    assert MDEx.to_html!("![chart](https://cdn.exa", auto_close: [links: :text]) =~ ~s(src="mdex:incomplete-link")
+    assert MDEx.to_html!("[docs](https://exa", auto_close: []) == MDEx.to_html!("[docs](https://exa", auto_close: true)
+    assert MDEx.to_html!("[docs](https://exa", auto_close: [links: :placeholder]) =~ ~s(href="mdex:incomplete-link")
+
+    for source <- ["[docs](https://example.test)", ~s([docs](https://example.test "tit)] do
+      assert MDEx.to_html!(source, options) == ~s(<p><a href="https://example.test">docs</a></p>)
+    end
+  end
+
+  test "completion policies are shared by renderers and streaming previews, not EOF" do
+    require MDEx
+    options = [auto_close: [links: :text, images: :text]]
+    source = "[**docs**](https://exa"
+    document = MDEx.parse_document!(source, options)
+
+    assert MDEx.to_html!(document) == "<p><strong>docs</strong></p>"
+    assert MDEx.to_slack!(source, options) == "*docs*\n"
+    assert MDEx.to_markdown!(document) == "**docs**"
+    assert MDEx.to_xml!(source, options) == MDEx.to_xml!(document)
+    refute MDEx.to_xml!(source, options) =~ "<link"
+    refute MDEx.to_json!(source, options) =~ "MDEx.Link"
+    assert MDEx.to_delta!(source, options) == MDEx.to_delta!("**docs**")
+    assert source |> MDEx.to_heex!(options) |> MDEx.to_html!() == "<p><strong>docs</strong></p>"
+
+    assert [{0, "<p><strong>docs</strong></p>"}, {0, final}] =
+             [source] |> MDEx.stream(options) |> Enum.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end)
+
+    assert final == MDEx.to_html!(source)
+
+    events = [source, "mple.test)"] |> MDEx.stream(options) |> Enum.to_list()
+
+    assert events |> Elixir.List.last() |> elem(1) |> MDEx.to_html!() ==
+             ~s(<p><a href="https://example.test"><strong>docs</strong></a></p>)
+  end
+
+  test "link completion policies cover wikilinks and bare autolinks" do
+    for {extension, source} <- [
+          {:wikilinks_title_after_pipe, "[[Page|docs"},
+          {:wikilinks_title_before_pipe, "[[docs|Page"}
+        ] do
+      assert MDEx.to_html!(source, extension: [{extension, true}], auto_close: [links: :text]) == "<p>docs</p>"
+
+      assert MDEx.to_html!(source, extension: [{extension, true}], auto_close: [links: {:placeholder, "/pending"}]) ==
+               ~s(<p><a href="/pending" data-wikilink="true">docs</a></p>)
+    end
+
+    for source <- ["https://example.test", "www.example.test", "user@example.test"] do
+      assert MDEx.to_html!(source, extension: [autolink: true], auto_close: [links: :text]) == "<p>#{source}</p>"
+
+      assert MDEx.to_html!(source, extension: [autolink: true], auto_close: [links: {:placeholder, "/pending"}]) ==
+               ~s(<p><a href="/pending">#{source}</a></p>)
+    end
+  end
+
+  test "custom placeholder destinations cannot inject Markdown or HTML" do
+    url = "/a b(1)[2]|x\\y<>\n?x=&copy;&q=\"hi\""
+    expected = "/a%20b%281%29%5B2%5D%7Cx%5Cy%3C%3E%0A?x=&copy;&q=\"hi\""
+
+    for {source, node_type, extensions} <- [
+          {"[docs](htt", MDEx.Link, []},
+          {"![docs](htt", MDEx.Image, []},
+          {"[[Page|docs", MDEx.WikiLink, [wikilinks_title_after_pipe: true]},
+          {"[[docs|Page", MDEx.WikiLink, [wikilinks_title_before_pipe: true]}
+        ] do
+      options = [auto_close: [links: {:placeholder, url}, images: {:placeholder, url}], extension: extensions]
+      assert %Document{nodes: [%Paragraph{nodes: [node]}]} = MDEx.parse_document!(source, options)
+      assert node.__struct__ == node_type
+      assert node.url == expected
+      html = MDEx.to_html!(source, options)
+      assert html =~ "&amp;copy;"
+      assert html =~ "%22hi%22"
+      refute html =~ "<script"
+    end
   end
 
   test "auto_close preserves bullet list markers" do
@@ -1447,7 +1526,7 @@ defmodule MDEx.StreamTest do
   test "auto_close applies to every renderer that accepts Markdown" do
     source = "a [x](htt"
 
-    assert MDEx.to_html!(source, auto_close: true) == "<p>a <a>x</a></p>"
+    assert MDEx.to_html!(source, auto_close: true) =~ ~s(<a href="mdex:incomplete-link">)
     assert MDEx.to_json!(source, auto_close: true) =~ "MDEx.Link"
     assert [_, %{"attributes" => %{"link" => "mdex:incomplete-link"}} | _] = MDEx.to_delta!(source, auto_close: true)
 

@@ -1218,8 +1218,8 @@ defmodule MDEx.FragmentParser do
     end
   end
 
-  # A link, image or autolink still arriving at the end of `core` points to the
-  # placeholder URL until its URL is complete, so a partial URL never renders.
+  # A link, image or autolink still arriving at the end of `core` uses its
+  # completion policy until its URL is complete, so a partial URL never renders.
   # Returns the span of `core` the link takes and its completed Markdown.
   defp incomplete_link(core, trailing, options) do
     lines = normalize_line_endings(core)
@@ -1514,41 +1514,34 @@ defmodule MDEx.FragmentParser do
     incomplete_inline_link(paragraph, {:label, outer, openers}, trailing, options)
   end
 
-  defp incomplete_inline_link(paragraph, open, trailing, _options) do
+  defp incomplete_inline_link(paragraph, open, trailing, options) do
     {start, type} = elem(open, 1)
     outer = elem(open, tuple_size(open) - 1)
     rest = binary_part(paragraph, start, byte_size(paragraph) - start)
 
     with false <- task_marker?(paragraph, open),
-         link when is_binary(link) <- complete_link(open, rest, trailing) do
-      {start, link <> close_enclosing_link(paragraph, type, outer, start)}
+         link when is_binary(link) <- complete_link(open, rest, trailing, options) do
+      close_enclosing_link(paragraph, type, outer, start, link, options)
     else
       _ -> nil
     end
   end
 
-  defp complete_link({:destination, {start, _type}, url_start, tail, _outer}, rest, trailing) do
+  defp complete_link({:destination, {start, type}, url_start, tail, _outer}, rest, trailing, options) do
     # a blank line after the destination ends the paragraph, so it stays text
     if count_char(trailing, ?\n) < 2 do
-      complete_destination(tail, rest, start, url_start, trailing)
+      case tail do
+        :url when trailing != "" -> rest <> ")"
+        {:keep, url_end} -> binary_part(rest, 0, url_end - start) <> ")"
+        _ -> complete_label({:after_label, {start, type}, []}, binary_part(rest, 0, url_start - start - 1), options)
+      end
     end
   end
 
-  defp complete_link(open, rest, trailing) do
+  defp complete_link(open, rest, trailing, options) do
     if not String.starts_with?(trailing, "\n") and not String.contains?(rest, "\n") do
-      complete_label(open, rest)
+      complete_label(open, rest, options)
     end
-  end
-
-  # Whitespace after a bare URL ends it.
-  defp complete_destination(:url, rest, _start, _url_start, trailing) when trailing != "", do: rest <> ")"
-
-  defp complete_destination({:keep, url_end}, rest, start, _url_start, _trailing) do
-    binary_part(rest, 0, url_end - start) <> ")"
-  end
-
-  defp complete_destination(_tail, rest, start, url_start, _trailing) do
-    binary_part(rest, 0, url_start - start) <> @incomplete_link_url <> ")"
   end
 
   # `- [ ]` is a task list marker, not a link.
@@ -1559,30 +1552,57 @@ defmodule MDEx.FragmentParser do
 
   defp task_marker?(_paragraph, _open), do: false
 
-  defp complete_label({:label, _opener, _outer}, rest) do
+  defp complete_label({:label, {_start, type}, _outer}, rest, options) do
     label = drop_trailing_backslash(rest)
-    opener_size = if String.starts_with?(label, "!"), do: 2, else: 1
+    opener_size = if type == :image, do: 2, else: 1
     content = binary_part(label, opener_size, byte_size(label) - opener_size)
-    label <> unmatched_suffix(content) <> "](" <> @incomplete_link_url <> ")"
+    pending_link(content <> unmatched_suffix(content), type, options)
   end
 
-  defp complete_label({:after_label, _opener, _outer}, rest), do: rest <> "(" <> @incomplete_link_url <> ")"
+  defp complete_label({:after_label, {_start, type}, _outer}, rest, options) do
+    opener_size = if type == :image, do: 2, else: 1
+    pending_link(binary_part(rest, opener_size, byte_size(rest) - opener_size - 1), type, options)
+  end
 
-  defp complete_label({:reference, {start, _type}, reference_start, _outer}, rest) do
-    binary_part(rest, 0, reference_start - start) <> "(" <> @incomplete_link_url <> ")"
+  defp complete_label({:reference, {start, type}, reference_start, outer}, rest, options) do
+    complete_label({:after_label, {start, type}, outer}, binary_part(rest, 0, reference_start - start), options)
   end
 
   # An image still arriving inside a link label, as in `[![badge](...)](...)`,
   # closes the link around it too.
-  defp close_enclosing_link(paragraph, :image, [{outer_start, :link} | _outer], start) do
+  defp close_enclosing_link(paragraph, :image, [{outer_start, :link} | _outer], start, link, options) do
     if String.contains?(binary_part(paragraph, outer_start, start - outer_start), "\n") do
-      ""
+      {start, link}
     else
-      "](" <> @incomplete_link_url <> ")"
+      label = binary_part(paragraph, outer_start + 1, start - outer_start - 1) <> link
+      {outer_start, pending_link(label, :link, options)}
     end
   end
 
-  defp close_enclosing_link(_paragraph, _type, _outer, _start), do: ""
+  defp close_enclosing_link(_paragraph, _type, _outer, start, link, _options), do: {start, link}
+
+  defp pending_link(label, type, options) do
+    case completion_policy(type, options) do
+      :text -> label
+      policy -> if(type == :image, do: "![", else: "[") <> label <> "](" <> placeholder_url(policy) <> ")"
+    end
+  end
+
+  defp completion_policy(type, options) do
+    case options[:auto_close] do
+      policies when is_list(policies) -> Keyword.get(policies, if(type == :image, do: :images, else: :links), :placeholder)
+      _ -> :placeholder
+    end
+  end
+
+  defp placeholder_url(:placeholder), do: @incomplete_link_url
+
+  defp placeholder_url({:placeholder, url}) do
+    # Keep the destination inside Markdown/wiki delimiters, and prevent entity decoding.
+    url
+    |> URI.encode(fn char -> char > 32 and char != 127 and char not in ~c"\\<>[]|()" end)
+    |> String.replace("&", "&amp;")
+  end
 
   defp complete_wikilink(rest, options) do
     content =
@@ -1591,10 +1611,16 @@ defmodule MDEx.FragmentParser do
       |> String.trim_trailing("]")
       |> drop_trailing_backslash()
 
-    case {wikilinks(options), String.split(content, "|", parts: 2)} do
-      {:title_after_pipe, [_url, title]} -> "[[" <> @incomplete_link_url <> "|" <> title <> "]]"
-      {:title_after_pipe, [page]} -> "[[" <> @incomplete_link_url <> "|" <> page <> "]]"
-      {:title_before_pipe, [title | _url]} -> "[[" <> title <> "|" <> @incomplete_link_url <> "]]"
+    title =
+      case {wikilinks(options), String.split(content, "|", parts: 2)} do
+        {:title_after_pipe, [_url, title]} -> title
+        {_, [title | _]} -> title
+      end
+
+    case {completion_policy(:link, options), wikilinks(options)} do
+      {:text, _} -> escape_punctuation(title)
+      {policy, :title_after_pipe} -> "[[" <> placeholder_url(policy) <> "|" <> title <> "]]"
+      {policy, :title_before_pipe} -> "[[" <> title <> "|" <> placeholder_url(policy) <> "]]"
     end
   end
 
@@ -1821,7 +1847,7 @@ defmodule MDEx.FragmentParser do
          start = token_start + offset,
          true <- start >= closed_end,
          url when url != "" <- autolink_text(binary_part(paragraph, start, byte_size(paragraph) - start)) do
-      {start, start + byte_size(url), "[" <> escape_punctuation(url) <> "](" <> @incomplete_link_url <> ")"}
+      {start, start + byte_size(url), pending_link(escape_punctuation(url), :link, options)}
     else
       _ -> nil
     end

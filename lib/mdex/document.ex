@@ -1335,11 +1335,27 @@ defmodule MDEx.Document do
       """
     ],
     auto_close: [
-      type: :boolean,
+      type:
+        {:or,
+         [
+           :boolean,
+           {:keyword_list,
+            links: [type: {:or, [{:in, [:text, :placeholder]}, {:tuple, [{:in, [:placeholder]}, :string]}]}],
+            images: [type: {:or, [{:in, [:text, :placeholder]}, {:tuple, [{:in, [:placeholder]}, :string]}]}]}
+         ]},
+      type_spec: quote(do: boolean() | keyword()),
       doc: """
       Closes Markdown syntax left open at the end of the source.
 
       Defaults to `false`, and to `true` in `MDEx.stream/2`.
+      A keyword list enables completion and sets independent `:links` and `:images`
+      policies: `:text` keeps the label Markdown, `:placeholder` uses
+      `mdex:incomplete-link`, and `{:placeholder, url}` uses a custom destination.
+      Omitted policies default to `:placeholder`. Completed destinations are unchanged.
+      Link policies also cover wikilinks and bare autolinks. Reference definitions
+      keep the default placeholder because they can be shared by links and images.
+      Custom destinations behave like ordinary URLs, including navigation, image
+      requests, and sanitization. See the [Streaming guide](streaming.html).
       """
     ],
     streaming: [
@@ -1658,7 +1674,7 @@ defmodule MDEx.Document do
         put_sanitize_options(acc, options)
 
       {name, value}, acc when name in [:auto_close, :streaming] ->
-        validate_boolean!(value, name)
+        if name == :streaming, do: validate_boolean!(value, name), else: validate_auto_close!(value)
 
         acc
         |> Map.update!(:options, &Keyword.put(&1 || [], :auto_close, value))
@@ -1721,6 +1737,12 @@ defmodule MDEx.Document do
   @spec validate_boolean!(term(), atom()) :: boolean()
   def validate_boolean!(value, name) do
     if is_boolean(value), do: value, else: raise_invalid_option!(name, value)
+  end
+
+  @doc false
+  def validate_auto_close!(value) do
+    NimbleOptions.validate!([auto_close: value], Keyword.take(@options_schema, [:auto_close]))
+    value
   end
 
   @doc false
@@ -2316,7 +2338,7 @@ defmodule MDEx.Document do
     {buffer, document} =
       if Document.get_private(document, :auto_close, false) do
         state = Document.get_private(document, :fragment_state)
-        options = Keyword.take(document.options, [:extension, :parse])
+        options = Keyword.take(document.options, [:extension, :parse, :auto_close])
         {completed, new_state} = MDEx.FragmentParser.complete_with_state(buffer, state, options)
         {completed, Document.put_private(document, :fragment_state, new_state)}
       else

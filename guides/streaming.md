@@ -29,25 +29,53 @@ complete, so a partial URL is never rendered. With the `:autolink` extension, a
 bare URL or email at the end of the source links to the placeholder too:
 
 ```elixir
-MDEx.to_html!("a [x](htt", auto_close: true)        #=> "<p>a <a>x</a></p>"
-MDEx.to_html!("![chart](htt", auto_close: true)     #=> "<p>chart</p>"
+MDEx.to_html!("a [x](htt", auto_close: true)   #=> ~s(<p>a <a href="mdex:incomplete-link">x</a></p>)
 ```
 
-HTML and HEEx render placeholder links without `href` and placeholder images
-as escaped plain alt text, without an `<img>`. This applies with or without
-sanitization. Slack renders only the label. Once a destination is complete,
-normal link and image rendering resumes.
+To choose how unfinished links and images appear, pass a keyword list:
 
-The exact URL `mdex:incomplete-link` is reserved, including when written
-explicitly in Markdown. The AST, JSON, XML, Markdown and Delta outputs retain
-it. To provide a custom image placeholder, transform `%MDEx.Image{}` nodes
-with that URL before rendering; the default alt-text output has no image
-element or styling hook. Empty alt text produces no visible placeholder.
+```elixir
+MDEx.to_html!("Read [**the docs**](https://exa", auto_close: [links: :text])
+#=> "<p>Read <strong>the docs</strong></p>"
+
+MDEx.to_html!("![Chart](https://cdn.exa", auto_close: [images: :text])
+#=> "<p>Chart</p>"
+
+MDEx.to_html!("![Chart](https://cdn.exa", auto_close: [images: {:placeholder, "/loading.svg"}])
+#=> ~s(<p><img src="/loading.svg" alt="Chart" /></p>)
+
+chunks |> MDEx.stream(auto_close: [links: :text, images: {:placeholder, "/loading.svg"}])
+```
+
+The `:links` and `:images` policies are independent:
+
+- `:text` removes the unfinished link or image wrapper, keeping its label as
+  Markdown. Formatting in the label is preserved; this is not a plain-text sanitizer.
+- `:placeholder` uses `mdex:incomplete-link`, the existing default.
+- `{:placeholder, url}` uses your destination. Characters that would break the
+  Markdown destination are percent-encoded.
+
+A keyword list enables completion. Omitted policies default to `:placeholder`,
+so `auto_close: []` is equivalent to `auto_close: true`. The `:links` policy also
+applies to unfinished wikilinks and bare autolinks when their extensions are enabled.
+Completed destinations are unchanged, even if a title is still arriving.
+
+These policies change Markdown before parsing, so they work with every renderer
+without renderer-specific options. Custom placeholders are ordinary URLs:
+browsers can navigate to them or fetch images from them, and sanitization can
+remove unsupported schemes. `mdex:incomplete-link` has no special renderer behavior.
+
+**Reference definitions are an exception.** An unfinished `[ref]: https://exa`
+keeps the default placeholder because one definition can serve both links and
+images. The policies apply to unfinished reference occurrences such as `[label][ref`.
+
+`MDEx.stream/2` applies completion only to previews. At EOF it parses the original
+source, so an unfinished construct returns to its normal Markdown interpretation.
 
 Pass `auto_close: false` if you would rather show the raw source until the
 construct is finished, including inside `MDEx.stream/2`.
 
-With `auto_close: true`, don't call `MDEx.Document.run/1` after each chunk.
+With completion enabled, don't call `MDEx.Document.run/1` after each chunk.
 For example, running after `"**bo"` makes `bo` bold. Adding `"ld** x"` and running
 again leaves `ld` outside the bold text, even though the full word should be bold.
 

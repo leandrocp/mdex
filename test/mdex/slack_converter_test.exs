@@ -224,19 +224,6 @@ defmodule MDEx.SlackConverterTest do
       assert result == "<https://example.com|click here>\n"
     end
 
-    test "incomplete destinations render only their labels" do
-      for unsafe <- [false, true],
-          source <- ["[docs](https://exa", "![docs](https://exa", "[[docs"] do
-        assert MDEx.to_slack!(source,
-                 auto_close: true,
-                 extension: [wikilinks_title_after_pipe: true],
-                 render: [unsafe: unsafe]
-               ) == "docs\n"
-      end
-
-      assert MDEx.to_slack!("[docs](mdex:other)") == "<mdex:other|docs>\n"
-    end
-
     test "flattens formatting inside link labels" do
       {:ok, result} = MDEx.to_slack("[**bold** and _italic_](https://example.com)")
 

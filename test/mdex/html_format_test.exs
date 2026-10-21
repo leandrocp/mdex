@@ -63,31 +63,6 @@ defmodule MDEx.HTMLFormatTest do
     assert html == String.trim(expected)
   end
 
-  test "incomplete destinations render without href or img, including sanitized HTML and HEEx" do
-    require MDEx
-
-    for {source, expected} <- [
-          {"[**docs**](https://exa", "<p><a><strong>docs</strong></a></p>"},
-          {"![a *b* & <c>](https://exa", "<p>a b &amp; &lt;c&gt;</p>"},
-          {"[![badge](https://img", "<p><a>badge</a></p>"},
-          {"[[Wiki", ~s(<p><a data-wikilink="true">Wiki</a></p>)}
-        ] do
-      options = [auto_close: true, extension: [wikilinks_title_after_pipe: true]]
-      document = MDEx.parse_document!(source, options)
-
-      assert MDEx.to_html!(source, options) == expected
-      assert MDEx.to_html!(document) == expected
-      assert source |> MDEx.to_heex!(options) |> MDEx.to_html!() == expected
-
-      assert MDEx.to_html!(source, options ++ [sanitize: MDEx.Document.default_sanitize_options()]) ==
-               MDEx.safe_html(expected, escape: [content: false])
-    end
-
-    # The direct native Markdown path must reserve the same exact destination.
-    assert MDEx.to_html!("[docs](mdex:incomplete-link) ![chart](mdex:incomplete-link)") ==
-             "<p><a>docs</a> chart</p>"
-  end
-
   test "text" do
     assert_format("mdex", "<p>mdex</p>\n")
 
