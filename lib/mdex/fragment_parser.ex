@@ -1597,9 +1597,36 @@ defmodule MDEx.FragmentParser do
   end
 
   defp text_label(label) do
-    # A label is inline content, even when removing its wrapper puts it at a block boundary.
-    marker = ~r/\A([ \t]*)(\#{1,6}(?=[ \t]|\z)|>|[-+*](?=[ \t]|\z)|[0-9]{1,9}[.)](?=[ \t]|\z)|(?:-[ \t]*){3,}\z|(?:\*[ \t]*){3,}\z|(?:_[ \t]*){3,}\z)/
-    Regex.replace(marker, label, fn _, spaces, marker -> spaces <> escape_punctuation(marker) end)
+    # Only the first and last lines lose delimiters. Middle lines already had
+    # their normal block interpretation inside the original Markdown.
+    delimiter = ~r/\A(?:=+|-+|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,}|\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?)\z/
+
+    label =
+      Regex.replace(~r/\A[^\n]+|[^\n]+\z/, label, fn line ->
+        if Regex.match?(delimiter, String.trim(line)), do: escape_punctuation(line), else: line
+      end)
+
+    label =
+      if Regex.match?(~r/\A[ \t]*~{3,}/, label) do
+        Regex.replace(~r/~{3,}\z/, label, &escape_punctuation/1)
+      else
+        label
+      end
+
+    marker = ~r/\A([ \t]*)(\#{1,6}(?=[ \t]|\z)|>|[-+*](?=[ \t]|\z)|[0-9]{1,9}[.)](?=[ \t]|\z)|~{3,})/
+    label = Regex.replace(marker, label, fn _, spaces, marker -> spaces <> escape_punctuation(marker) end)
+
+    label =
+      Enum.reduce(@html_block_delimiters, label, fn {opening, closing}, text ->
+        if String.starts_with?(String.trim_leading(text), opening) and not String.contains?(text, closing) do
+          String.replace(text, "<", "&lt;", global: false)
+        else
+          text
+        end
+      end)
+
+    # An entity preserves leading whitespace without introducing an indented code block.
+    Regex.replace(~r/\A[ \t]/, label, fn <<char>> -> "&##{char};" end)
   end
 
   defp completion_policy(type, options) do

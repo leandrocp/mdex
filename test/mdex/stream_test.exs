@@ -1418,6 +1418,13 @@ defmodule MDEx.StreamTest do
           {"+ note", "+ note"},
           {"* note", "* note"},
           {"---", "---"},
+          {"===", "==="},
+          {"    code", "    code"},
+          {"\t\tcode", "\t\tcode"},
+          {"~~~", "~~~"},
+          {"~~~ x", "~~~ x"},
+          {"~~~x~~~", "~~~x~~~"},
+          {"```code```", "<code>code</code>"},
           {"\\# Title", "# Title"},
           {"\\* note", "* note"},
           {"*bold*", "<em>bold</em>"},
@@ -1435,6 +1442,31 @@ defmodule MDEx.StreamTest do
       source = prefix <> opener <> label <> ending
       assert MDEx.to_html!(source, auto_close: [links: :text, images: :text]) == before <> html <> after_label
     end
+  end
+
+  test "text completion protects newly exposed first and last lines, not middle lines" do
+    options = [auto_close: [links: :text, images: :text], extension: [table: true]]
+
+    for opener <- ["[", "!["], marker <- ["---", "-", "=", "===", "***", "* * *", "___", "- - -"] do
+      assert MDEx.to_html!(opener <> "note\n" <> marker <> "](p", options) == "<p>note\n#{marker}</p>"
+    end
+
+    for opener <- ["[", "!["] do
+      assert MDEx.to_html!(opener <> "a | b\n|-|-|](p", options) == "<p>a | b\n|-|-|</p>"
+      assert MDEx.to_html!("a | b\n" <> opener <> "|-|-|\nmore](p", options) == "<p>a | b\n|-|-|\nmore</p>"
+      assert MDEx.to_html!("text\n" <> opener <> "===", options) == "<p>text\n===</p>"
+      assert MDEx.to_html!(opener <> "note\n# Heading\nend](p", options) == "<p>note</p>\n<h1>Heading</h1>\n<p>end</p>"
+    end
+  end
+
+  test "text completion escapes unfinished HTML block openers but preserves complete inline HTML" do
+    for opener <- ["[", "!["], unsafe <- [false, true], label <- ["<!-- c", "<?pi", "<!DOCTYPE html"], ending <- ["", "](p"] do
+      options = [auto_close: [links: :text, images: :text], render: [unsafe: unsafe]]
+      assert MDEx.to_html!(opener <> label <> ending, options) == "<p>&lt;#{String.trim_leading(label, "<")}</p>"
+    end
+
+    assert MDEx.to_html!("[<!-- c -->](p", auto_close: [links: :text], render: [unsafe: true]) == "<!-- c -->"
+    assert MDEx.to_html!("[<em>label</em>](p", auto_close: [links: :text], render: [unsafe: true]) == "<p><em>label</em></p>"
   end
 
   test "completion policies are shared by renderers and streaming previews, not EOF" do
