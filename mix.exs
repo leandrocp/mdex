@@ -190,13 +190,11 @@ defmodule MDEx.MixProject do
     ]
   end
 
-  # Temporary, until mdex_native releases leandrocp/mdex_native#88: built from
-  # its latest commit, so CI sets MDEX_NATIVE_BUILD=1. Require the release instead.
   defp mdex_native_dep do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, github: "leandrocp/mdex_native", ref: "71dca8a436ecfbe1af91be010f7b268818e88534"}
+      {:mdex_native, ">= 0.2.13"}
     end
   end
 
