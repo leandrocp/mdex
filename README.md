@@ -93,7 +93,6 @@ for example to use Lumis:
 def deps do
   [
     {:mdex, "~> 0.12"},
-    {:lumis, "~> 0.10"},
     # one package per language you highlight, or a `lumis_wasm_bundle_*` package
     {:lumis_wasm_elixir, "~> 0.26"}
   ]
@@ -113,9 +112,13 @@ config :mdex_native, syntax_highlighter: :lumis
 _Using the `:html_multi_themes` syntax highlighting formatter is not required but you get light/dark using it._
 
 ````elixir
-Mix.install([
-  {:mdex_gfm, "~> 0.1"}
-])
+Mix.install(
+  [
+    {:mdex_gfm, "~> 0.1"},
+    {:lumis_wasm_elixir, "~> 0.26"}
+  ],
+  config: [mdex_native: [syntax_highlighter: :lumis]]
+)
 
 markdown = """
 - [x] Set up project

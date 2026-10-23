@@ -2,12 +2,18 @@ Code block decorators are Lumis syntax highlighting options for individual code 
 
 ### Prerequisites
 
-Code block decorators require Lumis, plus a parser package for each language you
-highlight:
+Code block decorators need Lumis highlighting and a parser package for each language you
+highlight. These dependencies cover the examples below:
 
 ```elixir
-{:lumis, "~> 0.10"},
-{:lumis_wasm_elixir, "~> 0.26"}
+[
+  {:lumis_wasm_elixir, "~> 0.26"},
+  {:lumis_wasm_javascript, "~> 0.26"},
+  {:lumis_wasm_python, "~> 0.26"},
+  {:lumis_wasm_ruby, "~> 0.26"},
+  {:lumis_wasm_rust, "~> 0.26"},
+  {:lumis_wasm_typescript, "~> 0.26"}
+]
 ```
 
 Configure `:mdex_native` before compiling dependencies:
