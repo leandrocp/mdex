@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.4](https://github.com/leandrocp/mdex/compare/v0.14.3...v0.14.4) (2026-10-23)
+
+### Documentation
+
+- Clarify Lumis first-use latency in [\#462](https://github.com/leandrocp/mdex/pull/462)
+
 ## [0.14.3](https://github.com/leandrocp/mdex/compare/v0.14.2...v0.14.3) (2026-10-23)
 
 ### Features
