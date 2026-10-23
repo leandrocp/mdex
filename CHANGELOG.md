@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.3](https://github.com/leandrocp/mdex/compare/v0.14.2...v0.14.3) (2026-10-23)
+
+### Features
+
+- Customize incomplete links and images in [\#457](https://github.com/leandrocp/mdex/pull/457)
+- Lumis highlight doesn't require the :lumis dependency in [\#449](https://github.com/leandrocp/mdex/pull/449)
+
+### Dependencies
+
+- Update mdex_native to 0.2.12 in [\#454](https://github.com/leandrocp/mdex/pull/454)
+
 ## [0.14.2](https://github.com/leandrocp/mdex/compare/v0.14.1...v0.14.2) (2026-10-04)
 
 ### Bug Fixes
