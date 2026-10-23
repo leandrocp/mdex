@@ -55,13 +55,11 @@ Documents inject languages too: HTML reaches `css` and `javascript`, Elixir reac
 
 The [language catalog](https://docs.lumis.sh/reference/languages) lists every package name.
 
-Parsers compile on first use. In an application, warm them from `start/2` so the first request doesn't pay for it:
-
-<!-- livebook:{"force_markdown":true} -->
-
-```elixir
-Lumis.Languages.async_load(~w(elixir ruby rust))
-```
+> #### First-use latency {: .info}
+>
+> The first render of each language is slower because its parser must be compiled and loaded. Compiled parsers are cached on disk, but each new VM still needs to load them into memory. Subsequent renders reuse the loaded parser. Injected languages can incur their own first-use cost.
+>
+> If that initial delay matters, render representative Markdown through `MDEx.to_html!/2` at application startup using your normal highlighting options. This warms the same runtime that handles later renders; loading languages through `Lumis.Languages` does not warm MDEx's in-memory runtime.
 
 ## Highlighting budgets
 
