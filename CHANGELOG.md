@@ -6,6 +6,7 @@
 
 - Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content.
 - Preserve `![[url]]` embeds in `WikiLink.embed`. HTML, Slack, and Delta render them as links. Use `:wikilinks_ignore_embeds` with a wikilink title option to keep embed syntax literal.
+- Add a top-level `budget: [time_limit: milliseconds]` option that bounds each native Markdown parse. Running out returns `{:error, %MDExNative.BudgetExhaustedError{}}` from non-bang functions, raises it from bang functions and `MDEx.stream/2`, and halts `MDEx.Document.run/1` with it, without partial output. Omitted, `nil`, or `0` means no limit, the default. Requires the companion mdex_native budget support ([leandrocp/mdex_native#120](https://github.com/leandrocp/mdex_native/issues/120)).
 
 ### Compatibility
 

@@ -110,6 +110,41 @@ defmodule MDEx.ComrakConverterTest do
              ~s(<p>![[page]] <a href="page" data-wikilink="true">page</a></p>)
   end
 
+  # Takes well over a millisecond to parse even in a release build.
+  @slow_markdown String.duplicate("a *b* [c](d) ", 50_000)
+
+  test "budget reaches every native parse; non-bang functions return the error" do
+    budget = [budget: [time_limit: 1]]
+    document = MDEx.new([markdown: @slow_markdown] ++ budget)
+
+    for function <- [:parse_document, :to_html, :to_xml, :to_json, :to_delta, :to_slack] do
+      assert {:error, %MDExNative.BudgetExhaustedError{time_limit: 1}} =
+               apply(MDEx, function, [@slow_markdown, budget])
+
+      assert_raise MDExNative.BudgetExhaustedError, fn ->
+        apply(MDEx, :"#{function}!", [@slow_markdown, budget])
+      end
+    end
+
+    for function <- [:to_html, :to_xml, :to_json, :to_delta, :to_slack, :to_markdown] do
+      assert {:error, %MDExNative.BudgetExhaustedError{}} = apply(MDEx, function, [document])
+    end
+
+    assert {%MDEx.Document{halted: true}, %MDExNative.BudgetExhaustedError{}} = MDEx.Document.run(document)
+
+    assert_raise MDExNative.BudgetExhaustedError, fn ->
+      [@slow_markdown] |> MDEx.stream(budget) |> Enum.to_list()
+    end
+  end
+
+  test "budget of zero or a generous limit leaves the output unchanged" do
+    html = MDEx.to_html!(@slow_markdown)
+
+    for time_limit <- [0, 60_000, nil] do
+      assert MDEx.to_html!(@slow_markdown, budget: [time_limit: time_limit]) == html
+    end
+  end
+
   test "converts native document structs to mdex structs" do
     document = %MDExNative.Comrak.Document{
       nodes: [

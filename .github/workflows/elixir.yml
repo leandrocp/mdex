@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           repository: leandrocp/mdex_native
-          ref: 52d5f3dbe1886c1413e7f08d57540d484a1387ee
+          ref: f4e914938236421a14249004ba66ae3f600addf2
           path: native-companion
       - uses: erlef/setup-beam@v1.24.1
         with:

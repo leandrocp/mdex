@@ -262,7 +262,7 @@ defmodule MDEx do
 
   def parse_document({:markdown, markdown}, options) when is_binary(markdown) and is_list(options) do
     options = Keyword.put(options, :markdown, markdown)
-    {:ok, MDEx.new(options) |> Document.run()}
+    options |> MDEx.new() |> run()
   end
 
   def parse_document({:json, json}, options) when is_binary(json) and is_list(options) do
@@ -776,18 +776,16 @@ defmodule MDEx do
   def to_json(%Document{} = document, options) do
     {document_opt, options} = pop_deprecated_document_option(options)
 
-    document
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> then(fn document ->
-      document
-      |> Jason.encode()
-      |> case do
+    with {:ok, document} <-
+           document
+           |> Document.put_options(options)
+           |> maybe_apply_document_option(document_opt)
+           |> run() do
+      case Jason.encode(document) do
         {:ok, json} -> {:ok, json}
         {:error, error} -> {:error, %DecodeError{document: document, error: error}}
       end
-    end)
+    end
   end
 
   def to_json(source, options) do
@@ -955,21 +953,16 @@ defmodule MDEx do
 
     document_options = Keyword.drop(options, [:custom_converters])
 
-    document
-    |> Document.put_options(document_options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> then(fn document ->
-      document
-      |> MDEx.DeltaConverter.convert(validated_options)
-      |> case do
-        {:ok, ops} ->
-          {:ok, ops}
-
-        {:error, reason} ->
-          {:error, %DecodeError{document: document, error: reason}}
+    with {:ok, document} <-
+           document
+           |> Document.put_options(document_options)
+           |> maybe_apply_document_option(document_opt)
+           |> run() do
+      case MDEx.DeltaConverter.convert(document, validated_options) do
+        {:ok, ops} -> {:ok, ops}
+        {:error, reason} -> {:error, %DecodeError{document: document, error: reason}}
       end
-    end)
+    end
   end
 
   def to_delta(source, options) do
@@ -1037,11 +1030,13 @@ defmodule MDEx do
     {document_opt, options} = pop_deprecated_document_option(options)
     unsafe = get_in(options, [:render, :unsafe]) || false
 
-    document
-    |> Document.put_options(options)
-    |> maybe_apply_document_option(document_opt)
-    |> Document.run()
-    |> SlackConverter.convert(unsafe: unsafe)
+    with {:ok, document} <-
+           document
+           |> Document.put_options(options)
+           |> maybe_apply_document_option(document_opt)
+           |> run() do
+      SlackConverter.convert(document, unsafe: unsafe)
+    end
   end
 
   def to_slack(source, options) do
@@ -1202,15 +1197,22 @@ defmodule MDEx do
         |> maybe_trim()
 
       :error ->
-        document
-        |> Document.run()
-        |> then(fn document ->
+        with {:ok, document} <- run(document) do
           document
           |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
           |> ComrakConverter.from_mdex()
           |> converter.(Document.rust_options!(document.options))
           |> maybe_trim()
-        end)
+        end
+    end
+  end
+
+  # `Document.run/1` returns `{document, exception}` when a step or a native
+  # parse halts the pipeline; non-bang functions report that as `{:error, exception}`.
+  defp run(document) do
+    case Document.run(document) do
+      {%Document{}, exception} -> {:error, exception}
+      %Document{} = document -> {:ok, document}
     end
   end
 

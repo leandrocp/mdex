@@ -679,6 +679,7 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
+    :budget,
     :auto_close,
     :streaming,
     :assigns,
@@ -1349,6 +1350,34 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
+    budget: [
+      type:
+        {:or,
+         [
+           {:keyword_list, time_limit: [type: {:or, [:non_neg_integer, nil]}]},
+           nil
+         ]},
+      type_spec: quote(do: [time_limit: non_neg_integer() | nil] | nil),
+      doc: """
+      Bounds Markdown parsing, as `[time_limit: milliseconds]`.
+
+      Omitted, `nil`, or `time_limit: 0` means no limit, which is the default.
+
+      The limit applies to each native parse: the whole Markdown input of
+      `to_html/2`, `parse_document/2` and the other conversions, or each chunk
+      parsed by `MDEx.stream/2`. Rendering, syntax highlighting, sanitization,
+      and AST conversion are not counted. Comrak checks the limit cooperatively,
+      so a parse can run somewhat past it.
+
+      Running out never returns partial output. Non-bang functions such as
+      `MDEx.to_html/2` return `{:error, %MDExNative.BudgetExhaustedError{}}`,
+      bang functions and `MDEx.stream/2` raise it, and `MDEx.Document.run/1`
+      halts with it.
+      Syntax highlighting has its own per-block `:budget` in the Lumis options.
+
+          MDEx.to_html!(markdown, budget: [time_limit: 1_000])
+      """
+    ],
     auto_close: [
       type:
         {:or,
@@ -1691,6 +1720,10 @@ defmodule MDEx.Document do
 
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
+
+      {:budget, value}, acc ->
+        NimbleOptions.validate!([budget: value], Keyword.take(@options_schema, [:budget]))
+        %{acc | options: Keyword.put(acc.options || [], :budget, value)}
 
       {name, value}, acc when name in [:auto_close, :streaming] ->
         if name == :streaming, do: validate_boolean!(value, name), else: validate_auto_close!(value)
@@ -2822,7 +2855,8 @@ defmodule MDEx.Document do
       parse: Map.new(options[:parse]),
       render: Map.new(render),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
-      sanitize: adapt_sanitize_options(options[:sanitize])
+      sanitize: adapt_sanitize_options(options[:sanitize]),
+      budget: options[:budget]
     }
   end
 
