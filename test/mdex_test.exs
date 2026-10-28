@@ -439,9 +439,9 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis" style="color: #d8dee9; background-color: #2e3440;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #88c0d0;">{</span><span style="color: #ebcb8b;">:mdex</span><span style="color: #88c0d0;">,</span> <span style="color: #a3be8c;">&quot;~&gt; 0.1&quot;</span><span style="color: #88c0d0;">}</span></span></code></pre>
+        <pre class="lumis" style="color: #cdd6f4; background-color: #1e1e2e;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #9399b2;">{</span><span style="color: #f2cdcd;">:mdex</span><span style="color: #9399b2;">,</span> <span style="color: #a6e3a1;">&quot;~&gt; 0.1&quot;</span><span style="color: #9399b2;">}</span></span></code></pre>
         """,
-        syntax_highlight: [formatter: {:html_inline, theme: "nord"}]
+        syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_mocha"}]
       )
     end
 
@@ -481,11 +481,12 @@ defmodule MDExTest do
         MDEx.to_html(
           ~S"""
           ```elixir
+          # A comment styled in italic by the theme.
           defmodule Test do
           end
           ```
           """,
-          syntax_highlight: [formatter: {:html_inline, theme: "nord", italic: true}]
+          syntax_highlight: [formatter: {:html_inline, theme: "catppuccin_mocha", italic: true}]
         )
 
       assert html =~ ~s(font-style: italic)
