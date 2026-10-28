@@ -37,6 +37,8 @@ defmodule MDEx.Fuzz.Options do
     math_dollars: :boolean,
     math_latex: :boolean,
     multiline_block_quotes: :boolean,
+    ofm_callouts: :boolean,
+    ofm_comments: :boolean,
     phoenix_heex: :boolean,
     shortcodes: :boolean,
     spoiler: :boolean,
@@ -48,6 +50,7 @@ defmodule MDEx.Fuzz.Options do
     tagfilter: :boolean,
     tasklist: :boolean,
     underline: :boolean,
+    wikilinks_ignore_embeds: :boolean,
     wikilinks_title_after_pipe: :boolean,
     wikilinks_title_before_pipe: :boolean
   }
@@ -61,7 +64,9 @@ defmodule MDEx.Fuzz.Options do
     relaxed_tasklist_matching: :boolean,
     smart: :boolean,
     sourcepos_chars: :boolean,
-    tasklist_in_table: :boolean
+    tasklist_in_table: :boolean,
+    # Parity properties must finish parsing; zero-budget cancellation is tested separately.
+    timeout: {:member_of, [nil, 60_000]}
   }
 
   @render_option_kinds %{

@@ -325,6 +325,10 @@ defmodule MDEx do
     Map.update(node, :alert_type, :note, &String.to_existing_atom/1)
   end
 
+  defp map_node_fields(node, MDEx.Callout) do
+    Map.update(node, :fold, :none, &String.to_existing_atom/1)
+  end
+
   defp map_node_fields(node, _type), do: node
 
   @doc """

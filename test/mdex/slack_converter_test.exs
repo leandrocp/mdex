@@ -4,6 +4,13 @@ defmodule MDEx.SlackConverterTest do
   alias MDEx.Document
   alias MDEx.SlackConverter
 
+  test "Obsidian callout titles and bodies stay visible but comments do not" do
+    markdown = "> [!note]- **Title**\n> before %%hidden%% after\n\n%%\nblock secret\n%%\n"
+
+    assert MDEx.to_slack!(markdown, extension: [ofm_comments: true, ofm_callouts: true]) ==
+             "*Title*\nbefore  after\n"
+  end
+
   describe "convert/2" do
     test "converts empty document" do
       input = %Document{nodes: []}

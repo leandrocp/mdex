@@ -47,6 +47,10 @@ defmodule MDEx.ComrakConverterTest do
     Subtext,
     EscapedTag,
     Alert,
+    Callout,
+    CalloutTitle,
+    CommentInline,
+    MultilineComment,
     BlockDirective,
     HeexBlock,
     HeexInline
@@ -64,6 +68,64 @@ defmodule MDEx.ComrakConverterTest do
   test "native document keeps only Comrak AST fields" do
     assert fields(MDExNative.Comrak.Document) == [:nodes, :sourcepos]
     assert fields(MDExNative.Comrak.Document) -- fields(MDEx.Document) == []
+  end
+
+  test "Obsidian nodes survive parsing, JSON, native conversion, traversal, and rendering" do
+    markdown = "> [!Custom|meta]- **Title**\n> A %%hidden%% ![[page|label]]\n\n%%\nblock comment\n%%\n"
+    options = [extension: [ofm_callouts: true, ofm_comments: true, wikilinks_title_after_pipe: true]]
+    document = MDEx.parse_document!(markdown, options)
+
+    assert [%MDEx.Callout{callout_type: "custom", metadata: "meta", fold: :collapsed} = callout, %MDEx.MultilineComment{closed: true}] =
+             document.nodes
+
+    assert [%MDEx.CalloutTitle{} = title, %MDEx.Paragraph{}] = callout.nodes
+    assert [%MDEx.CommentInline{literal: "hidden"}] = document[MDEx.CommentInline]
+    assert [%MDEx.WikiLink{embed: true, url: "page"}] = document[MDEx.WikiLink]
+    assert Enum.any?(callout, &match?(%MDEx.Text{literal: "Title"}, &1))
+    assert Enum.any?(title, &match?(%MDEx.Strong{}, &1))
+    assert MDEx.Document.fragment?(callout)
+    assert MDEx.Document.fragment?(%MDEx.CommentInline{})
+    assert Enum.to_list(%MDEx.CommentInline{literal: "hidden"}) == [%MDEx.CommentInline{literal: "hidden"}]
+
+    native = MDEx.ComrakConverter.from_mdex(document)
+    assert MDEx.ComrakConverter.to_mdex(native).nodes == document.nodes
+
+    json = MDEx.to_json!(document)
+    decoded = MDEx.parse_document!({:json, json}, options)
+    assert decoded.nodes == document.nodes
+    assert MDEx.to_xml!(decoded) =~ ~s(fold="collapsed")
+    assert MDEx.to_xml!(decoded) =~ ~s(embed="true")
+    assert MDEx.to_markdown!(decoded) =~ "![[page|label]]"
+    assert to_string(callout) =~ "> [!custom|meta]- **Title**"
+
+    html = MDEx.to_html!(markdown, options)
+    assert html =~ ~s(data-callout-fold="collapsed")
+    assert html =~ "<strong>Title</strong>"
+    refute html =~ "hidden"
+    refute html =~ "block comment"
+    assert MDEx.to_html!(document) == html
+    assert MDEx.to_html!(decoded) == html
+
+    assert MDEx.to_html!("![[page]] [[page]]", extension: [wikilinks_title_after_pipe: true, wikilinks_ignore_embeds: true]) ==
+             ~s(<p>![[page]] <a href="page" data-wikilink="true">page</a></p>)
+  end
+
+  test "parser timeout is validated and reaches direct and pipeline entry points" do
+    for function <- [:parse_document, :parse_document!, :to_html, :to_html!, :to_xml, :to_xml!] do
+      assert_raise RuntimeError, "Markdown parsing timed out", fn ->
+        apply(MDEx, function, ["# Hello", [parse: [timeout: 0]]])
+      end
+    end
+
+    assert_raise RuntimeError, "Markdown parsing timed out", fn ->
+      MDEx.new(markdown: "# Hello", parse: [timeout: 0]) |> MDEx.Document.run()
+    end
+
+    assert MDEx.to_html!("# Hello", parse: [timeout: 60_000]) == "<h1>Hello</h1>"
+
+    assert_raise NimbleOptions.ValidationError, fn ->
+      MDEx.new(parse: [timeout: -1])
+    end
   end
 
   test "converts native document structs to mdex structs" do

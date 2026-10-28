@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content.
+- Preserve `![[url]]` embeds in `WikiLink.embed`. HTML, Slack, and Delta render them as links. Use `:wikilinks_ignore_embeds` with a wikilink title option to keep embed syntax literal.
+- Add `parse: [timeout: milliseconds]`, an optional cooperative timeout for each native parse. Expiration raises `RuntimeError` without partial output, including from non-bang functions. Rendering, highlighting, sanitization, and AST conversion are outside the timeout.
+
+### Compatibility
+
+- Requires the companion mdex_native Comrak 0.59 update. Local paired verification uses `MDEX_NATIVE_PATH` to select that checkout; no machine-specific path is part of the package dependency.
+- Wikilink XML now includes the `embed` flag. Callout folding is exposed as metadata and requires application CSS/JavaScript.
+
 ## [0.14.4](https://github.com/leandrocp/mdex/compare/v0.14.3...v0.14.4) (2026-10-28)
 
 ### Documentation
