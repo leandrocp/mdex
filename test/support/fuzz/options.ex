@@ -64,9 +64,7 @@ defmodule MDEx.Fuzz.Options do
     relaxed_tasklist_matching: :boolean,
     smart: :boolean,
     sourcepos_chars: :boolean,
-    tasklist_in_table: :boolean,
-    # Parity properties must finish parsing; zero-budget cancellation is tested separately.
-    timeout: {:member_of, [nil, 60_000]}
+    tasklist_in_table: :boolean
   }
 
   @render_option_kinds %{

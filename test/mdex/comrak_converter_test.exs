@@ -110,24 +110,6 @@ defmodule MDEx.ComrakConverterTest do
              ~s(<p>![[page]] <a href="page" data-wikilink="true">page</a></p>)
   end
 
-  test "parser timeout is validated and reaches direct and pipeline entry points" do
-    for function <- [:parse_document, :parse_document!, :to_html, :to_html!, :to_xml, :to_xml!] do
-      assert_raise RuntimeError, "Markdown parsing timed out", fn ->
-        apply(MDEx, function, ["# Hello", [parse: [timeout: 0]]])
-      end
-    end
-
-    assert_raise RuntimeError, "Markdown parsing timed out", fn ->
-      MDEx.new(markdown: "# Hello", parse: [timeout: 0]) |> MDEx.Document.run()
-    end
-
-    assert MDEx.to_html!("# Hello", parse: [timeout: 60_000]) == "<h1>Hello</h1>"
-
-    assert_raise NimbleOptions.ValidationError, fn ->
-      MDEx.new(parse: [timeout: -1])
-    end
-  end
-
   test "converts native document structs to mdex structs" do
     document = %MDExNative.Comrak.Document{
       nodes: [

@@ -6,7 +6,6 @@
 
 - Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content.
 - Preserve `![[url]]` embeds in `WikiLink.embed`. HTML, Slack, and Delta render them as links. Use `:wikilinks_ignore_embeds` with a wikilink title option to keep embed syntax literal.
-- Add `parse: [timeout: milliseconds]`, an optional cooperative timeout for each native parse. Expiration raises `RuntimeError` without partial output, including from non-bang functions. Rendering, highlighting, sanitization, and AST conversion are outside the timeout.
 
 ### Compatibility
 

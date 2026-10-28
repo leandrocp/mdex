@@ -969,12 +969,6 @@ defmodule MDEx.Document do
       default: false,
       doc:
         "Convert byte-based columns in Sourcepos to character-based columns, so that multi-byte UTF-8 characters occupy one column instead of multiple."
-    ],
-    timeout: [
-      type: {:or, [:non_neg_integer, nil]},
-      default: nil,
-      doc:
-        "Cooperative parsing timeout in milliseconds. `nil` is unlimited; `0` cancels at the first checkpoint. Expiration raises `RuntimeError` (including non-bang APIs). Covers each native parse, not rendering, highlighting, sanitization, AST conversion, or the whole streaming session."
     ]
   ]
 
