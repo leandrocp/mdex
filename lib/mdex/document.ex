@@ -1358,26 +1358,7 @@ defmodule MDEx.Document do
            nil
          ]},
       type_spec: quote(do: [parse_time: non_neg_integer() | nil] | nil),
-      doc: """
-      Bounds Markdown parsing, as `[parse_time: milliseconds]`.
-
-      Omitted, `nil`, or `parse_time: 0` means no limit, which is the default.
-
-      The limit applies to each native parse: the whole Markdown input of
-      `to_html/2`, `parse_document/2` and the other conversions, or each chunk
-      parsed by `MDEx.stream/2`. Rendering, syntax highlighting, sanitization,
-      and AST conversion are not counted. Comrak checks the limit cooperatively,
-      so a parse can run somewhat past it.
-
-      Running out never returns partial output. Non-bang functions such as
-      `MDEx.to_html/2` return `{:error, %MDExNative.ParseTimeExceededError{}}`,
-      bang functions and `MDEx.stream/2` raise it, and `MDEx.Document.run/1`
-      halts with it.
-      This is separate from the per-block `:budget` in Lumis's `:syntax_highlight`
-      options; Syntect has none.
-
-          MDEx.to_html!(markdown, budget: [parse_time: 1_000])
-      """
+      doc: "Bounds parsing, as `[parse_time: milliseconds]`. `0` or `nil` means no limit."
     ],
     auto_close: [
       type:
