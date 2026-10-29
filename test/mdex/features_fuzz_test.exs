@@ -22,7 +22,7 @@ defmodule MDEx.FeaturesFuzzTest do
     :codefence_renderers
   ]
 
-  @registered_option_names @document_option_names ++ [:budget, :auto_close, :streaming]
+  @registered_option_names @document_option_names ++ [:limits, :auto_close, :streaming]
 
   @unsafe_html ~S"""
   <div id="root" class="allowed blocked" data-kind="feature" onclick="attack()">

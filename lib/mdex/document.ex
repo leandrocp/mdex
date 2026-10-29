@@ -679,7 +679,7 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
-    :budget,
+    :limits,
     :auto_close,
     :streaming,
     :assigns,
@@ -1350,18 +1350,18 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
-    budget: [
+    limits: [
       type:
         {:or,
          [
-           {:keyword_list, time_limit: [type: {:or, [:non_neg_integer, nil]}]},
+           {:keyword_list, parse_time: [type: {:or, [:non_neg_integer, nil]}]},
            nil
          ]},
-      type_spec: quote(do: [time_limit: non_neg_integer() | nil] | nil),
+      type_spec: quote(do: [parse_time: non_neg_integer() | nil] | nil),
       doc: """
-      Bounds Markdown parsing, as `[time_limit: milliseconds]`.
+      Bounds Markdown parsing, as `[parse_time: milliseconds]`.
 
-      Omitted, `nil`, or `time_limit: 0` means no limit, which is the default.
+      Omitted, `nil`, or `parse_time: 0` means no limit, which is the default.
 
       The limit applies to each native parse: the whole Markdown input of
       `to_html/2`, `parse_document/2` and the other conversions, or each chunk
@@ -1375,7 +1375,7 @@ defmodule MDEx.Document do
       halts with it.
       Lumis highlighting has its own per-block `:budget` option; Syntect has none.
 
-          MDEx.to_html!(markdown, budget: [time_limit: 1_000])
+          MDEx.to_html!(markdown, limits: [parse_time: 1_000])
       """
     ],
     auto_close: [
@@ -1721,9 +1721,9 @@ defmodule MDEx.Document do
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
 
-      {:budget, value}, acc ->
-        NimbleOptions.validate!([budget: value], Keyword.take(@options_schema, [:budget]))
-        %{acc | options: Keyword.put(acc.options || [], :budget, value)}
+      {:limits, value}, acc ->
+        NimbleOptions.validate!([limits: value], Keyword.take(@options_schema, [:limits]))
+        %{acc | options: Keyword.put(acc.options || [], :limits, value)}
 
       {name, value}, acc when name in [:auto_close, :streaming] ->
         if name == :streaming, do: validate_boolean!(value, name), else: validate_auto_close!(value)
@@ -2856,7 +2856,7 @@ defmodule MDEx.Document do
       render: Map.new(render),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
       sanitize: adapt_sanitize_options(options[:sanitize]),
-      budget: options[:budget]
+      limits: options[:limits]
     }
   end
 
