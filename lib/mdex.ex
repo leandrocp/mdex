@@ -262,7 +262,7 @@ defmodule MDEx do
 
   def parse_document({:markdown, markdown}, options) when is_binary(markdown) and is_list(options) do
     options = Keyword.put(options, :markdown, markdown)
-    options |> MDEx.new() |> run()
+    options |> MDEx.new() |> run_result()
   end
 
   def parse_document({:json, json}, options) when is_binary(json) and is_list(options) do
@@ -780,7 +780,7 @@ defmodule MDEx do
            document
            |> Document.put_options(options)
            |> maybe_apply_document_option(document_opt)
-           |> run() do
+           |> run_result() do
       case Jason.encode(document) do
         {:ok, json} -> {:ok, json}
         {:error, error} -> {:error, %DecodeError{document: document, error: error}}
@@ -957,7 +957,7 @@ defmodule MDEx do
            document
            |> Document.put_options(document_options)
            |> maybe_apply_document_option(document_opt)
-           |> run() do
+           |> run_result() do
       case MDEx.DeltaConverter.convert(document, validated_options) do
         {:ok, ops} -> {:ok, ops}
         {:error, reason} -> {:error, %DecodeError{document: document, error: reason}}
@@ -1034,7 +1034,7 @@ defmodule MDEx do
            document
            |> Document.put_options(options)
            |> maybe_apply_document_option(document_opt)
-           |> run() do
+           |> run_result() do
       SlackConverter.convert(document, unsafe: unsafe)
     end
   end
@@ -1197,7 +1197,7 @@ defmodule MDEx do
         |> maybe_trim()
 
       :error ->
-        with {:ok, document} <- run(document) do
+        with {:ok, document} <- run_result(document) do
           document
           |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
           |> ComrakConverter.from_mdex()
@@ -1209,7 +1209,7 @@ defmodule MDEx do
 
   # `Document.run/1` returns `{document, exception}` when a step or a native
   # parse halts the pipeline; non-bang functions report that as `{:error, exception}`.
-  defp run(document) do
+  defp run_result(document) do
     case Document.run(document) do
       {%Document{}, exception} -> {:error, exception}
       %Document{} = document -> {:ok, document}
