@@ -679,6 +679,7 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
+    :budget,
     :auto_close,
     :streaming,
     :assigns,
@@ -1350,6 +1351,19 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
+    budget: [
+      type:
+        {:or,
+         [
+           {:keyword_list, parse_time: [type: {:or, [:non_neg_integer, nil]}]},
+           nil
+         ]},
+      type_spec: quote(do: [parse_time: non_neg_integer() | nil] | nil),
+      doc: """
+      Limits how long parsing can run before it is cancelled, using `[parse_time: milliseconds]`.
+      Defaults to no limit. A value of `0` or `nil` also means no limit.
+      """
+    ],
     auto_close: [
       type:
         {:or,
@@ -1692,6 +1706,10 @@ defmodule MDEx.Document do
 
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
+
+      {:budget, value}, acc ->
+        NimbleOptions.validate!([budget: value], Keyword.take(@options_schema, [:budget]))
+        %{acc | options: Keyword.put(acc.options || [], :budget, value)}
 
       {name, value}, acc when name in [:auto_close, :streaming] ->
         if name == :streaming, do: validate_boolean!(value, name), else: validate_auto_close!(value)
@@ -2823,7 +2841,8 @@ defmodule MDEx.Document do
       parse: Map.new(options[:parse]),
       render: Map.new(render),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
-      sanitize: adapt_sanitize_options(options[:sanitize])
+      sanitize: adapt_sanitize_options(options[:sanitize]),
+      budget: options[:budget]
     }
   end
 
