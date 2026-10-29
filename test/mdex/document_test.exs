@@ -1347,6 +1347,20 @@ defmodule MDEx.DocumentTest do
              } = Enum.into(nodes, %MDEx.Document{nodes: []}) |> Document.run()
     end
 
+    test "collect callout after inline content" do
+      nodes = [
+        %MDEx.Text{literal: "before"},
+        %MDEx.Callout{callout_type: "warning", nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "body"}]}]}
+      ]
+
+      assert %MDEx.Document{
+               nodes: [
+                 %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "before"}]},
+                 %MDEx.Callout{callout_type: "warning", nodes: [%MDEx.Paragraph{nodes: [%MDEx.Text{literal: "body"}]}]}
+               ]
+             } = Enum.into(nodes, MDEx.new(extension: [ofm_callouts: true])) |> Document.run()
+    end
+
     test "into document with empty collection" do
       initial_doc = %MDEx.Document{nodes: [%MDEx.Text{literal: "existing"}]}
       result = Enum.into([], initial_doc)

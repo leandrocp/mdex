@@ -99,8 +99,11 @@ defmodule MDEx.MixProject do
         "Document Nodes": [
           MDEx.Alert,
           MDEx.BlockQuote,
+          MDEx.Callout,
+          MDEx.CalloutTitle,
           MDEx.Code,
           MDEx.CodeBlock,
+          MDEx.CommentInline,
           MDEx.DescriptionDetails,
           MDEx.DescriptionItem,
           MDEx.DescriptionList,
@@ -122,6 +125,7 @@ defmodule MDEx.MixProject do
           MDEx.ListItem,
           MDEx.Math,
           MDEx.MultilineBlockQuote,
+          MDEx.MultilineComment,
           MDEx.Paragraph,
           MDEx.Raw,
           MDEx.ShortCode,
@@ -194,7 +198,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.2.14"}
+      {:mdex_native, ">= 0.3.0"}
     end
   end
 

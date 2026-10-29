@@ -367,6 +367,10 @@ defmodule MDEx.DeltaConverter do
     end
   end
 
+  # Obsidian comments are source-only content, not rendered text.
+  defp default_convert_node(%MDEx.CommentInline{}, _current_attrs, _options), do: []
+  defp default_convert_node(%MDEx.MultilineComment{}, _current_attrs, _options), do: []
+
   # FrontMatter - block-level attribute
   defp default_convert_node(%MDEx.FrontMatter{literal: content}, _current_attrs, _options) do
     [

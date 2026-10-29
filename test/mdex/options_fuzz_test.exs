@@ -25,7 +25,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   property "parsing stays in parity with mdex_native" do
     check all({markdown, options} <- fuzz_case()) do
-      native_nodes = NativeComrak.parse_document(markdown, native_options(options)).nodes
+      native_nodes = NativeComrak.parse_document!(markdown, native_options(options)).nodes
 
       mdex_nodes =
         markdown
@@ -39,7 +39,7 @@ defmodule MDEx.OptionsFuzzTest do
 
   property "HTML rendering has Markdown and Document input parity" do
     check all({markdown, options} <- fuzz_case()) do
-      expected = NativeComrak.markdown_to_html(markdown, native_options(options))
+      expected = NativeComrak.markdown_to_html!(markdown, native_options(options))
       document = MDEx.parse_document!(markdown, options)
 
       assert html_tree(MDEx.to_html!(document)) == html_tree(expected)
@@ -67,8 +67,8 @@ defmodule MDEx.OptionsFuzzTest do
       # its indent without it.
       expected =
         markdown
-        |> NativeComrak.parse_document(native_options)
-        |> NativeComrak.document_to_commonmark(native_options)
+        |> NativeComrak.parse_document!(native_options)
+        |> NativeComrak.document_to_commonmark!(native_options)
         |> String.trim_trailing()
 
       document = MDEx.parse_document!(markdown, options)

@@ -4,6 +4,15 @@ defmodule MDEx.DeltaConverterTest do
   alias MDEx.DeltaConverter
   alias MDEx.Document
 
+  test "Obsidian callout content retains formatting without exposing comments" do
+    markdown = "> [!note]- **Title**\n> before %%hidden%% after\n\n%%\nblock secret\n%%\n"
+
+    assert [%{"insert" => "Title", "attributes" => %{"bold" => true}} | body] =
+             MDEx.to_delta!(markdown, extension: [ofm_comments: true, ofm_callouts: true])
+
+    assert Enum.map_join(body, &Map.fetch!(&1, "insert")) == "\nbefore  after\n"
+  end
+
   describe "convert/2" do
     test "converts empty document" do
       input = %Document{nodes: []}

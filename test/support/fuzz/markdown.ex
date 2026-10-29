@@ -66,6 +66,8 @@ defmodule MDEx.Fuzz.Markdown do
       indented_code(),
       block_quote(opts),
       alert(opts),
+      callout(opts),
+      multiline_comment(),
       multiline_block_quote(opts),
       bullet_list(opts),
       ordered_list(opts),
@@ -111,6 +113,7 @@ defmodule MDEx.Fuzz.Markdown do
       wrapped("==", "=="),
       wrapped("++", "++"),
       wrapped("||", "||"),
+      wrapped("%%", "%%"),
       wrapped("`", "`"),
       wrapped("$", "$"),
       wrapped("$`", "`$"),
@@ -203,6 +206,24 @@ defmodule MDEx.Fuzz.Markdown do
   defp alert(opts) do
     gen all(kind <- member_of(@alert_kinds), content <- inlines(Keyword.put(opts, :max_length, 2))) do
       "> [!#{kind}]\n> #{content}"
+    end
+  end
+
+  defp callout(opts) do
+    gen all(
+          kind <- member_of(["note", "Custom Type", "warning"]),
+          metadata <- one_of([constant(""), map(text(), &"|#{&1}")]),
+          fold <- member_of(["", "+", "-"]),
+          title <- inlines(Keyword.put(opts, :max_length, 2)),
+          body <- inlines(Keyword.put(opts, :max_length, 3))
+        ) do
+      "> [!#{kind}#{metadata}]#{fold} #{title}\n> #{body}"
+    end
+  end
+
+  defp multiline_comment do
+    gen all(lines <- list_of(text(), min_length: 1, max_length: 3), closed <- boolean()) do
+      "%%\n" <> Enum.join(lines, "\n") <> if(closed, do: "\n%%", else: "")
     end
   end
 
@@ -322,8 +343,8 @@ defmodule MDEx.Fuzz.Markdown do
   defp braced_url, do: map(url(), &"{#{&1}}")
 
   defp wikilink do
-    gen all(page <- text(), title <- text(), order <- boolean()) do
-      if order, do: "[[#{page}|#{title}]]", else: "[[#{title}|#{page}]]"
+    gen all(page <- text(), title <- text(), order <- boolean(), embed <- member_of(["", "!"])) do
+      embed <> if(order, do: "[[#{page}|#{title}]]", else: "[[#{title}|#{page}]]")
     end
   end
 

@@ -762,6 +762,18 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables GitHub style alerts."
     ],
+    ofm_callouts: [
+      type: :boolean,
+      default: false,
+      doc:
+        "Enables Obsidian callouts with arbitrary types, metadata, Markdown titles, and fold markers. Takes precedence over alerts; folding behavior requires application CSS/JavaScript."
+    ],
+    ofm_comments: [
+      type: :boolean,
+      default: false,
+      doc:
+        "Enables Obsidian `%%` comments. Like Obsidian, rendered output (HTML, Slack, and Delta) omits them; Markdown output and the document tree (AST, JSON, and XML) keep them."
+    ],
     math_dollars: [
       type: :boolean,
       default: false,
@@ -791,6 +803,11 @@ defmodule MDEx.Document do
       type: :boolean,
       default: false,
       doc: "Enables wikilinks using title before pipe syntax."
+    ],
+    wikilinks_ignore_embeds: [
+      type: :boolean,
+      default: false,
+      doc: "Leaves `![[url]]` embeds as literal text while still parsing ordinary wikilinks. Requires one of the wikilink title options."
     ],
     underline: [
       type: :boolean,
@@ -1487,6 +1504,10 @@ defmodule MDEx.Document do
           | MDEx.Subtext.t()
           | MDEx.EscapedTag.t()
           | MDEx.Alert.t()
+          | MDEx.Callout.t()
+          | MDEx.CalloutTitle.t()
+          | MDEx.CommentInline.t()
+          | MDEx.MultilineComment.t()
           | MDEx.BlockDirective.t()
           | MDEx.HeexBlock.t()
           | MDEx.HeexInline.t()
@@ -2345,7 +2366,6 @@ defmodule MDEx.Document do
       end
 
     case Comrak.parse_document(buffer, rust_options!(document.options)) do
-      %{nodes: nodes} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:ok, %{nodes: nodes}} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:error, error} -> halt(document, error)
     end
@@ -2355,7 +2375,6 @@ defmodule MDEx.Document do
     document = %{document | buffer: [], current_steps: [], steps: []}
 
     case Comrak.document_to_commonmark(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
-      markdown when is_binary(markdown) -> {:ok, markdown}
       {:ok, markdown} -> {:ok, markdown}
       {:error, error} -> {:error, halt(document, error)}
     end
@@ -2754,6 +2773,10 @@ defmodule MDEx.Document do
       MDEx.Subtext,
       MDEx.EscapedTag,
       MDEx.Alert,
+      MDEx.Callout,
+      MDEx.CalloutTitle,
+      MDEx.CommentInline,
+      MDEx.MultilineComment,
       MDEx.BlockDirective,
       MDEx.HeexBlock,
       MDEx.HeexInline
@@ -3525,11 +3548,14 @@ end
 
 defmodule MDEx.WikiLink do
   @moduledoc """
-  A link in the form of a wiki link.
+  A wiki link (`[[url]]`) or embed (`![[url]]`).
+
+  `embed` preserves the embed marker in the AST and Markdown/XML/JSON output.
+  HTML, Slack, and Delta render embeds as ordinary links without fetching content.
   """
 
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t()}
-  defstruct nodes: [], url: "", sourcepos: %MDEx.Sourcepos{}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], url: String.t(), embed: boolean()}
+  defstruct nodes: [], url: "", embed: false, sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
 end
 
@@ -3610,6 +3636,66 @@ defmodule MDEx.Alert do
             sourcepos: %MDEx.Sourcepos{}
 
   use MDEx.Document.Access
+end
+
+defmodule MDEx.Callout do
+  @moduledoc """
+  An Obsidian callout, enabled with `extension: [ofm_callouts: true]`.
+
+  The type is normalized (`My Type` becomes `my-type`). Metadata preserves text
+  after `|`. The optional first child is a `MDEx.CalloutTitle`; remaining children
+  form the body. `fold` is `:none`, `:expanded` (`+`), or `:collapsed` (`-`).
+
+  HTML exposes these fields as `data-callout`, `data-callout-metadata`, and
+  `data-callout-fold`. Folding needs application CSS/JavaScript. Slack and Delta
+  flatten the explicit title and body, without fold state or metadata.
+  """
+
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          callout_type: String.t(),
+          metadata: String.t() | nil,
+          fold: :none | :expanded | :collapsed
+        }
+  defstruct nodes: [], callout_type: "note", metadata: nil, fold: :none, sourcepos: %MDEx.Sourcepos{}
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.CalloutTitle do
+  @moduledoc """
+  A custom Markdown callout title. Must be the first child of `MDEx.Callout`.
+
+  The children are blocks, not just inline nodes; headings are supported too.
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()]}
+  defstruct nodes: [], sourcepos: %MDEx.Sourcepos{}
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.CommentInline do
+  @moduledoc """
+  An Obsidian `%%comment%%` span, enabled with `extension: [ofm_comments: true]`.
+
+  The literal excludes delimiters. Like Obsidian, rendered output (HTML, Slack,
+  and Delta) omits comments, while Markdown output and the document tree (AST,
+  JSON, and XML) keep them. Do not store secrets in them.
+  """
+
+  @type t :: %__MODULE__{literal: String.t()}
+  defstruct literal: "", sourcepos: %MDEx.Sourcepos{}
+end
+
+defmodule MDEx.MultilineComment do
+  @moduledoc """
+  An Obsidian block comment, enabled with `extension: [ofm_comments: true]`.
+
+  The literal excludes delimiters. `closed` records whether the closing `%%`
+  was present. Visibility follows `MDEx.CommentInline`.
+  """
+
+  @type t :: %__MODULE__{literal: String.t(), closed: boolean()}
+  defstruct literal: "", closed: false, sourcepos: %MDEx.Sourcepos{}
 end
 
 defmodule MDEx.BlockDirective do
@@ -3707,6 +3793,8 @@ defimpl Enumerable,
     MDEx.Escaped,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.Callout,
+    MDEx.CalloutTitle,
     MDEx.BlockDirective,
     MDEx.HeexBlock
   ] do
@@ -3760,15 +3848,15 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
+    MDEx.CommentInline,
+    MDEx.MultilineComment,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}
   def member?(_, _), do: {:error, __MODULE__}
   def slice(_), do: {:error, __MODULE__}
 
-  def reduce(_node, {:halt, acc}, _fun), do: {:halted, acc}
-  def reduce(node, {:suspend, acc}, fun), do: {:suspended, acc, &reduce(node, &1, fun)}
-  def reduce(node, {:cont, acc}, fun), do: {:done, fun.(node, acc)}
+  def reduce(node, acc, fun), do: Enumerable.List.reduce([node], acc, fun)
 end
 
 defimpl String.Chars, for: [MDEx.Document] do
@@ -3823,6 +3911,10 @@ defimpl String.Chars,
     MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.Callout,
+    MDEx.CalloutTitle,
+    MDEx.CommentInline,
+    MDEx.MultilineComment,
     MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline
@@ -3915,6 +4007,10 @@ defimpl Jason.Encoder,
     MDEx.Subtext,
     MDEx.EscapedTag,
     MDEx.Alert,
+    MDEx.Callout,
+    MDEx.CalloutTitle,
+    MDEx.CommentInline,
+    MDEx.MultilineComment,
     MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline

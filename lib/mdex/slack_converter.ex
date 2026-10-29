@@ -88,6 +88,8 @@ defmodule MDEx.SlackConverter do
   defp render_node(%MDEx.Raw{literal: content}, _context), do: escape_text(content)
   defp render_node(%MDEx.ShortCode{emoji: emoji}, _context), do: emoji
   defp render_node(%MDEx.Math{literal: math}, _context), do: escape_text(math)
+  defp render_node(%MDEx.CommentInline{}, _context), do: ""
+  defp render_node(%MDEx.MultilineComment{}, _context), do: ""
   defp render_node(%MDEx.FrontMatter{}, _context), do: ""
   defp render_node(%MDEx.FootnoteReference{name: name}, _context), do: ["[^", escape_text(name), "]"]
   defp render_node(%MDEx.FootnoteDefinition{nodes: nodes}, context), do: render_nodes(nodes, context)

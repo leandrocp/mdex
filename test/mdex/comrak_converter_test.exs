@@ -47,6 +47,10 @@ defmodule MDEx.ComrakConverterTest do
     Subtext,
     EscapedTag,
     Alert,
+    Callout,
+    CalloutTitle,
+    CommentInline,
+    MultilineComment,
     BlockDirective,
     HeexBlock,
     HeexInline
@@ -66,6 +70,46 @@ defmodule MDEx.ComrakConverterTest do
     assert fields(MDExNative.Comrak.Document) -- fields(MDEx.Document) == []
   end
 
+  test "Obsidian nodes survive parsing, JSON, native conversion, traversal, and rendering" do
+    markdown = "> [!Custom|meta]- **Title**\n> A %%hidden%% ![[page|label]]\n\n%%\nblock comment\n%%\n"
+    options = [extension: [ofm_callouts: true, ofm_comments: true, wikilinks_title_after_pipe: true]]
+    document = MDEx.parse_document!(markdown, options)
+
+    assert [%MDEx.Callout{callout_type: "custom", metadata: "meta", fold: :collapsed} = callout, %MDEx.MultilineComment{closed: true}] =
+             document.nodes
+
+    assert [%MDEx.CalloutTitle{} = title, %MDEx.Paragraph{}] = callout.nodes
+    assert [%MDEx.CommentInline{literal: "hidden"}] = document[MDEx.CommentInline]
+    assert [%MDEx.WikiLink{embed: true, url: "page"}] = document[MDEx.WikiLink]
+    assert Enum.any?(callout, &match?(%MDEx.Text{literal: "Title"}, &1))
+    assert Enum.any?(title, &match?(%MDEx.Strong{}, &1))
+    assert MDEx.Document.fragment?(callout)
+    assert MDEx.Document.fragment?(%MDEx.CommentInline{})
+    assert Enum.to_list(%MDEx.CommentInline{literal: "hidden"}) == [%MDEx.CommentInline{literal: "hidden"}]
+
+    native = MDEx.ComrakConverter.from_mdex(document)
+    assert MDEx.ComrakConverter.to_mdex(native).nodes == document.nodes
+
+    json = MDEx.to_json!(document)
+    decoded = MDEx.parse_document!({:json, json}, options)
+    assert decoded.nodes == document.nodes
+    assert MDEx.to_xml!(decoded) =~ ~s(fold="collapsed")
+    assert MDEx.to_xml!(decoded) =~ ~s(embed="true")
+    assert MDEx.to_markdown!(decoded) =~ "![[page|label]]"
+    assert to_string(callout) =~ "> [!custom|meta]- **Title**"
+
+    html = MDEx.to_html!(markdown, options)
+    assert html =~ ~s(data-callout-fold="collapsed")
+    assert html =~ "<strong>Title</strong>"
+    refute html =~ "hidden"
+    refute html =~ "block comment"
+    assert MDEx.to_html!(document) == html
+    assert MDEx.to_html!(decoded) == html
+
+    assert MDEx.to_html!("![[page]] [[page]]", extension: [wikilinks_title_after_pipe: true, wikilinks_ignore_embeds: true]) ==
+             ~s(<p>![[page]] <a href="page" data-wikilink="true">page</a></p>)
+  end
+
   test "converts native document structs to mdex structs" do
     document = %MDExNative.Comrak.Document{
       nodes: [
@@ -83,7 +127,7 @@ defmodule MDEx.ComrakConverterTest do
   test "preserves escaped character children through MDEx conversion" do
     options = [parse: [escaped_char_spans: true], render: [escaped_char_spans: true]]
 
-    native_document = MDExNative.Comrak.parse_document(~S(\*escaped\*), options)
+    native_document = MDExNative.Comrak.parse_document!(~S(\*escaped\*), options)
     mdex_document = MDEx.ComrakConverter.to_mdex(native_document)
 
     assert %MDEx.Document{
@@ -100,9 +144,9 @@ defmodule MDEx.ComrakConverterTest do
 
     rebuilt = MDEx.ComrakConverter.from_mdex(mdex_document)
 
-    assert MDExNative.Comrak.document_to_commonmark(rebuilt, options) == "\\*escaped\\*\n"
+    assert MDExNative.Comrak.document_to_commonmark!(rebuilt, options) == "\\*escaped\\*\n"
 
-    assert MDExNative.Comrak.document_to_html(rebuilt, options) ==
+    assert MDExNative.Comrak.document_to_html!(rebuilt, options) ==
              "<p><span data-escaped-char>*</span>escaped<span data-escaped-char>*</span></p>\n"
   end
 

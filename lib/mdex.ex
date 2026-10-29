@@ -325,6 +325,10 @@ defmodule MDEx do
     Map.update(node, :alert_type, :note, &String.to_existing_atom/1)
   end
 
+  defp map_node_fields(node, MDEx.Callout) do
+    Map.update(node, :fold, :none, &String.to_existing_atom/1)
+  end
+
   defp map_node_fields(node, _type), do: node
 
   @doc """
@@ -1592,7 +1596,6 @@ defmodule MDEx do
 
   defp stream_parse_nodes!(source, rust_options) do
     case Comrak.parse_document(source, rust_options) do
-      %{nodes: native_nodes} -> ComrakConverter.to_mdex(native_nodes)
       {:ok, %{nodes: native_nodes}} -> ComrakConverter.to_mdex(native_nodes)
       {:error, error} -> raise error
     end
