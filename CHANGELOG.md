@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.14.5](https://github.com/leandrocp/mdex/compare/v0.14.4...v0.14.5) (2026-10-29)
+
 ### Features
 
 - Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content.
@@ -12,6 +14,11 @@
 
 - Requires the companion mdex_native Comrak 0.59 update. Local paired verification uses `MDEX_NATIVE_PATH` to select that checkout; no machine-specific path is part of the package dependency.
 - Wikilink XML now includes the `embed` flag. Callout folding is exposed as metadata and requires application CSS/JavaScript.
+
+### Features
+
+- Support Comrak 0.59 options and Obsidian nodes in [\#467](https://github.com/leandrocp/mdex/pull/467)
+- Add a parse time limit option in [\#468](https://github.com/leandrocp/mdex/pull/468)
 
 ## [0.14.4](https://github.com/leandrocp/mdex/compare/v0.14.3...v0.14.4) (2026-10-28)
 
