@@ -1,16 +1,16 @@
 # Changelog
 
-## Unreleased
+## [0.14.5](https://github.com/leandrocp/mdex/compare/v0.14.4...v0.14.5) (2026-10-29)
 
 ### Features
 
-- Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content.
+- Expose Comrak 0.59's Obsidian comments and callouts through `extension: [ofm_comments: true, ofm_callouts: true]`. Preserve their AST nodes through traversal, native conversion, JSON, XML, and Markdown. HTML, Slack, and Delta omit comment contents; Slack and Delta flatten callout title/body content. In [\#467](https://github.com/leandrocp/mdex/pull/467).
 - Preserve `![[url]]` embeds in `WikiLink.embed`. HTML, Slack, and Delta render them as links. Use `:wikilinks_ignore_embeds` with a wikilink title option to keep embed syntax literal.
-- Add a top-level `budget: [parse_time: milliseconds]` option that bounds each native Markdown parse. Running out returns `{:error, %MDExNative.ParseTimeExceededError{}}` from non-bang functions, raises it from bang functions and `MDEx.stream/2`, and halts `MDEx.Document.run/1` with it, without partial output. Omitted, `nil`, or `0` means no limit, the default. Requires the companion mdex_native parse limit support ([leandrocp/mdex_native#120](https://github.com/leandrocp/mdex_native/issues/120)).
+- Add a top-level `budget: [parse_time: milliseconds]` option that bounds each native Markdown parse. Running out returns `{:error, %MDExNative.ParseTimeExceededError{}}`. In [\#468](https://github.com/leandrocp/mdex/pull/468).
 
 ### Compatibility
 
-- Requires the companion mdex_native Comrak 0.59 update. Local paired verification uses `MDEX_NATIVE_PATH` to select that checkout; no machine-specific path is part of the package dependency.
+- Requires the companion mdex_native Comrak 0.59 update.
 - Wikilink XML now includes the `embed` flag. Callout folding is exposed as metadata and requires application CSS/JavaScript.
 
 ## [0.14.4](https://github.com/leandrocp/mdex/compare/v0.14.3...v0.14.4) (2026-10-28)
