@@ -1370,7 +1370,7 @@ defmodule MDEx.Document do
       so a parse can run somewhat past it.
 
       Running out never returns partial output. Non-bang functions such as
-      `MDEx.to_html/2` return `{:error, %MDExNative.BudgetExhaustedError{}}`,
+      `MDEx.to_html/2` return `{:error, %MDExNative.ParseTimeExceededError{}}`,
       bang functions and `MDEx.stream/2` raise it, and `MDEx.Document.run/1`
       halts with it.
       Lumis highlighting has its own per-block `:budget` option; Syntect has none.

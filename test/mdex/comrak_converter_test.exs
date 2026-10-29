@@ -118,21 +118,21 @@ defmodule MDEx.ComrakConverterTest do
     document = MDEx.new([markdown: @slow_markdown] ++ limits)
 
     for function <- [:parse_document, :to_html, :to_xml, :to_json, :to_delta, :to_slack] do
-      assert {:error, %MDExNative.BudgetExhaustedError{time_limit: 1}} =
+      assert {:error, %MDExNative.ParseTimeExceededError{parse_time: 1}} =
                apply(MDEx, function, [@slow_markdown, limits])
 
-      assert_raise MDExNative.BudgetExhaustedError, fn ->
+      assert_raise MDExNative.ParseTimeExceededError, fn ->
         apply(MDEx, :"#{function}!", [@slow_markdown, limits])
       end
     end
 
     for function <- [:to_html, :to_xml, :to_json, :to_delta, :to_slack, :to_markdown] do
-      assert {:error, %MDExNative.BudgetExhaustedError{}} = apply(MDEx, function, [document])
+      assert {:error, %MDExNative.ParseTimeExceededError{}} = apply(MDEx, function, [document])
     end
 
-    assert {%MDEx.Document{halted: true}, %MDExNative.BudgetExhaustedError{}} = MDEx.Document.run(document)
+    assert {%MDEx.Document{halted: true}, %MDExNative.ParseTimeExceededError{}} = MDEx.Document.run(document)
 
-    assert_raise MDExNative.BudgetExhaustedError, fn ->
+    assert_raise MDExNative.ParseTimeExceededError, fn ->
       [@slow_markdown] |> MDEx.stream(limits) |> Enum.to_list()
     end
   end
