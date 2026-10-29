@@ -9,65 +9,11 @@ on:
 jobs:
   test:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
-    name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: OTP 25.1, Elixir 1.15.0
-            elixir: "1.15.0"
-            otp: "25.1"
-            lint: false
-          - name: OTP 29.x, Elixir 1.20.x
-            elixir: "1.20.x"
-            otp: "29.x"
-            lint: true
-          - name: OTP 29, Elixir main
-            elixir: "main-otp-29"
-            otp: "maint-29"
-            lint: true
-    env:
-      MIX_ENV: test
-      MDEX_NATIVE_BUILD: "1"
-      MDEX_NATIVE_PATH: ${{ github.workspace }}/native-companion
+    uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
 
-    # Temporary paired CI: restore the shared workflows after the native release
-    # is available and mix.exs/mix.lock require that release. No published path dep.
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/checkout@v7.0.1
-        with:
-          repository: leandrocp/mdex_native
-          ref: 52d5f3dbe1886c1413e7f08d57540d484a1387ee
-          path: native-companion
-      - uses: erlef/setup-beam@v1.24.1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: native-companion/native/mdex_native_nif
-      - uses: actions/cache@v6.1.0
-        with:
-          path: |
-            deps
-            _build
-          key: paired-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock', 'native-companion/native/mdex_native_nif/Cargo.lock') }}
-      - name: Disable compile warnings
-        run: echo "::remove-matcher owner=elixir-mixCompileWarning::"
-      - name: Install mix dependencies
-        run: |
-          mix deps.get
-          mix deps.compile
-      - name: Run tests
-        run: mix test
-      - name: Lint
-        if: matrix.lint
-        run: |
-          mix compile --warnings-as-errors
-          mix deps.unlock --check-unused
-          mix format --check-formatted
-          mix credo --strict
+  lint:
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
+    uses: leandrocp/github-actions/.github/workflows/elixir-lint.yml@main
+    with:
+      credo: true
+      credo_args: '--strict'
