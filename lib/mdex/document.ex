@@ -772,7 +772,8 @@ defmodule MDEx.Document do
     ofm_comments: [
       type: :boolean,
       default: false,
-      doc: "Enables Obsidian `%%` comments. Hidden in HTML, Slack, and Delta; retained in the AST, JSON, XML, and Markdown."
+      doc:
+        "Enables Obsidian `%%` comments. Like Obsidian, rendered output (HTML, Slack, and Delta) omits them; Markdown output and the document tree (AST, JSON, and XML) keep them."
     ],
     math_dollars: [
       type: :boolean,
@@ -3692,8 +3693,9 @@ defmodule MDEx.CommentInline do
   @moduledoc """
   An Obsidian `%%comment%%` span, enabled with `extension: [ofm_comments: true]`.
 
-  The literal excludes delimiters. Comments are hidden from HTML, Slack, and
-  Delta but preserved in Markdown, JSON, and XML. Do not store secrets in them.
+  The literal excludes delimiters. Like Obsidian, rendered output (HTML, Slack,
+  and Delta) omits comments, while Markdown output and the document tree (AST,
+  JSON, and XML) keep them. Do not store secrets in them.
   """
 
   @type t :: %__MODULE__{literal: String.t()}
