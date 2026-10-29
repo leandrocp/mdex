@@ -113,16 +113,16 @@ defmodule MDEx.ComrakConverterTest do
   # Takes well over a millisecond to parse even in a release build.
   @slow_markdown String.duplicate("a *b* [c](d) ", 50_000)
 
-  test "limits reach every native parse; non-bang functions return the error" do
-    limits = [limits: [parse_time: 1]]
-    document = MDEx.new([markdown: @slow_markdown] ++ limits)
+  test "the budget reaches every native parse; non-bang functions return the error" do
+    budget = [budget: [parse_time: 1]]
+    document = MDEx.new([markdown: @slow_markdown] ++ budget)
 
     for function <- [:parse_document, :to_html, :to_xml, :to_json, :to_delta, :to_slack] do
       assert {:error, %MDExNative.ParseTimeExceededError{parse_time: 1}} =
-               apply(MDEx, function, [@slow_markdown, limits])
+               apply(MDEx, function, [@slow_markdown, budget])
 
       assert_raise MDExNative.ParseTimeExceededError, fn ->
-        apply(MDEx, :"#{function}!", [@slow_markdown, limits])
+        apply(MDEx, :"#{function}!", [@slow_markdown, budget])
       end
     end
 
@@ -133,7 +133,7 @@ defmodule MDEx.ComrakConverterTest do
     assert {%MDEx.Document{halted: true}, %MDExNative.ParseTimeExceededError{}} = MDEx.Document.run(document)
 
     assert_raise MDExNative.ParseTimeExceededError, fn ->
-      [@slow_markdown] |> MDEx.stream(limits) |> Enum.to_list()
+      [@slow_markdown] |> MDEx.stream(budget) |> Enum.to_list()
     end
   end
 
@@ -141,7 +141,7 @@ defmodule MDEx.ComrakConverterTest do
     html = MDEx.to_html!(@slow_markdown)
 
     for parse_time <- [0, 60_000, nil] do
-      assert MDEx.to_html!(@slow_markdown, limits: [parse_time: parse_time]) == html
+      assert MDEx.to_html!(@slow_markdown, budget: [parse_time: parse_time]) == html
     end
   end
 

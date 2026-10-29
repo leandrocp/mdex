@@ -679,7 +679,7 @@ defmodule MDEx.Document do
     :render,
     :syntax_highlight,
     :sanitize,
-    :limits,
+    :budget,
     :auto_close,
     :streaming,
     :assigns,
@@ -1350,7 +1350,7 @@ defmodule MDEx.Document do
       See the [Safety](#module-safety) section for more info.
       """
     ],
-    limits: [
+    budget: [
       type:
         {:or,
          [
@@ -1373,9 +1373,10 @@ defmodule MDEx.Document do
       `MDEx.to_html/2` return `{:error, %MDExNative.ParseTimeExceededError{}}`,
       bang functions and `MDEx.stream/2` raise it, and `MDEx.Document.run/1`
       halts with it.
-      Lumis highlighting has its own per-block `:budget` option; Syntect has none.
+      This is separate from the per-block `:budget` in Lumis's `:syntax_highlight`
+      options; Syntect has none.
 
-          MDEx.to_html!(markdown, limits: [parse_time: 1_000])
+          MDEx.to_html!(markdown, budget: [parse_time: 1_000])
       """
     ],
     auto_close: [
@@ -1721,9 +1722,9 @@ defmodule MDEx.Document do
       {:sanitize, options}, acc ->
         put_sanitize_options(acc, options)
 
-      {:limits, value}, acc ->
-        NimbleOptions.validate!([limits: value], Keyword.take(@options_schema, [:limits]))
-        %{acc | options: Keyword.put(acc.options || [], :limits, value)}
+      {:budget, value}, acc ->
+        NimbleOptions.validate!([budget: value], Keyword.take(@options_schema, [:budget]))
+        %{acc | options: Keyword.put(acc.options || [], :budget, value)}
 
       {name, value}, acc when name in [:auto_close, :streaming] ->
         if name == :streaming, do: validate_boolean!(value, name), else: validate_auto_close!(value)
@@ -2856,7 +2857,7 @@ defmodule MDEx.Document do
       render: Map.new(render),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
       sanitize: adapt_sanitize_options(options[:sanitize]),
-      limits: options[:limits]
+      budget: options[:budget]
     }
   end
 
