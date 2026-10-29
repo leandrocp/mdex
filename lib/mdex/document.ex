@@ -1359,7 +1359,10 @@ defmodule MDEx.Document do
            nil
          ]},
       type_spec: quote(do: [parse_time: non_neg_integer() | nil] | nil),
-      doc: "Bounds parsing, as `[parse_time: milliseconds]`. `0` or `nil` means no limit."
+      doc: """
+      Limits how long parsing can run before it is cancelled, using `[parse_time: milliseconds]`.
+      Defaults to no limit. A value of `0` or `nil` also means no limit.
+      """
     ],
     auto_close: [
       type:
