@@ -2365,7 +2365,6 @@ defmodule MDEx.Document do
       end
 
     case Comrak.parse_document(buffer, rust_options!(document.options)) do
-      %{nodes: nodes} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:ok, %{nodes: nodes}} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:error, error} -> halt(document, error)
     end
@@ -2375,7 +2374,6 @@ defmodule MDEx.Document do
     document = %{document | buffer: [], current_steps: [], steps: []}
 
     case Comrak.document_to_commonmark(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
-      markdown when is_binary(markdown) -> {:ok, markdown}
       {:ok, markdown} -> {:ok, markdown}
       {:error, error} -> {:error, halt(document, error)}
     end

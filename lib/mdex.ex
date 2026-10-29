@@ -1596,7 +1596,6 @@ defmodule MDEx do
 
   defp stream_parse_nodes!(source, rust_options) do
     case Comrak.parse_document(source, rust_options) do
-      %{nodes: native_nodes} -> ComrakConverter.to_mdex(native_nodes)
       {:ok, %{nodes: native_nodes}} -> ComrakConverter.to_mdex(native_nodes)
       {:error, error} -> raise error
     end
