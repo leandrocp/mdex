@@ -1373,7 +1373,7 @@ defmodule MDEx.Document do
       `MDEx.to_html/2` return `{:error, %MDExNative.BudgetExhaustedError{}}`,
       bang functions and `MDEx.stream/2` raise it, and `MDEx.Document.run/1`
       halts with it.
-      Syntax highlighting has its own per-block `:budget` in the Lumis options.
+      Lumis highlighting has its own per-block `:budget` option; Syntect has none.
 
           MDEx.to_html!(markdown, budget: [time_limit: 1_000])
       """
