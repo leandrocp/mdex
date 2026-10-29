@@ -127,7 +127,7 @@ defmodule MDEx.ComrakConverterTest do
   test "preserves escaped character children through MDEx conversion" do
     options = [parse: [escaped_char_spans: true], render: [escaped_char_spans: true]]
 
-    native_document = MDExNative.Comrak.parse_document(~S(\*escaped\*), options)
+    native_document = MDExNative.Comrak.parse_document!(~S(\*escaped\*), options)
     mdex_document = MDEx.ComrakConverter.to_mdex(native_document)
 
     assert %MDEx.Document{
@@ -144,9 +144,9 @@ defmodule MDEx.ComrakConverterTest do
 
     rebuilt = MDEx.ComrakConverter.from_mdex(mdex_document)
 
-    assert MDExNative.Comrak.document_to_commonmark(rebuilt, options) == "\\*escaped\\*\n"
+    assert MDExNative.Comrak.document_to_commonmark!(rebuilt, options) == "\\*escaped\\*\n"
 
-    assert MDExNative.Comrak.document_to_html(rebuilt, options) ==
+    assert MDExNative.Comrak.document_to_html!(rebuilt, options) ==
              "<p><span data-escaped-char>*</span>escaped<span data-escaped-char>*</span></p>\n"
   end
 
