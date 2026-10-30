@@ -1464,6 +1464,7 @@ defmodule MDEx.DocumentTest do
             sanitize: [:default],
             budget: 1_000,
             budget: [parse_time: -1],
+            budget: [parse_memory: -1],
             auto_close: nil,
             auto_close: "no",
             streaming: nil,

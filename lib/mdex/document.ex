@@ -1355,13 +1355,14 @@ defmodule MDEx.Document do
       type:
         {:or,
          [
-           {:keyword_list, parse_time: [type: {:or, [:non_neg_integer, nil]}]},
+           {:keyword_list, parse_time: [type: {:or, [:non_neg_integer, nil]}], parse_memory: [type: {:or, [:non_neg_integer, nil]}]},
            nil
          ]},
-      type_spec: quote(do: [parse_time: non_neg_integer() | nil] | nil),
+      type_spec: quote(do: [parse_time: non_neg_integer() | nil, parse_memory: non_neg_integer() | nil] | nil),
       doc: """
-      Limits how long parsing can run before it is cancelled, using `[parse_time: milliseconds]`.
-      Defaults to no limit. A value of `0` or `nil` also means no limit.
+      Limits parsing, using `[parse_time: milliseconds, parse_memory: bytes]`. A parse is cancelled
+      once it runs longer than `:parse_time` or holds more than `:parse_memory` bytes of heap.
+      Each limit defaults to no limit. A value of `0` or `nil` also means no limit.
       """
     ],
     auto_close: [
