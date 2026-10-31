@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Add `parse_memory` to the `budget` option: `budget: [parse_memory: bytes]` cancels a native Markdown parse once it holds more than `bytes` of heap. Running out returns `{:error, %MDExNative.ParseMemoryExceededError{}}` from non-bang functions, raises it from bang functions and `MDEx.stream/2`, and halts `MDEx.Document.run/1` with it, without partial output. Omitted, `nil`, or `0` means no limit, the default. Requires the companion mdex_native parse memory limit ([leandrocp/mdex_native#129](https://github.com/leandrocp/mdex_native/pull/129)).
+
 ## [0.14.5](https://github.com/leandrocp/mdex/compare/v0.14.4...v0.14.5) (2026-10-29)
 
 ### Features

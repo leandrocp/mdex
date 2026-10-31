@@ -110,7 +110,7 @@ defmodule MDEx.ComrakConverterTest do
              ~s(<p>![[page]] <a href="page" data-wikilink="true">page</a></p>)
   end
 
-  # Takes well over a millisecond to parse even in a release build.
+  # Takes well over a millisecond to parse even in a release build, and holds far more than 1 KB.
   @slow_markdown String.duplicate("a *b* [c](d) ", 50_000)
 
   test "the budget reaches every native parse; non-bang functions return the error" do
@@ -142,6 +142,38 @@ defmodule MDEx.ComrakConverterTest do
 
     for parse_time <- [0, 60_000, nil] do
       assert MDEx.to_html!(@slow_markdown, budget: [parse_time: parse_time]) == html
+    end
+  end
+
+  test "the memory budget reaches every native parse; non-bang functions return the error" do
+    budget = [budget: [parse_memory: 1_000]]
+    document = MDEx.new([markdown: @slow_markdown] ++ budget)
+
+    for function <- [:parse_document, :to_html, :to_xml, :to_json, :to_delta, :to_slack] do
+      assert {:error, %MDExNative.ParseMemoryExceededError{parse_memory: 1_000}} =
+               apply(MDEx, function, [@slow_markdown, budget])
+
+      assert_raise MDExNative.ParseMemoryExceededError, fn ->
+        apply(MDEx, :"#{function}!", [@slow_markdown, budget])
+      end
+    end
+
+    for function <- [:to_html, :to_xml, :to_json, :to_delta, :to_slack, :to_markdown] do
+      assert {:error, %MDExNative.ParseMemoryExceededError{}} = apply(MDEx, function, [document])
+    end
+
+    assert {%MDEx.Document{halted: true}, %MDExNative.ParseMemoryExceededError{}} = MDEx.Document.run(document)
+
+    assert_raise MDExNative.ParseMemoryExceededError, fn ->
+      [@slow_markdown] |> MDEx.stream(budget) |> Enum.to_list()
+    end
+  end
+
+  test "a parse memory of zero, nil, or a generous limit leaves the output unchanged" do
+    html = MDEx.to_html!(@slow_markdown)
+
+    for parse_memory <- [0, 1_000_000_000, nil] do
+      assert MDEx.to_html!(@slow_markdown, budget: [parse_memory: parse_memory]) == html
     end
   end
 
