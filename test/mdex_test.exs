@@ -762,6 +762,67 @@ defmodule MDExTest do
     end
   end
 
+  describe "syntax highlighting - inline code" do
+    test "highlights a {:lang} suffix and removes it" do
+      assert_output(
+        ~S"""
+        Add `{:mdex, "~> 0.1"}{:elixir}` to deps.
+        """,
+        ~S"""
+        <p>Add <code class="lumis" style="color: #abb2bf; background-color: #282c34;"><span style="color: #c678dd;">{</span><span style="color: #e06c75;">:mdex</span><span style="color: #abb2bf;">,</span> <span style="color: #98c379;">&quot;~&gt; 0.1&quot;</span><span style="color: #c678dd;">}</span></code> to deps.</p>
+        """,
+        syntax_highlight: [formatter: :html_inline]
+      )
+    end
+
+    test "reads the language from attributes and keeps them" do
+      assert_output(
+        ~S"""
+        `{:mdex, "~> 0.1"}`{#dep .language-elixir}
+        """,
+        ~S"""
+        <p><code class="lumis language-elixir" id="dep"><span class="l-punctuation-bracket">{</span><span class="l-string-special-symbol">:mdex</span><span class="l-punctuation-delimiter">,</span> <span class="l-string">&quot;~&gt; 0.1&quot;</span><span class="l-punctuation-bracket">}</span></code></p>
+        """,
+        render: [unsafe: true],
+        syntax_highlight: [formatter: :html_linked]
+      )
+    end
+
+    test "puts every theme on the code with html_multi_themes" do
+      {:ok, html} =
+        MDEx.to_html("`:ok{:elixir}`",
+          syntax_highlight: [formatter: {:html_multi_themes, themes: [light: "github_light", dark: "github_dark"]}]
+        )
+
+      assert html =~
+               ~s(<p><code class="lumis lumis-themes github_dark github_light" style="--lumis-dark:#e6edf3; --lumis-dark-bg:#0d1117; --lumis-light:#1f2328; --lumis-light-bg:#ffffff;"><span )
+
+      refute html =~ "<pre"
+    end
+
+    test "renders an unknown language as plain text without the suffix" do
+      assert_output(
+        "`<x>{:notalang}`",
+        ~s(<p><code class="lumis" style="color: #abb2bf; background-color: #282c34;">&lt;x&gt;</code></p>\n),
+        syntax_highlight: [formatter: :html_inline]
+      )
+    end
+
+    test "leaves unmarked, nohighlight, and disabled inline code alone" do
+      assert_output(
+        "`:ok` `{:ok}` `:ok{:elixir}`{.nohighlight}",
+        "<p><code>:ok</code> <code>{:ok}</code> <code>:ok{:elixir}</code></p>\n",
+        syntax_highlight: [formatter: :html_inline]
+      )
+
+      assert_output(
+        "`:ok{:elixir}`",
+        "<p><code>:ok{:elixir}</code></p>\n",
+        syntax_highlight: [code_spans: false, formatter: :html_inline]
+      )
+    end
+  end
+
   test "render emoji shortcodes" do
     assert_output(":rocket:", "<p>🚀</p>\n", extension: [shortcodes: true])
   end
