@@ -1,23 +1,16 @@
 # Changelog
 
-## Unreleased
-
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
 ### Features
 
-- Add `parse_memory` to the `budget` option: `budget: [parse_memory: bytes]` cancels a native Markdown parse once it holds more than `bytes` of heap. Running out returns `{:error, %MDExNative.ParseMemoryExceededError{}}` from non-bang functions, raises it from bang functions and `MDEx.stream/2`, and halts `MDEx.Document.run/1` with it, without partial output. Omitted, `nil`, or `0` means no limit, the default. Requires the companion mdex_native parse memory limit ([leandrocp/mdex_native#129](https://github.com/leandrocp/mdex_native/pull/129)).
-- Highlight inline code that names its language with Lumis: `` `IO.puts(1){:elixir}` `` or `` `IO.puts(1)`{.language-elixir} ``. On by default when Lumis highlighting is on; turn it off with `syntax_highlight: [inline_code: false]`. Closes [\#473](https://github.com/leandrocp/mdex/issues/473).
+- Add `budget: [parse_memory: bytes]` to cap the heap a native Markdown parse can use in [\#472](https://github.com/leandrocp/mdex/pull/472)
+- Highlight inline code with Lumis, e.g. `` `IO.puts(1){:elixir}` ``, in [\#474](https://github.com/leandrocp/mdex/pull/474)
 
 ### Compatibility
 
-- `extension: [inline_code_attributes: true]` is now the default, so `` `code`{...} `` parses its braces as attributes.
-- Requires the companion mdex_native inline code support.
-
-### Features
-
-- Add a parse memory limit option in [\#472](https://github.com/leandrocp/mdex/pull/472)
-- Highlight inline code with Lumis in [\#474](https://github.com/leandrocp/mdex/pull/474)
+- `extension: [inline_code_attributes: true]` is now the default
+- Requires mdex_native 0.3.1
 
 ## [0.14.5](https://github.com/leandrocp/mdex/compare/v0.14.4...v0.14.5) (2026-10-29)
 
