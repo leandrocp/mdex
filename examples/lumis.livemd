@@ -85,6 +85,24 @@ When time runs out, the whole block renders as escaped plain text with `data-lum
 
 The time limit covers parsing and highlighting the code block, excluding language loading. It is checked cooperatively and can be exceeded between checks. It does not bound Markdown parsing, HTML formatting, or the total time to render a document containing several code blocks.
 
+## Inline code
+
+Inline code that names its language is highlighted too. End the code span with a `{:lang}` suffix, which is removed, or give it a `language-*` class or `data-language` attribute:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```markdown
+Add `{:mdex, "~> 0.14"}{:elixir}` to your deps, then call `MDEx.to_html!(markdown)`{.language-elixir}.
+```
+
+The `<code>` gets the `lumis` class and the theme's colors, as a block's `<pre>` does. Inline code that names no language, or has a `nohighlight` or `no-highlight` class, is left alone. A language without an installed parser renders as plain text. Set `inline_code: false` to turn it off:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+syntax_highlight: [engine: :lumis, inline_code: false, opts: [formatter: :html_linked]]
+```
+
 ## Inline styles
 
 Use `:html_inline` when the generated HTML needs to stand on its own. This is useful for docs, feeds, emails, or anything where carrying a stylesheet around is a hassle.

@@ -904,7 +904,7 @@ defmodule MDEx.Document do
     ],
     inline_code_attributes: [
       type: :boolean,
-      default: false,
+      default: true,
       doc: "Enables attributes on inline code spans."
     ],
     link_attributes: [
@@ -1090,6 +1090,11 @@ defmodule MDEx.Document do
       default: [formatter: @default_lumis_formatter],
       doc:
         "Engine-specific syntax highlighting options. For `:lumis`, see [`Lumis.options()`](https://hexdocs.pm/lumis/Lumis.html#t:options/0) and the [Lumis guide](https://mdex.hexdocs.pm/lumis.html). For `:syntect`, see `t:syntect_options/0` and the [Syntect guide](https://mdex.hexdocs.pm/syntect.html)."
+    ],
+    inline_code: [
+      type: :boolean,
+      doc:
+        "Defaults to `true`. Also highlight inline code that names its language, as in `` `IO.puts(1){:elixir}` `` or `` `IO.puts(1)`{.language-elixir} ``. Lumis only. See the [Lumis guide](https://mdex.hexdocs.pm/lumis.html#inline-code)."
     ],
     formatter: [
       type: :any,
@@ -2856,13 +2861,13 @@ defmodule MDEx.Document do
 
     {formatter, options} = Keyword.pop(options, :formatter)
     {engine, options} = Keyword.pop(options, :engine)
-    {opts, _options} = Keyword.pop(options, :opts)
+    {opts, options} = Keyword.pop(options, :opts)
 
     opts = syntax_highlight_engine_options(engine, opts, formatter, raw_options)
 
     # A keyword list: `:mdex_native` validates and converts Lumis options
     # itself, but only when `:syntax_highlight` arrives as one.
-    [engine: engine, opts: opts]
+    [engine: engine, opts: opts] ++ Keyword.take(options, [:inline_code])
   end
 
   defp syntax_highlight_engine_options(:lumis, opts, formatter, _raw_options) do
