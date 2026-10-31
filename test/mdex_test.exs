@@ -818,7 +818,7 @@ defmodule MDExTest do
       assert_output(
         "`:ok{:elixir}`",
         "<p><code>:ok{:elixir}</code></p>\n",
-        syntax_highlight: [code_spans: false, formatter: :html_inline]
+        syntax_highlight: [inline_code: false, formatter: :html_inline]
       )
     end
   end

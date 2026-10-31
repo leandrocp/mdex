@@ -5,7 +5,7 @@
 ### Features
 
 - Add `parse_memory` to the `budget` option: `budget: [parse_memory: bytes]` cancels a native Markdown parse once it holds more than `bytes` of heap. Running out returns `{:error, %MDExNative.ParseMemoryExceededError{}}` from non-bang functions, raises it from bang functions and `MDEx.stream/2`, and halts `MDEx.Document.run/1` with it, without partial output. Omitted, `nil`, or `0` means no limit, the default. Requires the companion mdex_native parse memory limit ([leandrocp/mdex_native#129](https://github.com/leandrocp/mdex_native/pull/129)).
-- Highlight inline code that names its language with Lumis: `` `IO.puts(1){:elixir}` `` or `` `IO.puts(1)`{.language-elixir} ``. On by default when Lumis highlighting is on; turn it off with `syntax_highlight: [code_spans: false]`. Closes [\#473](https://github.com/leandrocp/mdex/issues/473).
+- Highlight inline code that names its language with Lumis: `` `IO.puts(1){:elixir}` `` or `` `IO.puts(1)`{.language-elixir} ``. On by default when Lumis highlighting is on; turn it off with `syntax_highlight: [inline_code: false]`. Closes [\#473](https://github.com/leandrocp/mdex/issues/473).
 
 ### Compatibility
 
