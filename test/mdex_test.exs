@@ -1269,7 +1269,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #d19a66;">@</span><span style="color: #d19a66;">lang </span><span style="color: #e06c75;">:elixir</span></span></code></pre>
+        <pre class="lumis custom-class another-class" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #56b6c2;"><span style="color: #d19a66;">@<span style="color: #61afef;"><span style="color: #d19a66;">lang <span style="color: #e06c75;">:elixir</span></span></span></span></span></span></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline],
         render: [github_pre_lang: true, full_info_string: true]
@@ -1436,7 +1436,7 @@ defmodule MDExTest do
         ```
         """,
         ~S"""
-        <pre class="lumis custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-constant">@</span><span class="l-constant">lang </span><span class="l-string-special-symbol">:elixir</span></span></code></pre>
+        <pre class="lumis custom-class another-class"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span class="l-operator"><span class="l-constant">@<span class="l-function-call"><span class="l-constant">lang <span class="l-string-special-symbol">:elixir</span></span></span></span></span></span></code></pre>
         """,
         syntax_highlight: [formatter: :html_inline],
         render: [github_pre_lang: true, full_info_string: true],
