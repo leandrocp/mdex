@@ -1677,7 +1677,9 @@ defmodule MDEx.Document do
   @doc false
   # `sanitize: MDEx.default_sanitize_options()` is the usual way to turn sanitizing
   # on, and the defaults are valid, so they skip validating their long allowlists.
-  def validate_sanitize_options!(@default_sanitize_options = options), do: options
+  # `===` rather than a pattern: the default list is the same literal term, so this
+  # is a pointer check instead of walking every allowlist.
+  def validate_sanitize_options!(options) when options === @default_sanitize_options, do: options
   def validate_sanitize_options!(options), do: validate_options!(options, :sanitize)
 
   defp validate_options!(options, name) do
@@ -2023,8 +2025,9 @@ defmodule MDEx.Document do
     %{
       document
       | options:
-          update_in(document.options, [:sanitize], fn sanitize ->
-            Keyword.merge(sanitize || [], options)
+          update_in(document.options, [:sanitize], fn
+            nil -> options
+            sanitize -> Keyword.merge(sanitize, options)
           end)
     }
   end
@@ -3000,8 +3003,24 @@ defmodule MDEx.Document do
   @doc false
   def adapt_sanitize_options(nil = _options), do: nil
 
-  def adapt_sanitize_options(options) do
-    options = Keyword.merge(sanitize_defaults(options), options)
+  # The default allowlists are the common case and always adapt to the same map.
+  def adapt_sanitize_options(options) when options === @default_sanitize_options do
+    case :persistent_term.get({__MODULE__, :default_sanitize}, nil) do
+      nil ->
+        adapted = adapt_custom_sanitize_options(options)
+        :persistent_term.put({__MODULE__, :default_sanitize}, adapted)
+        adapted
+
+      adapted ->
+        adapted
+    end
+  end
+
+  def adapt_sanitize_options(options), do: adapt_custom_sanitize_options(options)
+
+  defp adapt_custom_sanitize_options(options) do
+    defaults = sanitize_defaults(options)
+    options = if options === defaults, do: options, else: Keyword.merge(defaults, options)
 
     {:custom,
      %{
