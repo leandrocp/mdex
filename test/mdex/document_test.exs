@@ -1511,6 +1511,18 @@ defmodule MDEx.DocumentTest do
       end
     end
 
+    test "validation errors name the option and list every valid option", %{document: document} do
+      assert_raise NimbleOptions.ValidationError, ~r/:table option/, fn ->
+        Document.put_extension_options(document, table: 1)
+      end
+
+      error = assert_raise NimbleOptions.ValidationError, fn -> Document.put_extension_options(document, foo: 1) end
+
+      for key <- Keyword.keys(Document.default_extension_options()) do
+        assert error.message =~ "#{inspect(key)}," or error.message =~ "#{inspect(key)}]"
+      end
+    end
+
     test "keep other options groups" do
       document = %Document{options: [extension: [table: true], render: [escape: true]]}
       document = Document.put_extension_options(document, table: false)
@@ -1533,7 +1545,30 @@ defmodule MDEx.DocumentTest do
     end
   end
 
+  describe "rust_options!" do
+    test "merges options onto the defaults" do
+      options = Document.rust_options!(extension: [table: true], render: [escape: true, escape: false, unsafe: true, unsafe: false])
+
+      # The deprecated :header_ids is migrated to :header_id_prefix, never passed on.
+      expected_extension = Document.default_extension_options() |> Keyword.delete(:header_ids) |> Keyword.put(:table, true)
+      assert options.extension == Map.new(expected_extension)
+      assert options.parse == Map.new(Document.default_parse_options())
+      # As in a keyword list, the last value of a repeated key wins, except :unsafe, read first.
+      assert options.render.escape == false
+      assert options.render.unsafe == true
+    end
+  end
+
   describe "put_sanitize_options" do
+    test "validates the given options" do
+      assert_raise NimbleOptions.ValidationError, ~r/:rm_tags option/, fn ->
+        Document.put_sanitize_options(%Document{}, rm_tags: "em")
+      end
+
+      assert Document.put_sanitize_options(%Document{}, Document.default_sanitize_options()).options[:sanitize] ==
+               Document.default_sanitize_options()
+    end
+
     test "can disable" do
       document = Document.put_sanitize_options(%Document{options: [sanitize: [rm_tags: ["a"]]]}, nil)
       refute get_in(document.options, [:sanitize])

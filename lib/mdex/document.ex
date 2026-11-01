@@ -1454,6 +1454,31 @@ defmodule MDEx.Document do
     ]
   ]
 
+  # Schemas are validated once here instead of on every `NimbleOptions.validate!/2`
+  # call, and defaults are computed once instead of on every render.
+  #
+  # The `put_*_options/2` functions validate options but store them as given, so
+  # they validate against schemas without defaults. Otherwise NimbleOptions would
+  # validate every default value, such as the sanitize allowlists, on every call.
+  # The errors are the same.
+  without_defaults = fn schema -> Enum.map(schema, fn {key, spec} -> {key, Keyword.delete(spec, :default)} end) end
+
+  @compiled_extension_options_schema NimbleOptions.new!(without_defaults.(@extension_options_schema))
+  @compiled_parse_options_schema NimbleOptions.new!(without_defaults.(@parse_options_schema))
+  @compiled_render_options_schema NimbleOptions.new!(without_defaults.(@render_options_schema))
+  @compiled_syntax_highlight_options_schema NimbleOptions.new!(without_defaults.(@syntax_highlight_options_schema))
+  @compiled_sanitize_options_schema NimbleOptions.new!(without_defaults.(@sanitize_options_schema))
+  @compiled_syntax_highlight_options_schema_with_defaults NimbleOptions.new!(@syntax_highlight_options_schema)
+
+  @default_options NimbleOptions.validate!([], @options_schema)
+  @default_extension_options NimbleOptions.validate!([], @extension_options_schema)
+  @default_parse_options NimbleOptions.validate!([], @parse_options_schema)
+  @default_render_options NimbleOptions.validate!([], @render_options_schema)
+
+  @default_extension_options_map Map.new(@default_options[:extension])
+  @default_parse_options_map Map.new(@default_options[:parse])
+  @default_render_options_map Map.new(@default_options[:render])
+
   @typedoc """
   Tree root of a Markdown document, including all children nodes.
   """
@@ -1571,41 +1596,41 @@ defmodule MDEx.Document do
   Returns all default options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_options() :: options()
-  def default_options, do: NimbleOptions.validate!([], @options_schema)
+  def default_options, do: @default_options
 
   @doc """
   Returns the default `:extension` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @extension_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_extension_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_extension_options() :: extension_options()
-  def default_extension_options, do: NimbleOptions.validate!([], @extension_options_schema)
+  def default_extension_options, do: @default_extension_options
 
   @doc """
   Returns the default `:parse` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @parse_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_parse_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_parse_options() :: parse_options()
-  def default_parse_options, do: NimbleOptions.validate!([], @parse_options_schema)
+  def default_parse_options, do: @default_parse_options
 
   @doc """
   Returns the default `:render` options.
 
   ```elixir
-  #{inspect(NimbleOptions.validate!([], @render_options_schema), pretty: true, limit: :infinity, printable_limit: :infinity)}
+  #{inspect(@default_render_options, pretty: true, limit: :infinity, printable_limit: :infinity)}
   ```
   """
   @spec default_render_options() :: render_options()
-  def default_render_options, do: NimbleOptions.validate!([], @render_options_schema)
+  def default_render_options, do: @default_render_options
 
   @doc """
   Returns the default `:syntax_highlight` options.
@@ -1629,6 +1654,12 @@ defmodule MDEx.Document do
 
   @doc false
   def sanitize_options_schema, do: @sanitize_options_schema
+
+  @doc false
+  # `sanitize: MDEx.default_sanitize_options()` is the usual way to turn sanitizing
+  # on, and the defaults are valid, so they skip validating their long allowlists.
+  def validate_sanitize_options!(@default_sanitize_options = options), do: options
+  def validate_sanitize_options!(options), do: NimbleOptions.validate!(options, @compiled_sanitize_options_schema)
 
   @doc """
   Registers a list of valid options that can be used by steps in the document pipeline.
@@ -1814,7 +1845,7 @@ defmodule MDEx.Document do
   @spec put_extension_options(t(), extension_options()) :: t()
   def put_extension_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :extension)
-    NimbleOptions.validate!(options, @extension_options_schema)
+    NimbleOptions.validate!(options, @compiled_extension_options_schema)
 
     %{
       document
@@ -1843,7 +1874,7 @@ defmodule MDEx.Document do
     {unsafe_, options} = Keyword.pop(options, :unsafe_, false)
     options = Keyword.put_new(options, :unsafe, unsafe_)
 
-    NimbleOptions.validate!(options, @render_options_schema)
+    NimbleOptions.validate!(options, @compiled_render_options_schema)
 
     %{
       document
@@ -1869,7 +1900,7 @@ defmodule MDEx.Document do
   @spec put_parse_options(t(), parse_options()) :: t()
   def put_parse_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :parse)
-    NimbleOptions.validate!(options, @parse_options_schema)
+    NimbleOptions.validate!(options, @compiled_parse_options_schema)
 
     %{
       document
@@ -1909,7 +1940,7 @@ defmodule MDEx.Document do
 
   def put_syntax_highlight_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :syntax_highlight)
-    NimbleOptions.validate!(options, @syntax_highlight_options_schema)
+    NimbleOptions.validate!(options, @compiled_syntax_highlight_options_schema)
 
     %{
       document
@@ -1947,7 +1978,7 @@ defmodule MDEx.Document do
     validate_keyword_list!(options, :sanitize)
     # Only the given keys are stored, so later calls merge into earlier ones.
     # Defaults are filled in by adapt_sanitize_options/1.
-    NimbleOptions.validate!(options, @sanitize_options_schema)
+    validate_sanitize_options!(options)
 
     %{
       document
@@ -2835,17 +2866,20 @@ defmodule MDEx.Document do
   @doc false
   @spec rust_options!(Keyword.t()) :: map()
   def rust_options!(options) do
-    options = MDEx.merge_options(default_options(), options)
+    extension = Keyword.get(options, :extension, [])
+    parse = Keyword.get(options, :parse, [])
+    render = Keyword.get(options, :render, [])
 
-    {unsafe, render} = Keyword.pop(options[:render] || [], :unsafe, false)
-    render = Keyword.put_new(render, :unsafe, unsafe)
-
-    extension = migrate_header_ids(options[:extension])
-
+    # Same result as merging `options` into `default_options/0` with
+    # `MDEx.merge_options/2` and converting the lists to maps, but merging maps
+    # instead of keyword lists. As in a keyword list, the first `:unsafe` wins.
     %{
-      extension: Map.new(extension),
-      parse: Map.new(options[:parse]),
-      render: Map.new(render),
+      extension: migrate_header_ids(extension),
+      parse: Map.merge(@default_parse_options_map, Map.new(parse)),
+      render:
+        @default_render_options_map
+        |> Map.merge(Map.new(render))
+        |> Map.put(:unsafe, Keyword.get(render, :unsafe, Map.get(@default_render_options_map, :unsafe, false))),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
       sanitize: adapt_sanitize_options(options[:sanitize]),
       budget: options[:budget]
@@ -2857,7 +2891,7 @@ defmodule MDEx.Document do
 
   defp syntax_highlight_options(options) do
     raw_options = options
-    options = NimbleOptions.validate!(options, @syntax_highlight_options_schema)
+    options = NimbleOptions.validate!(options, @compiled_syntax_highlight_options_schema_with_defaults)
 
     {formatter, options} = Keyword.pop(options, :formatter)
     {engine, options} = Keyword.pop(options, :engine)
@@ -2894,18 +2928,19 @@ defmodule MDEx.Document do
   defp legacy_lumis_formatter(formatter), do: formatter
 
   defp migrate_header_ids(extension) do
-    {header_ids, extension} = Keyword.pop(extension, :header_ids)
+    {_header_ids, merged} = @default_extension_options_map |> Map.merge(Map.new(extension)) |> Map.pop(:header_ids)
+    header_ids = Keyword.get(extension, :header_ids, Map.get(@default_extension_options_map, :header_ids))
 
     if header_ids do
       IO.warn("extension :header_ids is deprecated, use :header_id_prefix instead")
 
-      if Keyword.get(extension, :header_id_prefix) do
-        extension
+      if Keyword.get(extension, :header_id_prefix, Map.get(@default_extension_options_map, :header_id_prefix)) do
+        merged
       else
-        Keyword.put(extension, :header_id_prefix, header_ids)
+        Map.put(merged, :header_id_prefix, header_ids)
       end
     else
-      extension
+      merged
     end
   end
 
@@ -2974,7 +3009,12 @@ defmodule MDEx.Document do
   # the tags given `allowed_classes` and let the allowlist decide.
   defp sanitize_defaults(options) do
     class_tags = Map.keys(options[:allowed_classes] || %{}) ++ Map.keys(options[:add_allowed_classes] || %{})
+    sanitize_defaults_without_class(class_tags)
+  end
 
+  defp sanitize_defaults_without_class([]), do: @default_sanitize_options
+
+  defp sanitize_defaults_without_class(class_tags) do
     tag_attributes =
       Map.new(@default_sanitize_options[:tag_attributes], fn {tag, attributes} ->
         if tag in class_tags, do: {tag, List.delete(attributes, "class")}, else: {tag, attributes}

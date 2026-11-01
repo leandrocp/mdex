@@ -580,7 +580,7 @@ defmodule MDEx.FragmentParser do
   end
 
   defp has_unclosed_delimiter?(text, "$") do
-    count = count_math_dollars(text, 0)
+    count = count_math_dollars(text)
     rem(count, 2) == 1
   end
 
@@ -589,15 +589,16 @@ defmodule MDEx.FragmentParser do
     rem(count, 2) == 1
   end
 
-  defp count_math_dollars(<<>>, acc), do: acc
-  defp count_math_dollars(<<"\\$", rest::binary>>, acc), do: count_math_dollars(rest, acc)
+  # Counts `$` not escaped by a backslash and not followed by a digit (`$5`).
+  defp count_math_dollars(text) do
+    last = byte_size(text) - 1
 
-  defp count_math_dollars(<<"$", digit, rest::binary>>, acc) when digit in ?0..?9 do
-    count_math_dollars(rest, acc)
+    text
+    |> :binary.matches("$")
+    |> Enum.count(fn {pos, _} ->
+      (pos == 0 or :binary.at(text, pos - 1) != ?\\) and (pos == last or :binary.at(text, pos + 1) not in ?0..?9)
+    end)
   end
-
-  defp count_math_dollars(<<"$", rest::binary>>, acc), do: count_math_dollars(rest, acc + 1)
-  defp count_math_dollars(<<_char, rest::binary>>, acc), do: count_math_dollars(rest, acc)
 
   defp complete_list_line(core, line) do
     case extract_list_content(line) do
@@ -995,15 +996,10 @@ defmodule MDEx.FragmentParser do
     {String.trim_trailing(binary_part(text, 0, pos)), after_lt}
   end
 
-  defp last_byte_pos(text, byte), do: last_byte_pos(text, byte, byte_size(text) - 1)
-
-  defp last_byte_pos(_text, _byte, index) when index < 0, do: nil
-
-  defp last_byte_pos(text, byte, index) do
-    if :binary.at(text, index) == byte do
-      index
-    else
-      last_byte_pos(text, byte, index - 1)
+  defp last_byte_pos(text, byte) do
+    case :binary.matches(text, <<byte>>) do
+      [] -> nil
+      matches -> matches |> List.last() |> elem(0)
     end
   end
 

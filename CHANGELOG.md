@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Performance
+
+- Cut MDEx's own work around each native call; output and options are unchanged. Option schemas and defaults are computed at compile time instead of on every call, options are merged as maps, sanitize options skip re-validating the default allowlists, and AST nodes convert to and from mdex_native with a single map update. `MDEx.to_html/2` on a small document now runs close to the raw `MDExNative.Comrak.markdown_to_html/2` call, and `MDEx.parse_document/2` and rendering an `MDEx.Document` are about twice as fast on large documents. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
+- `MDEx.stream/2` scans the buffered source faster when closing incomplete Markdown.
+
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
 ### Features

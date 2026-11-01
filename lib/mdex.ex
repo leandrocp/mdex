@@ -1304,7 +1304,7 @@ defmodule MDEx do
         options ->
           Document.validate_keyword_list!(options, :sanitize)
           # adapt_sanitize_options/1 fills in the defaults, the same way it does when rendering
-          NimbleOptions.validate!(options, MDEx.Document.sanitize_options_schema())
+          MDEx.Document.validate_sanitize_options!(options)
           MDEx.Document.adapt_sanitize_options(options)
       end
 
