@@ -15,6 +15,7 @@
 #   BENCH_QUICK      "1" for short runs while iterating. Don't publish quick numbers.
 #   BENCH_TIMEOUT    Seconds one call may take before the row is marked as a timeout. Defaults to 60.
 #   BENCH_OUTPUT     Directory for results.json and RESULTS.md. Defaults to benchmarks/.
+#   BENCH_ROUNDS     Times each library runs; rows report the round with the lowest median. Defaults to 2.
 
 defmodule Bench.Spec do
   @moduledoc false
@@ -147,31 +148,15 @@ defmodule Bench.Orchestrator do
     environment = environment(timeout)
     IO.puts("MDEx benchmark — #{environment.date} — mdex #{String.slice(environment.mdex_commit, 0, 7)}")
 
+    rounds = String.to_integer(System.get_env("BENCH_ROUNDS") || "2")
+
     libraries =
-      for library <- libraries do
-        IO.puts("\n== #{library.name}")
-        out = Path.join(tmp, "#{library.name}.json")
-
-        {output, status} =
-          System.cmd("elixir", [__ENV__.file, "--library", library.name, out],
-            stderr_to_stdout: true,
-            env: [{"BENCH_TIMEOUT", to_string(timeout)}]
-          )
-
-        case File.read(out) do
-          {:ok, json} ->
-            IO.puts(output |> String.split("\n") |> Enum.filter(&String.starts_with?(&1, "  bench ")) |> Enum.join("\n"))
-            library |> Map.merge(Jason.decode!(json, keys: :atoms)) |> Map.put(:status, "ok")
-
-          {:error, _} ->
-            error = install_error(output)
-            IO.puts("  install failed (exit #{status}): #{error}")
-            Map.merge(library, %{status: "install failed", error: error, versions: %{}, rows: []})
-        end
-      end
+      1..rounds
+      |> Enum.map(fn round -> run_round(libraries, round, tmp, timeout) end)
+      |> Enum.zip_with(&best_of/1)
 
     results = %{
-      environment: environment,
+      environment: Map.put(environment, :rounds, rounds),
       inputs: Enum.map(selected_inputs(), &Map.put(&1, :bytes, File.stat!(input_path(&1)).size)),
       operations: Map.new(Bench.Spec.operations()),
       libraries: Enum.map(libraries, &Map.drop(&1, [:deps, :config, :apps]))
@@ -181,6 +166,48 @@ defmodule Bench.Orchestrator do
     File.write!(Path.join(output_dir, "RESULTS.md"), Bench.Report.render(results))
     File.rm_rf!(tmp)
     IO.puts("\nWrote #{Path.join(output_dir, "results.json")} and RESULTS.md")
+  end
+
+  # Every library runs once per round, so a burst of load on the machine during
+  # one round doesn't decide a row: each row reports the round with the lower median.
+  defp best_of([first | _] = rounds) do
+    rows =
+      rounds
+      |> Enum.flat_map(& &1.rows)
+      |> Enum.group_by(&{&1.input, &1.operation})
+      |> Enum.map(fn {_key, rows} ->
+        case Enum.filter(rows, &(&1.status == "ok")) do
+          [] -> hd(rows)
+          ok -> Enum.min_by(ok, & &1.median_ns)
+        end
+      end)
+
+    order = first.rows |> Enum.with_index() |> Map.new(fn {row, index} -> {{row.input, row.operation}, index} end)
+    %{first | rows: Enum.sort_by(rows, &Map.get(order, {&1.input, &1.operation}, 0))}
+  end
+
+  defp run_round(libraries, round, tmp, timeout) do
+    for library <- libraries do
+      IO.puts("\n== #{library.name} (round #{round})")
+      out = Path.join(tmp, "#{library.name}-#{round}.json")
+
+      {output, status} =
+        System.cmd("elixir", [__ENV__.file, "--library", library.name, out],
+          stderr_to_stdout: true,
+          env: [{"BENCH_TIMEOUT", to_string(timeout)}]
+        )
+
+      case File.read(out) do
+        {:ok, json} ->
+          IO.puts(output |> String.split("\n") |> Enum.filter(&String.starts_with?(&1, "  bench ")) |> Enum.join("\n"))
+          library |> Map.merge(Jason.decode!(json, keys: :atoms)) |> Map.put(:status, "ok")
+
+        {:error, _} ->
+          error = install_error(output)
+          IO.puts("  install failed (exit #{status}): #{error}")
+          Map.merge(library, %{status: "install failed", error: error, versions: %{}, rows: []})
+      end
+    end
   end
 
   def selected_inputs do
@@ -497,6 +524,7 @@ defmodule Bench.Report do
     - Machine: #{env.cpu}, #{env.logical_cpus} logical CPUs, #{env.memory_gb} GB RAM, #{env.os}
     - Elixir #{env.elixir}, Erlang/OTP #{env.otp} (erts #{env.erts}#{if env.jit, do: ", JIT"})#{if env.pandoc, do: ", #{env.pandoc}"}
     - Benchee per row: #{env.benchee.warmup} s warmup, #{env.benchee.time} s run time, #{env.benchee.memory_time} s memory, #{env.benchee.reduction_time} s reductions. Each library runs in its own BEAM.
+    - Every library ran #{env.rounds} times, in separate rounds; each row reports the round with the lower median, so a burst of load on this shared VM doesn't decide a row.
     - Before a row is benchmarked, one call runs on its own: a call over #{env.timeout_s} s is a **timeout**, a call that raises or returns an error is an **error**.
     - ips is calls per second (higher is better). Memory is what Benchee measures on the BEAM process heap, so it leaves out memory a NIF or an external program allocates.
 
