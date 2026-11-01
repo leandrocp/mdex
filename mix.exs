@@ -57,7 +57,6 @@ defmodule MDEx.MixProject do
         examples
         guides
         mix.exs
-        benchmark.exs
         README.md
         LICENSE.md
         CHANGELOG.md
