@@ -1,0 +1,654 @@
+{
+  "stream_chunk_size": 128,
+  "environment": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+    "date": "2026-11-01 11:41 EST",
+    "os": "Linux 6.1.158+ x86_64",
+    "otp": "29",
+    "elixir": "1.20.5",
+    "erts": "17.1.1",
+    "memory_gb": 3,
+    "versions": {
+      "mdex": "0.14.6",
+      "lumis_wasm_elixir": "0.26.8",
+      "benchee": "1.5.1",
+      "earmark": "1.4.49",
+      "md": "0.15.1",
+      "cmark": "0.10.0",
+      "markdown": "1.0.0",
+      "mdex_native": "0.3.1"
+    },
+    "mdex_commit": "e03df400dfe0d90c522fcd92d43b9ffbdf2f2394",
+    "mdex_lib_dirty": false,
+    "jit": true,
+    "logical_cpus": 2
+  },
+  "results": [
+    {
+      "input": {
+        "name": "small",
+        "file": "small.md",
+        "description": "Handwritten release note: headings, list, task item, link, autolink, code block, table, quote",
+        "bytes": 540
+      },
+      "rows": [
+        {
+          "name": "mdex_native markdown_to_html (comrak defaults)",
+          "reductions": 71.0,
+          "ips": 58054.41226261021,
+          "average_ns": 17225.219600475524,
+          "median_ns": 15651.0,
+          "p99_ns": 45233.04000000004,
+          "deviation_pct": 63.626270847467524,
+          "sample_size": 282636,
+          "memory_bytes": 112.0
+        },
+        {
+          "name": "cmark",
+          "reductions": 54.0,
+          "ips": 49111.203231651016,
+          "average_ns": 20361.952756138613,
+          "median_ns": 15042.0,
+          "p99_ns": 65237.600000000326,
+          "deviation_pct": 73.61216048374489,
+          "sample_size": 236454,
+          "memory_bytes": 64.0
+        },
+        {
+          "name": "mdex_native markdown_to_html",
+          "reductions": 142.0,
+          "ips": 46992.71791710117,
+          "average_ns": 21279.892807308534,
+          "median_ns": 20126.0,
+          "p99_ns": 50265.03000000003,
+          "deviation_pct": 47.4918513637761,
+          "sample_size": 227898,
+          "memory_bytes": 496.0
+        },
+        {
+          "name": "MDEx.to_html",
+          "reductions": 300.0,
+          "ips": 38965.9824057974,
+          "average_ns": 25663.410448268824,
+          "median_ns": 22774.0,
+          "p99_ns": 62492.87999999989,
+          "deviation_pct": 37.97786323699353,
+          "sample_size": 191113,
+          "memory_bytes": 2280.0
+        },
+        {
+          "name": "mdex_native parse_document",
+          "reductions": 444.0,
+          "ips": 30083.971261918825,
+          "average_ns": 33240.29235680827,
+          "median_ns": 28681.0,
+          "p99_ns": 74094.0,
+          "deviation_pct": 48.655089551108034,
+          "sample_size": 148158,
+          "memory_bytes": 2696.0
+        },
+        {
+          "name": "mdex_native document_to_html",
+          "reductions": 181.0,
+          "ips": 29807.682226329784,
+          "average_ns": 33548.39844329385,
+          "median_ns": 31133.0,
+          "p99_ns": 68033.44,
+          "deviation_pct": 30.39750532297438,
+          "sample_size": 146977,
+          "memory_bytes": 1920.0
+        },
+        {
+          "name": "MDEx.to_html(document)",
+          "reductions": 1324.0,
+          "ips": 19887.711573236335,
+          "average_ns": 50282.30605203159,
+          "median_ns": 45879.0,
+          "p99_ns": 97575.23999999987,
+          "deviation_pct": 28.398793125003596,
+          "sample_size": 98248,
+          "memory_bytes": 1.14e4
+        },
+        {
+          "name": "MDEx.parse_document",
+          "reductions": 1152.0,
+          "ips": 16801.41497042524,
+          "average_ns": 59518.7965870883,
+          "median_ns": 49046.0,
+          "p99_ns": 119711.79999999999,
+          "deviation_pct": 161.61179652490347,
+          "sample_size": 82979,
+          "memory_bytes": 10496.0
+        },
+        {
+          "name": "mdex_native markdown_to_html + sanitize",
+          "reductions": 586.0,
+          "ips": 9564.036111909478,
+          "average_ns": 104558.36723104428,
+          "median_ns": 97595.0,
+          "p99_ns": 160083.40000000002,
+          "deviation_pct": 17.15209345189024,
+          "sample_size": 47545,
+          "memory_bytes": 2912.0
+        },
+        {
+          "name": "MDEx.to_html + sanitize",
+          "reductions": 1221.0,
+          "ips": 8093.551786786436,
+          "average_ns": 123555.14937614952,
+          "median_ns": 110571.5,
+          "p99_ns": 268440.10000000015,
+          "deviation_pct": 26.956866033371018,
+          "sample_size": 40234,
+          "memory_bytes": 5.6e3
+        },
+        {
+          "name": "mdex_native markdown_to_html + highlight",
+          "reductions": 712.0,
+          "ips": 5795.156869079768,
+          "average_ns": 172557.88283066673,
+          "median_ns": 155224.0,
+          "p99_ns": 347742.24000000046,
+          "deviation_pct": 24.20046041415887,
+          "sample_size": 28813,
+          "memory_bytes": 856.0
+        },
+        {
+          "name": "~MD sigil expansion (HTML)",
+          "reductions": 8271.0,
+          "ips": 5478.126962962273,
+          "average_ns": 182544.14451527322,
+          "median_ns": 177916.0,
+          "p99_ns": 284667.59999999875,
+          "deviation_pct": 17.501748306996884,
+          "sample_size": 27139,
+          "memory_bytes": 55864.0
+        },
+        {
+          "name": "MDEx.to_html + highlight",
+          "reductions": 1290.0,
+          "ips": 5350.627418558047,
+          "average_ns": 186893.96995418012,
+          "median_ns": 167993.0,
+          "p99_ns": 336793.13999999996,
+          "deviation_pct": 25.516836387316914,
+          "sample_size": 26626,
+          "memory_bytes": 4032.0
+        },
+        {
+          "name": "md",
+          "reductions": 15459.0,
+          "ips": 2434.911374826232,
+          "average_ns": 410692.5657905578,
+          "median_ns": 383501.0,
+          "p99_ns": 787988.4000000003,
+          "deviation_pct": 22.65188180010752,
+          "sample_size": 12137,
+          "memory_bytes": 699576.0
+        },
+        {
+          "name": "MDEx.stream + to_html each",
+          "reductions": 19228.0,
+          "ips": 1274.0329227713155,
+          "average_ns": 784909.0726986625,
+          "median_ns": 724271.0,
+          "p99_ns": 1462728.9999999925,
+          "deviation_pct": 24.609868301288635,
+          "sample_size": 6355,
+          "memory_bytes": 210760.0
+        },
+        {
+          "name": "earmark",
+          "reductions": 51387.0,
+          "ips": 395.76132034975086,
+          "average_ns": 2526775.479514416,
+          "median_ns": 2465541.0,
+          "p99_ns": 4287077.700000001,
+          "deviation_pct": 11.743226416809723,
+          "sample_size": 1977,
+          "memory_bytes": 540648.0
+        },
+        {
+          "name": "erlang-markdown",
+          "reductions": 314812.0,
+          "ips": 296.71224648021325,
+          "average_ns": 3370268.709372893,
+          "median_ns": 3317267.0,
+          "p99_ns": 5855686.440000006,
+          "deviation_pct": 11.194928844538406,
+          "sample_size": 1483,
+          "memory_bytes": 7260168.0
+        }
+      ],
+      "skipped": {}
+    },
+    {
+      "input": {
+        "name": "medium",
+        "file": "medium.md",
+        "description": "MDEx README.md snapshot (commit fad697a)",
+        "bytes": 13339
+      },
+      "rows": [
+        {
+          "name": "cmark",
+          "reductions": 658.0,
+          "ips": 5412.232829632373,
+          "average_ns": 184766.62617412288,
+          "median_ns": 166639.0,
+          "p99_ns": 347848.95999999996,
+          "deviation_pct": 24.60716538828444,
+          "sample_size": 26935,
+          "memory_bytes": 64.0
+        },
+        {
+          "name": "mdex_native markdown_to_html (comrak defaults)",
+          "reductions": 827.0,
+          "ips": 4108.006582336636,
+          "average_ns": 243427.06856891152,
+          "median_ns": 234215.0,
+          "p99_ns": 416767.4799999996,
+          "deviation_pct": 14.48237261533529,
+          "sample_size": 20432,
+          "memory_bytes": 112.0
+        },
+        {
+          "name": "mdex_native markdown_to_html",
+          "reductions": 902.0,
+          "ips": 4034.2781930461542,
+          "average_ns": 247875.81622994918,
+          "median_ns": 240983.0,
+          "p99_ns": 397388.5,
+          "deviation_pct": 15.056913706828789,
+          "sample_size": 20074,
+          "memory_bytes": 496.0
+        },
+        {
+          "name": "MDEx.to_html",
+          "reductions": 1063.0,
+          "ips": 3892.5052387199235,
+          "average_ns": 256903.95739296597,
+          "median_ns": 248259.0,
+          "p99_ns": 406160.9200000004,
+          "deviation_pct": 12.631721337438204,
+          "sample_size": 19363,
+          "memory_bytes": 2280.0
+        },
+        {
+          "name": "mdex_native document_to_html",
+          "reductions": 1365.0,
+          "ips": 2693.135231242,
+          "average_ns": 371314.4399135232,
+          "median_ns": 355778.0,
+          "p99_ns": 675471.2500000006,
+          "deviation_pct": 18.159203720519653,
+          "sample_size": 13414,
+          "memory_bytes": 22064.0
+        },
+        {
+          "name": "mdex_native parse_document",
+          "reductions": 3543.0,
+          "ips": 2310.578559038934,
+          "average_ns": 432792.0364741641,
+          "median_ns": 414636.0,
+          "p99_ns": 682029.72,
+          "deviation_pct": 18.406029772109026,
+          "sample_size": 11515,
+          "memory_bytes": 2704.0
+        },
+        {
+          "name": "MDEx.to_html(document)",
+          "reductions": 8901.0,
+          "ips": 2055.1670009863797,
+          "average_ns": 486578.46273322264,
+          "median_ns": 459208.0,
+          "p99_ns": 851953.86,
+          "deviation_pct": 21.95333728776042,
+          "sample_size": 10237,
+          "memory_bytes": 74880.0
+        },
+        {
+          "name": "MDEx.parse_document",
+          "reductions": 8132.0,
+          "ips": 2009.3120662415517,
+          "average_ns": 497682.7725274725,
+          "median_ns": 478350.5,
+          "p99_ns": 813279.0999999997,
+          "deviation_pct": 16.537967704010544,
+          "sample_size": 10010,
+          "memory_bytes": 72840.0
+        },
+        {
+          "name": "mdex_native markdown_to_html + sanitize",
+          "reductions": 3930.0,
+          "ips": 971.0072797255324,
+          "average_ns": 1029858.3964094098,
+          "median_ns": 1009138.5,
+          "p99_ns": 1444386.1899999997,
+          "deviation_pct": 13.241095317044776,
+          "sample_size": 4846,
+          "memory_bytes": 2912.0
+        },
+        {
+          "name": "MDEx.to_html + sanitize",
+          "reductions": 4572.0,
+          "ips": 961.9222766259517,
+          "average_ns": 1039585.031243491,
+          "median_ns": 1025470.0,
+          "p99_ns": 1558662.5399999935,
+          "deviation_pct": 13.06290157067168,
+          "sample_size": 4801,
+          "memory_bytes": 5.6e3
+        },
+        {
+          "name": "~MD sigil expansion (HTML)",
+          "reductions": 19973.0,
+          "ips": 863.053325055503,
+          "average_ns": 1158676.9565318457,
+          "median_ns": 1128437.0,
+          "p99_ns": 1974287.8600000008,
+          "deviation_pct": 25.45504977799853,
+          "sample_size": 4302,
+          "memory_bytes": 114456.0
+        },
+        {
+          "name": "mdex_native markdown_to_html + highlight",
+          "reductions": 13788.0,
+          "ips": 281.6318994798992,
+          "average_ns": 3550734.1385927508,
+          "median_ns": 3452365.0,
+          "p99_ns": 5162905.08,
+          "deviation_pct": 12.722126289119151,
+          "sample_size": 1407,
+          "memory_bytes": 856.0
+        },
+        {
+          "name": "MDEx.to_html + highlight",
+          "reductions": 14627.0,
+          "ips": 275.22013510028006,
+          "average_ns": 3633455.0872727274,
+          "median_ns": 3530242.0,
+          "p99_ns": 4784219.36,
+          "deviation_pct": 8.778651143017008,
+          "sample_size": 1375,
+          "memory_bytes": 4032.0
+        },
+        {
+          "name": "md",
+          "reductions": 155070.0,
+          "ips": 131.8808210428504,
+          "average_ns": 7582603.6878787875,
+          "median_ns": 7374988.5,
+          "p99_ns": 12648410.889999999,
+          "deviation_pct": 11.77502246137375,
+          "sample_size": 660,
+          "memory_bytes": 16683648.0
+        },
+        {
+          "name": "earmark",
+          "reductions": 861558.0,
+          "ips": 29.27724343429345,
+          "average_ns": 34156221.10204082,
+          "median_ns": 34105688.0,
+          "p99_ns": 38929824.64,
+          "deviation_pct": 3.1451509171106964,
+          "sample_size": 147,
+          "memory_bytes": 9249472.0
+        },
+        {
+          "name": "MDEx.stream + to_html each",
+          "reductions": 1776376.0,
+          "ips": 13.733333373405475,
+          "average_ns": 72815533.76811594,
+          "median_ns": 72367053.0,
+          "p99_ns": 80577672.0,
+          "deviation_pct": 3.0219928411075943,
+          "sample_size": 69,
+          "memory_bytes": 23303968.0
+        },
+        {
+          "name": "erlang-markdown",
+          "reductions": 32429087.0,
+          "ips": 4.218475476955871,
+          "average_ns": 237052462.54545453,
+          "median_ns": 232318060.0,
+          "p99_ns": 271405736.0,
+          "deviation_pct": 5.5650900697932,
+          "sample_size": 22,
+          "memory_bytes": 763846904.0
+        }
+      ],
+      "skipped": {}
+    },
+    {
+      "input": {
+        "name": "large",
+        "file": "large.md",
+        "description": "CommonMark Spec 0.31.2 (spec.txt), CC BY-SA 4.0, John MacFarlane",
+        "bytes": 205025
+      },
+      "rows": [
+        {
+          "name": "cmark",
+          "reductions": 13263.0,
+          "ips": 271.29903469464875,
+          "average_ns": 3685969.620664207,
+          "median_ns": 3401468.0,
+          "p99_ns": 6719691.560000007,
+          "deviation_pct": 22.274926215086154,
+          "sample_size": 1355,
+          "memory_bytes": 64.0
+        },
+        {
+          "name": "mdex_native markdown_to_html (comrak defaults)",
+          "reductions": 16602.0,
+          "ips": 231.32349098157246,
+          "average_ns": 4322950.4956747405,
+          "median_ns": 4229896.0,
+          "p99_ns": 6179638.570000005,
+          "deviation_pct": 9.83097730733392,
+          "sample_size": 1156,
+          "memory_bytes": 112.0
+        },
+        {
+          "name": "mdex_native markdown_to_html",
+          "reductions": 16707.0,
+          "ips": 231.0516090274917,
+          "average_ns": 4328037.3774891775,
+          "median_ns": 4240637.0,
+          "p99_ns": 6646973.04,
+          "deviation_pct": 9.229613144758321,
+          "sample_size": 1155,
+          "memory_bytes": 496.0
+        },
+        {
+          "name": "MDEx.to_html",
+          "reductions": 17038.0,
+          "ips": 228.8182130144831,
+          "average_ns": 4370281.486013986,
+          "median_ns": 4239905.0,
+          "p99_ns": 6779455.5,
+          "deviation_pct": 11.325797087915085,
+          "sample_size": 1144,
+          "memory_bytes": 2280.0
+        },
+        {
+          "name": "mdex_native document_to_html",
+          "reductions": 18531.0,
+          "ips": 208.9357304171051,
+          "average_ns": 4786160.787356322,
+          "median_ns": 4665595.5,
+          "p99_ns": 6909356.949999996,
+          "deviation_pct": 8.481330881103114,
+          "sample_size": 1044,
+          "memory_bytes": 71096.0
+        },
+        {
+          "name": "mdex_native parse_document",
+          "reductions": 25940.0,
+          "ips": 186.4096470720553,
+          "average_ns": 5364529.227467811,
+          "median_ns": 5091055.5,
+          "p99_ns": 7746614.259999998,
+          "deviation_pct": 13.998437443785033,
+          "sample_size": 932,
+          "memory_bytes": 2704.0
+        },
+        {
+          "name": "MDEx.to_html(document)",
+          "reductions": 72944.0,
+          "ips": 162.68913239735306,
+          "average_ns": 6146692.070110701,
+          "median_ns": 5848102.0,
+          "p99_ns": 9323877.680000002,
+          "deviation_pct": 37.49323107251656,
+          "sample_size": 813,
+          "memory_bytes": 855288.0
+        },
+        {
+          "name": "MDEx.parse_document",
+          "reductions": 76303.0,
+          "ips": 158.57299143580886,
+          "average_ns": 6306244.15258512,
+          "median_ns": 6247194.0,
+          "p99_ns": 10428541.979999993,
+          "deviation_pct": 14.691532640146992,
+          "sample_size": 793,
+          "memory_bytes": 785352.0
+        },
+        {
+          "name": "~MD sigil expansion (HTML)",
+          "reductions": 80489.0,
+          "ips": 130.55825893180875,
+          "average_ns": 7659415.86676876,
+          "median_ns": 7432741.0,
+          "p99_ns": 12325336.360000007,
+          "deviation_pct": 12.190949976121615,
+          "sample_size": 653,
+          "memory_bytes": 938448.0
+        },
+        {
+          "name": "MDEx.to_html + sanitize",
+          "reductions": 51316.0,
+          "ips": 78.72842926035996,
+          "average_ns": 12701891.92639594,
+          "median_ns": 12624195.5,
+          "p99_ns": 15150185.4,
+          "deviation_pct": 3.0132476937531747,
+          "sample_size": 394,
+          "memory_bytes": 5.6e3
+        },
+        {
+          "name": "mdex_native markdown_to_html + sanitize",
+          "reductions": 50031.0,
+          "ips": 78.59070441722665,
+          "average_ns": 12724151.124681935,
+          "median_ns": 12540189.0,
+          "p99_ns": 17569820.16,
+          "deviation_pct": 6.963615919014021,
+          "sample_size": 393,
+          "memory_bytes": 2912.0
+        },
+        {
+          "name": "MDEx.to_html + highlight",
+          "reductions": 195705.0,
+          "ips": 20.104447989725173,
+          "average_ns": 49740236.61386139,
+          "median_ns": 49633327.0,
+          "p99_ns": 57858552.64,
+          "deviation_pct": 4.068355648338449,
+          "sample_size": 101,
+          "memory_bytes": 4032.0
+        },
+        {
+          "name": "mdex_native markdown_to_html + highlight",
+          "reductions": 203774.0,
+          "ips": 19.68365669221713,
+          "average_ns": 50803568.44444445,
+          "median_ns": 50624540.0,
+          "p99_ns": 58654291.0,
+          "deviation_pct": 4.4046923551074,
+          "sample_size": 99,
+          "memory_bytes": 856.0
+        },
+        {
+          "name": "md",
+          "reductions": 3686380.0,
+          "ips": 6.903269369695213,
+          "average_ns": 144858898.94285715,
+          "median_ns": 126241123.0,
+          "p99_ns": 312506585.0,
+          "deviation_pct": 36.789267568005485,
+          "sample_size": 35,
+          "memory_bytes": 255164760.0
+        },
+        {
+          "name": "earmark",
+          "reductions": 22779921.0,
+          "ips": 1.6985913815323632,
+          "average_ns": 588723109.5555556,
+          "median_ns": 589764659.0,
+          "p99_ns": 608337558.0,
+          "deviation_pct": 1.7082188272109315,
+          "sample_size": 9,
+          "memory_bytes": 225188328.0
+        },
+        {
+          "name": "MDEx.stream + to_html each",
+          "reductions": 2756135559.0,
+          "ips": 0.031050068270794234,
+          "average_ns": 32206048350.0,
+          "median_ns": 32206048350.0,
+          "p99_ns": 32206048350.0,
+          "deviation_pct": 0.0,
+          "sample_size": 1,
+          "memory_bytes": 5135041264.0
+        }
+      ],
+      "skipped": {
+        "erlang-markdown": "One call took 100 s on this input (measured once with :timer.tc), too slow to benchmark"
+      }
+    }
+  ],
+  "benchee_config": {
+    "time": 5,
+    "warmup": 2,
+    "memory_time": 1,
+    "reduction_time": 1
+  },
+  "sigil_compile": [
+    {
+      "input": "small",
+      "median_us": 4728,
+      "runs_us": [
+        4895,
+        3742,
+        4728,
+        4281,
+        5222
+      ]
+    },
+    {
+      "input": "medium",
+      "median_us": 6061,
+      "runs_us": [
+        6488,
+        5611,
+        6186,
+        6061,
+        5616
+      ]
+    },
+    {
+      "input": "large",
+      "median_us": 36314,
+      "runs_us": [
+        36314,
+        35402,
+        36784,
+        36291,
+        37136
+      ]
+    }
+  ]
+}
