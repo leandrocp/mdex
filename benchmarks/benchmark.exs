@@ -332,15 +332,28 @@ defmodule Bench.Worker do
     timeout = String.to_integer(System.get_env("BENCH_TIMEOUT") || "60") * 1000
     config = benchee_config(System.get_env("BENCH_QUICK") == "1")
 
-    rows =
+    cases =
       for input <- Bench.Orchestrator.selected_inputs(),
           markdown <- [File.read!(Bench.Orchestrator.input_path(input))],
-          {operation, job} <- jobs(library.name, markdown) do
+          {operation, job} <- jobs(library.name, markdown),
+          do: {input, operation, job}
+
+    # Run one operation across all inputs before the next: highlighting and sanitizing
+    # leave VM/allocator state that slows later plain-HTML calls in the same BEAM.
+    operations = cases |> Enum.map(&elem(&1, 1)) |> Enum.uniq()
+    cases = Enum.sort_by(cases, fn {_, operation, _} -> Enum.find_index(operations, &(&1 == operation)) end)
+
+    {natives, cases} = Enum.split_with(cases, fn {_, operation, _} -> String.starts_with?(operation, "native_") end)
+    natives = Map.new(natives, fn {input, "native_" <> operation, job} -> {{input.name, operation}, job} end)
+
+    rows =
+      for {input, operation, job} <- cases do
         row = %{library: library.name, input: input.name, operation: operation}
 
         case probe(job, timeout) do
           ok when ok == :ok or elem(ok, 0) == :ok ->
             stats = measure(job, config)
+            stats = if native = natives[{input.name, operation}], do: Map.put(stats, :paired, paired(job, native, config)), else: stats
             IO.puts("  bench #{input.name} #{operation}: #{format_ips(stats.ips)} ips, median #{round(stats.median_ns / 1000)} µs")
             row |> Map.merge(stats) |> Map.put(:status, "ok") |> Map.put(:note, if(ok == :ok, do: nil, else: elem(ok, 1)))
 
@@ -402,6 +415,36 @@ defmodule Bench.Worker do
     }
   end
 
+  # MDEx and the raw NIF call, alternating call by call (and which goes first) in
+  # this BEAM, so drift between Benchee rows and between BEAM processes cancels out.
+  defp paired(mdex, native, config) do
+    paired_loop(mdex, native, deadline(config[:warmup]), 0, [], [])
+    {mdex_ns, native_ns} = paired_loop(mdex, native, deadline(config[:time]), 0, [], [])
+    %{mdex_median_ns: median(mdex_ns), native_median_ns: median(native_ns), samples: length(mdex_ns)}
+  end
+
+  defp deadline(seconds), do: System.monotonic_time(:nanosecond) + round(seconds * 1_000_000_000)
+
+  defp paired_loop(mdex, native, deadline, n, mdex_ns, native_ns) do
+    if System.monotonic_time(:nanosecond) > deadline do
+      {mdex_ns, native_ns}
+    else
+      {a, b} =
+        if rem(n, 2) == 0 do
+          a = time(mdex)
+          {a, time(native)}
+        else
+          b = time(native)
+          {time(mdex), b}
+        end
+
+      paired_loop(mdex, native, deadline, n + 1, [a | mdex_ns], [b | native_ns])
+    end
+  end
+
+  defp time(job), do: job |> :timer.tc(:nanosecond) |> elem(0)
+  defp median(list), do: list |> Enum.sort() |> Enum.at(div(length(list), 2))
+
   defp format_ips(ips) when ips >= 10, do: ips |> round() |> Integer.to_string()
   defp format_ips(ips), do: :erlang.float_to_binary(ips, decimals: 2)
 
@@ -416,12 +459,24 @@ defmodule Bench.Worker do
     chunks = chunk(md, @stream_chunk_size)
     sigil_env = sigil_env()
 
+    # The raw NIF calls with the options MDEx passes. They aren't rows of their own:
+    # the worker times each one alternating with its MDEx counterpart (see `paired/3`).
+    native = fn opts -> MDEx.Document.rust_options!(MDEx.new(opts).options) end
+    {plain, highlight} = {native.([]), native.(@highlight)}
+    sanitize_native = native.(sanitize)
+    {:ok, native_document} = MDExNative.Comrak.parse_document(md, plain)
+
     [
       {"html", fn -> MDEx.to_html(md) end},
+      {"native_html", fn -> MDExNative.Comrak.markdown_to_html(md, plain) end},
       {"ast", fn -> MDEx.parse_document(md) end},
+      {"native_ast", fn -> MDExNative.Comrak.parse_document(md, plain) end},
       {"ast_html", fn -> MDEx.to_html(document) end},
+      {"native_ast_html", fn -> MDExNative.Comrak.document_to_html(native_document, plain) end},
       {"highlight", fn -> MDEx.to_html(md, @highlight) end},
+      {"native_highlight", fn -> MDExNative.Comrak.markdown_to_html(md, highlight) end},
       {"sanitize", fn -> MDEx.to_html(md, sanitize) end},
+      {"native_sanitize", fn -> MDExNative.Comrak.markdown_to_html(md, sanitize_native) end},
       {"stream", fn -> chunks |> MDEx.stream() |> Stream.map(fn {id, doc} -> {id, MDEx.to_html!(doc)} end) |> Stream.run() end},
       {"sigil", fn -> Macro.expand_once({:sigil_MD, [], [{:<<>>, [], [md]}, ~c"HTML"]}, sigil_env) end}
     ]
@@ -551,7 +606,7 @@ defmodule Bench.Report do
     #{Enum.map_join(Bench.Spec.operations(), "\n", &operation_section(&1, inputs, rows))}
     ## MDEx and mdex_native with the same options
 
-    MDEx's throughput as a share of mdex_native's, both called with MDEx's options (`mdex_native` rows use `MDEx.Document.rust_options!/1`).
+    MDEx's throughput as a share of the raw mdex_native call with the options MDEx passes (`MDEx.Document.rust_options!/1`), from median call times. The two calls alternate one by one in the same BEAM: timings of small calls shift between BEAM processes and between consecutive Benchee runs on this machine, so the tables above can't give a fair ratio.
 
     | Operation | #{Enum.map_join(inputs, " | ", & &1.name)} |
     |---|#{Enum.map_join(inputs, "|", fn _ -> "---:" end)}|
@@ -640,17 +695,17 @@ defmodule Bench.Report do
     "| #{library} | #{format_ips(row.ips)} | #{relative} | #{format_time(row.median_ns)} | #{format_time(row.p99_ns)} | ±#{format_float(row.deviation_pct)}% | #{format_bytes(row.memory_bytes)} | #{format_int(round(row.reductions))} |"
   end
 
-  @pairs [{"html", "html_mdex_options"}, {"highlight", "highlight"}, {"sanitize", "sanitize"}, {"ast", "ast"}, {"ast_html", "ast_html"}]
+  @pairs ["html", "highlight", "sanitize", "ast", "ast_html"]
 
   defp same_options_table(inputs, rows) do
     find = fn lib, op, input -> Enum.find(rows, &(&1.library == lib and &1.operation == op and &1.input == input and &1.status == "ok")) end
     labels = Map.new(Bench.Spec.operations())
 
-    Enum.map_join(@pairs, "\n", fn {mdex_op, native_op} ->
+    Enum.map_join(@pairs, "\n", fn mdex_op ->
       cells =
         Enum.map_join(inputs, " | ", fn input ->
-          with %{} = mdex <- find.("mdex", mdex_op, input.name), %{} = native <- find.("mdex_native", native_op, input.name) do
-            "#{round(mdex.ips / native.ips * 100)}% (#{format_time(mdex.median_ns)} vs #{format_time(native.median_ns)})"
+          with %{paired: %{mdex_median_ns: mdex, native_median_ns: native}} <- find.("mdex", mdex_op, input.name) do
+            "#{round(native / mdex * 100)}% (#{format_time(mdex)} vs #{format_time(native)})"
           else
             _ -> "n/a"
           end
