@@ -2052,6 +2052,7 @@ defmodule MDEx.StreamTest do
       nested_list: "- one\n  - nested\n  - also\n- two\n",
       task_list: "- [ ] todo\n- [x] done\n",
       fenced_code: "Intro:\n\n```elixir\ndef a(b), do: b\n```\n\nOutro.\n",
+      nested_fence_lines: "````\n~~~\n```elixir\ncode\n```\n````\n\nOutro.\n",
       table: "| name | qty |\n|---|---|\n| apples | 3 |\n| pears | 7 |\n",
       block_quote: "> quoted\n> lines\n\nAfter.\n",
       raw_html: "<div class=\"x\">\n  <p>raw</p>\n</div>\n\nAfter.\n",

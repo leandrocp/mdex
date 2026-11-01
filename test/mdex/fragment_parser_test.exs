@@ -672,6 +672,16 @@ defmodule MDEx.FragmentParserTest do
       assert complete("~~~\ncode") == "~~~\ncode\n~~~"
     end
 
+    test "fence lines that don't close the open fence are content" do
+      assert complete("````\n~~~\ncode") == "````\n~~~\ncode\n````"
+      assert complete("~~~~\n```\ncode") == "~~~~\n```\ncode\n~~~~"
+      assert complete("````\n```\ncode") == "````\n```\ncode\n````"
+    end
+
+    test "closing fence indented differently from the opening fence" do
+      assert complete("text\n\n  ```\ncode\n```\nafter") == "text\n\n  ```\ncode\n```\nafter"
+    end
+
     test "display math with trailing newline and half close" do
       assert complete("$$formula$\n") == "$$formula$\n$"
     end

@@ -284,8 +284,9 @@ defmodule MDEx.FragmentParser do
           closes_open_fence?(updated_info, open_fence) ->
             find_unclosed_fence(rest, index + 1, nil)
 
+          # Any other fence line inside an open fence is part of its content.
           true ->
-            find_unclosed_fence(rest, index + 1, updated_info)
+            find_unclosed_fence(rest, index + 1, maybe_mark_body(open_fence, index))
         end
 
       _ ->
@@ -308,9 +309,13 @@ defmodule MDEx.FragmentParser do
 
   defp normalize_fence_info(info), do: Map.drop(info, [:has_body])
 
-  defp closes_open_fence?(%{indent: indent, char: char, run: run, rest: rest}, %{indent: indent, char: char, run: open_run}) do
+  # A closing fence uses the opening fence's character, is at least as long,
+  # and may be indented up to 3 spaces regardless of the opening fence's indent.
+  defp closes_open_fence?(%{char: char, run: run, rest: rest}, %{char: char, run: open_run}) do
     run >= open_run and only_spaces?(rest)
   end
+
+  defp closes_open_fence?(_line, _open_fence), do: false
 
   defp parse_fence_line(line) do
     {indent, rest} = take_fence_indent(line)
