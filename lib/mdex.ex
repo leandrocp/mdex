@@ -1637,28 +1637,38 @@ defmodule MDEx do
     end
   end
 
+  # Groups the top-level nodes by the range their first line falls in, in one
+  # pass. Ranges are kept in source order, so the range of a line is found by a
+  # binary search over their start lines.
   defp stream_segment_nodes(state, nodes) do
-    ranges =
-      Map.new(state.ranges, fn range ->
-        {range.id, stream_nodes_in_range(nodes, range.start_line, range.end_line)}
+    ranges = List.to_tuple(state.ranges ++ [Map.put(state.open_range, :end_line, :infinity)])
+    empty = for index <- 0..(tuple_size(ranges) - 1)//1, into: %{}, do: {index, []}
+
+    buckets =
+      Enum.reduce(nodes, empty, fn node, buckets ->
+        line = elem(node.sourcepos.start, 0)
+
+        case stream_range_index(ranges, line, 0, tuple_size(ranges) - 1, nil) do
+          nil -> buckets
+          index -> Map.update!(buckets, index, &[node | &1])
+        end
       end)
 
-    Map.put(
-      ranges,
-      state.open_range.id,
-      stream_nodes_in_range(nodes, state.open_range.start_line, :infinity)
-    )
+    Map.new(buckets, fn {index, range_nodes} -> {elem(ranges, index).id, Enum.reverse(range_nodes)} end)
   end
 
-  defp stream_nodes_in_range(nodes, start_line, :infinity) do
-    Enum.filter(nodes, fn node -> elem(node.sourcepos.start, 0) >= start_line end)
+  defp stream_range_index(ranges, line, low, high, found) when low > high do
+    if found != nil and line < elem(ranges, found).end_line, do: found
   end
 
-  defp stream_nodes_in_range(nodes, start_line, end_line) do
-    Enum.filter(nodes, fn node ->
-      line = elem(node.sourcepos.start, 0)
-      line >= start_line and line < end_line
-    end)
+  defp stream_range_index(ranges, line, low, high, found) do
+    middle = div(low + high, 2)
+
+    if elem(ranges, middle).start_line <= line do
+      stream_range_index(ranges, line, middle + 1, high, middle)
+    else
+      stream_range_index(ranges, line, low, middle - 1, found)
+    end
   end
 
   defp stream_changed_ids(previous, current) do

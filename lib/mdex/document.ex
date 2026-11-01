@@ -1463,11 +1463,23 @@ defmodule MDEx.Document do
   # The errors are the same.
   without_defaults = fn schema -> Enum.map(schema, fn {key, spec} -> {key, Keyword.delete(spec, :default)} end) end
 
-  @compiled_extension_options_schema NimbleOptions.new!(without_defaults.(@extension_options_schema))
-  @compiled_parse_options_schema NimbleOptions.new!(without_defaults.(@parse_options_schema))
-  @compiled_render_options_schema NimbleOptions.new!(without_defaults.(@render_options_schema))
-  @compiled_syntax_highlight_options_schema NimbleOptions.new!(without_defaults.(@syntax_highlight_options_schema))
-  @compiled_sanitize_options_schema NimbleOptions.new!(without_defaults.(@sanitize_options_schema))
+  #
+  # NimbleOptions validation is quadratic in the number of options given, so each
+  # option is also validated on its own against a one-key schema. Only when that
+  # fails does the full schema run, to raise the same error it always did.
+  @validation_schemas (for {name, schema} <- [
+                             extension: @extension_options_schema,
+                             parse: @parse_options_schema,
+                             render: @render_options_schema,
+                             syntax_highlight: @syntax_highlight_options_schema,
+                             sanitize: @sanitize_options_schema
+                           ],
+                           into: %{} do
+                         schema = without_defaults.(schema)
+                         key_schemas = Map.new(schema, fn {key, spec} -> {key, NimbleOptions.new!([{key, spec}])} end)
+                         {name, {NimbleOptions.new!(schema), key_schemas}}
+                       end)
+
   @compiled_syntax_highlight_options_schema_with_defaults NimbleOptions.new!(@syntax_highlight_options_schema)
 
   @default_options NimbleOptions.validate!([], @options_schema)
@@ -1478,6 +1490,13 @@ defmodule MDEx.Document do
   @default_extension_options_map Map.new(@default_options[:extension])
   @default_parse_options_map Map.new(@default_options[:parse])
   @default_render_options_map Map.new(@default_options[:render])
+  @default_options_extension @default_options[:extension]
+  @default_options_parse @default_options[:parse]
+  @default_options_render @default_options[:render]
+  # What extension_map/1 and render_map/1 return for the defaults: the
+  # deprecated :header_ids (nil by default) is dropped, and :unsafe is kept.
+  @default_extension_native_map Map.delete(@default_extension_options_map, :header_ids)
+  @default_render_native_map Map.put(@default_render_options_map, :unsafe, Keyword.get(@default_options[:render], :unsafe, false))
 
   @typedoc """
   Tree root of a Markdown document, including all children nodes.
@@ -1659,7 +1678,28 @@ defmodule MDEx.Document do
   # `sanitize: MDEx.default_sanitize_options()` is the usual way to turn sanitizing
   # on, and the defaults are valid, so they skip validating their long allowlists.
   def validate_sanitize_options!(@default_sanitize_options = options), do: options
-  def validate_sanitize_options!(options), do: NimbleOptions.validate!(options, @compiled_sanitize_options_schema)
+  def validate_sanitize_options!(options), do: validate_options!(options, :sanitize)
+
+  defp validate_options!(options, name) do
+    {schema, key_schemas} = Map.fetch!(@validation_schemas, name)
+    if valid_by_key?(options, key_schemas, %{}), do: options, else: NimbleOptions.validate!(options, schema)
+  end
+
+  # Repeated or unknown keys go to the full schema.
+  defp valid_by_key?([], _key_schemas, _seen), do: true
+
+  defp valid_by_key?([{key, value} | rest], key_schemas, seen) when not is_map_key(seen, key) do
+    case key_schemas do
+      %{^key => schema} ->
+        match?({:ok, _}, NimbleOptions.validate([{key, value}], schema)) and
+          valid_by_key?(rest, key_schemas, Map.put(seen, key, true))
+
+      _ ->
+        false
+    end
+  end
+
+  defp valid_by_key?(_options, _key_schemas, _seen), do: false
 
   @doc """
   Registers a list of valid options that can be used by steps in the document pipeline.
@@ -1845,7 +1885,7 @@ defmodule MDEx.Document do
   @spec put_extension_options(t(), extension_options()) :: t()
   def put_extension_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :extension)
-    NimbleOptions.validate!(options, @compiled_extension_options_schema)
+    validate_options!(options, :extension)
 
     %{
       document
@@ -1874,7 +1914,7 @@ defmodule MDEx.Document do
     {unsafe_, options} = Keyword.pop(options, :unsafe_, false)
     options = Keyword.put_new(options, :unsafe, unsafe_)
 
-    NimbleOptions.validate!(options, @compiled_render_options_schema)
+    validate_options!(options, :render)
 
     %{
       document
@@ -1900,7 +1940,7 @@ defmodule MDEx.Document do
   @spec put_parse_options(t(), parse_options()) :: t()
   def put_parse_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :parse)
-    NimbleOptions.validate!(options, @compiled_parse_options_schema)
+    validate_options!(options, :parse)
 
     %{
       document
@@ -1940,7 +1980,7 @@ defmodule MDEx.Document do
 
   def put_syntax_highlight_options(%MDEx.Document{} = document, options) when is_list(options) do
     validate_keyword_list!(options, :syntax_highlight)
-    NimbleOptions.validate!(options, @compiled_syntax_highlight_options_schema)
+    validate_options!(options, :syntax_highlight)
 
     %{
       document
@@ -2874,12 +2914,9 @@ defmodule MDEx.Document do
     # `MDEx.merge_options/2` and converting the lists to maps, but merging maps
     # instead of keyword lists. As in a keyword list, the first `:unsafe` wins.
     %{
-      extension: migrate_header_ids(extension),
-      parse: Map.merge(@default_parse_options_map, Map.new(parse)),
-      render:
-        @default_render_options_map
-        |> Map.merge(Map.new(render))
-        |> Map.put(:unsafe, Keyword.get(render, :unsafe, Map.get(@default_render_options_map, :unsafe, false))),
+      extension: extension_map(extension),
+      parse: parse_map(parse),
+      render: render_map(render),
       syntax_highlight: syntax_highlight_options(options[:syntax_highlight]),
       sanitize: adapt_sanitize_options(options[:sanitize]),
       budget: options[:budget]
@@ -2926,6 +2963,22 @@ defmodule MDEx.Document do
   end
 
   defp legacy_lumis_formatter(formatter), do: formatter
+
+  # Documents created with `MDEx.new/1` carry the default lists, so their maps
+  # are computed at compile time.
+  defp extension_map(@default_options_extension), do: @default_extension_native_map
+  defp extension_map(extension), do: migrate_header_ids(extension)
+
+  defp parse_map(@default_options_parse), do: @default_parse_options_map
+  defp parse_map(parse), do: Map.merge(@default_parse_options_map, Map.new(parse))
+
+  defp render_map(@default_options_render), do: @default_render_native_map
+
+  defp render_map(render) do
+    @default_render_options_map
+    |> Map.merge(Map.new(render))
+    |> Map.put(:unsafe, Keyword.get(render, :unsafe, Map.get(@default_render_options_map, :unsafe, false)))
+  end
 
   defp migrate_header_ids(extension) do
     {_header_ids, merged} = @default_extension_options_map |> Map.merge(Map.new(extension)) |> Map.pop(:header_ids)
