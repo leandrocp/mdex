@@ -3,7 +3,11 @@
 <!-- MDOC -->
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/images/mdex_logo.png" width="360" alt="MDEx logo" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/brand/banners/readme-banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/brand/banners/readme-banner-light.svg">
+    <img src="https://raw.githubusercontent.com/leandrocp/mdex/main/assets/brand/banners/readme-banner-light.svg" alt="MDEx: Markdown for Elixir. Fast. Extensible. Phoenix-native. AI-ready." width="640">
+  </picture>
   <br>
 
   <a href="https://hex.pm/packages/mdex">
