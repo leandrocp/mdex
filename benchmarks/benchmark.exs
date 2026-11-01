@@ -312,10 +312,10 @@ defmodule Bench.Worker do
         row = %{library: library.name, input: input.name, operation: operation}
 
         case probe(job, timeout) do
-          :ok ->
+          ok when ok == :ok or elem(ok, 0) == :ok ->
             stats = measure(job, config)
             IO.puts("  bench #{input.name} #{operation}: #{format_ips(stats.ips)} ips, median #{round(stats.median_ns / 1000)} µs")
-            row |> Map.merge(stats) |> Map.put(:status, "ok")
+            row |> Map.merge(stats) |> Map.put(:status, "ok") |> Map.put(:note, if(ok == :ok, do: nil, else: elem(ok, 1)))
 
           {status, error} ->
             IO.puts("  bench #{input.name} #{operation}: #{status} #{error}")
@@ -339,6 +339,7 @@ defmodule Bench.Worker do
 
     case Task.yield(task, timeout) || Task.shutdown(task, :brutal_kill) do
       {:ok, :ok} -> :ok
+      {:ok, {:note, note}} -> {:ok, note}
       {:ok, {:error, reason}} -> {"error", reason}
       {:exit, reason} -> {"error", Exception.format_exit(reason) |> String.slice(0, 300)}
       nil -> {"timeout", "one call took longer than #{div(timeout, 1000)} s"}
@@ -348,7 +349,8 @@ defmodule Bench.Worker do
   defp try_call(job) do
     case job.() do
       {:error, reason} -> {:error, "returned an error: " <> String.slice(inspect(reason), 0, 300)}
-      {:error, _html, messages} -> {:error, "returned an error: " <> String.slice(inspect(messages), 0, 300)}
+      # Earmark returns `{:error, output, messages}` when it has warnings, along with the output.
+      {:error, output, messages} when output != nil -> {:note, "returns `:error` with output and: " <> String.slice(inspect(messages), 0, 200)}
       _ -> :ok
     end
   rescue
@@ -419,10 +421,10 @@ defmodule Bench.Worker do
   def jobs("cmark", md), do: [{"html", fn -> Cmark.to_html(md) end}]
 
   def jobs("earmark", md) do
+    # `{:error, ast, warnings}` still carries the AST.
     ast =
       case Earmark.Parser.as_ast(md) do
-        {:ok, ast, _messages} -> ast
-        _ -> []
+        {_status, ast, _messages} -> ast
       end
 
     [
@@ -445,7 +447,7 @@ defmodule Bench.Worker do
     chars = String.to_charlist(md)
 
     [
-      {"html", fn -> chars |> :marker.markdown() |> elem(1) |> :render.html() |> IO.iodata_to_binary() end},
+      {"html", fn -> chars |> :marker.markdown() |> elem(1) |> :render.html() |> :unicode.characters_to_binary() end},
       {"ast", fn -> :marker.markdown(chars) end}
     ]
   end
@@ -605,7 +607,9 @@ defmodule Bench.Report do
   defp ok_row(row, fastest) do
     relative = if row == fastest, do: "fastest", else: "#{format_float(fastest.ips / row.ips)}x slower"
 
-    "| #{row.library} | #{format_ips(row.ips)} | #{relative} | #{format_time(row.median_ns)} | #{format_time(row.p99_ns)} | ±#{format_float(row.deviation_pct)}% | #{format_bytes(row.memory_bytes)} | #{format_int(round(row.reductions))} |"
+    library = if row[:note], do: "#{row.library} (#{escape(row.note)})", else: row.library
+
+    "| #{library} | #{format_ips(row.ips)} | #{relative} | #{format_time(row.median_ns)} | #{format_time(row.p99_ns)} | ±#{format_float(row.deviation_pct)}% | #{format_bytes(row.memory_bytes)} | #{format_int(round(row.reductions))} |"
   end
 
   @pairs [{"html", "html_mdex_options"}, {"highlight", "highlight"}, {"sanitize", "sanitize"}, {"ast", "ast"}, {"ast_html", "ast_html"}]
