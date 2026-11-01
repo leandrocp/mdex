@@ -1,0 +1,108 @@
+/* MDEx brand tokens.
+   Source: mdelixir.dev build (index-Tg2F7Mua.css, Tailwind v4.3.3), read 2026-11-01.
+   Stone hex values are the sRGB conversions of Tailwind's oklch stone scale.
+   --color-brand-on-dark (#C4A5D6) is adjustment A1, not on the live site yet. */
+
+:root {
+  /* brand */
+  --color-brand: #6E3C88;          /* tile, links, # accents, primary button */
+  --color-brand-dark: #4C2A5E;     /* hover on brand */
+  --color-brand-on-dark: #C4A5D6;  /* A1: brand text on dark surfaces */
+  --color-on-brand: #FFFFFF;       /* glyphs on the tile, button label */
+
+  /* neutrals: Tailwind stone */
+  --color-stone-50:  #FAFAF9;  /* page (light) */
+  --color-stone-100: #F5F5F4;  /* surface-muted (light), text (dark) */
+  --color-stone-200: #E7E5E4;
+  --color-stone-300: #D6D3D1;  /* border (light), dots (light) */
+  --color-stone-400: #A6A09B;
+  --color-stone-500: #79716B;
+  --color-stone-600: #57534D;  /* body text (light) */
+  --color-stone-700: #44403B;  /* dots (dark) */
+  --color-stone-800: #292524;  /* surface-muted (dark) */
+  --color-stone-900: #1C1917;  /* ink, surface (dark) */
+  --color-stone-950: #0C0A09;  /* page (dark) */
+
+  /* semantic, light */
+  --color-page: var(--color-stone-50);
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F5F5F4;
+  --color-border: #D6D3D1;
+  --color-border-hover: #A8A29E;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: var(--color-stone-600);
+  --color-accent-text: var(--color-brand);
+  --color-success: #009966;        /* emerald-600, copy confirmation */
+  --color-selection: rgb(110 60 136 / 0.2);
+
+  /* type: JetBrains Mono everywhere (OFL 1.1) */
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;   /* buttons */
+  --font-weight-bold: 700;       /* headings, wordmark */
+  --text-hero: 4.5rem;           /* text-7xl at lg, leading 1.25 */
+  --text-h2: 1.875rem;           /* text-3xl at sm+ */
+  --text-subtitle: 1.5rem;       /* text-2xl at md+ */
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-xs: 0.75rem;
+
+  /* shape */
+  --radius: 0;                   /* UI is square-cornered; only the logo tile is rounded (rx 15/128) */
+  --border-style-card: dashed;
+
+  /* motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);  /* Tailwind default transition */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --duration-fast: 150ms;        /* hover colour, scale */
+  --duration-card: 300ms;        /* card border, corner +, nav background */
+  --duration-fade: 500ms;
+  --duration-slide: 600ms;
+  --duration-count: 2000ms;      /* hero counters */
+  --duration-bars: 2500ms;       /* benchmark bars */
+  --duration-marquee: 45s;       /* 35s at <= 640px */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-page: var(--color-stone-950);
+    --color-surface: #1C1917;
+    --color-surface-muted: #292524;
+    --color-border: #57534E;
+    --color-border-hover: #78716C;
+    --color-text-primary: #F5F5F4;
+    --color-text-secondary: var(--color-stone-400);
+    --color-accent-text: var(--color-brand-on-dark); /* A1; live site uses --color-brand */
+  }
+}
+
+/* dot-grid background (hero opacity .6, CTA .4) */
+.bg-dots {
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23D6D3D1' fill-opacity='0.5'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  .bg-dots {
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1' fill='%2344403C' fill-opacity='0.5'/%3E%3C/svg%3E");
+  }
+}
+
+/* keyframes, as shipped on mdelixir.dev */
+@keyframes blink { 50% { opacity: 0 } }
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes marquee { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
+@keyframes marquee-reverse { 0% { transform: translateX(-50%) } 100% { transform: translateX(0) } }
+
+.animate-blink { animation: blink 1s step-end infinite; }
+.animate-fade-in { animation: fade-in .5s ease-out forwards; }
+.animate-slide-up { animation: slide-up .6s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
