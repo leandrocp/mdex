@@ -2460,7 +2460,7 @@ defmodule MDEx.Document do
         {buffer, document}
       end
 
-    case Comrak.parse_document(buffer, rust_options!(document.options)) do
+    case Comrak.parse_document(buffer, MDEx.__rust_options__(document.options)) do
       {:ok, %{nodes: nodes}} -> %{document | nodes: ComrakConverter.to_mdex(nodes), buffer: []}
       {:error, error} -> halt(document, error)
     end
@@ -2469,7 +2469,7 @@ defmodule MDEx.Document do
   defp render_existing_nodes(document) do
     document = %{document | buffer: [], current_steps: [], steps: []}
 
-    case Comrak.document_to_commonmark(ComrakConverter.from_mdex(document), rust_options!(document.options)) do
+    case Comrak.document_to_commonmark(ComrakConverter.from_mdex(document), MDEx.__rust_options__(document.options)) do
       {:ok, markdown} -> {:ok, markdown}
       {:error, error} -> {:error, halt(document, error)}
     end

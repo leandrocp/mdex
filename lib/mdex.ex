@@ -260,6 +260,10 @@ defmodule MDEx do
     parse_document({:markdown, source}, options)
   end
 
+  def parse_document({:markdown, markdown}, []) when is_binary(markdown) do
+    markdown |> new_document() |> run_result()
+  end
+
   def parse_document({:markdown, markdown}, options) when is_binary(markdown) and is_list(options) do
     options = Keyword.put(options, :markdown, markdown)
     options |> MDEx.new() |> run_result()
@@ -432,6 +436,10 @@ defmodule MDEx do
           | {:error, MDEx.DecodeError.t()}
           | {:error, MDEx.InvalidInputError.t()}
   def to_html(source, options \\ [])
+
+  def to_html(markdown, []) when is_binary(markdown) do
+    markdown |> new_document() |> to_html([])
+  end
 
   def to_html(markdown, options) when is_binary(markdown) and is_list(options) do
     {document, options} = Keyword.pop(options, :document, nil)
@@ -696,7 +704,7 @@ defmodule MDEx do
 
     markdown
     |> maybe_auto_close(document)
-    |> Comrak.markdown_to_xml(Document.rust_options!(document.options))
+    |> Comrak.markdown_to_xml(__rust_options__(document.options))
     |> maybe_trim()
   end
 
@@ -1178,9 +1186,20 @@ defmodule MDEx do
   @spec traverse_and_update(MDEx.Document.t(), any(), (MDEx.Document.md_node() -> MDEx.Document.md_node())) :: MDEx.Document.t()
   def traverse_and_update(ast, acc, fun), do: Document.Traversal.traverse_and_update(ast, acc, fun)
 
-  defp maybe_trim({:ok, result}), do: {:ok, String.trim_trailing(result)}
-  defp maybe_trim(result) when is_binary(result), do: {:ok, String.trim_trailing(result)}
+  defp maybe_trim({:ok, result}), do: {:ok, trim_trailing(result)}
+  defp maybe_trim(result) when is_binary(result), do: {:ok, trim_trailing(result)}
   defp maybe_trim(error), do: error
+
+  # Rendered HTML almost always ends in ">\n"; strip that newline without scanning
+  # for Unicode whitespace. Anything else goes through `String.trim_trailing/1`.
+  defp trim_trailing(result) do
+    size = byte_size(result) - 2
+
+    case result do
+      <<_::binary-size(^size), ">\n">> -> binary_part(result, 0, size + 1)
+      _ -> String.trim_trailing(result)
+    end
+  end
 
   defp run_pipeline(document, options, converter, markdown_converter \\ nil) do
     {document_opt, options} = pop_deprecated_document_option(options)
@@ -1193,7 +1212,7 @@ defmodule MDEx do
     case source_markdown(document, markdown_converter) do
       {:ok, markdown} ->
         markdown
-        |> markdown_converter.(Document.rust_options!(document.options))
+        |> markdown_converter.(__rust_options__(document.options))
         |> maybe_trim()
 
       :error ->
@@ -1201,7 +1220,7 @@ defmodule MDEx do
           document
           |> apply_codefence_renderers_to_document(document.options[:codefence_renderers])
           |> ComrakConverter.from_mdex()
-          |> converter.(Document.rust_options!(document.options))
+          |> converter.(__rust_options__(document.options))
           |> maybe_trim()
         end
     end
@@ -1327,6 +1346,20 @@ defmodule MDEx do
   end
 
   @document Document.put_options(%MDEx.Document{}, MDEx.Document.default_options())
+  @document_rust_options Document.rust_options!(@document.options)
+
+  # `MDEx.new(markdown: markdown)`, without its option handling.
+  defp new_document(markdown), do: Document.put_markdown(@document, markdown)
+
+  # Documents built by `MDEx.new/1` without options share the options term of the
+  # `@document` literal, so `===` is a pointer check for the common case and its
+  # NIF options are precomputed.
+  @doc false
+  def __rust_options__(options) do
+    if options === @document.options,
+      do: @document_rust_options,
+      else: Document.rust_options!(options)
+  end
 
   @typedoc """
   A list of [plugins](`m:MDEx.Document#module-pipeline-and-plugins`) to attach to an `MDEx.Document` with `MDEx.new/1`.
@@ -1526,7 +1559,7 @@ defmodule MDEx do
         %{
           document: document,
           auto_close: auto_close,
-          rust_options: Document.rust_options!(document.options),
+          rust_options: __rust_options__(document.options),
           source: "",
           utf8_suffix: "",
           ranges: [],
