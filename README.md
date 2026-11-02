@@ -207,6 +207,7 @@ The library is built on top of:
 
 - [00](https://github.com/technomancy-dev/00)
 - [Algora](https://github.com/algora-io/algora)
+- [Arcana](https://github.com/georgeguimaraes/arcana)
 - [Ash AI](https://github.com/ash-project/ash_ai)
 - [BeaconCMS](https://github.com/BeaconCMS/beacon)
 - [BeamLens Web](https://github.com/beamlens/beamlens_web)
