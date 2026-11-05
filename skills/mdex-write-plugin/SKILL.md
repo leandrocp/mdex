@@ -121,7 +121,7 @@ Pick the node that holds your HTML on purpose:
 
 ```elixir
 defp enhance_code_blocks(document) do
-  class = Document.get_option(document, :code_class) || "highlight"
+  class = Document.get_option(document, :code_block_enhancer_class) || "highlight"
 
   MDEx.traverse_and_update(document, fn
     %MDEx.CodeBlock{} = node ->
@@ -163,7 +163,7 @@ Test the plugin the way users call it:
 ```elixir
 test "wraps code blocks" do
   html = MDEx.to_html!("```elixir\n:ok\n```", plugins: [MyPlugin])
-  assert html =~ ~s(<pre class="highlight">)
+  assert html =~ ~s(<pre class="highlight"><code>:ok\n</code></pre>)
 end
 ```
 

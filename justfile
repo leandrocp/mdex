@@ -8,4 +8,4 @@ dev-server:
 
 # Regenerate usage-rules.md (read by the usage_rules package) from skills/mdex/SKILL.md
 sync-usage-rules:
-    awk 'n >= 2 { print; next } /^---$/ { n++; if (n == 2) getline }' skills/mdex/SKILL.md > usage-rules.md
+    awk 'n >= 2 { if (started || NF) { started = 1; print }; next } /^---$/ { n++ }' skills/mdex/SKILL.md > usage-rules.md

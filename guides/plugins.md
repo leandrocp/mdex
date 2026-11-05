@@ -284,13 +284,13 @@ defmodule CodeBlockEnhancer do
 
   def attach(document, options \\ []) do
     document
-    |> Document.register_options([:code_class])
+    |> Document.register_options([:code_block_enhancer_class])
     |> Document.put_options(options)
     |> Document.append_steps(enhance_code_blocks: &enhance_code_blocks/1)
   end
 
   defp enhance_code_blocks(document) do
-    class = Document.get_option(document, :code_class) || "highlight"
+    class = Document.get_option(document, :code_block_enhancer_class) || "highlight"
 
     MDEx.traverse_and_update(document, fn
       %MDEx.CodeBlock{} = node ->
@@ -309,6 +309,6 @@ end
 Usage:
 
 ```elixir
-MDEx.to_html!("```elixir\n:ok\n```", plugins: [{CodeBlockEnhancer, code_class: "syntax-highlight"}])
+MDEx.to_html!("```elixir\n:ok\n```", plugins: [{CodeBlockEnhancer, code_block_enhancer_class: "syntax-highlight"}])
 #=> "<pre class=\"syntax-highlight\"><code>:ok\n</code></pre>"
 ```
