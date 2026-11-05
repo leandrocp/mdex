@@ -9,7 +9,7 @@
 
 ### Documentation
 
-- Publish agent skills in `skills/`: `mdex` for using MDEx (`npx skills add leandrocp/mdex`) and `mdex-write-plugin` for writing plugins (`npx skills add leandrocp/mdex --skill mdex-write-plugin`). `usage-rules.md` is now generated from `skills/mdex/SKILL.md` with `just sync-usage-rules`.
+- Publish agent skills in `skills/`: `mdex` for using MDEx (`npx skills add leandrocp/mdex`) and `mdex-write-plugin` for writing plugins (`npx skills add leandrocp/mdex --skill mdex-write-plugin`). `usage-rules.md` is now generated from `skills/mdex/SKILL.md` with `just sync-usage-rules`. In [\#479](https://github.com/leandrocp/mdex/pull/479).
 
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
