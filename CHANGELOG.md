@@ -7,6 +7,10 @@
 - Cut MDEx's own work around each native call; output and options are unchanged. Option schemas and defaults are computed at compile time instead of on every call, the default options map to precomputed native options, `MDEx.to_html/2` and `MDEx.parse_document/2` without options skip option handling, options are merged as maps, validation is linear in the number of options given, the default sanitize allowlists are neither re-validated nor re-converted on every call, and AST nodes convert to and from mdex_native with a single map update. `MDEx.to_html/2` now runs close to the raw `MDExNative.Comrak.markdown_to_html/2` call, and `MDEx.parse_document/2`, rendering an `MDEx.Document`, and expanding `~MD` are several times faster. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
 - `MDEx.stream/2` scans the buffered source faster when closing incomplete Markdown, and groups nodes into chunks in one pass.
 
+### Documentation
+
+- Publish agent skills in `skills/`: `mdex` for using MDEx (`npx skills add leandrocp/mdex`) and `mdex-write-plugin` for writing plugins (`npx skills add leandrocp/mdex --skill mdex-write-plugin`). `usage-rules.md` is now generated from `skills/mdex/SKILL.md` with `just sync-usage-rules`. In [\#479](https://github.com/leandrocp/mdex/pull/479).
+
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
 ### Features

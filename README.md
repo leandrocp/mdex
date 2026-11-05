@@ -193,6 +193,22 @@ iex> ["# Install **MD", "Ex**\n\n`{:mdex,", " \"~> 0.12\"}`\n\n", "Enjoy!"]
 
 In docs you can find [Livebook examples](https://hexdocs.pm/mdex/gfm.html) covering options and usage, and [Guides](https://hexdocs.pm/mdex/plugins.html) for more info.
 
+## Agent Skills
+
+Install the [mdex](https://github.com/leandrocp/mdex/blob/main/skills/mdex/SKILL.md) skill so coding agents use MDEx correctly:
+
+```sh
+npx skills add leandrocp/mdex
+```
+
+Writing a plugin or contributing to MDEx? Install the [mdex-write-plugin](https://github.com/leandrocp/mdex/blob/main/skills/mdex-write-plugin/SKILL.md) skill:
+
+```sh
+npx skills add leandrocp/mdex --skill mdex-write-plugin
+```
+
+The same rules ship in the Hex package as `usage-rules.md` for [usage_rules](https://hex.pm/packages/usage_rules).
+
 ## Foundation
 
 The library is built on top of:
