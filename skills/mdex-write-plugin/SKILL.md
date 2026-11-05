@@ -183,7 +183,7 @@ To list a published plugin, or to change the plugin docs, open a PR against
 
 - List the plugin in the README `## Plugins` section and in the
   `## Plugin Ecosystem` section of `skills/mdex/SKILL.md`.
-- After editing `skills/mdex/SKILL.md`, run `just sync-usage-rules` to
+- After editing `skills/mdex/SKILL.md`, run `mise run sync-usage-rules` to
   regenerate `usage-rules.md`.
 
 Install this skill with `npx skills add leandrocp/mdex --skill mdex-write-plugin`.

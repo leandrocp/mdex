@@ -35,7 +35,6 @@ checksum-*.exs
 
 /examples/*.html
 
-mise.toml
 /.claude/settings.local.json
 
 # Orb portal metadata is local to each machine.

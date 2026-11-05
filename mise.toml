@@ -1,0 +1,10 @@
+[tasks.dev-server]
+description = "Serve priv/site locally"
+dir = "priv/site"
+run = "python -m http.server"
+
+[tasks.sync-usage-rules]
+description = "Regenerate usage-rules.md (read by the usage_rules package) from skills/mdex/SKILL.md"
+run = '''
+awk 'n >= 2 { if (started || NF) { started = 1; print }; next } /^---$/ { n++ }' skills/mdex/SKILL.md > usage-rules.md
+'''
