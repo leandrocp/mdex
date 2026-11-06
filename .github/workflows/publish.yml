@@ -9,5 +9,6 @@ jobs:
   hex-publish:
     if: startsWith(github.ref, 'refs/tags/v')
     uses: leandrocp/github-actions/.github/workflows/hex-publish.yml@main
-    secrets:
-      HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    permissions:
+      contents: read
+      id-token: write
