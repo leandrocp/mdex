@@ -1,19 +1,23 @@
 # Changelog
 
-## Unreleased
+## [0.14.7](https://github.com/leandrocp/mdex/compare/v0.14.6...v0.14.7) (2026-11-14)
+
+### Bug Fixes
+
+- `MDEx.stream/2` crash on fence lines inside an open fence
 
 ### Performance
 
-- Cut MDEx's own work around each native call; output and options are unchanged. Option schemas and defaults are computed at compile time instead of on every call, the default options map to precomputed native options, `MDEx.to_html/2` and `MDEx.parse_document/2` without options skip option handling, options are merged as maps, validation is linear in the number of options given, the default sanitize allowlists are neither re-validated nor re-converted on every call, and AST nodes convert to and from mdex_native with a single map update. `MDEx.to_html/2` now runs close to the raw `MDExNative.Comrak.markdown_to_html/2` call, and `MDEx.parse_document/2`, rendering an `MDEx.Document`, and expanding `~MD` are several times faster. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
-- `MDEx.stream/2` scans the buffered source faster when closing incomplete Markdown, and groups nodes into chunks in one pass.
+- Cut MDEx's own work around native calls: `MDEx.to_html/2` now runs close to the raw native call, and `MDEx.parse_document/2`, rendering an `MDEx.Document`, and expanding `~MD` are several times faster. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
 
 ### Documentation
 
-- Publish agent skills in `skills/`: `mdex` for using MDEx (`npx skills add leandrocp/mdex`) and `mdex-write-plugin` for writing plugins (`npx skills add leandrocp/mdex --skill mdex-write-plugin`). `usage-rules.md` is now generated from `skills/mdex/SKILL.md` with `just sync-usage-rules`. In [\#479](https://github.com/leandrocp/mdex/pull/479).
+- Publish agent skills in `skills/` in [\#479](https://github.com/leandrocp/mdex/pull/479)
+- Add MDEx brand kit and arcana to Used By
 
 ### Compatibility
 
-- Requires mdex_native 0.3.2, whose precompiled x86_64 and aarch64 Linux GNU NIFs load on glibc 2.28 (RHEL, Rocky, and AlmaLinux 8) instead of requiring glibc 2.34 ([leandrocp/mdex_native#147](https://github.com/leandrocp/mdex_native/issues/147)).
+- Requires mdex_native 0.3.2, whose precompiled Linux GNU NIFs load on glibc 2.28 in [\#484](https://github.com/leandrocp/mdex/pull/484)
 
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
