@@ -11,6 +11,10 @@
 
 - Publish agent skills in `skills/`: `mdex` for using MDEx (`npx skills add leandrocp/mdex`) and `mdex-write-plugin` for writing plugins (`npx skills add leandrocp/mdex --skill mdex-write-plugin`). `usage-rules.md` is now generated from `skills/mdex/SKILL.md` with `just sync-usage-rules`. In [\#479](https://github.com/leandrocp/mdex/pull/479).
 
+### Compatibility
+
+- Requires mdex_native 0.3.2, whose precompiled x86_64 and aarch64 Linux GNU NIFs load on glibc 2.28 (RHEL, Rocky, and AlmaLinux 8) instead of requiring glibc 2.34 ([leandrocp/mdex_native#147](https://github.com/leandrocp/mdex_native/issues/147)).
+
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
 ### Features
