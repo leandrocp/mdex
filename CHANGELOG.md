@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.14.7](https://github.com/leandrocp/mdex/compare/v0.14.6...v0.14.7) (2026-11-14)
+
 ### Performance
 
 - Cut MDEx's own work around each native call; output and options are unchanged. Option schemas and defaults are computed at compile time instead of on every call, the default options map to precomputed native options, `MDEx.to_html/2` and `MDEx.parse_document/2` without options skip option handling, options are merged as maps, validation is linear in the number of options given, the default sanitize allowlists are neither re-validated nor re-converted on every call, and AST nodes convert to and from mdex_native with a single map update. `MDEx.to_html/2` now runs close to the raw `MDExNative.Comrak.markdown_to_html/2` call, and `MDEx.parse_document/2`, rendering an `MDEx.Document`, and expanding `~MD` are several times faster. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
@@ -14,6 +16,40 @@
 ### Compatibility
 
 - Requires mdex_native 0.3.2, whose precompiled x86_64 and aarch64 Linux GNU NIFs load on glibc 2.28 (RHEL, Rocky, and AlmaLinux 8) instead of requiring glibc 2.34 ([leandrocp/mdex_native#147](https://github.com/leandrocp/mdex_native/issues/147)).
+
+### Bug Fixes
+
+- MDEx.stream crash on fence lines inside an open fence
+
+### Performance Improvements
+
+- Cut MDEx overhead around native calls
+- Squeeze more MDEx overhead
+- Precompute native options for default documents
+- Skip repeated work for the default sanitize allowlists
+
+### Documentation
+
+- Add MDEx brand kit (logo, icons, banners, social preview, tokens)
+- Add arcana to Used By
+
+### Dependencies
+
+- Require mdex_native 0.3.2 in [\#484](https://github.com/leandrocp/mdex/pull/484)
+
+### Other Changes
+
+- Rewrite the benchmark with vendored inputs and paired rows
+- Record results before and after the MDEx overhead work
+- Benchmark every Elixir/Erlang Markdown library in isolation
+- Count Earmark's warnings as output and read markerl's chardata
+- Run every library in two rounds and keep each row's lower median
+- Compare MDEx and mdex_native call by call
+- Record latest results for every library
+- Add agent skills (mdex, mdex-write-plugin) in [\#479](https://github.com/leandrocp/mdex/pull/479)
+- Move from justfile to mise
+
+Amp-Thread-ID: https://ampcode.com/threads/T-01a1abcc-ba19-7207-a3c9-96b6581acc25
 
 ## [0.14.6](https://github.com/leandrocp/mdex/compare/v0.14.5...v0.14.6) (2026-10-31)
 
