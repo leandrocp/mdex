@@ -308,6 +308,13 @@ defmodule MDEx.DeltaConverter do
     [%{"insert" => math, "attributes" => attrs}]
   end
 
+  defp default_convert_node(%MDEx.MathBlock{literal: math}, _current_attrs, _options) do
+    [%{"insert" => String.trim_trailing(math, "\n"), "attributes" => %{"math" => "display"}}, %{"insert" => "\n"}]
+  end
+
+  # Block IDs label their block in HTML (`id="^name"`) and are not text.
+  defp default_convert_node(%MDEx.BlockId{}, _current_attrs, _options), do: []
+
   # Alerts - custom attributes for type and styling
   defp default_convert_node(%MDEx.Alert{alert_type: type, title: title, nodes: children}, current_attrs, options) do
     child_ops = convert_nodes(children, current_attrs, options)

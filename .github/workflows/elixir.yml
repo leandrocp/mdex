@@ -10,6 +10,10 @@ jobs:
   test:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
     uses: leandrocp/github-actions/.github/workflows/elixir-test.yml@main
+    # mdex_native is a git dependency with no precompiled NIF for its branch.
+    with:
+      env_vars: '{"MDEX_NATIVE_BUILD": "1"}'
+      rust-toolchain: stable
 
   lint:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
@@ -17,3 +21,5 @@ jobs:
     with:
       credo: true
       credo_args: '--strict'
+      env_vars: '{"MDEX_NATIVE_BUILD": "1"}'
+      rust-toolchain: stable

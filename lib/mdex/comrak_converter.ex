@@ -2,10 +2,10 @@ defmodule MDEx.ComrakConverter do
   @moduledoc false
 
   @nodes ~w(
-    Alert Attributes BlockDirective BlockQuote Callout CalloutTitle Code CodeBlock CommentInline DescriptionDetails
+    Alert Attributes BlockDirective BlockId BlockQuote Callout CalloutTitle Code CodeBlock CommentInline DescriptionDetails
     DescriptionItem DescriptionList DescriptionTerm Document Emph Escaped EscapedTag
-    FootnoteDefinition FootnoteReference FrontMatter Heading HeexBlock HeexInline
-    Highlight HtmlBlock HtmlInline Image Insert LineBreak Link List ListItem Math
+    FootnoteDefinition FootnoteReference FrontMatter GridTable GridTableCell GridTableRow Heading HeexBlock HeexInline
+    Highlight HtmlBlock HtmlInline Image Insert LineBreak Link List ListItem Math MathBlock
     MultilineBlockQuote MultilineComment Paragraph Raw ShortCode SoftBreak Sourcepos SpoileredText
     Strikethrough Strong Subscript Subtext Superscript Table TableCell TableRow
     TaskItem Text ThematicBreak Underline WikiLink

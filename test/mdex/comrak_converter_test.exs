@@ -51,6 +51,11 @@ defmodule MDEx.ComrakConverterTest do
     CalloutTitle,
     CommentInline,
     MultilineComment,
+    BlockId,
+    GridTable,
+    GridTableRow,
+    GridTableCell,
+    MathBlock,
     BlockDirective,
     HeexBlock,
     HeexInline
@@ -175,6 +180,55 @@ defmodule MDEx.ComrakConverterTest do
     for parse_memory <- [0, 1_000_000_000, nil] do
       assert MDEx.to_html!(@slow_markdown, budget: [parse_memory: parse_memory]) == html
     end
+  end
+
+  test "grid tables, math blocks, and block IDs survive parsing, JSON, native conversion, traversal, and rendering" do
+    markdown = "+-----+-----+\n| a   | *b* |\n+:====+====:+\n| c   | 中  |\n+-----+-----+\n\n$$\nx^2\n$$\n\nPara ^blk\n"
+    options = [extension: [grid_table: true, math_dollars: true, math_dollars_block: true, ofm_block_ids: true], render: [grid_table_widths: true]]
+    document = MDEx.parse_document!(markdown, options)
+
+    assert [
+             %MDEx.GridTable{columns: [%{alignment: :left, width: 5}, %{alignment: :right, width: 5}]} = table,
+             %MDEx.MathBlock{literal: "x^2\n", closed: true},
+             %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Para "}, %MDEx.BlockId{name: "blk"}]}
+           ] = document.nodes
+
+    assert [
+             %MDEx.GridTableRow{section: :head},
+             %MDEx.GridTableRow{section: :body, nodes: [_, %MDEx.GridTableCell{column: 1, colspan: 1, rowspan: 1}]}
+           ] =
+             table.nodes
+
+    assert Enum.any?(table, &match?(%MDEx.Emph{}, &1))
+    assert MDEx.Document.fragment?(table)
+    assert Enum.to_list(%MDEx.BlockId{name: "blk"}) == [%MDEx.BlockId{name: "blk"}]
+
+    native = MDEx.ComrakConverter.from_mdex(document)
+    assert MDEx.ComrakConverter.to_mdex(native).nodes == document.nodes
+
+    decoded = MDEx.parse_document!({:json, MDEx.to_json!(document)}, options)
+    assert decoded.nodes == document.nodes
+    assert MDEx.to_xml!(decoded) =~ ~s(<grid_table alignments="left right" widths="5 5">)
+    assert MDEx.to_markdown!(decoded) == String.trim_trailing(markdown)
+
+    html = MDEx.to_html!(markdown, options)
+    assert html =~ ~s(<col style="width:50%" />)
+    assert html =~ ~s(<th align="right"><em>b</em></th>)
+    assert html =~ ~s(<div data-math-style="display">\nx^2\n</div>)
+    assert html =~ ~s(<p id="^blk">Para </p>)
+    assert MDEx.to_html!(document) == html
+    assert MDEx.to_html!(decoded) == html
+  end
+
+  test "render: [attributes: true] renders parsed attributes on headings and code blocks" do
+    markdown = "# Hi {#x .y}\n\n```text {.z}\nx\n```\n"
+    options = [extension: [header_attributes: true, fenced_code_attributes: true], syntax_highlight: nil]
+
+    assert MDEx.to_html!(markdown, Keyword.put(options, :render, unsafe: true, attributes: true)) ==
+             ~s(<h1 id="x" class="y">Hi</h1>\n<pre class="z"><code class="language-text">x\n</code></pre>)
+
+    assert MDEx.to_html!(markdown, Keyword.put(options, :render, unsafe: true)) ==
+             ~s(<h1>Hi</h1>\n<pre><code class="language-text">x\n</code></pre>)
   end
 
   test "converts native document structs to mdex structs" do

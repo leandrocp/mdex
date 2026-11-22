@@ -88,6 +88,8 @@ defmodule MDEx.SlackConverter do
   defp render_node(%MDEx.Raw{literal: content}, _context), do: escape_text(content)
   defp render_node(%MDEx.ShortCode{emoji: emoji}, _context), do: emoji
   defp render_node(%MDEx.Math{literal: math}, _context), do: escape_text(math)
+  defp render_node(%MDEx.MathBlock{literal: math}, _context), do: [escape_text(String.trim_trailing(math, "\n")), "\n"]
+  defp render_node(%MDEx.BlockId{}, _context), do: ""
   defp render_node(%MDEx.CommentInline{}, _context), do: ""
   defp render_node(%MDEx.MultilineComment{}, _context), do: ""
   defp render_node(%MDEx.FrontMatter{}, _context), do: ""
@@ -97,6 +99,14 @@ defmodule MDEx.SlackConverter do
   defp render_node(%MDEx.Table{nodes: rows}, context), do: render_nodes(rows, context)
   defp render_node(%MDEx.TableRow{nodes: cells}, context), do: [cells |> Enum.map(&render_node(&1, context)) |> Enum.intersperse(" | "), "\n"]
   defp render_node(%MDEx.TableCell{nodes: nodes}, context), do: render_nodes(nodes, context)
+  defp render_node(%MDEx.GridTable{nodes: rows}, context), do: render_nodes(rows, context)
+  defp render_node(%MDEx.GridTableRow{nodes: cells}, context), do: [cells |> Enum.map(&render_node(&1, context)) |> Enum.intersperse(" | "), "\n"]
+
+  # Grid table cells hold blocks; join them onto the row's line.
+  defp render_node(%MDEx.GridTableCell{nodes: nodes}, context) do
+    nodes |> render_nodes(context) |> IO.iodata_to_binary() |> String.trim_trailing("\n") |> String.replace("\n", " ")
+  end
+
   defp render_node(%MDEx.DescriptionList{nodes: nodes}, context), do: render_nodes(nodes, context)
   defp render_node(%MDEx.DescriptionItem{nodes: nodes}, context), do: render_nodes(nodes, context)
   defp render_node(%MDEx.DescriptionTerm{nodes: nodes}, context), do: [render_nodes(nodes, context), "\n"]

@@ -419,7 +419,7 @@ defmodule MDEx.ParseTest do
                 name: "1",
                 ref_num: 1,
                 ix: 1,
-                texts: [{"^", 1}, {"1", 1}],
+                texts: [{"^1", 2}],
                 sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 12}}
               }
             ],
@@ -458,13 +458,13 @@ defmodule MDEx.ParseTest do
           %MDEx.FootnoteDefinition{
             nodes: [
               %MDEx.Paragraph{
-                nodes: [%MDEx.Text{literal: "inline content", sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 14}}}],
-                sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 0}}
+                nodes: [%MDEx.Text{literal: "inline content", sourcepos: %MDEx.Sourcepos{start: {1, 11}, end: {1, 24}}}],
+                sourcepos: %MDEx.Sourcepos{start: {1, 11}, end: {1, 24}}
               }
             ],
             name: "__inline_1",
             total_references: 1,
-            sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {1, 0}}
+            sourcepos: %MDEx.Sourcepos{start: {1, 9}, end: {1, 25}}
           }
         ]
       },
@@ -867,7 +867,7 @@ defmodule MDEx.ParseTest do
                     nodes: [
                       %MDEx.Paragraph{
                         nodes: [%MDEx.Text{literal: "item two", sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 10}}}],
-                        sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 3}}
+                        sourcepos: %MDEx.Sourcepos{start: {5, 3}, end: {5, 10}}
                       }
                     ],
                     list_type: :bullet,
@@ -877,7 +877,7 @@ defmodule MDEx.ParseTest do
                     delimiter: :period,
                     bullet_char: "-",
                     tight: false,
-                    sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 3}}
+                    sourcepos: %MDEx.Sourcepos{start: {5, 1}, end: {5, 10}}
                   }
                 ],
                 list_type: :bullet,

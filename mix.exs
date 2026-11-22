@@ -97,6 +97,7 @@ defmodule MDEx.MixProject do
       groups_for_modules: [
         "Document Nodes": [
           MDEx.Alert,
+          MDEx.BlockId,
           MDEx.BlockQuote,
           MDEx.Callout,
           MDEx.CalloutTitle,
@@ -113,6 +114,9 @@ defmodule MDEx.MixProject do
           MDEx.FootnoteDefinition,
           MDEx.FootnoteReference,
           MDEx.FrontMatter,
+          MDEx.GridTable,
+          MDEx.GridTableCell,
+          MDEx.GridTableRow,
           MDEx.Heading,
           MDEx.Highlight,
           MDEx.HtmlBlock,
@@ -123,6 +127,7 @@ defmodule MDEx.MixProject do
           MDEx.List,
           MDEx.ListItem,
           MDEx.Math,
+          MDEx.MathBlock,
           MDEx.MultilineBlockQuote,
           MDEx.MultilineComment,
           MDEx.Paragraph,
@@ -197,7 +202,8 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      {:mdex_native, ">= 0.3.2"}
+      # Comrak 1.1 support until mdex_native releases it; CI builds the NIF from this branch.
+      {:mdex_native, github: "leandrocp/mdex_native", branch: "lp-comrak-110"}
     end
   end
 
