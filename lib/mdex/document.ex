@@ -1042,7 +1042,7 @@ defmodule MDEx.Document do
       doc: """
       With `:unsafe`, render the attributes parsed by `:header_attributes`, `:fenced_code_attributes`,
       `:inline_code_attributes`, and `:link_attributes` on headings, code blocks (on the `<pre>`), code spans,
-      links, and images. Without it, `:unsafe` renders them on links and images only.
+      links, and images. Without it, `:unsafe` renders them on links, images, and highlighted code spans only.
       Attributes can run script like raw HTML can, so sanitize the output of untrusted input.
       """
     ],
