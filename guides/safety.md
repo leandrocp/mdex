@@ -57,3 +57,30 @@ then you can just render it directly without escaping nor sanitizing:
 iex> MDEx.to_html!("<script>alert('hello')</script>", render: [unsafe: true])
 "<script>alert('hello')</script>"
 ```
+
+### Attributes
+
+The `:header_attributes`, `:fenced_code_attributes`, `:inline_code_attributes`, and `:link_attributes` extensions
+parse `{#id .class key=value}` into the document. Attributes can run script like raw HTML can, for example
+through `onclick`, so they follow the same rule: they are omitted by default and written only with `render: [unsafe: true]`.
+
+`unsafe: true` alone writes them on links and images:
+
+```elixir
+iex> MDEx.to_html!(~S|[Elixir](https://elixir-lang.org){onclick="alert(1)"}|, extension: [link_attributes: true], render: [unsafe: true])
+"<p><a href=\"https://elixir-lang.org\" onclick=\"alert(1)\">Elixir</a></p>"
+```
+
+Adding `attributes: true` also writes them on headings, code blocks (on the `<pre>`), and code spans:
+
+```elixir
+iex> MDEx.to_html!(~S|# Hi {onclick="alert(1)"}|, extension: [header_attributes: true], render: [unsafe: true, attributes: true])
+"<h1 onclick=\"alert(1)\">Hi</h1>"
+```
+
+For untrusted input, sanitize the output, which removes attributes outside the allowed set:
+
+```elixir
+iex> MDEx.to_html!(~S|# Hi {onclick="alert(1)"}|, extension: [header_attributes: true], render: [unsafe: true, attributes: true], sanitize: MDEx.Document.default_sanitize_options())
+"<h1>Hi</h1>"
+```
