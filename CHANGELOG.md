@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.8](https://github.com/leandrocp/mdex/compare/v0.14.7...v0.14.8) (2026-11-23)
+
+### Bug Fixes
+
+- Require mdex_native 0.3.3 in [\#488](https://github.com/leandrocp/mdex/pull/488)
+
 ## [0.14.7](https://github.com/leandrocp/mdex/compare/v0.14.6...v0.14.7) (2026-11-14)
 
 ### Bug Fixes
