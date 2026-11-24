@@ -5,7 +5,7 @@
 ### Features
 
 - Support Comrak 1.2 through mdex_native:
-  - `extension: [grid_table: true]` parses Pandoc-style grid tables into `MDEx.GridTable`, `MDEx.GridTableRow`, and `MDEx.GridTableCell`, whose cells hold blocks and span columns and rows. `render: [grid_table_widths: true]` writes a `<colgroup>` with the column widths.
+  - `extension: [grid_table: true]` parses Pandoc-style grid tables into `MDEx.GridTable`, `MDEx.GridTableRow`, `MDEx.GridTableCell`, and `MDEx.GridTableColumn`, whose cells hold blocks and span columns and rows. `render: [grid_table_widths: true]` writes a `<colgroup>` with the column widths.
   - `extension: [math_dollars: true, math_dollars_block: true]` parses lines between `$$` fences as `MDEx.MathBlock`.
   - `extension: [ofm_block_ids: true]` parses a trailing `^name` as `MDEx.BlockId`; HTML renders it as `id="^name"` on its block.
   - `render: [unsafe: true, attributes: true]` renders parsed attributes on headings, code blocks, and code spans, not only links and images.

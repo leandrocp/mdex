@@ -334,7 +334,12 @@ defmodule MDEx do
   end
 
   defp map_node_fields(node, MDEx.GridTable) do
-    Map.update(node, :columns, [], &Enum.map(&1, fn column -> Map.update!(column, :alignment, fn a -> String.to_existing_atom(a) end) end))
+    Map.update(
+      node,
+      :columns,
+      [],
+      &Enum.map(&1, fn column -> %MDEx.GridTableColumn{alignment: String.to_existing_atom(column.alignment), width: column.width} end)
+    )
   end
 
   defp map_node_fields(node, MDEx.GridTableRow) do

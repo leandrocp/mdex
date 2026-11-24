@@ -55,6 +55,7 @@ defmodule MDEx.ComrakConverterTest do
     GridTable,
     GridTableRow,
     GridTableCell,
+    GridTableColumn,
     MathBlock,
     BlockDirective,
     HeexBlock,
@@ -188,7 +189,12 @@ defmodule MDEx.ComrakConverterTest do
     document = MDEx.parse_document!(markdown, options)
 
     assert [
-             %MDEx.GridTable{columns: [%{alignment: :left, width: 5}, %{alignment: :right, width: 5}]} = table,
+             %MDEx.GridTable{
+               columns: [
+                 %MDEx.GridTableColumn{alignment: :left, width: 5},
+                 %MDEx.GridTableColumn{alignment: :right, width: 5}
+               ]
+             } = table,
              %MDEx.MathBlock{literal: "x^2\n", closed: true},
              %MDEx.Paragraph{nodes: [%MDEx.Text{literal: "Para "}, %MDEx.BlockId{name: "blk"}]}
            ] = document.nodes

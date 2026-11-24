@@ -3496,20 +3496,28 @@ defmodule MDEx.GridTable do
   @moduledoc """
   A Pandoc-style grid table, enabled with `extension: [grid_table: true]`.
 
-  Its children are `MDEx.GridTableRow`s. `columns` holds one
-  `%{alignment: :none | :left | :center | :right, width: width}` map per column,
-  where `width` counts display columns between the borders, wide characters as
-  two. `render: [grid_table_widths: true]` writes a `<colgroup>` with each
+  Its children are `MDEx.GridTableRow`s. `columns` holds one `MDEx.GridTableColumn`
+  per column. `render: [grid_table_widths: true]` writes a `<colgroup>` with each
   column's share of the total width.
 
   Spec: https://comrak.ee/extensions/grid-table.html
   """
 
-  @type column :: %{alignment: :none | :left | :center | :right, width: non_neg_integer()}
-
-  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], columns: [column()]}
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], columns: [MDEx.GridTableColumn.t()]}
   defstruct nodes: [], columns: [], sourcepos: %MDEx.Sourcepos{}
   use MDEx.Document.Access
+end
+
+defmodule MDEx.GridTableColumn do
+  @moduledoc """
+  A column of a grid table: its alignment, and its `width` in display columns
+  between the borders, wide characters counting as two.
+
+  See `MDEx.GridTable`
+  """
+
+  @type t :: %__MODULE__{alignment: :none | :left | :center | :right, width: non_neg_integer()}
+  defstruct alignment: :none, width: 0
 end
 
 defmodule MDEx.GridTableRow do
@@ -4211,6 +4219,12 @@ defimpl Jason.Encoder, for: MDEx.Attributes do
   def encode(%MDEx.Attributes{id: id, classes: classes, pairs: pairs}, opts) do
     pairs = Enum.map(pairs, &Tuple.to_list/1)
     Jason.Encode.map(%{"id" => id, "classes" => classes, "pairs" => pairs}, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: MDEx.GridTableColumn do
+  def encode(%MDEx.GridTableColumn{alignment: alignment, width: width}, opts) do
+    Jason.Encode.map(%{"alignment" => alignment, "width" => width}, opts)
   end
 end
 

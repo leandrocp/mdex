@@ -4,7 +4,7 @@ defmodule MDEx.ComrakConverter do
   @nodes ~w(
     Alert Attributes BlockDirective BlockId BlockQuote Callout CalloutTitle Code CodeBlock CommentInline DescriptionDetails
     DescriptionItem DescriptionList DescriptionTerm Document Emph Escaped EscapedTag
-    FootnoteDefinition FootnoteReference FrontMatter GridTable GridTableCell GridTableRow Heading HeexBlock HeexInline
+    FootnoteDefinition FootnoteReference FrontMatter GridTable GridTableCell GridTableColumn GridTableRow Heading HeexBlock HeexInline
     Highlight HtmlBlock HtmlInline Image Insert LineBreak Link List ListItem Math MathBlock
     MultilineBlockQuote MultilineComment Paragraph Raw ShortCode SoftBreak Sourcepos SpoileredText
     Strikethrough Strong Subscript Subtext Superscript Table TableCell TableRow
@@ -12,7 +12,7 @@ defmodule MDEx.ComrakConverter do
   )a
 
   # Fields that hold other convertible values.
-  @nested [:nodes, :sourcepos, :attrs]
+  @nested [:nodes, :sourcepos, :attrs, :columns]
 
   def to_mdex(value), do: convert(value, :to_mdex)
   def from_mdex(value), do: convert(value, :from_mdex)
