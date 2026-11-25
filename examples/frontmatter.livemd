@@ -11,69 +11,30 @@ Mix.install([
 
 ## Intro
 
-Front matter is a block of metadata at the top of a Markdown file, between two delimiter lines. Formats such as the [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) use it to describe the document, while the body stays plain Markdown. The metadata is often YAML between `---` lines, but it can be any format, such as TOML between `+++` lines.
-
-MDEx recognizes the block when you set the `front_matter_delimiter` extension option and stores its raw text in an `MDEx.FrontMatter` node. MDEx doesn't decode that text, so use a library for its format to turn it into Elixir data. This example uses YAML and [yaml_elixir](https://hex.pm/packages/yaml_elixir). See [Other formats](#other-formats) for TOML.
+Set the `front_matter_delimiter` extension option to parse front matter into an `MDEx.FrontMatter` node. Its `literal` holds the raw text, delimiters included, so remove the delimiters and decode the rest with a library for its format, YAML in this example.
 
 ## Example
 
 ```elixir
 markdown = """
 ---
-type: BigQuery Table
 title: Orders
 description: One row per completed customer order.
-resource: https://console.cloud.google.com/bigquery?p=acme&d=sales&t=orders
 tags: [sales, revenue]
-timestamp: 2026-05-28T14:30:00Z
 ---
 
-# Schema
-
-| Column        | Type      | Description                              |
-|---------------|-----------|------------------------------------------|
-| `order_id`    | STRING    | Globally unique order identifier.        |
-| `customer_id` | STRING    | FK to [customers](/tables/customers.md). |
-
-# Joins
-
-Joined with [customers](/tables/customers.md) on `customer_id`.
+# Orders
 """
-```
 
-## Parse the front matter
+document = MDEx.parse_document!(markdown, extension: [front_matter_delimiter: "---"])
 
-Set `front_matter_delimiter: "---"` and the front matter becomes the first node of the document. The front matter must start on the first line. If it starts later, `---` is parsed as a thematic break.
+[%MDEx.FrontMatter{literal: literal}] = document[MDEx.FrontMatter]
 
-```elixir
-document = MDEx.parse_document!(markdown, extension: [front_matter_delimiter: "---", table: true])
-
-[%MDEx.FrontMatter{} = front_matter | _] = document.nodes
-front_matter
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-%MDEx.FrontMatter{
-  literal: "---\ntype: BigQuery Table\ntitle: Orders\ndescription: One row per completed customer order.\nresource: https://console.cloud.google.com/bigquery?p=acme&d=sales&t=orders\ntags: [sales, revenue]\ntimestamp: 2026-05-28T14:30:00Z\n---\n\n",
-  sourcepos: %MDEx.Sourcepos{start: {1, 1}, end: {8, 3}}
-}
-```
-
-## Decode the YAML
-
-The `literal` field contains the delimiters. Remove them before decoding the YAML: the YAML parser reads `---` as the start of a new document, and `YamlElixir.read_from_string/1` then returns an empty map.
-
-```elixir
-{:ok, metadata} =
-  front_matter.literal
-  |> String.trim()
-  |> String.trim_leading("---")
-  |> String.trim_trailing("---")
-  |> YamlElixir.read_from_string()
-
-metadata
+literal
+|> String.trim()
+|> String.trim_leading("---")
+|> String.trim_trailing("---")
+|> YamlElixir.read_from_string!()
 ```
 
 <!-- livebook:{"output":true} -->
@@ -81,147 +42,7 @@ metadata
 ```
 %{
   "description" => "One row per completed customer order.",
-  "resource" => "https://console.cloud.google.com/bigquery?p=acme&d=sales&t=orders",
   "tags" => ["sales", "revenue"],
-  "timestamp" => "2026-05-28T14:30:00Z",
-  "title" => "Orders",
-  "type" => "BigQuery Table"
+  "title" => "Orders"
 }
 ```
-
-Keys stay strings and the timestamp stays a string. To work with typed data, map the keys you expect into a struct. Don't call `String.to_atom/1` on keys from files you don't control: atoms are never garbage collected.
-
-```elixir
-defmodule Table do
-  defstruct [:type, :title, :description, :resource, :timestamp, tags: []]
-
-  def new(metadata) do
-    {:ok, timestamp, 0} = DateTime.from_iso8601(metadata["timestamp"])
-
-    %__MODULE__{
-      type: metadata["type"],
-      title: metadata["title"],
-      description: metadata["description"],
-      resource: metadata["resource"],
-      tags: metadata["tags"] || [],
-      timestamp: timestamp
-    }
-  end
-end
-
-Table.new(metadata)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-%Table{
-  type: "BigQuery Table",
-  title: "Orders",
-  description: "One row per completed customer order.",
-  resource: "https://console.cloud.google.com/bigquery?p=acme&d=sales&t=orders",
-  timestamp: ~U[2026-05-28 14:30:00Z],
-  tags: ["sales", "revenue"]
-}
-```
-
-## Render the body
-
-The HTML output leaves the front matter out, so the same document gives you both the metadata and the HTML:
-
-```elixir
-MDEx.to_html!(document)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-"<h1>Schema</h1>\n<table>\n<thead>\n<tr>\n<th>Column</th>\n<th>Type</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>order_id</code></td>\n<td>STRING</td>\n<td>Globally unique order identifier.</td>\n</tr>\n<tr>\n<td><code>customer_id</code></td>\n<td>STRING</td>\n<td>FK to <a href=\"/tables/customers.md\">customers</a>.</td>\n</tr>\n</tbody>\n</table>\n<h1>Joins</h1>\n<p>Joined with <a href=\"/tables/customers.md\">customers</a> on <code>customer_id</code>.</p>"
-```
-
-Without `front_matter_delimiter`, MDEx renders the block as content, a thematic break followed by a heading:
-
-```elixir
-markdown
-|> MDEx.to_html!()
-|> String.slice(0, 50)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-"<hr />\n<h2>type: BigQuery Table\ntitle: Orders\ndesc"
-```
-
-## Putting it together
-
-This module returns the metadata and the HTML of a Markdown file. A file without front matter gets an empty map, and invalid YAML returns an error:
-
-```elixir
-defmodule FrontMatter do
-  @delimiter "---"
-  @options [extension: [front_matter_delimiter: @delimiter, table: true]]
-
-  def parse(markdown) do
-    document = MDEx.parse_document!(markdown, @options)
-
-    with {:ok, metadata} <- metadata(document) do
-      {:ok, metadata, MDEx.to_html!(document)}
-    end
-  end
-
-  defp metadata(%MDEx.Document{nodes: [%MDEx.FrontMatter{literal: literal} | _]}) do
-    literal
-    |> String.trim()
-    |> String.trim_leading(@delimiter)
-    |> String.trim_trailing(@delimiter)
-    |> YamlElixir.read_from_string()
-  end
-
-  defp metadata(_document), do: {:ok, %{}}
-end
-
-{:ok, metadata, _html} = FrontMatter.parse(markdown)
-metadata["tags"]
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-["sales", "revenue"]
-```
-
-```elixir
-FrontMatter.parse("# No front matter")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, %{}, "<h1>No front matter</h1>"}
-```
-
-```elixir
-FrontMatter.parse("""
----
-tags: [sales
----
-# Orders
-""")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:error,
- %YamlElixir.ParsingError{
-   line: 2,
-   column: 13,
-   type: :unfinished_flow_collection,
-   message: "Unfinished flow collection"
- }}
-```
-
-## Other formats
-
-The steps are the same for any format: set the delimiter, remove it from the literal, and decode the rest. The delimiter can be any string. Hugo uses `+++` around TOML front matter, for example. In the `FrontMatter` module above, set `@delimiter "+++"` and replace `YamlElixir.read_from_string/1` with a TOML decoder such as `Toml.decode/1` from [toml](https://hex.pm/packages/toml).
