@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.14.9](https://github.com/leandrocp/mdex/compare/v0.14.8...v0.14.9) (2026-11-25)
+
 ### Features
 
 - Support Comrak 1.2 through mdex_native:
@@ -12,6 +14,14 @@
 ### Compatibility
 
 - Requires mdex_native 0.3.4, which upgrades Comrak to 1.2. See the [Comrak changelog](https://github.com/kivikakk/comrak/blob/main/CHANGELOG.md) for parsing changes and other details in Comrak 1.x.
+
+### Features
+
+- Support Comrak 1.2 options and nodes in [\#486](https://github.com/leandrocp/mdex/pull/486)
+
+### Documentation
+
+- Add front matter example in [\#492](https://github.com/leandrocp/mdex/pull/492)
 
 ## [0.14.8](https://github.com/leandrocp/mdex/compare/v0.14.7...v0.14.8) (2026-11-23)
 
