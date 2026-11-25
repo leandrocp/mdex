@@ -1,5 +1,18 @@
 # Changelog
 
+### Features
+
+- Support Comrak 1.2 through mdex_native:
+  - `extension: [grid_table: true]` parses Pandoc-style grid tables into `MDEx.GridTable`, `MDEx.GridTableRow`, `MDEx.GridTableCell`, and `MDEx.GridTableColumn`, whose cells hold blocks and span columns and rows. `render: [grid_table_widths: true]` writes a `<colgroup>` with the column widths.
+  - `extension: [math_dollars: true, math_dollars_block: true]` parses lines between `$$` fences as `MDEx.MathBlock`.
+  - `extension: [ofm_block_ids: true]` parses a trailing `^name` as `MDEx.BlockId`; HTML renders it as `id="^name"` on its block.
+  - `render: [unsafe: true, attributes: true]` renders parsed attributes on headings, code blocks, and code spans, not only links and images.
+- The new nodes survive traversal, native conversion, JSON, XML, and Markdown. Slack and Delta omit block IDs, render math blocks as display math, and flatten grid table cells.
+
+### Compatibility
+
+- Requires mdex_native 0.3.4, which upgrades Comrak to 1.2. See the [Comrak changelog](https://github.com/kivikakk/comrak/blob/main/CHANGELOG.md) for parsing changes and other details in Comrak 1.x.
+
 ## [0.14.8](https://github.com/leandrocp/mdex/compare/v0.14.7...v0.14.8) (2026-11-23)
 
 ### Bug Fixes
