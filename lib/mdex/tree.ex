@@ -18,6 +18,10 @@ defmodule MDEx.Tree do
   def block_node?(%MDEx.Table{}), do: true
   def block_node?(%MDEx.TableRow{}), do: true
   def block_node?(%MDEx.TableCell{}), do: true
+  def block_node?(%MDEx.GridTable{}), do: true
+  def block_node?(%MDEx.GridTableRow{}), do: true
+  def block_node?(%MDEx.GridTableCell{}), do: true
+  def block_node?(%MDEx.MathBlock{}), do: true
   def block_node?(%MDEx.TaskItem{}), do: true
   def block_node?(%MDEx.MultilineBlockQuote{}), do: true
   def block_node?(%MDEx.Alert{}), do: true

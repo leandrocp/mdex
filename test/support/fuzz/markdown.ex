@@ -73,6 +73,7 @@ defmodule MDEx.Fuzz.Markdown do
       ordered_list(opts),
       task_list(),
       table(),
+      grid_table(),
       definition_list(),
       block_directive(opts),
       footnote_definition(opts),
@@ -129,6 +130,7 @@ defmodule MDEx.Fuzz.Markdown do
       raw_html_span(),
       escaped(),
       member_of(@shortcodes),
+      member_of(["^block-1", "^b2"]),
       constant("中文*emphasis*文本")
     ]
 
@@ -305,6 +307,30 @@ defmodule MDEx.Fuzz.Markdown do
       ~s(<#{tag} data-kind="raw">#{content}</#{tag}>)
     end
   end
+
+  # Cells use fixed words so every row lines up with the border; `:`s on the
+  # separator set alignments and `=` separates the header.
+  defp grid_table do
+    gen all(
+          columns <- integer(1..3),
+          rows <- list_of(list_of(member_of(["a", "*b*", "c d", "中"]), length: columns), min_length: 1, max_length: 3),
+          header? <- boolean(),
+          alignment <- member_of(["-----", ":----", "----:", ":---:"])
+        ) do
+      border = "+" <> String.duplicate("-----+", columns)
+      header_border = "+" <> String.duplicate(String.replace(alignment, "-", "=") <> "+", columns)
+      lines = Enum.map(rows, fn cells -> "|" <> Enum.map_join(cells, &" #{grid_cell(&1)} |") end)
+
+      case lines do
+        [header | body] when header? and body != [] -> Enum.join([border, header, header_border | Enum.intersperse(body, border)] ++ [border], "\n")
+        _ -> Enum.join([border | Enum.intersperse(lines, border)] ++ [border], "\n")
+      end
+    end
+  end
+
+  # Pads to three display columns; `中` is two wide.
+  defp grid_cell("中"), do: "中 "
+  defp grid_cell(word), do: String.pad_trailing(word, 3)
 
   defp math_block do
     gen all(content <- text()) do

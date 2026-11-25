@@ -13,6 +13,17 @@ defmodule MDEx.DeltaConverterTest do
     assert Enum.map_join(body, &Map.fetch!(&1, "insert")) == "\nbefore  after\n"
   end
 
+  test "math blocks become display math and block IDs are hidden" do
+    markdown = "$$\nx^2\n$$\n\nPara ^blk\n"
+
+    assert MDEx.to_delta!(markdown, extension: [math_dollars: true, math_dollars_block: true, ofm_block_ids: true]) == [
+             %{"insert" => "x^2", "attributes" => %{"math" => "display"}},
+             %{"insert" => "\n"},
+             %{"insert" => "Para "},
+             %{"insert" => "\n"}
+           ]
+  end
+
   describe "convert/2" do
     test "converts empty document" do
       input = %Document{nodes: []}

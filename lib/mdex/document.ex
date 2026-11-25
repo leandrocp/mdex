@@ -703,6 +703,12 @@ defmodule MDEx.Document do
       default: false,
       doc: "Enables the [table extension](https://github.github.com/gfm/#tables-extension-) from the GFM spec."
     ],
+    grid_table: [
+      type: :boolean,
+      default: false,
+      doc:
+        "Enables [Pandoc-style grid tables](https://comrak.ee/extensions/grid-table.html), whose cells hold blocks and can span columns and rows. See `MDEx.GridTable`."
+    ],
     autolink: [
       type: :boolean,
       default: false,
@@ -775,10 +781,22 @@ defmodule MDEx.Document do
       doc:
         "Enables Obsidian `%%` comments. Like Obsidian, rendered output (HTML, Slack, and Delta) omits them; Markdown output and the document tree (AST, JSON, and XML) keep them."
     ],
+    ofm_block_ids: [
+      type: :boolean,
+      default: false,
+      doc:
+        "Enables [Obsidian block identifiers](https://comrak.ee/extensions/ofm-block-ids.html): a trailing `^name` becomes a `MDEx.BlockId`, and HTML renders it as `id=\"^name\"` on the block it ends."
+    ],
     math_dollars: [
       type: :boolean,
       default: false,
       doc: "Enables math using dollar syntax."
+    ],
+    math_dollars_block: [
+      type: :boolean,
+      default: false,
+      doc:
+        "With `:math_dollars`, parses lines between `$$` fences as a [display math block](https://comrak.ee/extensions/math-dollars-block.html), `MDEx.MathBlock`, instead of a paragraph of inline math."
     ],
     math_latex: [
       type: :boolean,
@@ -1018,6 +1036,16 @@ defmodule MDEx.Document do
       default: false,
       doc: "Include source position attributes in HTML and XML output."
     ],
+    attributes: [
+      type: :boolean,
+      default: false,
+      doc: """
+      With `:unsafe`, render the attributes parsed by `:header_attributes`, `:fenced_code_attributes`,
+      `:inline_code_attributes`, and `:link_attributes` on headings, code blocks (on the `<pre>`), code spans,
+      links, and images. Without it, `:unsafe` renders them on links, images, and highlighted code spans only.
+      Attributes can run script like raw HTML can, so sanitize the output of untrusted input.
+      """
+    ],
     escaped_char_spans: [
       type: :boolean,
       default: false,
@@ -1071,6 +1099,11 @@ defmodule MDEx.Document do
       type: {:in, [:specific, :semantic]},
       default: :specific,
       doc: "Controls whether alerts render using specific or semantic HTML elements."
+    ],
+    grid_table_widths: [
+      type: :boolean,
+      default: false,
+      doc: "Render a `<colgroup>` in grid tables with each column's share of the total width."
     ]
   ]
 
@@ -1572,6 +1605,11 @@ defmodule MDEx.Document do
           | MDEx.CalloutTitle.t()
           | MDEx.CommentInline.t()
           | MDEx.MultilineComment.t()
+          | MDEx.BlockId.t()
+          | MDEx.GridTable.t()
+          | MDEx.GridTableRow.t()
+          | MDEx.GridTableCell.t()
+          | MDEx.MathBlock.t()
           | MDEx.BlockDirective.t()
           | MDEx.HeexBlock.t()
           | MDEx.HeexInline.t()
@@ -2875,6 +2913,11 @@ defmodule MDEx.Document do
       MDEx.CalloutTitle,
       MDEx.CommentInline,
       MDEx.MultilineComment,
+      MDEx.BlockId,
+      MDEx.GridTable,
+      MDEx.GridTableRow,
+      MDEx.GridTableCell,
+      MDEx.MathBlock,
       MDEx.BlockDirective,
       MDEx.HeexBlock,
       MDEx.HeexInline
@@ -3449,6 +3492,64 @@ defmodule MDEx.TableCell do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.GridTable do
+  @moduledoc """
+  A Pandoc-style grid table, enabled with `extension: [grid_table: true]`.
+
+  Its children are `MDEx.GridTableRow`s. `columns` holds one `MDEx.GridTableColumn`
+  per column. `render: [grid_table_widths: true]` writes a `<colgroup>` with each
+  column's share of the total width.
+
+  Spec: https://comrak.ee/extensions/grid-table.html
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], columns: [MDEx.GridTableColumn.t()]}
+  defstruct nodes: [], columns: [], sourcepos: %MDEx.Sourcepos{}
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.GridTableColumn do
+  @moduledoc """
+  A column of a grid table: its alignment, and its `width` in display columns
+  between the borders, wide characters counting as two.
+
+  See `MDEx.GridTable`
+  """
+
+  @type t :: %__MODULE__{alignment: :none | :left | :center | :right, width: non_neg_integer()}
+  defstruct alignment: :none, width: 0
+end
+
+defmodule MDEx.GridTableRow do
+  @moduledoc """
+  A row of a grid table, in its head, body, or foot `section`.
+
+  See `MDEx.GridTable`
+  """
+
+  @type t :: %__MODULE__{nodes: [MDEx.Document.md_node()], section: :head | :body | :foot}
+  defstruct nodes: [], section: :body, sourcepos: %MDEx.Sourcepos{}
+  use MDEx.Document.Access
+end
+
+defmodule MDEx.GridTableCell do
+  @moduledoc """
+  A cell of a grid table row. Unlike `MDEx.TableCell`, it holds blocks, and it
+  can span columns and rows. `column` is its zero-based starting column.
+
+  See `MDEx.GridTable`
+  """
+
+  @type t :: %__MODULE__{
+          nodes: [MDEx.Document.md_node()],
+          column: non_neg_integer(),
+          colspan: pos_integer(),
+          rowspan: pos_integer()
+        }
+  defstruct nodes: [], column: 0, colspan: 1, rowspan: 1, sourcepos: %MDEx.Sourcepos{}
+  use MDEx.Document.Access
+end
+
 defmodule MDEx.Text do
   @moduledoc """
   Literal text.
@@ -3659,6 +3760,21 @@ defmodule MDEx.Math do
   use MDEx.Document.Access
 end
 
+defmodule MDEx.MathBlock do
+  @moduledoc """
+  Display math between lines of only `$$`, enabled with
+  `extension: [math_dollars: true, math_dollars_block: true]`.
+
+  The literal is not parsed as Markdown. `closed` records whether a closing
+  `$$` line was present; an unclosed block runs to the end of its container.
+
+  Spec: https://comrak.ee/extensions/math-dollars-block.html
+  """
+
+  @type t :: %__MODULE__{fence_offset: non_neg_integer(), literal: String.t(), closed: boolean()}
+  defstruct fence_offset: 0, literal: "", closed: true, sourcepos: %MDEx.Sourcepos{}
+end
+
 defmodule MDEx.MultilineBlockQuote do
   @moduledoc """
   A multiline block quote.
@@ -3835,6 +3951,22 @@ defmodule MDEx.MultilineComment do
   defstruct literal: "", closed: false, sourcepos: %MDEx.Sourcepos{}
 end
 
+defmodule MDEx.BlockId do
+  @moduledoc """
+  An Obsidian block identifier, `^name` at the end of a block, enabled with
+  `extension: [ofm_block_ids: true]`.
+
+  It is the last inline of the block it labels. HTML does not render it as
+  text; the block gets `id="^name"` instead. Slack and Delta omit it. `name`
+  excludes the caret.
+
+  Spec: https://comrak.ee/extensions/ofm-block-ids.html
+  """
+
+  @type t :: %__MODULE__{name: String.t()}
+  defstruct name: "", sourcepos: %MDEx.Sourcepos{}
+end
+
 defmodule MDEx.BlockDirective do
   @moduledoc """
   Container block directive.
@@ -3912,6 +4044,9 @@ defimpl Enumerable,
     MDEx.Table,
     MDEx.TableRow,
     MDEx.TableCell,
+    MDEx.GridTable,
+    MDEx.GridTableRow,
+    MDEx.GridTableCell,
     MDEx.TaskItem,
     MDEx.Emph,
     MDEx.Strong,
@@ -3985,8 +4120,10 @@ defimpl Enumerable,
     MDEx.Raw,
     MDEx.ShortCode,
     MDEx.Math,
+    MDEx.MathBlock,
     MDEx.CommentInline,
     MDEx.MultilineComment,
+    MDEx.BlockId,
     MDEx.HeexInline
   ] do
   def count(_), do: {:error, __MODULE__}
@@ -4052,6 +4189,11 @@ defimpl String.Chars,
     MDEx.CalloutTitle,
     MDEx.CommentInline,
     MDEx.MultilineComment,
+    MDEx.BlockId,
+    MDEx.GridTable,
+    MDEx.GridTableRow,
+    MDEx.GridTableCell,
+    MDEx.MathBlock,
     MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline
@@ -4077,6 +4219,12 @@ defimpl Jason.Encoder, for: MDEx.Attributes do
   def encode(%MDEx.Attributes{id: id, classes: classes, pairs: pairs}, opts) do
     pairs = Enum.map(pairs, &Tuple.to_list/1)
     Jason.Encode.map(%{"id" => id, "classes" => classes, "pairs" => pairs}, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: MDEx.GridTableColumn do
+  def encode(%MDEx.GridTableColumn{alignment: alignment, width: width}, opts) do
+    Jason.Encode.map(%{"alignment" => alignment, "width" => width}, opts)
   end
 end
 
@@ -4148,6 +4296,11 @@ defimpl Jason.Encoder,
     MDEx.CalloutTitle,
     MDEx.CommentInline,
     MDEx.MultilineComment,
+    MDEx.BlockId,
+    MDEx.GridTable,
+    MDEx.GridTableRow,
+    MDEx.GridTableCell,
+    MDEx.MathBlock,
     MDEx.BlockDirective,
     MDEx.HeexBlock,
     MDEx.HeexInline

@@ -11,6 +11,13 @@ defmodule MDEx.SlackConverterTest do
              "*Title*\nbefore  after\n"
   end
 
+  test "grid table rows stay on one line, math blocks show their source, and block IDs are hidden" do
+    markdown = "+-----+-----+\n| a   | c   |\n|     |     |\n| *b* |     |\n+-----+-----+\n\n$$\nx^2\n$$\n\nPara ^blk\n"
+    options = [extension: [grid_table: true, math_dollars: true, math_dollars_block: true, ofm_block_ids: true]]
+
+    assert MDEx.to_slack!(markdown, options) == "a _b_ | c\nx^2\nPara \n"
+  end
+
   describe "convert/2" do
     test "converts empty document" do
       input = %Document{nodes: []}
