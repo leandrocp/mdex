@@ -202,8 +202,7 @@ defmodule MDEx.MixProject do
     if path = System.get_env("MDEX_NATIVE_PATH") do
       {:mdex_native, path: path}
     else
-      # Comrak 1.2 support until mdex_native releases it; CI builds the NIF from this branch.
-      {:mdex_native, github: "leandrocp/mdex_native", branch: "lp-comrak-110"}
+      {:mdex_native, ">= 0.3.4"}
     end
   end
 

@@ -13,7 +13,7 @@
 
 ### Compatibility
 
-- Requires the companion mdex_native Comrak 1.2 update, which includes Comrak's fix for quadratic-time table and autolink input ([GHSA-7f8r-4rh5-vr5h](https://github.com/kivikakk/comrak/security/advisories/GHSA-7f8r-4rh5-vr5h)). Comrak 1.x follows its new extension specs, so some ASTs change: `FootnoteReference.texts` holds the label as written (`[{"^1", 2}]`), and several source positions are corrected, including inline footnotes and the end of a list's last item.
+- Requires mdex_native 0.3.4, which upgrades Comrak to 1.2. See the [Comrak changelog](https://github.com/kivikakk/comrak/blob/main/CHANGELOG.md) for parsing changes and other details in Comrak 1.x.
 
 ## [0.14.8](https://github.com/leandrocp/mdex/compare/v0.14.7...v0.14.8) (2026-11-23)
 
