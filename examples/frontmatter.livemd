@@ -1,0 +1,48 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Front Matter
+
+```elixir
+Mix.install([
+  {:mdex, "~> 0.14"},
+  {:yaml_elixir, "~> 2.12"}
+])
+```
+
+## Intro
+
+Set the `front_matter_delimiter` extension option to parse front matter into an `MDEx.FrontMatter` node. Its `literal` holds the raw text, delimiters included, so remove the delimiters and decode the rest with a library for its format, YAML in this example.
+
+## Example
+
+```elixir
+markdown = """
+---
+title: Orders
+description: One row per completed customer order.
+tags: [sales, revenue]
+---
+
+# Orders
+"""
+
+document = MDEx.parse_document!(markdown, extension: [front_matter_delimiter: "---"])
+
+[%MDEx.FrontMatter{literal: literal}] = document[MDEx.FrontMatter]
+
+literal
+|> String.trim()
+|> String.trim_leading("---")
+|> String.trim_trailing("---")
+|> YamlElixir.read_from_string!()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{
+  "description" => "One row per completed customer order.",
+  "tags" => ["sales", "revenue"],
+  "title" => "Orders"
+}
+```
