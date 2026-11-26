@@ -326,87 +326,11 @@ defmodule MDEx.Sigil do
   end
 
   @deprecated "Use the ~MD sigil instead"
-  defmacro sigil_m({:<<>>, _, [binary]}, modifiers) when is_binary(binary) do
-    binary = Macro.unescape_string(binary)
-    doc = expr(binary, __CALLER__)
-
-    doc =
-      cond do
-        modifiers == ~c"AST" ->
-          IO.warn("""
-          modifier AST is deprecated
-
-          This sigil now returns a %MDEx.Document{} by default,
-          so you can remove the AST suffix.
-          """)
-
-          MDEx.parse_document!(doc, @opts)
-
-        modifiers == ~c"HTML" ->
-          MDEx.to_html!(doc, @opts)
-
-        modifiers == ~c"JSON" ->
-          MDEx.to_json!(doc, @opts)
-
-        modifiers == ~c"XML" ->
-          MDEx.to_xml!(doc, @opts)
-
-        modifiers == ~c"MD" ->
-          MDEx.to_markdown!(doc, @opts)
-
-        :default ->
-          MDEx.parse_document!(doc, @opts)
-      end
-
-    Macro.escape(doc)
+  defmacro sigil_m(_binary, _modifiers) do
+    raise ArgumentError, "~m has been removed, use ~MD instead"
   end
 
-  defmacro sigil_m({:<<>>, meta, pieces}, modifiers) do
-    binary = {:<<>>, meta, unescape_tokens(pieces)}
-    opts = Macro.escape(@opts)
-
-    cond do
-      modifiers == ~c"AST" ->
-        IO.warn("""
-        modifier AST is deprecated
-
-        This sigil now returns a %MDEx.Document{} by default,
-        so you can remove the AST suffix.
-        """)
-
-        quote do
-          MDEx.parse_document!(unquote(binary), unquote(opts))
-        end
-
-      modifiers == ~c"HTML" ->
-        quote do
-          MDEx.to_html!(expr(unquote(binary), __ENV__), unquote(opts))
-        end
-
-      modifiers == ~c"JSON" ->
-        quote do
-          MDEx.to_json!(expr(unquote(binary), __ENV__), unquote(opts))
-        end
-
-      modifiers == ~c"XML" ->
-        quote do
-          MDEx.to_xml!(expr(unquote(binary), __ENV__), unquote(opts))
-        end
-
-      modifiers == ~c"MD" ->
-        quote do
-          MDEx.to_markdown!(expr(unquote(binary), __ENV__), unquote(opts))
-        end
-
-      :default ->
-        quote do
-          MDEx.parse_document!(unquote(binary), unquote(opts))
-        end
-    end
-  end
-
-  @doc false
-  def expr(binary, env) do
+  defp expr(binary, env) do
     with {:ok, {:%, _, _} = quoted} <- Code.string_to_quoted(binary),
          quoted = expand_alias(quoted, env),
          {doc, _} <- Code.eval_quoted(quoted) do
@@ -421,17 +345,5 @@ defmodule MDEx.Sigil do
       {:__aliases__, _, _} = module -> Macro.expand(module, caller)
       other -> other
     end)
-  end
-
-  defp unescape_tokens(tokens) do
-    :lists.map(
-      fn token ->
-        case is_binary(token) do
-          true -> :elixir_interpolation.unescape_string(token)
-          false -> token
-        end
-      end,
-      tokens
-    )
   end
 end

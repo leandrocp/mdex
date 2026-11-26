@@ -945,11 +945,6 @@ defmodule MDEx.DocumentTest do
       assert to_string(~MD[# Hello]) == "# Hello"
     end
 
-    test "to_string resolves interpolation" do
-      title = "Hello"
-      assert to_string(~m[# #{title}]) == "# Hello"
-    end
-
     test "to_string formats document to commonmark" do
       assert to_string(%MDEx.Document{}) == ""
 
