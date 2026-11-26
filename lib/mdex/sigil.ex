@@ -325,6 +325,11 @@ defmodule MDEx.Sigil do
     Macro.escape(doc)
   end
 
+  @deprecated "Use the ~MD sigil instead"
+  defmacro sigil_m(_binary, _modifiers) do
+    raise ArgumentError, "~m has been removed, use ~MD instead"
+  end
+
   defp expr(binary, env) do
     with {:ok, {:%, _, _} = quoted} <- Code.string_to_quoted(binary),
          quoted = expand_alias(quoted, env),
