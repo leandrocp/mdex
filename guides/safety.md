@@ -85,3 +85,18 @@ For untrusted input, sanitize the output, which removes attributes outside the a
 iex> MDEx.to_html!(~S|# Hi {onclick="alert(1)"}|, extension: [header_attributes: true], render: [unsafe: true, attributes: true], sanitize: MDEx.Document.default_sanitize_options())
 "<h1>Hi</h1>"
 ```
+
+### Documents and templates
+
+The rules above apply to Markdown. A `MDEx.Document` built in code or loaded with
+`MDEx.parse_document({:json, json})` renders as it is: `MDEx.Raw` nodes are written verbatim
+whatever `:unsafe` and `:escape` are set to. Sanitize documents that come from untrusted sources:
+
+```elixir
+iex> doc = %MDEx.Document{nodes: [%MDEx.Raw{literal: "<script>alert(1)</script><p>Hi</p>"}]}
+iex> MDEx.to_html!(doc, sanitize: MDEx.Document.default_sanitize_options())
+"<p>Hi</p>"
+```
+
+`MDEx.to_heex/2` and the `~MD` sigil compile their content as HEEx templates, where `<%= ... %>` and `{...}` run as Elixir code.
+Only use them with content you control.

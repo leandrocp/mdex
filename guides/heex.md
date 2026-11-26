@@ -55,6 +55,11 @@ end
 
 Note: Calling `to_heex/2` repeatedly at runtime may impact performance. Prefer the sigil when possible.
 
+> #### Trusted content only {: .warning}
+>
+> The template runs `<%= ... %>` and `{...}` as Elixir code, so only load content you control.
+> Use `MDEx.to_html/2` to render Markdown written by users.
+
 ## Using Assigns
 
 Pass variables to your Markdown templates using the `{@var}` syntax:

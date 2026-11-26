@@ -174,6 +174,9 @@ defmodule MDEx do
 
   Source can be either a Markdown string or a tagged JSON string.
 
+  JSON is loaded as a document as it is, so nodes like `MDEx.Raw` render verbatim.
+  See the [Safety guide](https://hexdocs.pm/mdex/safety.html) before rendering JSON from untrusted sources.
+
   This function is essentially a shortcut for `MDEx.new(markdown: source) |> MDEx.Document.run()`
 
   ## Examples
@@ -509,6 +512,11 @@ defmodule MDEx do
   >
   > This macro requires the module to be required before use.
   > You can include `use MDEx` at the top of your module to enable it or add `require MDEx`.
+
+  > #### Trusted content only {: .warning}
+  >
+  > The source is compiled as a HEEx template, so `<%= ... %>` and `{...}` run as Elixir code.
+  > Never pass user input. Use `to_html/2` to render untrusted Markdown.
 
   > #### Performance {: .warning}
   >
