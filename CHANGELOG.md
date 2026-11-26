@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0](https://github.com/leandrocp/mdex/compare/v0.14.9...v0.15.0) (2026-11-26)
+
+### Features
+
+- **Breaking:** Remove the deprecated ~m sigil in [\#496](https://github.com/leandrocp/mdex/pull/496)
+
+### Documentation
+
+- Clarify how documents and HEEx templates handle content in [\#494](https://github.com/leandrocp/mdex/pull/494)
+
 ## [0.14.9](https://github.com/leandrocp/mdex/compare/v0.14.8...v0.14.9) (2026-11-25)
 
 ### Features
