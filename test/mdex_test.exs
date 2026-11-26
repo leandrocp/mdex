@@ -1486,6 +1486,36 @@ defmodule MDExTest do
         render: [github_pre_lang: true, full_info_string: true]
       )
     end
+
+    test "an unmatched quote does not drop the other decorators" do
+      assert_output(
+        ~S"""
+        ```elixir title=Don't theme=dracula
+        :hello
+        ```
+        """,
+        ~S"""
+        <pre class="lumis" style="color: #f8f8f2; background-color: #282a36;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #bd93f9;">:hello</span></span></code></pre>
+        """,
+        syntax_highlight: [formatter: :html_inline],
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
+
+    test "include_highlights=false turns off the formatter option" do
+      assert_output(
+        ~S"""
+        ```elixir include_highlights=false
+        :hello
+        ```
+        """,
+        ~S"""
+        <pre class="lumis" style="color: #abb2bf; background-color: #282c34;"><code class="language-elixir" translate="no" tabindex="0"><span class="l-line" data-line="1"><span style="color: #e06c75;">:hello</span></span></code></pre>
+        """,
+        syntax_highlight: [formatter: {:html_inline, include_highlights: true}],
+        render: [github_pre_lang: true, full_info_string: true]
+      )
+    end
   end
 
   describe "html_linked: code block decorators" do

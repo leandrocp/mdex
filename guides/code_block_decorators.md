@@ -166,3 +166,14 @@ interface User {
    - For example, `elixir theme=github_dark` is valid, but `theme=github_dark elixir` is not.
 
 5. **Performance**: Decorators are processed at render time, so using many decorators may impact performance
+
+### How Decorators Are Read
+
+Lumis reads decorators the same way in every runtime. See [Code fence options](https://docs.lumis.sh/reference/code-fence-meta) for the full rules.
+
+- Quote a value that contains spaces, with `"..."` or `'...'`. Inside double quotes, `\"` is a quote and `\\` is a backslash; every other backslash is kept.
+- A quote that is never closed is ordinary text, so `title=Don't theme=dracula` still applies `theme`.
+- When a decorator appears twice, the last one wins. An empty value, such as `theme=`, is ignored.
+- A malformed part of `highlight_lines` is skipped on its own: `highlight_lines="1, oops, 3-5"` highlights lines 1 and 3 to 5. If no part is valid, the formatter's own `highlight_lines` applies.
+- `include_highlights=false` turns off the formatter's `include_highlights`.
+- Words that are not decorators, such as `title="app.ex"` or `{1,3}`, are ignored.
