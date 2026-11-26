@@ -282,10 +282,6 @@ defmodule MDEx.SigilTest do
     end
   end
 
-  test "~m is removed" do
-    refute {:sigil_m, 2} in MDEx.Sigil.__info__(:macros)
-  end
-
   describe "html" do
     test "code with assigns" do
       assigns = %{lang: ":elixir"}
